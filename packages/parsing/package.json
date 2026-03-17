@@ -1,0 +1,35 @@
+{
+  "name": "@dns-ops/parsing",
+  "version": "0.1.0",
+  "description": "DNS and mail parsing utilities for DNS Ops Workbench",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dns": {
+      "import": "./dist/dns/index.js",
+      "types": "./dist/dns/index.d.ts"
+    },
+    "./dig": {
+      "import": "./dist/dig/index.js",
+      "types": "./dist/dig/index.d.ts"
+    },
+    "./mail": {
+      "import": "./dist/mail/index.js",
+      "types": "./dist/mail/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@dns-ops/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "dns-ops-web",
+  "main": "./dist/index.js",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "ENVIRONMENT": "production"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dns-ops-db",
+      "database_id": "your-database-id-here"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "your-kv-namespace-id-here"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "dns-ops.example.com/*",
+      "custom_domain": true
+    }
+  ]
+}

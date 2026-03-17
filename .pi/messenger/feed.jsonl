@@ -24,3 +24,22 @@
 {"ts":"2026-03-17T20:32:26.384Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/index.ts"}
 {"ts":"2026-03-17T20:32:26.384Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/package.json"}
 {"ts":"2026-03-17T20:32:26.384Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/tsconfig.json"}
+{"ts":"2026-03-17T20:32:33.017Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/drizzle.config.ts"}
+{"ts":"2026-03-17T20:32:33.972Z","type":"commit","agent":"GoldTiger","preview":"Bead 02: Minimal data model and persistence contract - Created Drizzle ORM schema with all core entities: - domains, snapshots, observations, vantage_points - record_sets, findings, suggestions, ruleset_versions - Implemented PostgreSQL enums for type safety - Created repository pattern for Domain, Snapshot, and Observation - Added database client supporting both PostgreSQL and D1 - Created drizzle-kit configuration for migrations"}
+{"ts":"2026-03-17T20:33:28.337Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/package.json"}
+{"ts":"2026-03-17T20:33:28.337Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/tsconfig.json"}
+{"ts":"2026-03-17T20:33:28.337Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/wrangler.jsonc"}
+{"ts":"2026-03-17T20:33:52.687Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/collector/package.json"}
+{"ts":"2026-03-17T20:33:52.687Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/collector/tsconfig.json"}
+{"ts":"2026-03-17T20:33:52.687Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/collector/Dockerfile"}
+{"ts":"2026-03-17T20:34:21.526Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/package.json"}
+{"ts":"2026-03-17T20:34:21.579Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/tsconfig.json"}
+{"ts":"2026-03-17T20:34:21.579Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/index.ts"}
+{"ts":"2026-03-17T20:34:21.579Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dns/index.ts"}
+{"ts":"2026-03-17T20:35:31.041Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dig/index.ts"}
+{"ts":"2026-03-17T20:35:31.041Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/mail/index.ts"}
+{"ts":"2026-03-17T20:36:03.388Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/idn/index.ts"}
+{"ts":"2026-03-17T20:36:03.388Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/rules/package.json"}
+{"ts":"2026-03-17T20:36:03.388Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/rules/tsconfig.json"}
+{"ts":"2026-03-17T20:36:35.436Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/rules/src/engine/index.ts"}
+{"ts":"2026-03-17T20:36:36.719Z","type":"commit","agent":"GoldTiger","preview":"Bead 02A: Stack, runtime split, and repo scaffold - Created apps/web with TanStack Start + Hono + Cloudflare Workers config - Created apps/collector with Node.js worker + Dockerfile - Created packages/parsing with DNS, dig, mail, and IDN utilities - Created packages/rules with deterministic rules engine core - Added package.json and tsconfig for all apps and packages - Configured wrangler for Cloudflare Workers deployment"}
