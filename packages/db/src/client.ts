@@ -15,6 +15,7 @@ export * from './schema';
 
 // Database type - can be PostgreSQL or D1
 export type Database = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
+export type DbClient = Database;
 
 // Environment configuration
 export interface DBConfig {

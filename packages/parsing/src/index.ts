@@ -6,6 +6,7 @@
  */
 
 export * from './dns/index';
-export * from './dig/index';
+export * from './dns/recordset';
+export * from './dig/format';
 export * from './mail/index';
 export * from './idn/index';

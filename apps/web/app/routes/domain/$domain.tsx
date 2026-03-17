@@ -1,24 +1,32 @@
 import { createFileRoute, useParams } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ZoneManagementBadge, ResultStateBadge } from '../../components/StatusBadges'
-import type { Snapshot } from '@dns-ops/contracts'
+import { DNSViews } from '../../components/DNSViews'
+import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
 export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
   loader: async ({ params }) => {
-    // Fetch snapshot data
-    const response = await fetch(`/api/domain/${params.domain}/latest`)
-    if (!response.ok) {
-      return { domain: params.domain, snapshot: null }
+    // Fetch latest snapshot
+    const snapshotResponse = await fetch(`/api/domain/${params.domain}/latest`)
+    const snapshot = snapshotResponse.ok ? await snapshotResponse.json() : null
+
+    // Fetch observations if snapshot exists
+    let observations: Observation[] = []
+    if (snapshot) {
+      const obsResponse = await fetch(`/api/snapshot/${snapshot.id}/observations`)
+      if (obsResponse.ok) {
+        observations = await obsResponse.json()
+      }
     }
-    const snapshot = await response.json()
-    return { domain: params.domain, snapshot }
+
+    return { domain: params.domain, snapshot, observations }
   },
 })
 
 function Domain360Page() {
   const { domain } = useParams({ from: '/domain/$domain' })
-  const { snapshot } = Route.useLoaderData()
+  const { snapshot, observations } = Route.useLoaderData()
   const [activeTab, setActiveTab] = useState('overview')
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -31,7 +39,6 @@ function Domain360Page() {
         body: JSON.stringify({ domain, zoneManagement: 'unmanaged' }),
       })
       if (response.ok) {
-        // Reload page to get new snapshot
         window.location.reload()
       }
     } finally {
@@ -53,7 +60,7 @@ function Domain360Page() {
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
-        
+
         {snapshot ? (
           <div className="flex items-center gap-2 mt-2">
             <ZoneManagementBadge type={snapshot.zoneManagement} />
@@ -100,8 +107,8 @@ function Domain360Page() {
 
       {/* Tab Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {activeTab === 'overview' && <OverviewTab snapshot={snapshot} domain={domain} />}
-        {activeTab === 'dns' && <DNSTab snapshot={snapshot} />}
+        {activeTab === 'overview' && <OverviewTab snapshot={snapshot} observations={observations} domain={domain} />}
+        {activeTab === 'dns' && <DNSTab observations={observations} />}
         {activeTab === 'mail' && <MailTabPlaceholder />}
         {activeTab === 'delegation' && <DelegationTabPlaceholder />}
         {activeTab === 'history' && <HistoryTabPlaceholder />}
@@ -110,7 +117,7 @@ function Domain360Page() {
   )
 }
 
-function OverviewTab({ snapshot, domain }: { snapshot: Snapshot | null; domain: string }) {
+function OverviewTab({ snapshot, observations, domain }: { snapshot: Snapshot | null; observations: Observation[]; domain: string }) {
   if (!snapshot) {
     return (
       <div className="text-center py-12">
@@ -119,8 +126,19 @@ function OverviewTab({ snapshot, domain }: { snapshot: Snapshot | null; domain: 
     )
   }
 
+  // Calculate summary stats
+  const successCount = observations.filter(o => o.status === 'success').length
+  const errorCount = observations.filter(o => o.status !== 'success').length
+
   return (
     <div className="space-y-6">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard label="Total Queries" value={observations.length} />
+        <StatCard label="Successful" value={successCount} color="green" />
+        <StatCard label="Errors/Timeouts" value={errorCount} color={errorCount > 0 ? 'red' : 'gray'} />
+      </div>
+
       {/* Scope Information */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-semibold text-blue-900 mb-2">Query Scope</h3>
@@ -168,26 +186,39 @@ function OverviewTab({ snapshot, domain }: { snapshot: Snapshot | null; domain: 
   )
 }
 
-function DNSTab({ snapshot }: { snapshot: Snapshot | null }) {
-  if (!snapshot) {
+function StatCard({ label, value, color = 'gray' }: { label: string; value: number; color?: 'gray' | 'green' | 'red' }) {
+  const colorClasses = {
+    gray: 'bg-gray-50',
+    green: 'bg-green-50',
+    red: 'bg-red-50',
+  }
+
+  return (
+    <div className={`${colorClasses[color]} rounded-lg p-4 text-center`}>
+      <div className="text-2xl font-bold text-gray-900">{value}</div>
+      <div className="text-sm text-gray-600">{label}</div>
+    </div>
+  )
+}
+
+function DNSTab({ observations }: { observations: Observation[] }) {
+  if (observations.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No snapshot available.</p>
+        <p className="text-gray-500">No observations available. Refresh to collect DNS data.</p>
       </div>
     )
   }
 
   return (
     <div>
-      <h3 className="font-semibold text-gray-900 mb-4">DNS Records</h3>
-      <p className="text-gray-500 text-sm mb-4">
-        Full DNS record views will be available after Bead 05 (Snapshot Read Path).
-      </p>
-      <div className="bg-gray-50 rounded-lg p-4">
-        <p className="text-sm text-gray-600">
-          Snapshot ID: <code className="bg-gray-200 px-1 rounded">{snapshot.id}</code>
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-900">DNS Records</h3>
+        <p className="text-sm text-gray-500">
+          View DNS data in three formats: Parsed (structured), Raw (complete data), or Dig (CLI-style).
         </p>
       </div>
+      <DNSViews observations={observations} />
     </div>
   )
 }
