@@ -16,7 +16,7 @@
     "@dns-ops/db": "workspace:*",
     "@tanstack/react-query": "^5.17.0",
     "@tanstack/react-router": "^1.4.0",
-    "@tanstack/start": "^1.4.0",
+    "@tanstack/react-start": "^1.4.0",
     "hono": "^3.12.0",
     "drizzle-orm": "^0.29.0",
     "react": "^18.2.0",
