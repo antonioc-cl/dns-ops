@@ -14,3 +14,13 @@
 {"ts":"2026-03-17T20:28:02.838Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/pnpm-workspace.yaml"}
 {"ts":"2026-03-17T20:28:02.838Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/turbo.json"}
 {"ts":"2026-03-17T20:28:10.488Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/biome.json"}
+{"ts":"2026-03-17T20:28:21.489Z","type":"commit","agent":"GoldTiger","preview":"Bead 01: Pilot corpus, status vocabulary, and trust boundary - Created shared enums and vocabulary (packages/contracts/src/enums.ts) - Created benchmark corpus with test cases (packages/testkit/src/benchmark-corpus/index.ts) - Documented trust boundary policy for non-DNS probes (docs/rules/trust-boundary.md) - Documented phase 1 query scope (docs/rules/query-scope.md) - Set up monorepo structure with pnpm workspaces and turbo - Created contracts and testkit packages with TypeScript configs"}
+{"ts":"2026-03-17T20:30:47.367Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/schema/index.ts"}
+{"ts":"2026-03-17T20:31:24.965Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/client.ts"}
+{"ts":"2026-03-17T20:31:24.965Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/repos/domain.ts"}
+{"ts":"2026-03-17T20:32:09.926Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/repos/snapshot.ts"}
+{"ts":"2026-03-17T20:32:09.927Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/repos/observation.ts"}
+{"ts":"2026-03-17T20:32:26.374Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/repos/index.ts"}
+{"ts":"2026-03-17T20:32:26.384Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/index.ts"}
+{"ts":"2026-03-17T20:32:26.384Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/package.json"}
+{"ts":"2026-03-17T20:32:26.384Z","type":"edit","agent":"GoldTiger","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/tsconfig.json"}
