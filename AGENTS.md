@@ -121,6 +121,59 @@ bd automatically syncs via Dolt:
 
 For more details, see README.md and docs/QUICKSTART.md.
 
+## No Stubs or Placeholders Policy
+
+**CRITICAL: This project does NOT allow stubs, placeholders, TODOs without implementation, or "mock" code.**
+
+### What This Means
+
+- ❌ **NEVER commit**: `// TODO: implement this`, `return null`, `throw new Error("not implemented")`
+- ❌ **NEVER commit**: Mock functions that return hardcoded data instead of real implementation
+- ❌ **NEVER commit**: Placeholder files with only exports but no actual logic
+- ❌ **NEVER commit**: Database operations that return fake IDs instead of persisting
+
+### If a Bead Is Unclear
+
+**STOP and communicate immediately.** Do NOT proceed with guesses or stubs.
+
+**Required workflow:**
+1. Read the full bead specification in `beads/<name>.md`
+2. If requirements are ambiguous, incomplete, or contradictory:
+   - Document what is unclear
+   - Propose a specific solution with rationale
+   - Wait for confirmation before implementing
+3. Use `bd` to track clarification needs:
+   ```bash
+   bd create "Clarification needed for Bead X" \
+     --description="Specific questions..." \
+     -p 1 \
+     --deps discovered-from:<bead-id>
+   ```
+
+### What IS Allowed
+
+- ✅ Temporary workarounds with `FIXME:` comments that include:
+  - Specific trigger condition for replacement
+  - Name of library/approach to use instead
+  - Link to issue tracking the replacement
+  
+  Example:
+  ```typescript
+  // FIXME: Replace with dns-packet library when CAA/DNSSEC records needed
+  // See: bd show dns-ops-xyz
+  ```
+
+- ✅ Feature flags for gradual rollout (with clear on/off logic)
+- ✅ Graceful degradation with explicit error messages to users
+
+### Quality Gate
+
+Before committing, verify:
+1. Every function returns real data or a meaningful error
+2. Database operations actually persist (not mock IDs)
+3. API endpoints return real responses (not placeholders)
+4. All error cases are handled explicitly (not `TODO: handle error`)
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
