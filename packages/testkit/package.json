@@ -1,0 +1,27 @@
+{
+  "name": "@dns-ops/testkit",
+  "version": "0.1.0",
+  "description": "Test fixtures, benchmark corpus, and helpers for DNS Ops Workbench",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./benchmark-corpus": {
+      "import": "./dist/benchmark-corpus/index.js",
+      "types": "./dist/benchmark-corpus/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src"
+  },
+  "dependencies": {
+    "@dns-ops/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
