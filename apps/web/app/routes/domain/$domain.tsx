@@ -235,7 +235,7 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | 
         </p>
       </div>
 
-      {/* Mail Diagnostics (Bead 06) */}
+      {/* Mail Diagnostics (Bead 16) */}
       <div className="mb-8">
         <MailDiagnostics domain={domain} snapshotId={snapshotId || undefined} />
       </div>

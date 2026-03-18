@@ -15,7 +15,7 @@ import {
   pgEnum,
   index,
 } from 'drizzle-orm/pg-core';
-import { snapshots } from './index';
+// Note: snapshotId references snapshots.id but FK constraint removed to avoid circular dependency
 
 export const remediationStatusEnum = pgEnum('remediation_status', [
   'open',
@@ -35,8 +35,7 @@ export const remediationRequests = pgTable(
   'remediation_requests',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    snapshotId: uuid('snapshot_id')
-      .references(() => snapshots.id, { onDelete: 'cascade' }),
+    snapshotId: uuid('snapshot_id'), // References snapshots.id without FK constraint to avoid circular dependency
     domain: varchar('domain', { length: 253 }).notNull(),
 
     // Contact information (validated)

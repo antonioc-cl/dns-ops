@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ISSUE_LABELS, type IssueType } from './types';
 
 interface RemediationFormProps {

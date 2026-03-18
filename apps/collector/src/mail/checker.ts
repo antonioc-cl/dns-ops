@@ -48,7 +48,7 @@ export const PROVIDER_SELECTORS: Record<string, ProviderSelectorInfo> = {
 };
 
 // Common DKIM selectors to try as fallback
-const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'email'];
+export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'email'];
 
 /**
  * Perform complete mail check (DMARC, DKIM, SPF)

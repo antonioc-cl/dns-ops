@@ -9,8 +9,6 @@ import { performMailCheck, PROVIDER_SELECTORS, type MailCheckResult } from '../m
 import {
   createPostgresClient,
   ObservationRepository,
-  RecordSetRepository,
-  SnapshotRepository,
 } from '@dns-ops/db';
 import type { NewObservation } from '@dns-ops/db/schema';
 
@@ -182,7 +180,7 @@ async function storeMailObservations(
   });
 
   // Insert observations
-  await repo.insertMany(observations);
+  await repo.createMany(observations);
 
   return observations.length;
 }
