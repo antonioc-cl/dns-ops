@@ -5,6 +5,8 @@ import { legacyToolsRoutes } from './legacy-tools'
 import { selectorRoutes } from './selectors'
 import { delegationRoutes } from './delegation'
 import { mailRoutes } from './mail'
+import { shadowComparisonRoutes } from './shadow-comparison'
+import { providerTemplateRoutes } from './provider-templates'
 
 export const apiRoutes = new Hono<Env>()
 
@@ -22,6 +24,12 @@ apiRoutes.route('/', delegationRoutes)
 
 // Mount mail routes
 apiRoutes.route('/', mailRoutes)
+
+// Mount shadow comparison routes (Bead 09)
+apiRoutes.route('/', shadowComparisonRoutes)
+
+// Mount provider template routes (Bead 09)
+apiRoutes.route('/', providerTemplateRoutes)
 
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
