@@ -188,12 +188,14 @@ export class RemediationRepository {
       .from(remediationRequests)
       .groupBy(remediationRequests.status);
 
-    return results.reduce(
-      (acc, row) => {
+    return results.reduce<
+      Record<RemediationRequest['status'], number>
+    >(
+      (acc, row: { status: RemediationRequest['status']; count: number | bigint }) => {
         acc[row.status] = Number(row.count);
         return acc;
       },
-      {} as Record<RemediationRequest['status'], number>
+      { open: 0, 'in-progress': 0, resolved: 0, closed: 0 }
     );
   }
 }

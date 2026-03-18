@@ -6,6 +6,7 @@ import { FindingsPanel } from '../../components/FindingsPanel'
 import { LegacyToolsPanel } from '../../components/LegacyToolsPanel'
 import { DiscoveredSelectors } from '../../components/DiscoveredSelectors'
 import { DelegationPanel } from '../../components/DelegationPanel'
+import { MailDiagnostics } from '../../components/mail'
 import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -230,20 +231,25 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | 
       <div className="mb-6">
         <h3 className="font-semibold text-gray-900">Mail Configuration</h3>
         <p className="text-sm text-gray-500">
-          Access legacy DMARC/DKIM tools and view discovered DKIM selectors.
+          Run mail diagnostics, view discovered DKIM selectors, and request remediation for issues.
         </p>
+      </div>
+
+      {/* Mail Diagnostics (Bead 06) */}
+      <div className="mb-8">
+        <MailDiagnostics domain={domain} snapshotId={snapshotId || undefined} />
       </div>
 
       {/* Discovered DKIM Selectors (Bead 08) */}
       {snapshotId && (
-        <div className="mb-8">
+        <div className="mb-8 border-t pt-6">
           <h4 className="font-medium text-gray-900 mb-3">Discovered DKIM Selectors</h4>
           <DiscoveredSelectors snapshotId={snapshotId} />
         </div>
       )}
 
       {/* Legacy Tools Integration (Bead 06) */}
-      <div className="mb-8">
+      <div className="mb-8 border-t pt-6">
         <h4 className="font-medium text-gray-900 mb-3">Legacy Mail Tools</h4>
         <LegacyToolsPanel domain={domain} />
       </div>
