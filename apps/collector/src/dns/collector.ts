@@ -17,7 +17,7 @@ import type { Database } from '@dns-ops/db';
 import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db/repos';
 import { observationsToRecordSets } from '@dns-ops/parsing';
 import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db/schema';
-import { generateMailQueries, analyzeMailResults } from '../mail/collector';
+import { generateMailQueries } from '../mail/collector';
 import { DelegationCollector } from '../delegation/collector';
 
 export class DNSCollector {

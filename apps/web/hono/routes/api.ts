@@ -4,6 +4,7 @@ import { findingsRoutes } from './findings'
 import { legacyToolsRoutes } from './legacy-tools'
 import { selectorRoutes } from './selectors'
 import { delegationRoutes } from './delegation'
+import { mailRoutes } from './mail'
 
 export const apiRoutes = new Hono<Env>()
 

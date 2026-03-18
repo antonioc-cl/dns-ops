@@ -63,8 +63,9 @@ export class DelegationCollector {
 
   /**
    * Extract parent zone from domain
-   * example.com -> .
+   * example.com -> com
    * sub.example.com -> example.com
+   * deep.sub.example.com -> sub.example.com
    */
   getParentZone(domain: string): string {
     const labels = domain.split('.');
