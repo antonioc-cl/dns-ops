@@ -10,6 +10,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { collectDomainRoutes } from './jobs/collect-domain';
+import { collectMailRoutes } from './jobs/collect-mail';
+import { probeRoutes } from './jobs/probe-routes';
 
 const app = new Hono();
 
@@ -27,6 +29,9 @@ app.get('/health', (c) => c.json({
 // Mount collection routes
 app.route('/api/collect', collectDomainRoutes);
 app.route('/api/collect', collectMailRoutes);
+
+// Mount probe routes (Bead 10)
+app.route('/api/probe', probeRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
