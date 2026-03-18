@@ -8,6 +8,7 @@ import { mailRoutes } from './mail'
 import { shadowComparisonRoutes } from './shadow-comparison'
 import { providerTemplateRoutes } from './provider-templates'
 import { snapshotRoutes } from './snapshots'
+import { portfolioRoutes } from './portfolio'
 
 export const apiRoutes = new Hono<Env>()
 
@@ -34,6 +35,9 @@ apiRoutes.route('/', providerTemplateRoutes)
 
 // Mount snapshot routes (Bead 13)
 apiRoutes.route('/snapshots', snapshotRoutes)
+
+// Mount portfolio routes (Bead 14)
+apiRoutes.route('/portfolio', portfolioRoutes)
 
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {

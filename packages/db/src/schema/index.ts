@@ -442,6 +442,324 @@ export type Suggestion = typeof suggestions.$inferSelect;
 export type NewSuggestion = typeof suggestions.$inferInsert;
 
 // =============================================================================
+// DOMAIN NOTES & TAGS (Bead 14)
+// =============================================================================
+
+export const domainNotes = pgTable(
+  'domain_notes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    domainId: uuid('domain_id')
+      .notNull()
+      .references(() => domains.id, { onDelete: 'cascade' }),
+    
+    // Note content
+    content: text('content').notNull(),
+    
+    // Actor context
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    tenantId: uuid('tenant_id'),
+    
+    // Timestamps
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    domainIdx: index('domain_note_domain_idx').on(table.domainId),
+    tenantIdx: index('domain_note_tenant_idx').on(table.tenantId),
+    createdIdx: index('domain_note_created_idx').on(table.createdAt),
+  })
+);
+
+export const domainTags = pgTable(
+  'domain_tags',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    domainId: uuid('domain_id')
+      .notNull()
+      .references(() => domains.id, { onDelete: 'cascade' }),
+    
+    // Tag
+    tag: varchar('tag', { length: 50 }).notNull(),
+    
+    // Actor context
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    tenantId: uuid('tenant_id'),
+    
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    domainIdx: index('domain_tag_domain_idx').on(table.domainId),
+    tagIdx: index('domain_tag_tag_idx').on(table.tag),
+    tenantIdx: index('domain_tag_tenant_idx').on(table.tenantId),
+    uniqueTag: uniqueIndex('domain_tag_unique_idx').on(table.domainId, table.tag),
+  })
+);
+
+export type DomainNote = typeof domainNotes.$inferSelect;
+export type NewDomainNote = typeof domainNotes.$inferInsert;
+export type DomainTag = typeof domainTags.$inferSelect;
+export type NewDomainTag = typeof domainTags.$inferInsert;
+
+// =============================================================================
+// SAVED FILTERS (Bead 14)
+// =============================================================================
+
+export const savedFilters = pgTable(
+  'saved_filters',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    
+    // Filter definition
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    
+    // Filter criteria (JSON for flexibility)
+    criteria: jsonb('criteria').notNull().$type<{
+      domainPatterns?: string[];
+      zoneManagement?: ('managed' | 'unmanaged' | 'unknown')[];
+      findings?: {
+        types?: string[];
+        severities?: ('critical' | 'high' | 'medium' | 'low' | 'info')[];
+        minConfidence?: 'certain' | 'high' | 'medium' | 'low' | 'heuristic';
+      };
+      tags?: string[];
+      lastSnapshotWithin?: number; // hours
+    }>(),
+    
+    // Visibility
+    isShared: boolean('is_shared').notNull().default(false),
+    
+    // Actor context
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    tenantId: uuid('tenant_id'),
+    
+    // Timestamps
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantIdx: index('saved_filter_tenant_idx').on(table.tenantId),
+    createdByIdx: index('saved_filter_created_by_idx').on(table.createdBy),
+    sharedIdx: index('saved_filter_shared_idx').on(table.isShared),
+  })
+);
+
+export type SavedFilter = typeof savedFilters.$inferSelect;
+export type NewSavedFilter = typeof savedFilters.$inferInsert;
+
+// =============================================================================
+// AUDIT EVENTS (Bead 14)
+// =============================================================================
+
+export const auditActionEnum = pgEnum('audit_action', [
+  'domain_note_created',
+  'domain_note_updated',
+  'domain_note_deleted',
+  'domain_tag_added',
+  'domain_tag_removed',
+  'filter_created',
+  'filter_updated',
+  'filter_deleted',
+  'template_override_created',
+  'template_override_updated',
+  'template_override_deleted',
+]);
+
+export const auditEvents = pgTable(
+  'audit_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    
+    // Action details
+    action: auditActionEnum('action').notNull(),
+    entityType: varchar('entity_type', { length: 50 }).notNull(),
+    entityId: uuid('entity_id').notNull(),
+    
+    // Change details
+    previousValue: jsonb('previous_value'),
+    newValue: jsonb('new_value'),
+    
+    // Actor context
+    actorId: varchar('actor_id', { length: 100 }).notNull(),
+    actorEmail: varchar('actor_email', { length: 255 }),
+    tenantId: uuid('tenant_id'),
+    
+    // Request context
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent'),
+    
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    entityIdx: index('audit_entity_idx').on(table.entityType, table.entityId),
+    actorIdx: index('audit_actor_idx').on(table.actorId),
+    tenantIdx: index('audit_tenant_idx').on(table.tenantId),
+    actionIdx: index('audit_action_idx').on(table.action),
+    createdIdx: index('audit_created_idx').on(table.createdAt),
+  })
+);
+
+export type AuditEvent = typeof auditEvents.$inferSelect;
+export type NewAuditEvent = typeof auditEvents.$inferInsert;
+
+// =============================================================================
+// TEMPLATE OVERRIDES (Bead 14)
+// =============================================================================
+
+export const templateOverrides = pgTable(
+  'template_overrides',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    
+    // Template reference
+    providerKey: varchar('provider_key', { length: 50 }).notNull(),
+    templateKey: varchar('template_key', { length: 50 }).notNull(),
+    
+    // Override content (merged with base template)
+    overrideData: jsonb('override_data').notNull(),
+    
+    // Scope
+    appliesToDomains: jsonb('applies_to_domains').$type<string[]>(), // null = all domains
+    
+    // Actor context
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    tenantId: uuid('tenant_id'),
+    
+    // Timestamps
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    providerIdx: index('template_override_provider_idx').on(table.providerKey),
+    tenantIdx: index('template_override_tenant_idx').on(table.tenantId),
+    uniqueOverride: uniqueIndex('template_override_unique_idx').on(
+      table.providerKey, 
+      table.templateKey, 
+      table.tenantId
+    ),
+  })
+);
+
+export type TemplateOverride = typeof templateOverrides.$inferSelect;
+export type NewTemplateOverride = typeof templateOverrides.$inferInsert;
+
+// =============================================================================
+// MONITORED DOMAINS (Bead 15)
+// =============================================================================
+
+export const monitoringScheduleEnum = pgEnum('monitoring_schedule', [
+  'hourly',
+  'daily',
+  'weekly',
+]);
+
+export const monitoredDomains = pgTable(
+  'monitored_domains',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    domainId: uuid('domain_id')
+      .notNull()
+      .references(() => domains.id, { onDelete: 'cascade' }),
+    
+    // Schedule
+    schedule: monitoringScheduleEnum('schedule').notNull().default('daily'),
+    
+    // Alert configuration
+    alertChannels: jsonb('alert_channels').notNull().$type<{
+      email?: string[];
+      webhook?: string;
+      slack?: string;
+    }>(),
+    
+    // Noise budget
+    maxAlertsPerDay: integer('max_alerts_per_day').notNull().default(5),
+    suppressionWindowMinutes: integer('suppression_window_minutes').notNull().default(60),
+    
+    // State
+    isActive: boolean('is_active').notNull().default(true),
+    lastCheckAt: timestamp('last_check_at', { withTimezone: true }),
+    lastAlertAt: timestamp('last_alert_at', { withTimezone: true }),
+    
+    // Actor context
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    tenantId: uuid('tenant_id'),
+    
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    domainIdx: uniqueIndex('monitored_domain_unique_idx').on(table.domainId),
+    tenantIdx: index('monitored_domain_tenant_idx').on(table.tenantId),
+    activeIdx: index('monitored_domain_active_idx').on(table.isActive),
+    scheduleIdx: index('monitored_domain_schedule_idx').on(table.schedule),
+  })
+);
+
+export type MonitoredDomain = typeof monitoredDomains.$inferSelect;
+export type NewMonitoredDomain = typeof monitoredDomains.$inferInsert;
+
+// =============================================================================
+// ALERTS (Bead 15)
+// =============================================================================
+
+export const alertStatusEnum = pgEnum('alert_status', [
+  'pending',
+  'sent',
+  'suppressed',
+  'acknowledged',
+  'resolved',
+]);
+
+export const alerts = pgTable(
+  'alerts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    monitoredDomainId: uuid('monitored_domain_id')
+      .notNull()
+      .references(() => monitoredDomains.id, { onDelete: 'cascade' }),
+    
+    // Alert content
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description').notNull(),
+    severity: severityEnum('severity').notNull(),
+    
+    // Trigger
+    triggeredByFindingId: uuid('triggered_by_finding_id')
+      .references(() => findings.id),
+    
+    // Status
+    status: alertStatusEnum('status').notNull().default('pending'),
+    
+    // Deduplication
+    dedupKey: varchar('dedup_key', { length: 200 }), // For grouping similar alerts
+    
+    // Acknowledgment
+    acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    acknowledgedBy: varchar('acknowledged_by', { length: 100 }),
+    
+    // Resolution
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolutionNote: text('resolution_note'),
+    
+    // Actor context
+    tenantId: uuid('tenant_id'),
+    
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    monitoredIdx: index('alert_monitored_idx').on(table.monitoredDomainId),
+    statusIdx: index('alert_status_idx').on(table.status),
+    tenantIdx: index('alert_tenant_idx').on(table.tenantId),
+    dedupIdx: index('alert_dedup_idx').on(table.dedupKey),
+    createdIdx: index('alert_created_idx').on(table.createdAt),
+  })
+);
+
+export type Alert = typeof alerts.$inferSelect;
+export type NewAlert = typeof alerts.$inferInsert;
+
+// =============================================================================
 // REMEDIATION EXPORTS
 // =============================================================================
 
