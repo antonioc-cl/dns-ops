@@ -4,6 +4,7 @@ import { ZoneManagementBadge, ResultStateBadge } from '../../components/StatusBa
 import { DNSViews } from '../../components/DNSViews'
 import { FindingsPanel } from '../../components/FindingsPanel'
 import { LegacyToolsPanel } from '../../components/LegacyToolsPanel'
+import { DiscoveredSelectors } from '../../components/DiscoveredSelectors'
 import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -111,7 +112,7 @@ function Domain360Page() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {activeTab === 'overview' && <OverviewTab snapshot={snapshot} observations={observations} domain={domain} />}
         {activeTab === 'dns' && <DNSTab observations={observations} />}
-        {activeTab === 'mail' && <MailTab domain={domain} />}
+        {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id || null} />
         {activeTab === 'delegation' && <DelegationTabPlaceholder />}
         {activeTab === 'history' && <HistoryTabPlaceholder />}
       </div>
@@ -222,29 +223,36 @@ function DNSTab({ observations }: { observations: Observation[] }) {
   )
 }
 
-function MailTab({ domain }: { domain: string }) {
-  // In the future, this will include detected selectors from DNS observations
-  // For now, we pass an empty array as selector discovery is part of Bead 08
-  const detectedSelectors: string[] = []
-
+function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | null }) {
   return (
     <div>
       <div className="mb-6">
         <h3 className="font-semibold text-gray-900">Mail Configuration</h3>
         <p className="text-sm text-gray-500">
-          Access legacy DMARC/DKIM tools and view mail-related findings.
+          Access legacy DMARC/DKIM tools and view discovered DKIM selectors.
         </p>
       </div>
 
-      {/* Legacy Tools Integration (Bead 06) */}
-      <LegacyToolsPanel domain={domain} detectedSelectors={detectedSelectors} />
+      {/* Discovered DKIM Selectors (Bead 08) */}
+      {snapshotId && (
+        <div className="mb-8">
+          <h4 className="font-medium text-gray-900 mb-3">Discovered DKIM Selectors</h4>
+          <DiscoveredSelectors snapshotId={snapshotId} />
+        </div>
+      )}
 
-      {/* Future: New workbench mail findings will appear here after Bead 08/09 */}
-      <div className="mt-8 border-t pt-6">
+      {/* Legacy Tools Integration (Bead 06) */}
+      <div className="mb-8">
+        <h4 className="font-medium text-gray-900 mb-3">Legacy Mail Tools</h4>
+        <LegacyToolsPanel domain={domain} />
+      </div>
+
+      {/* Future: New workbench mail findings will appear here after Bead 09 */}
+      <div className="border-t pt-6">
         <h4 className="font-medium text-gray-900 mb-2">Workbench Mail Analysis</h4>
         <p className="text-sm text-gray-500">
-          New mail findings from the workbench rules engine will appear here after
-          Bead 08 (Mail Collection) and Bead 09 (Shadow Comparison).
+          Mail findings from the workbench rules engine will appear here after
+          Bead 09 (Shadow Comparison and Provider Templates).
         </p>
       </div>
     </div>
