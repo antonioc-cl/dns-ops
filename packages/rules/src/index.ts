@@ -10,5 +10,10 @@ export * from './engine/index';
 // DNS Rules
 export * from './dns/rules';
 
+// Mail Rules (Bead 09)
+export * from './mail/rules';
+export * from './mail/templates';
+export * from './mail/shadow';
+
 // Re-export types
 export type { Rule, RuleContext, RuleResult, Ruleset, RulesEngine } from './engine/index';
