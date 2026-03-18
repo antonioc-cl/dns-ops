@@ -164,6 +164,16 @@ export const snapshots = pgTable(
     collectionDurationMs: integer('collection_duration_ms'),
     errorMessage: text('error_message'),
     
+    // Delegation and extended metadata (Bead 12)
+    metadata: jsonb('metadata').$type<{
+      hasDelegationData?: boolean;
+      parentZone?: string;
+      nsServers?: string[];
+      hasDivergence?: boolean;
+      lameDelegations?: number;
+      hasDnssec?: boolean;
+    }>(),
+    
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({

@@ -68,8 +68,11 @@ export class DelegationCollector {
    */
   getParentZone(domain: string): string {
     const labels = domain.split('.');
-    if (labels.length <= 2) {
-      return '.'; // TLD or root
+    if (labels.length < 2) {
+      return '.'; // Root
+    }
+    if (labels.length === 2) {
+      return labels[1]; // TLD (e.g., 'com' for 'example.com')
     }
     return labels.slice(1).join('.');
   }

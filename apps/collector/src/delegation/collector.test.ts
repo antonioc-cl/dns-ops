@@ -52,7 +52,7 @@ describe('DelegationCollector', () => {
       const collector = new DelegationCollector('sub.example.com');
       
       expect(collector.getParentZone('sub.example.com')).toBe('example.com');
-      expect(collector.getParentZone('example.com')).toBe('.');
+      expect(collector.getParentZone('example.com')).toBe('com');
       expect(collector.getParentZone('deep.sub.example.com')).toBe('sub.example.com');
     });
   });
@@ -109,8 +109,8 @@ describe('DelegationCollector', () => {
 
       const divergence = collector.detectDivergence(results);
       
-      expect(d divergence.hasDivergence).toBe(true);
-      expect(d divergence.serversWithDifferentAnswers).toHaveLength(2);
+      expect(divergence.hasDivergence).toBe(true);
+      expect(divergence.serversWithDifferentAnswers).toHaveLength(2);
     });
   });
 
