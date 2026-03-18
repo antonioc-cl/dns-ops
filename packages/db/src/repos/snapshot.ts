@@ -5,7 +5,7 @@
  * Snapshots represent point-in-time collections of DNS data.
  */
 
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { snapshots, type Snapshot, type NewSnapshot } from '../schema';

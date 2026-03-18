@@ -13,14 +13,28 @@ import type {
   DNSQueryResult,
   VantageInfo,
 } from './types';
+import type { Database } from '@dns-ops/db';
+import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db/repos';
+import { observationsToRecordSets } from '@dns-ops/parsing';
+import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db/schema';
 
 export class DNSCollector {
   private resolver: DNSResolver;
   private config: CollectionConfig;
+  private db: Database;
+  private domainRepo: DomainRepository;
+  private snapshotRepo: SnapshotRepository;
+  private observationRepo: ObservationRepository;
+  private recordSetRepo: RecordSetRepository;
 
-  constructor(config: CollectionConfig) {
+  constructor(config: CollectionConfig, db: Database) {
     this.config = config;
     this.resolver = new DNSResolver();
+    this.db = db;
+    this.domainRepo = new DomainRepository(db);
+    this.snapshotRepo = new SnapshotRepository(db);
+    this.observationRepo = new ObservationRepository(db);
+    this.recordSetRepo = new RecordSetRepository(db);
   }
 
   /**
@@ -202,14 +216,118 @@ export class DNSCollector {
   }
 
   /**
-   * Store results in database (placeholder implementation)
+   * Store results in database
    */
   private async storeResults(
     results: DNSQueryResult[],
     resultState: 'complete' | 'partial' | 'failed'
   ): Promise<string> {
-    // TODO: Integrate with @dns-ops/db to actually store observations
-    // For now, return a mock snapshot ID
-    return `snapshot-${Date.now()}`;
+    const { domain, zoneManagement, triggeredBy } = this.config;
+
+    // Find or create domain
+    let domainRecord = await this.domainRepo.findByName(domain);
+    if (!domainRecord) {
+      domainRecord = await this.domainRepo.create({
+        name: domain,
+        normalizedName: domain.toLowerCase(),
+        zoneManagement,
+      });
+    }
+
+    // Create snapshot
+    const snapshot = await this.snapshotRepo.create({
+      domainId: domainRecord.id,
+      domainName: domain,
+      resultState,
+      queriedNames: [...new Set(results.map(r => r.query.name))],
+      queriedTypes: [...new Set(results.map(r => r.query.type))],
+      vantages: [...new Set(results.map(r => r.vantage.identifier))],
+      zoneManagement,
+      triggeredBy: triggeredBy || 'system',
+    });
+
+    // Create observations for each result
+    const observationData: NewObservation[] = results.map(result => ({
+      snapshotId: snapshot.id,
+      queryName: result.query.name,
+      queryType: result.query.type,
+      vantageType: result.vantage.type === 'public-recursive' ? 'public-recursive' : 'authoritative',
+      vantageIdentifier: result.vantage.identifier,
+      status: result.success ? 'success' : this.mapErrorToStatus(result.error),
+      queriedAt: new Date(),
+      responseTimeMs: result.responseTime,
+      responseCode: result.responseCode ?? null,
+      flags: result.flags ? {
+        authoritative: result.flags.aa,
+        truncated: result.flags.tc,
+        recursionDesired: result.flags.rd,
+        recursionAvailable: result.flags.ra,
+        authenticated: result.flags.ad,
+        checkingDisabled: result.flags.cd,
+      } : null,
+      answerSection: result.answers.map(a => ({
+        name: a.name,
+        type: a.type,
+        ttl: a.ttl,
+        data: a.data,
+      })),
+      authoritySection: result.authority.map(a => ({
+        name: a.name,
+        type: a.type,
+        ttl: a.ttl,
+        data: a.data,
+      })),
+      additionalSection: result.additional.map(a => ({
+        name: a.name,
+        type: a.type,
+        ttl: a.ttl,
+        data: a.data,
+      })),
+      errorMessage: result.error || null,
+    }));
+
+    const createdObservations = await this.observationRepo.createMany(observationData);
+
+    // Create recordsets from observations
+    await this.createRecordSetsFromObservations(snapshot.id, createdObservations);
+
+    return snapshot.id;
+  }
+
+  /**
+   * Map error message to collection status
+   */
+  private mapErrorToStatus(error: string | undefined): 'timeout' | 'refused' | 'nxdomain' | 'error' {
+    if (!error) return 'error';
+    if (error.includes('timeout')) return 'timeout';
+    if (error.includes('ECONNREFUSED') || error.includes('REFUSED')) return 'refused';
+    if (error.includes('ENOTFOUND') || error.includes('NXDOMAIN')) return 'nxdomain';
+    return 'error';
+  }
+
+  /**
+   * Create RecordSets from normalized observations
+   */
+  private async createRecordSetsFromObservations(
+    snapshotId: string,
+    observations: Observation[]
+  ): Promise<void> {
+    const normalizedRecords = observationsToRecordSets(observations);
+
+    const recordSetData: NewRecordSet[] = normalizedRecords.map(record => ({
+      snapshotId,
+      name: record.name,
+      type: record.type,
+      ttl: record.ttl,
+      values: record.values,
+      sourceObservationIds: record.sourceObservationIds,
+      sourceVantages: record.sourceVantages,
+      isConsistent: record.isConsistent,
+      consolidationNotes: record.consolidationNotes || null,
+    }));
+
+    if (recordSetData.length > 0) {
+      await this.recordSetRepo.createMany(recordSetData);
+    }
   }
 }

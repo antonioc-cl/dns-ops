@@ -337,7 +337,7 @@ export const findings = pgTable(
     reviewOnly: boolean('review_only').notNull().default(false),
     
     // Evidence links
-    evidence: jsonb('evidence').notNull().$Type<EvidenceLink[]>(),
+    evidence: jsonb('evidence').notNull().$type<EvidenceLink[]>(),
     
     // Rule that generated this finding
     ruleId: varchar('rule_id', { length: 100 }).notNull(),

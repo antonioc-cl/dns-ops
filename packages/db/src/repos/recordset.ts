@@ -1,61 +1,58 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import type { DrizzleD1Database } from 'drizzle-orm/d1'
 import { recordSets, type RecordSet, type NewRecordSet } from '../schema'
-import type { DbClient } from '../client'
+import * as schema from '../schema'
 
-export interface RecordSetRepository {
-  findById(id: string): Promise<RecordSet | null>
-  findBySnapshotId(snapshotId: string): Promise<RecordSet[]>
-  findByNameAndType(snapshotId: string, name: string, type: string): Promise<RecordSet | null>
-  create(data: NewRecordSet): Promise<RecordSet>
-  createMany(data: NewRecordSet[]): Promise<RecordSet[]>
-  update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet>
-}
+type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>
 
-export function createRecordSetRepository(db: DbClient): RecordSetRepository {
-  return {
-    async findById(id: string): Promise<RecordSet | null> {
-      const results = await db.select()
-        .from(recordSets)
-        .where(eq(recordSets.id, id))
-        .limit(1)
+export class RecordSetRepository {
+  constructor(private db: DB) {}
 
-      return results[0] || null
-    },
+  async findById(id: string): Promise<RecordSet | null> {
+    const results = await this.db.select()
+      .from(recordSets)
+      .where(eq(recordSets.id, id))
+      .limit(1)
 
-    async findBySnapshotId(snapshotId: string): Promise<RecordSet[]> {
-      return db.select()
-        .from(recordSets)
-        .where(eq(recordSets.snapshotId, snapshotId))
-        .orderBy(recordSets.type, recordSets.name)
-    },
+    return results[0] || null
+  }
 
-    async findByNameAndType(snapshotId: string, name: string, type: string): Promise<RecordSet | null> {
-      const results = await db.select()
-        .from(recordSets)
-        .where(eq(recordSets.snapshotId, snapshotId))
-        .where(eq(recordSets.name, name))
-        .where(eq(recordSets.type, type))
-        .limit(1)
+  async findBySnapshotId(snapshotId: string): Promise<RecordSet[]> {
+    return this.db.select()
+      .from(recordSets)
+      .where(eq(recordSets.snapshotId, snapshotId))
+      .orderBy(recordSets.type, recordSets.name)
+  }
 
-      return results[0] || null
-    },
+  async findByNameAndType(snapshotId: string, name: string, type: string): Promise<RecordSet | null> {
+    const results = await this.db.select()
+      .from(recordSets)
+      .where(and(
+        eq(recordSets.snapshotId, snapshotId),
+        eq(recordSets.name, name),
+        eq(recordSets.type, type)
+      ))
+      .limit(1)
 
-    async create(data: NewRecordSet): Promise<RecordSet> {
-      const results = await db.insert(recordSets).values(data).returning()
-      return results[0]
-    },
+    return results[0] || null
+  }
 
-    async createMany(data: NewRecordSet[]): Promise<RecordSet[]> {
-      if (data.length === 0) return []
-      return db.insert(recordSets).values(data).returning()
-    },
+  async create(data: NewRecordSet): Promise<RecordSet> {
+    const results = await this.db.insert(recordSets).values(data).returning()
+    return results[0]
+  }
 
-    async update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet> {
-      const results = await db.update(recordSets)
-        .set(data)
-        .where(eq(recordSets.id, id))
-        .returning()
-      return results[0]
-    },
+  async createMany(data: NewRecordSet[]): Promise<RecordSet[]> {
+    if (data.length === 0) return []
+    return this.db.insert(recordSets).values(data).returning()
+  }
+
+  async update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet> {
+    const results = await this.db.update(recordSets)
+      .set(data)
+      .where(eq(recordSets.id, id))
+      .returning()
+    return results[0]
   }
 }

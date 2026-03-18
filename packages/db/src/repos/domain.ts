@@ -5,7 +5,7 @@
  * Provides type-safe database access with common query patterns.
  */
 
-import { eq, like, desc, and } from 'drizzle-orm';
+import { eq, like, desc, and, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import { domains, type Domain, type NewDomain } from '../schema';
@@ -149,6 +149,3 @@ export class DomainRepository {
     return result[0]?.count || 0;
   }
 }
-
-// Import sql for count query
-import { sql } from 'drizzle-orm';

@@ -23,6 +23,9 @@ const RESPONSE_CODES: Record<number, string> = {
   5: 'REFUSED',
 };
 
+// Default TTL when Node.js dns module doesn't expose it (which is most methods)
+const DEFAULT_TTL = 300;
+
 export class DNSResolver {
   /**
    * Perform a DNS query

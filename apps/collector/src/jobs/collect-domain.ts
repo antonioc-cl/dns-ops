@@ -7,6 +7,7 @@
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector';
 import type { CollectionConfig } from '../dns/types';
+import { createPostgresClient } from '@dns-ops/db';
 
 export const collectDomainRoutes = new Hono();
 
@@ -39,8 +40,15 @@ collectDomainRoutes.post('/domain', async (c) => {
       triggeredBy,
     };
 
+    // Create database connection
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) {
+      return c.json({ error: 'DATABASE_URL not configured' }, 500);
+    }
+    const db = createPostgresClient(dbUrl);
+
     // Run collection
-    const collector = new DNSCollector(config);
+    const collector = new DNSCollector(config, db);
     const result = await collector.collect();
 
     return c.json({
@@ -76,10 +84,18 @@ collectDomainRoutes.get('/status/:snapshotId', async (c) => {
 function isValidDomain(domain: string): boolean {
   // Simple domain validation
   if (!domain || domain.length > 253) return false;
-  
-  // Check for valid characters
+
+  // Check for valid characters - labels cannot start or end with hyphen
   const labelRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
   const labels = domain.split('.');
-  
-  return labels.every(label => labelRegex.test(label));
+
+  // Reject empty labels and labels that are just hyphens or start/end with hyphen
+  for (const label of labels) {
+    if (!label || label.length > 63) return false;
+    if (!labelRegex.test(label)) return false;
+    // Explicit check: no leading or trailing hyphen
+    if (label.startsWith('-') || label.endsWith('-')) return false;
+  }
+
+  return true;
 }

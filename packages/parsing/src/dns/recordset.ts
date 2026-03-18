@@ -75,6 +75,9 @@ function valuesEqual(a: string[], b: string[]): boolean {
 
 /**
  * Normalize observations into RecordSets
+ *
+ * Handles mixed success/failure states across vantages.
+ * Failed observations are included in metadata but don't contribute values.
  */
 export function observationsToRecordSets(
   observations: Observation[]
@@ -85,15 +88,17 @@ export function observationsToRecordSets(
   for (const [key, group] of groups) {
     const [name, type] = key.split('|');
 
+    // Separate successful and failed observations
+    const successfulObs = group.filter(obs => obs.status === 'success');
+    const failedObs = group.filter(obs => obs.status !== 'success');
+
     // Extract all values from successful observations
     const allValues: string[] = [];
     const vantages: string[] = [];
     const observationIds: string[] = [];
     const vantageValues = new Map<string, string[]>();
 
-    for (const obs of group) {
-      if (obs.status !== 'success') continue;
-
+    for (const obs of successfulObs) {
       const vantageId = obs.vantageIdentifier || obs.vantageType;
       vantages.push(vantageId);
       observationIds.push(obs.id);
@@ -103,27 +108,43 @@ export function observationsToRecordSets(
       vantageValues.set(vantageId, values);
     }
 
+    // Include failed observations in metadata
+    for (const obs of failedObs) {
+      const vantageId = obs.vantageIdentifier || obs.vantageType;
+      vantages.push(`${vantageId} (${obs.status})`);
+      observationIds.push(obs.id);
+    }
+
     // Deduplicate values
     const uniqueValues = [...new Set(allValues)];
 
-    // Check consistency across vantages
+    // Check consistency across vantages (only successful ones)
     let isConsistent = true;
-    let consolidationNotes: string | undefined;
+    const notes: string[] = [];
 
     if (vantageValues.size > 1) {
-      const firstValues = [...vantageValues.values()][0];
-      for (const [, values] of vantageValues) {
-        if (!valuesEqual(firstValues, values)) {
-          isConsistent = false;
-          consolidationNotes = 'Values differ across vantages';
-          break;
+      const firstEntry = vantageValues.values().next();
+      if (firstEntry.value) {
+        const firstValues = firstEntry.value;
+        for (const [, values] of vantageValues) {
+          if (!valuesEqual(firstValues, values)) {
+            isConsistent = false;
+            notes.push('Values differ across vantages');
+            break;
+          }
         }
       }
     }
 
+    // Note any failures
+    if (failedObs.length > 0) {
+      const failureTypes = [...new Set(failedObs.map(o => o.status))];
+      notes.push(`Failures from ${failedObs.length} vantage(s): ${failureTypes.join(', ')}`);
+      isConsistent = false;
+    }
+
     // Calculate average TTL
-    const ttls = group
-      .filter(obs => obs.status === 'success')
+    const ttls = successfulObs
       .flatMap(obs => (obs.answerSection || []).map(r => r.ttl))
       .filter((ttl): ttl is number => ttl !== undefined);
 
@@ -139,7 +160,7 @@ export function observationsToRecordSets(
       sourceVantages: [...new Set(vantages)],
       sourceObservationIds: observationIds,
       isConsistent,
-      consolidationNotes,
+      consolidationNotes: notes.length > 0 ? notes.join('; ') : undefined,
     });
   }
 

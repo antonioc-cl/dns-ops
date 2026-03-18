@@ -1,7 +1,11 @@
 import { Hono } from 'hono'
 import type { Env } from '../types'
+import { findingsRoutes } from './findings'
 
 export const apiRoutes = new Hono<Env>()
+
+// Mount findings routes
+apiRoutes.route('/', findingsRoutes)
 
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
@@ -71,7 +75,12 @@ apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
 
 // Trigger collection (proxies to collector service)
 apiRoutes.post('/collect/domain', async (c) => {
-  const body = await c.req.json()
+  let body: { domain?: string; zoneManagement?: string };
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON in request body' }, 400)
+  }
   const { domain, zoneManagement = 'unmanaged' } = body
 
   if (!domain) {

@@ -2,6 +2,7 @@ import { createFileRoute, useParams } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ZoneManagementBadge, ResultStateBadge } from '../../components/StatusBadges'
 import { DNSViews } from '../../components/DNSViews'
+import { FindingsPanel } from '../../components/FindingsPanel'
 import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -177,11 +178,8 @@ function OverviewTab({ snapshot, observations, domain }: { snapshot: Snapshot | 
         </dl>
       </div>
 
-      {/* Placeholder for Findings (Bead 07) */}
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-2">Findings</h3>
-        <p className="text-gray-500 text-sm">Findings will be available after Bead 07 (Rules Engine).</p>
-      </div>
+      {/* Findings Panel (Bead 07) */}
+      <FindingsPanel snapshotId={snapshot?.id || null} />
     </div>
   )
 }
