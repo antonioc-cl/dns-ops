@@ -1,8 +1,8 @@
 import { eq, and } from 'drizzle-orm'
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
 import type { DrizzleD1Database } from 'drizzle-orm/d1'
-import { observations, type Observation, type NewObservation } from '../schema.js'
-import * as schema from '../schema.js'
+import { observations, type Observation, type NewObservation } from '../schema/index.js'
+import * as schema from '../schema/index.js'
 
 type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>
 

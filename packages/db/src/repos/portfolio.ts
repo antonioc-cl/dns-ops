@@ -23,7 +23,7 @@ import {
   type SavedFilter,
   type AuditEvent,
   type TemplateOverride,
-} from '../schema.js';
+} from '../schema/index.js';
 
 // =============================================================================
 // DOMAIN NOTES REPOSITORY
@@ -282,7 +282,7 @@ export class TemplateOverrideRepository {
 // MONITORED DOMAINS REPOSITORY (Bead 15)
 // =============================================================================
 
-import { monitoredDomains, alerts, type NewMonitoredDomain, type NewAlert, type MonitoredDomain, type Alert } from '../schema.js';
+import { monitoredDomains, alerts, type NewMonitoredDomain, type NewAlert, type MonitoredDomain, type Alert } from '../schema/index.js';
 
 export class MonitoredDomainRepository {
   constructor(private db: DbClient) {}

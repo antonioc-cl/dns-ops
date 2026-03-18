@@ -8,8 +8,8 @@
 import { eq, desc, and, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { snapshots, type Snapshot, type NewSnapshot } from '../schema.js';
-import * as schema from '../schema.js';
+import { snapshots, type Snapshot, type NewSnapshot } from '../schema/index.js';
+import * as schema from '../schema/index.js';
 
 type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
 
@@ -134,4 +134,3 @@ export class SnapshotRepository {
   }
 }
 
-import { sql } from 'drizzle-orm';
