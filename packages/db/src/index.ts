@@ -4,6 +4,13 @@
  * Shared database client, schema, and repositories.
  */
 
-export * from './schema.js';
+export * from './schema/index.js';
+
+// Export database adapter and types
+export * from './database/index.js';
+
+// Export client
 export * from './client.js';
-export * from './repos.js';
+
+// Export repositories
+export * from './repos/index.js';
