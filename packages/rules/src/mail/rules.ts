@@ -14,7 +14,6 @@
 
 import type { Observation } from '@dns-ops/db/schema';
 import type { Rule, RuleContext, RuleResult } from '../engine';
-import { isReviewOnly } from '../engine';
 import { parseSPF, parseDMARC } from '@dns-ops/parsing';
 
 // =============================================================================
@@ -164,19 +163,26 @@ export const spfRule: Rule = {
   enabled: true,
 
   evaluate(context: RuleContext): RuleResult | null {
-    // Find TXT records at apex that might contain SPF
-    const txtObservations = context.observations.filter(
+    // Find all TXT record queries at apex
+    const allTxtObservations = context.observations.filter(
       (obs) =>
         obs.queryType === 'TXT' &&
-        obs.queryName.toLowerCase() === context.domainName.toLowerCase() &&
-        obs.status === 'success'
+        obs.queryName.toLowerCase() === context.domainName.toLowerCase()
     );
 
-    // Look for SPF record in answers
+    // Filter to successful observations for SPF detection
+    const successfulTxtObs = allTxtObservations.filter((obs) => obs.status === 'success');
+
+    // Check if any TXT queries failed entirely
+    const failedTxtObs = allTxtObservations.filter(
+      (obs) => obs.status === 'timeout' || obs.status === 'error' || obs.status === 'refused'
+    );
+
+    // Look for SPF record in successful answers
     let spfRecord: string | null = null;
     let spfObservation: Observation | null = null;
 
-    for (const obs of txtObservations) {
+    for (const obs of successfulTxtObs) {
       for (const answer of obs.answerSection || []) {
         if (answer.data.includes('v=spf1')) {
           spfRecord = answer.data;
@@ -185,6 +191,28 @@ export const spfRule: Rule = {
         }
       }
       if (spfRecord) break;
+    }
+
+    // If no SPF found and some TXT queries failed, report uncertainty
+    if (!spfRecord && failedTxtObs.length > 0 && successfulTxtObs.length === 0) {
+      return {
+        finding: {
+          type: 'mail.spf-query-failed',
+          title: `SPF query failed for ${context.domainName}`,
+          description: `Could not determine SPF status for ${context.domainName} due to query failures: ${failedTxtObs.map((f) => f.status).join(', ')}. This is not the same as "no SPF record".`,
+          severity: 'medium',
+          confidence: 'low',
+          riskPosture: 'medium',
+          blastRadius: 'single-domain',
+          reviewOnly: true,
+          evidence: allTxtObservations.map((obs) => ({
+            observationId: obs.id,
+            description: `${obs.vantageType}: ${obs.status}${obs.errorMessage ? ` - ${obs.errorMessage}` : ''}`,
+          })),
+          ruleId: this.id,
+          ruleVersion: this.version,
+        },
+      };
     }
 
     if (!spfRecord) {
@@ -198,7 +226,7 @@ export const spfRule: Rule = {
           riskPosture: 'high',
           blastRadius: 'single-domain',
           reviewOnly: false,
-          evidence: txtObservations.map((obs) => ({
+          evidence: successfulTxtObs.map((obs) => ({
             observationId: obs.id,
             description: `${obs.vantageType}: TXT record present but no SPF found`,
           })),
@@ -489,9 +517,7 @@ export const dkimRule: Rule = {
         return (
           obs.queryType === 'TXT' &&
           queryNameLower.includes('._domainkey.') &&
-          // Match exact domain or subdomain: selector._domainkey.domain or selector._domainkey.sub.domain
-          (queryNameLower.endsWith(`._domainkey.${domainLower}`) ||
-           queryNameLower === `._domainkey.${domainLower}`)
+          queryNameLower.endsWith(`._domainkey.${domainLower}`)
         );
       }
     );
@@ -542,11 +568,11 @@ export const dkimRule: Rule = {
         continue;
       }
 
-      // Basic DKIM key validation
-      if (txtData.includes('k=') || txtData.includes('v=DKIM1')) {
+      // Basic DKIM key validation - require BOTH version tag and key
+      if (txtData.includes('k=') && txtData.includes('v=DKIM1')) {
         validKeys.push({ selector, observation: obs });
       } else {
-        invalidKeys.push({ selector, observation: obs, reason: 'No key data found' });
+        invalidKeys.push({ selector, observation: obs, reason: 'No valid DKIM key data found' });
       }
     }
 

@@ -270,6 +270,23 @@ describe('SPF Rule', () => {
     expect(result?.finding?.type).toBe('mail.spf-malformed');
     expect(result?.finding?.severity).toBe('critical');
   });
+
+  it('should detect SPF query failures', () => {
+    const txtObs = createMockObservation({
+      queryType: 'TXT',
+      queryName: 'example.com',
+      status: 'timeout',
+      errorMessage: 'Query timed out after 5s',
+    });
+    const context = createMockContext({ observations: [txtObs] });
+
+    const result = spfRule.evaluate(context);
+
+    expect(result).not.toBeNull();
+    expect(result?.finding?.type).toBe('mail.spf-query-failed');
+    expect(result?.finding?.severity).toBe('medium');
+    expect(result?.finding?.confidence).toBe('low');
+  });
 });
 
 // =============================================================================
@@ -427,6 +444,34 @@ describe('DKIM Rule', () => {
       queryType: 'TXT',
       queryName: 'google._domainkey.example.com',
       status: 'timeout',
+    });
+    const context = createMockContext({ observations: [dkimObs] });
+
+    const result = dkimRule.evaluate(context);
+
+    expect(result).not.toBeNull();
+    expect(result?.finding?.type).toBe('mail.dkim-no-valid-keys');
+  });
+
+  it('should reject DKIM records missing key data', () => {
+    const dkimObs = createMockObservation({
+      queryType: 'TXT',
+      queryName: 'bad._domainkey.example.com',
+      answerSection: [{ name: 'bad._domainkey.example.com', type: 'TXT', ttl: 300, data: 'v=DKIM1' }], // Missing k= and p=
+    });
+    const context = createMockContext({ observations: [dkimObs] });
+
+    const result = dkimRule.evaluate(context);
+
+    expect(result).not.toBeNull();
+    expect(result?.finding?.type).toBe('mail.dkim-no-valid-keys');
+  });
+
+  it('should reject DKIM records missing version tag', () => {
+    const dkimObs = createMockObservation({
+      queryType: 'TXT',
+      queryName: 'bad._domainkey.example.com',
+      answerSection: [{ name: 'bad._domainkey.example.com', type: 'TXT', ttl: 300, data: 'k=rsa; p=ABCD1234' }], // Missing v=DKIM1
     });
     const context = createMockContext({ observations: [dkimObs] });
 
