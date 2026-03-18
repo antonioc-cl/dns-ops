@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ZoneManagementBadge, ResultStateBadge } from '../../components/StatusBadges'
 import { DNSViews } from '../../components/DNSViews'
 import { FindingsPanel } from '../../components/FindingsPanel'
+import { LegacyToolsPanel } from '../../components/LegacyToolsPanel'
 import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -110,7 +111,7 @@ function Domain360Page() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {activeTab === 'overview' && <OverviewTab snapshot={snapshot} observations={observations} domain={domain} />}
         {activeTab === 'dns' && <DNSTab observations={observations} />}
-        {activeTab === 'mail' && <MailTabPlaceholder />}
+        {activeTab === 'mail' && <MailTab domain={domain} />}
         {activeTab === 'delegation' && <DelegationTabPlaceholder />}
         {activeTab === 'history' && <HistoryTabPlaceholder />}
       </div>
@@ -221,13 +222,31 @@ function DNSTab({ observations }: { observations: Observation[] }) {
   )
 }
 
-function MailTabPlaceholder() {
+function MailTab({ domain }: { domain: string }) {
+  // In the future, this will include detected selectors from DNS observations
+  // For now, we pass an empty array as selector discovery is part of Bead 08
+  const detectedSelectors: string[] = []
+
   return (
-    <div className="text-center py-12">
-      <h3 className="font-semibold text-gray-900 mb-2">Mail Configuration</h3>
-      <p className="text-gray-500">
-        Mail diagnostics will be available after Bead 08 (Mail Collection).
-      </p>
+    <div>
+      <div className="mb-6">
+        <h3 className="font-semibold text-gray-900">Mail Configuration</h3>
+        <p className="text-sm text-gray-500">
+          Access legacy DMARC/DKIM tools and view mail-related findings.
+        </p>
+      </div>
+
+      {/* Legacy Tools Integration (Bead 06) */}
+      <LegacyToolsPanel domain={domain} detectedSelectors={detectedSelectors} />
+
+      {/* Future: New workbench mail findings will appear here after Bead 08/09 */}
+      <div className="mt-8 border-t pt-6">
+        <h4 className="font-medium text-gray-900 mb-2">Workbench Mail Analysis</h4>
+        <p className="text-sm text-gray-500">
+          New mail findings from the workbench rules engine will appear here after
+          Bead 08 (Mail Collection) and Bead 09 (Shadow Comparison).
+        </p>
+      </div>
     </div>
   )
 }

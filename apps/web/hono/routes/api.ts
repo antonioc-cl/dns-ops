@@ -1,11 +1,15 @@
 import { Hono } from 'hono'
 import type { Env } from '../types'
 import { findingsRoutes } from './findings'
+import { legacyToolsRoutes } from './legacy-tools'
 
 export const apiRoutes = new Hono<Env>()
 
 // Mount findings routes
 apiRoutes.route('/', findingsRoutes)
+
+// Mount legacy tools routes
+apiRoutes.route('/', legacyToolsRoutes
 
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
