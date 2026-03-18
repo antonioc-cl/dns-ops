@@ -13,6 +13,7 @@ import { collectDomainRoutes } from './jobs/collect-domain';
 import { collectMailRoutes } from './jobs/collect-mail';
 import { probeRoutes } from './jobs/probe-routes';
 import { fleetReportRoutes } from './jobs/fleet-report';
+import { monitoringRoutes } from './jobs/monitoring';
 
 const app = new Hono();
 
@@ -36,6 +37,9 @@ app.route('/api/probe', probeRoutes);
 
 // Mount fleet report routes (Bead 11)
 app.route('/api/fleet-report', fleetReportRoutes);
+
+// Mount monitoring routes (Bead 15)
+app.route('/api/monitoring', monitoringRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
