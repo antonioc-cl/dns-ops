@@ -18,6 +18,7 @@ import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetR
 import { observationsToRecordSets } from '@dns-ops/parsing';
 import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db/schema';
 import { generateMailQueries, analyzeMailResults } from '../mail/collector';
+import { DelegationCollector } from '../delegation/collector';
 
 export class DNSCollector {
   private resolver: DNSResolver;
@@ -80,11 +81,23 @@ export class DNSCollector {
     // Combine all results
     const allResults = [...recursiveResults, ...authoritativeResults];
 
+    // Collect delegation data if enabled (Bead 12)
+    let delegationData = null;
+    if (this.config.includeDelegationData !== false) { // Default to true
+      try {
+        const delegationCollector = new DelegationCollector(this.config.domain);
+        delegationData = await delegationCollector.collectDelegationSummary('8.8.8.8');
+      } catch (error) {
+        console.error('Delegation collection failed:', error);
+        // Don't fail the entire collection if delegation fails
+      }
+    }
+
     // Calculate result state
     const resultState = this.calculateResultState(allResults, errors);
 
     // Store results (placeholder - will integrate with DB)
-    const snapshotId = await this.storeResults(allResults, resultState);
+    const snapshotId = await this.storeResults(allResults, resultState, delegationData);
 
     return {
       snapshotId,
@@ -259,7 +272,8 @@ export class DNSCollector {
    */
   private async storeResults(
     results: DNSQueryResult[],
-    resultState: 'complete' | 'partial' | 'failed'
+    resultState: 'complete' | 'partial' | 'failed',
+    delegationData?: import('../delegation/collector').DelegationSummary | null
   ): Promise<string> {
     const { domain, zoneManagement, triggeredBy } = this.config;
 
@@ -283,7 +297,16 @@ export class DNSCollector {
       vantages: [...new Set(results.map(r => r.vantage.identifier))],
       zoneManagement,
       triggeredBy: triggeredBy || 'system',
-    });
+      // Store delegation data summary if available (Bead 12)
+      metadata: delegationData ? {
+        hasDelegationData: true,
+        parentZone: delegationData.parentZone,
+        nsServers: delegationData.parentNs.map(ns => ns.data),
+        hasDivergence: delegationData.hasDivergence,
+        lameDelegations: delegationData.lameDelegations.length,
+        hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
+      } : undefined,
+    } as NewSnapshot);
 
     // Create observations for each result
     const observationData: NewObservation[] = results.map(result => ({

@@ -5,6 +5,7 @@ import { DNSViews } from '../../components/DNSViews'
 import { FindingsPanel } from '../../components/FindingsPanel'
 import { LegacyToolsPanel } from '../../components/LegacyToolsPanel'
 import { DiscoveredSelectors } from '../../components/DiscoveredSelectors'
+import { DelegationPanel } from '../../components/DelegationPanel'
 import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -113,7 +114,7 @@ function Domain360Page() {
         {activeTab === 'overview' && <OverviewTab snapshot={snapshot} observations={observations} domain={domain} />}
         {activeTab === 'dns' && <DNSTab observations={observations} />}
         {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id || null} />
-        {activeTab === 'delegation' && <DelegationTabPlaceholder />}
+        {activeTab === 'delegation' && <DelegationTab snapshotId={snapshot?.id || null} />}
         {activeTab === 'history' && <HistoryTabPlaceholder />}
       </div>
     </div>
@@ -259,13 +260,16 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | 
   )
 }
 
-function DelegationTabPlaceholder() {
+function DelegationTab({ snapshotId }: { snapshotId: string | null }) {
   return (
-    <div className="text-center py-12">
-      <h3 className="font-semibold text-gray-900 mb-2">Delegation Analysis</h3>
-      <p className="text-gray-500">
-        Delegation diagnostics will be available after Bead 12 (Delegation Vantage Collector).
-      </p>
+    <div>
+      <div className="mb-6">
+        <h3 className="font-semibold text-gray-900">Delegation Analysis</h3>
+        <p className="text-sm text-gray-500">
+          Parent zone view, authoritative server responses, glue records, and DNSSEC status.
+        </p>
+      </div>
+      <DelegationPanel snapshotId={snapshotId} />
     </div>
   )
 }

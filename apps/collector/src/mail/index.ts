@@ -1,8 +1,19 @@
 /**
- * Mail Collection Module
- *
- * DNS-based mail infrastructure collection with DKIM selector discovery.
+ * Mail checking module exports
  */
 
-export * from './selector-discovery';
-export * from './collector';
+export {
+  performMailCheck,
+  checkDMARC,
+  checkDKIM,
+  checkSPF,
+  PROVIDER_SELECTORS,
+  COMMON_SELECTORS,
+  type MailCheckResult,
+  type RecordCheckResult,
+  type DKIMCheckResult,
+  type SelectorProvenance,
+  type ProviderSelectorInfo,
+} from './checker';
+
+export { resolveTXT } from './dns';

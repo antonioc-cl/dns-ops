@@ -26,6 +26,7 @@ app.get('/health', (c) => c.json({
 
 // Mount collection routes
 app.route('/api/collect', collectDomainRoutes);
+app.route('/api/collect', collectMailRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));

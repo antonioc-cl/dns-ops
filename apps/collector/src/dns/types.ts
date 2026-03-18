@@ -13,6 +13,8 @@ export interface CollectionConfig {
   includeMailRecords?: boolean;
   dkimSelectors?: string[];
   managedDkimSelectors?: string[];
+  // Delegation collection options (Bead 12)
+  includeDelegationData?: boolean;
 }
 
 export interface CollectionResult {

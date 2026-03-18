@@ -430,3 +430,15 @@ export type NewFinding = typeof findings.$inferInsert;
 
 export type Suggestion = typeof suggestions.$inferSelect;
 export type NewSuggestion = typeof suggestions.$inferInsert;
+
+// =============================================================================
+// REMEDIATION EXPORTS
+// =============================================================================
+
+export {
+  remediationRequests,
+  remediationStatusEnum,
+  remediationPriorityEnum,
+  type RemediationRequest,
+  type NewRemediationRequest,
+} from './remediation';
