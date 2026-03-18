@@ -32,12 +32,18 @@ collectDomainRoutes.post('/domain', async (c) => {
       return c.json({ error: 'Invalid domain format' }, 400);
     }
 
+    // Extract mail collection options (Bead 08)
+    const { dkimSelectors, managedDkimSelectors, includeMailRecords } = body;
+
     // Configuration for collection
     const config: CollectionConfig = {
       domain: normalizedDomain,
       zoneManagement: zoneManagement as 'managed' | 'unmanaged' | 'unknown',
       recordTypes: ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'CAA'],
       triggeredBy,
+      includeMailRecords: includeMailRecords !== false, // Default to true
+      dkimSelectors: Array.isArray(dkimSelectors) ? dkimSelectors : undefined,
+      managedDkimSelectors: Array.isArray(managedDkimSelectors) ? managedDkimSelectors : undefined,
     };
 
     // Create database connection

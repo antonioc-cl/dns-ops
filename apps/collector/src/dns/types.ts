@@ -9,6 +9,10 @@ export interface CollectionConfig {
   triggeredBy: string;
   // Optional: specific names to query (for targeted inspection)
   queryNames?: string[];
+  // Mail collection options (Bead 08)
+  includeMailRecords?: boolean;
+  dkimSelectors?: string[];
+  managedDkimSelectors?: string[];
 }
 
 export interface CollectionResult {

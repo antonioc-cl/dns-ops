@@ -17,6 +17,7 @@ import type { Database } from '@dns-ops/db';
 import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db/repos';
 import { observationsToRecordSets } from '@dns-ops/parsing';
 import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db/schema';
+import { generateMailQueries, analyzeMailResults } from '../mail/collector';
 
 export class DNSCollector {
   private resolver: DNSResolver;
@@ -45,7 +46,7 @@ export class DNSCollector {
     const errors: CollectionError[] = [];
 
     // Generate queries based on zone management
-    const queries = this.generateQueries();
+    const queries = await this.generateQueries();
 
     // Collect from public recursive vantage
     const recursiveResults = await this.collectFromVantage(
@@ -98,9 +99,9 @@ export class DNSCollector {
   /**
    * Generate queries based on configuration
    */
-  private generateQueries(): DNSQuery[] {
+  private async generateQueries(): Promise<DNSQuery[]> {
     const queries: DNSQuery[] = [];
-    const { domain, zoneManagement, recordTypes, queryNames } = this.config;
+    const { domain, zoneManagement, recordTypes, queryNames, includeMailRecords, dkimSelectors, managedDkimSelectors } = this.config;
 
     if (queryNames) {
       // Use explicit query names (targeted inspection)
@@ -123,14 +124,52 @@ export class DNSCollector {
           queries.push({ name, type });
         }
       }
+
+      // Include mail records with DKIM selector discovery (Bead 08)
+      if (includeMailRecords !== false) { // Default to true
+        const mailQueries = await this.generateMailQueries(domain, dkimSelectors, managedDkimSelectors);
+        queries.push(...mailQueries);
+      }
     } else {
       // Full zone queries for managed zones
       for (const type of recordTypes) {
         queries.push({ name: domain, type });
       }
+
+      // Include mail records for managed zones
+      if (includeMailRecords !== false) {
+        const mailQueries = await this.generateMailQueries(domain, dkimSelectors, managedDkimSelectors);
+        queries.push(...mailQueries);
+      }
     }
 
-    return queries;
+    // Deduplicate queries
+    const seen = new Set<string>();
+    return queries.filter((q) => {
+      const key = `${q.name}|${q.type}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  /**
+   * Generate mail-related queries including DKIM selector discovery
+   */
+  private async generateMailQueries(
+    domain: string,
+    operatorSelectors?: string[],
+    managedSelectors?: string[]
+  ): Promise<DNSQuery[]> {
+    const { generateMailQueries: generateMailQueriesFunc } = await import('../mail/collector');
+
+    const mailResult = await generateMailQueriesFunc(domain, [], {
+      domain,
+      operatorSelectors,
+      managedSelectors,
+    });
+
+    return mailResult.queries;
   }
 
   /**
