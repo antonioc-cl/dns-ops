@@ -7,8 +7,6 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../types';
-import { RulesEngine } from '@dns-ops/rules';
-import { mailRules } from '@dns-ops/rules';
 import { SnapshotRepository, DomainRepository, ObservationRepository } from '@dns-ops/db/repos';
 
 export const fleetReportRoutes = new Hono<Env>();
@@ -135,10 +133,23 @@ fleetReportRoutes.post('/import-csv', async (c) => {
     return c.json({ error: 'CSV data required' }, 400);
   }
 
+  // Limit CSV size to prevent DoS
+  const maxCsvSize = 1024 * 1024; // 1MB
+  if (body.length > maxCsvSize) {
+    return c.json({ error: 'CSV file too large. Max size: 1MB' }, 400);
+  }
+
   try {
-    // Simple CSV parsing (handles basic comma-separated values)
+    // Simple CSV parsing (handles basic comma-separated values, not quoted fields)
     const lines = body.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    
+    // Limit number of rows
+    const maxRows = 10000;
+    if (lines.length > maxRows) {
+      return c.json({ error: `Too many rows. Max: ${maxRows}` }, 400);
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
     
     const domainIndex = headers.indexOf('domain');
     if (domainIndex === -1) {
@@ -149,11 +160,19 @@ fleetReportRoutes.post('/import-csv', async (c) => {
     }
 
     const inventory: string[] = [];
+    const seenDomains = new Set<string>();
     
     for (let i = 1; i < lines.length; i++) {
-      const columns = lines[i].split(',');
-      const domain = columns[domainIndex]?.trim();
-      if (domain && isValidDomain(domain)) {
+      const line = lines[i].trim();
+      if (!line) continue; // Skip empty lines
+      
+      // Basic parsing - split by comma, handle simple quoted values
+      const columns = line.split(',').map(col => col.trim().replace(/^["']|["']$/g, ''));
+      const domain = columns[domainIndex]?.toLowerCase();
+      
+      // Validate and deduplicate
+      if (domain && isValidDomain(domain) && !seenDomains.has(domain)) {
+        seenDomains.add(domain);
         inventory.push(domain);
       }
     }
@@ -407,7 +426,15 @@ function generateSummary(results: FleetReportResult[], checkTypes: string[]): Re
 }
 
 function isValidDomain(domain: string): boolean {
-  // Simple domain validation
-  const regex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?)*$/;
-  return regex.test(domain) && domain.length <= 253;
+  // Domain validation: requires at least one dot (TLD), valid label format per RFC 1123
+  // Each label: starts with alphanumeric, ends with alphanumeric, hyphens allowed in middle
+  const labelRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$/;
+  if (!domain || domain.length > 253) return false;
+  
+  const labels = domain.toLowerCase().split('.');
+  // Must have at least 2 labels (domain.tld)
+  if (labels.length < 2) return false;
+  
+  // Each label must be valid
+  return labels.every(label => labelRegex.test(label));
 }

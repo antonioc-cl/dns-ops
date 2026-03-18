@@ -165,6 +165,7 @@ export function validateUrl(url: string): SSRFCheckResult & { url?: URL } {
 /**
  * Check if an IP address is in the allowed range
  * Used after DNS resolution to prevent DNS rebinding attacks
+ * @deprecated Use checkSSRF directly - this is now an alias
  */
 export function checkResolvedIP(ip: string): SSRFCheckResult {
   return checkSSRF(ip);

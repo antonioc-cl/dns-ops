@@ -14,7 +14,6 @@ import {
   SavedFilterRepository,
   AuditEventRepository,
   TemplateOverrideRepository,
-  FindingRepository,
 } from '@dns-ops/db/repos';
 import { like, and, eq, or, inArray, desc } from 'drizzle-orm';
 import { domains, findings, snapshots } from '@dns-ops/db/schema';
@@ -82,7 +81,7 @@ portfolioRoutes.post('/search', async (c) => {
     const filteredDomains = await Promise.all(
       results.map(async (domain) => {
         const latestSnapshot = await db.query.snapshots.findFirst({
-          where: eq(domains.id, domain.id),
+          where: eq(snapshots.domainId, domain.id),
           orderBy: desc(snapshots.createdAt),
         });
 
@@ -110,11 +109,11 @@ portfolioRoutes.post('/search', async (c) => {
       })
     );
 
-    const domains = filteredDomains.filter(Boolean);
+    const domainResults = filteredDomains.filter(Boolean);
 
     return c.json({
-      domains,
-      total: domains.length,
+      domains: domainResults,
+      total: domainResults.length,
       limit,
       offset,
     });

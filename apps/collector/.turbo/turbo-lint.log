@@ -1,0 +1,5 @@
+
+> @dns-ops/collector@0.1.0 lint /Users/antonio/Documents/PROYECTOS/dns-ops/apps/collector
+> biome check src
+
+ ELIFECYCLE  Command failed.

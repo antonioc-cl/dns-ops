@@ -1,0 +1,6 @@
+
+> @dns-ops/contracts@0.1.0 lint /Users/antonio/Documents/PROYECTOS/dns-ops/packages/contracts
+> biome check src
+
+sh: biome: command not found
+ ELIFECYCLE  Command failed.

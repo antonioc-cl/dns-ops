@@ -52,9 +52,13 @@ function parsePolicy(raw: string): MTASTSPolicy | null {
           policy.mode = value.toLowerCase() as 'enforce' | 'testing' | 'none';
         }
         break;
-      case 'max_age':
-        policy.maxAge = parseInt(value, 10);
+      case 'max_age': {
+        const parsedMaxAge = parseInt(value, 10);
+        if (!isNaN(parsedMaxAge) && parsedMaxAge >= 0) {
+          policy.maxAge = parsedMaxAge;
+        }
         break;
+      }
       case 'mx':
         policy.mx!.push(value);
         break;

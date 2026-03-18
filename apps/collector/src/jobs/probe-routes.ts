@@ -80,7 +80,7 @@ probeRoutes.post('/smtp-starttls', async (c) => {
         success: true,
         answers: mxRecords.map((mx: string) => ({ name: hostname, type: 'MX', ttl: 300, data: mx })),
       }];
-      probeAllowlist.generateFromDnsRecords(hostname, mockResults);
+      probeAllowlist.generateFromDnsResults(hostname, mockResults);
     }
 
     const result = await probeSMTPStarttls(hostname, {
@@ -109,7 +109,7 @@ probeRoutes.post('/smtp-starttls', async (c) => {
       success: true,
       answers: hosts.map(h => ({ name: 'probe', type: 'MX', ttl: 300, data: `${h.priority} ${h.hostname}.` })),
     }];
-    probeAllowlist.generateFromDnsRecords('probe', mockResults);
+    probeAllowlist.generateFromDnsResults('probe', mockResults);
 
     const results = await probeMXHosts(hosts, {
       timeoutMs: 30000,
@@ -145,7 +145,7 @@ probeRoutes.post('/allowlist/generate', async (c) => {
     }, 400);
   }
 
-  const entries = probeAllowlist.generateFromDnsRecords(domain, dnsResults);
+  const entries = probeAllowlist.generateFromDnsResults(domain, dnsResults);
 
   return c.json({
     domain,
@@ -182,7 +182,7 @@ probeRoutes.get('/allowlist', (c) => {
  * GET /api/probe/ssrf-check/:target
  * Check if a target passes SSRF validation
  */
-probeRoutes.get('/ssrf-check/:target', (c) => {
+probeRoutes.get('/ssrf-check/:target', async (c) => {
   const target = c.req.param('target');
   const { checkSSRF } = await import('../probes');
   

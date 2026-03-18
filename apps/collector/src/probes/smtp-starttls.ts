@@ -246,13 +246,16 @@ export async function probeSMTPStarttls(
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const isTimeout = errorMessage.toLowerCase().includes('timeout') || 
+                      errorMessage.toLowerCase().includes('etimedout') ||
+                      errorMessage.includes('ETIMEDOUT');
     
     return {
       success: false,
       hostname,
       port,
       supportsStarttls: false,
-      error: errorMessage.includes('Timeout') 
+      error: isTimeout
         ? `Timeout after ${timeoutMs}ms` 
         : errorMessage,
       responseTimeMs: Date.now() - startTime,

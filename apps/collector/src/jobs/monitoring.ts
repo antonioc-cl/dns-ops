@@ -10,9 +10,9 @@ import {
   MonitoredDomainRepository,
   AlertRepository,
   DomainRepository,
-  SnapshotRepository,
 } from '@dns-ops/db/repos';
-import { MonitoredDomainRepository, AlertRepository } from '@dns-ops/db/repos';
+import { and, eq, sql } from 'drizzle-orm';
+import { alerts } from '@dns-ops/db/schema';
 
 export const monitoringRoutes = new Hono<Env>();
 
@@ -28,12 +28,13 @@ monitoringRoutes.post('/check', async (c) => {
   try {
     const monitoredRepo = new MonitoredDomainRepository(db);
     const alertRepo = new AlertRepository(db);
+    const domainRepo = new DomainRepository(db);
 
     // Get domains scheduled for this check
-    const domains = await monitoredRepo.findActiveBySchedule(schedule);
+    const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule);
     const results = [];
 
-    for (const monitored of domains) {
+    for (const monitored of monitoredDomains) {
       // Check if within suppression window
       if (monitored.lastAlertAt) {
         const suppressionEnd = new Date(
@@ -45,15 +46,24 @@ monitoringRoutes.post('/check', async (c) => {
         }
       }
 
-      // Check daily alert limit
+      // Check daily alert limit using database-level filtering for efficiency
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const recentAlerts = await alertRepo.findByMonitoredDomain(monitored.id);
-      const todayAlerts = recentAlerts.filter(
-        (a) => new Date(a.createdAt) >= today
-      );
+      const todayAlerts = await db.query.alerts.findMany({
+        where: and(
+          eq(alerts.monitoredDomainId, monitored.id),
+          sql`${alerts.createdAt} >= ${today}`
+        ),
+      });
       if (todayAlerts.length >= monitored.maxAlertsPerDay) {
         continue; // Hit daily limit
+      }
+
+      // Look up domain name
+      const domain = await domainRepo.findById(monitored.domainId);
+      if (!domain) {
+        console.error(`Domain not found for monitored domain: ${monitored.domainId}`);
+        continue;
       }
 
       // Trigger collection via collector service
@@ -62,7 +72,7 @@ monitoringRoutes.post('/check', async (c) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          domain: monitored.domainId, // Actually need to lookup domain name
+          domain: domain.name,
           triggeredBy: 'monitoring-scheduler',
         }),
       });

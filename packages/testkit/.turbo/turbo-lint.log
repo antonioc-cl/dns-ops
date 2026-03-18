@@ -1,0 +1,5 @@
+
+> @dns-ops/testkit@0.1.0 lint /Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit
+> biome check src
+
+ ELIFECYCLE  Command failed.
