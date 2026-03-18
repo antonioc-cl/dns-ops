@@ -10,3 +10,4 @@ export * from './dns/recordset';
 export * from './dig/index';
 export * from './mail/index';
 export * from './idn/index';
+export * from './diff/index';
