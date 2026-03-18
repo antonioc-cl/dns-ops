@@ -27,9 +27,11 @@
     "lint": "biome check src"
   },
   "dependencies": {
-    "@dns-ops/contracts": "workspace:*"
+    "@dns-ops/contracts": "workspace:*",
+    "@dns-ops/db": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^5.3.0"
   }
 }

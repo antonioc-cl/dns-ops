@@ -8,10 +8,10 @@
 import { drizzle as drizzlePg, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzleD1, DrizzleD1Database } from 'drizzle-orm/d1';
 import { Pool } from 'pg';
-import * as schema from './schema';
+import * as schema from './schema.js';
 
 // Export schema for convenience
-export * from './schema';
+export * from './schema.js';
 
 // Database type - can be PostgreSQL or D1
 export type Database = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;

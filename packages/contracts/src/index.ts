@@ -3,7 +3,7 @@
 // This package contains shared TypeScript types, interfaces, and enums
 // used across the entire monorepo.
 
-export * from './enums';
+export * from './enums.js';
 
 // Core entity types (will be expanded in Bead 02)
 
@@ -12,7 +12,7 @@ export interface Domain {
   name: string;
   normalizedName: string;
   punycodeName?: string;
-  zoneManagement: import('./enums').ZoneManagement;
+  zoneManagement: import('./enums.js').ZoneManagement;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,7 +21,7 @@ export interface Snapshot {
   id: string;
   domainId: string;
   domainName: string;
-  resultState: import('./enums').ResultState;
+  resultState: import('./enums.js').ResultState;
   scope: SnapshotScope;
   rulesetVersion: string;
   createdAt: Date;
@@ -30,9 +30,9 @@ export interface Snapshot {
 
 export interface SnapshotScope {
   queriedNames: string[];
-  queriedTypes: import('./enums').SupportedRecordType[];
-  vantages: import('./enums').VantageType[];
-  zoneManagement: import('./enums').ZoneManagement;
+  queriedTypes: import('./enums.js').SupportedRecordType[];
+  vantages: import('./enums.js').VantageType[];
+  zoneManagement: import('./enums.js').ZoneManagement;
 }
 
 export interface Observation {
@@ -40,8 +40,8 @@ export interface Observation {
   snapshotId: string;
   queryName: string;
   queryType: string;
-  vantage: import('./enums').VantageType;
-  status: import('./enums').CollectionStatus;
+  vantage: import('./enums.js').VantageType;
+  status: import('./enums.js').CollectionStatus;
   timestamp: Date;
   responseCode?: number;
   ttl?: number;
@@ -65,7 +65,7 @@ export interface RecordSet {
   type: string;
   ttl: number;
   values: string[];
-  sourceVantages: import('./enums').VantageType[];
+  sourceVantages: import('./enums.js').VantageType[];
 }
 
 export interface Finding {
@@ -74,10 +74,10 @@ export interface Finding {
   type: string;
   title: string;
   description: string;
-  severity: import('./enums').Severity;
-  confidence: import('./enums').Confidence;
-  riskPosture: import('./enums').RiskPosture;
-  blastRadius: import('./enums').BlastRadius;
+  severity: import('./enums.js').Severity;
+  confidence: import('./enums.js').Confidence;
+  riskPosture: import('./enums.js').RiskPosture;
+  blastRadius: import('./enums.js').BlastRadius;
   reviewOnly: boolean;
   evidence: EvidenceLink[];
   createdAt: Date;
@@ -95,8 +95,8 @@ export interface Suggestion {
   title: string;
   description: string;
   action: string;
-  riskPosture: import('./enums').RiskPosture;
-  blastRadius: import('./enums').BlastRadius;
+  riskPosture: import('./enums.js').RiskPosture;
+  blastRadius: import('./enums.js').BlastRadius;
   reviewOnly: boolean;
 }
 

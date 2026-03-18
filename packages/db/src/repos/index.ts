@@ -4,11 +4,11 @@
  * Export all repository classes for database operations.
  */
 
-export { DomainRepository } from './domain';
-export { SnapshotRepository } from './snapshot';
-export { ObservationRepository } from './observation';
-export { RecordSetRepository } from './recordset';
-export { RemediationRepository } from './remediation';
+export { DomainRepository } from './domain.js';
+export { SnapshotRepository } from './snapshot.js';
+export { ObservationRepository } from './observation.js';
+export { RecordSetRepository } from './recordset.js';
+export { RemediationRepository } from './remediation.js';
 export {
   DomainNoteRepository,
   DomainTagRepository,
@@ -17,4 +17,4 @@ export {
   TemplateOverrideRepository,
   MonitoredDomainRepository,
   AlertRepository,
-} from './portfolio';
+} from './portfolio.js';

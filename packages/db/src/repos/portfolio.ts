@@ -6,7 +6,7 @@
  */
 
 import { eq, and, desc, inArray, sql } from 'drizzle-orm';
-import type { DbClient } from '../client';
+import type { DbClient } from '../client.js';
 import {
   domainNotes,
   domainTags,
@@ -23,7 +23,7 @@ import {
   type SavedFilter,
   type AuditEvent,
   type TemplateOverride,
-} from '../schema';
+} from '../schema.js';
 
 // =============================================================================
 // DOMAIN NOTES REPOSITORY
@@ -282,7 +282,7 @@ export class TemplateOverrideRepository {
 // MONITORED DOMAINS REPOSITORY (Bead 15)
 // =============================================================================
 
-import { monitoredDomains, alerts, type NewMonitoredDomain, type NewAlert, type MonitoredDomain, type Alert } from '../schema';
+import { monitoredDomains, alerts, type NewMonitoredDomain, type NewAlert, type MonitoredDomain, type Alert } from '../schema.js';
 
 export class MonitoredDomainRepository {
   constructor(private db: DbClient) {}

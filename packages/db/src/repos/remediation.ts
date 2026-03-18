@@ -10,7 +10,7 @@ import {
   remediationRequests,
   type RemediationRequest,
   type NewRemediationRequest,
-} from '../schema/remediation';
+} from '../schema/remediation.js';
 
 export class RemediationRepository {
   constructor(private db: NodePgDatabase) {}

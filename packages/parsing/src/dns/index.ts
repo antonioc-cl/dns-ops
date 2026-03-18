@@ -4,7 +4,7 @@
  * Parse and normalize DNS responses into structured formats.
  */
 
-import type { DNSRecord } from '../../db/src/schema';
+import type { DNSRecord } from '@dns-ops/db/schema';
 
 export interface ParsedAnswer {
   name: string;

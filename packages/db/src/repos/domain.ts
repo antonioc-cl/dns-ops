@@ -8,8 +8,8 @@
 import { eq, like, desc, and, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { domains, type Domain, type NewDomain } from '../schema';
-import * as schema from '../schema';
+import { domains, type Domain, type NewDomain } from '../schema.js';
+import * as schema from '../schema.js';
 
 type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
 

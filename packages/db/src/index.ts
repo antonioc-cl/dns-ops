@@ -4,6 +4,6 @@
  * Shared database client, schema, and repositories.
  */
 
-export * from './schema';
-export * from './client';
-export * from './repos';
+export * from './schema.js';
+export * from './client.js';
+export * from './repos.js';

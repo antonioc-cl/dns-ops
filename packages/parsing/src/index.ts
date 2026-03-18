@@ -5,9 +5,9 @@
  * and formatting in dig-style output.
  */
 
-export * from './dns/index';
-export * from './dns/recordset';
-export * from './dig/index';
-export * from './mail/index';
-export * from './idn/index';
-export * from './diff/index';
+export * from './dns/index.js';
+export * from './dns/recordset.js';
+export * from './dig/index.js';
+export * from './mail/index.js';
+export * from './idn/index.js';
+export * from './diff/index.js';

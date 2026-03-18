@@ -4,4 +4,4 @@
  * Format DNS observations in dig-like text format for familiar CLI presentation.
  */
 
-export * from './format';
+export * from './format.js';

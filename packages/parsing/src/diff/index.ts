@@ -6,4 +6,4 @@ export {
   type FindingChange,
   type ScopeChange,
   type RulesetChange,
-} from './snapshot-diff';
+} from './snapshot-diff.js';
