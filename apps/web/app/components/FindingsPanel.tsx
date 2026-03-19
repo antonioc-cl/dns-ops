@@ -4,8 +4,8 @@
  * Displays rule-based findings and suggestions on the Domain 360 Overview tab.
  */
 
-import { useState, useEffect } from 'react';
 import type { Finding, Suggestion } from '@dns-ops/db/schema';
+import { useEffect, useState } from 'react';
 
 interface FindingsPanelProps {
   snapshotId: string | null;
@@ -36,8 +36,8 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
         if (!res.ok) throw new Error('Failed to fetch findings');
         return res.json();
       })
-      .then((data) => {
-        setData(data as FindingsData);
+      .then((payload) => {
+        setData(payload as FindingsData);
         setLoading(false);
       })
       .catch((err) => {
@@ -56,9 +56,9 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
 
   if (loading) {
     return (
-      <div className="py-4 text-gray-500" role="status" aria-live="polite" aria-busy="true">
+      <output className="block py-4 text-gray-500" aria-live="polite" aria-busy="true">
         <div className="motion-safe:animate-pulse">Analyzing DNS data...</div>
-      </div>
+      </output>
     );
   }
 
@@ -76,7 +76,6 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
 
   return (
     <div className="space-y-4">
-      {/* Findings Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-gray-900">DNS Findings</h3>
@@ -89,7 +88,6 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
         )}
       </div>
 
-      {/* No Findings State */}
       {data.findings.length === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-green-800 text-sm">
@@ -98,7 +96,6 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
         </div>
       )}
 
-      {/* Findings by Severity */}
       {(['critical', 'high', 'medium', 'low', 'info'] as const).map((severity) => {
         const findings = findingsBySeverity[severity];
         if (!findings || findings.length === 0) return null;
@@ -112,9 +109,7 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
               <FindingCard
                 key={finding.id}
                 finding={finding}
-                suggestions={data.suggestions.filter(
-                  (s) => s.findingId === finding.id
-                )}
+                suggestions={data.suggestions.filter((s) => s.findingId === finding.id)}
               />
             ))}
           </div>
@@ -124,13 +119,7 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
   );
 }
 
-function FindingCard({
-  finding,
-  suggestions,
-}: {
-  finding: Finding;
-  suggestions: Suggestion[];
-}) {
+function FindingCard({ finding, suggestions }: { finding: Finding; suggestions: Suggestion[] }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -140,6 +129,7 @@ function FindingCard({
       }`}
     >
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
         aria-controls={`finding-details-${finding.id}`}
@@ -156,15 +146,11 @@ function FindingCard({
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-              {finding.description}
-            </p>
+            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{finding.description}</p>
             <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
               <span className="capitalize">{finding.confidence} confidence</span>
               <span className="capitalize">{finding.blastRadius.replace(/-/g, ' ')}</span>
-              {suggestions.length > 0 && (
-                <span>{suggestions.length} suggestion(s)</span>
-              )}
+              {suggestions.length > 0 && <span>{suggestions.length} suggestion(s)</span>}
             </div>
           </div>
           <svg
@@ -174,28 +160,27 @@ function FindingCard({
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
+            focusable="false"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
       </button>
 
       {expanded && (
-        <div id={`finding-details-${finding.id}`} className="px-4 pb-4 border-t border-gray-200/50 bg-white">
-          {/* Evidence Links */}
+        <div
+          id={`finding-details-${finding.id}`}
+          className="px-4 pb-4 border-t border-gray-200/50 bg-white"
+        >
           {finding.evidence && finding.evidence.length > 0 && (
             <div className="mt-3">
               <h6 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Evidence
               </h6>
               <ul className="space-y-1">
-                {finding.evidence.map((ev, idx) => (
-                  <li key={idx} className="text-sm text-gray-600">
+                {finding.evidence.map((ev) => (
+                  <li key={ev.description} className="text-sm text-gray-600">
                     • {ev.description}
                   </li>
                 ))}
@@ -203,7 +188,6 @@ function FindingCard({
             </div>
           )}
 
-          {/* Suggestions */}
           {suggestions.length > 0 && (
             <div className="mt-4 space-y-3">
               <h6 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -218,12 +202,8 @@ function FindingCard({
                       : 'bg-blue-50 border border-blue-200'
                   }`}
                 >
-                  <h6 className="font-medium text-gray-900">
-                    {suggestion.title}
-                  </h6>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {suggestion.description}
-                  </p>
+                  <h6 className="font-medium text-gray-900">{suggestion.title}</h6>
+                  <p className="text-sm text-gray-600 mt-1">{suggestion.description}</p>
                   <div className="mt-2 p-2 bg-white/50 rounded text-sm font-mono text-gray-700">
                     {suggestion.action}
                   </div>
@@ -232,7 +212,6 @@ function FindingCard({
             </div>
           )}
 
-          {/* Rule Info */}
           <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
             Rule: {finding.ruleId} · Version: {finding.ruleVersion}
           </div>
@@ -244,29 +223,22 @@ function FindingCard({
 
 function SeverityIcon({ severity }: { severity: string }) {
   const colors: Record<string, string> = {
-    critical: 'text-red-600',
-    high: 'text-orange-500',
-    medium: 'text-yellow-500',
-    low: 'text-blue-500',
-    info: 'text-gray-400',
+    critical: 'bg-red-600',
+    high: 'bg-orange-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-blue-500',
+    info: 'bg-gray-400',
   };
 
   return (
-    <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${colors[severity] || 'text-gray-400'}`}>
-      <svg viewBox="0 0 8 8" fill="currentColor">
-        <circle cx="4" cy="4" r="4" />
-      </svg>
-    </div>
+    <span
+      className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${colors[severity] || 'bg-gray-400'}`}
+      aria-hidden="true"
+    />
   );
 }
 
-function SeverityBadge({
-  count,
-  severity,
-}: {
-  count: number;
-  severity: string;
-}) {
+function SeverityBadge({ count, severity }: { count: number; severity: string }) {
   const styles: Record<string, string> = {
     total: 'bg-gray-100 text-gray-700',
     critical: 'bg-red-100 text-red-700',
@@ -288,10 +260,13 @@ function SeverityBadge({
 }
 
 function groupBySeverity(findings: Finding[]): Record<string, Finding[]> {
-  return findings.reduce((acc, finding) => {
-    const sev = finding.severity;
-    if (!acc[sev]) acc[sev] = [];
-    acc[sev].push(finding);
-    return acc;
-  }, {} as Record<string, Finding[]>);
+  return findings.reduce(
+    (acc, finding) => {
+      const sev = finding.severity;
+      if (!acc[sev]) acc[sev] = [];
+      acc[sev].push(finding);
+      return acc;
+    },
+    {} as Record<string, Finding[]>
+  );
 }

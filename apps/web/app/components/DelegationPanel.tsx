@@ -5,7 +5,7 @@
  * glue records, divergence detection, and DNSSEC status.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DelegationData {
   domain: string;
@@ -64,14 +64,18 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
 
   if (loading) {
     return (
-      <div className="py-8 text-center" role="status" aria-live="polite" aria-busy="true">
+      <output className="block py-8 text-center" aria-live="polite" aria-busy="true">
         <div className="motion-safe:animate-pulse text-gray-500">Loading delegation data...</div>
-      </div>
+      </output>
     );
   }
 
   if (error) {
-    return <div className="py-4 text-red-600" role="alert">Error: {error}</div>;
+    return (
+      <div className="py-4 text-red-600" role="alert">
+        Error: {error}
+      </div>
+    );
   }
 
   if (!delegation) {
@@ -87,18 +91,17 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
 
   return (
     <div className="space-y-6">
-      {/* Issues Banner */}
       {issues.length > 0 && (
         <div className="space-y-3">
-          {issues.map((issue, idx) => (
+          {issues.map((issue) => (
             <div
-              key={idx}
+              key={`${issue.type}-${issue.severity}-${issue.description}`}
               className={`p-4 rounded-lg border ${
                 issue.severity === 'critical'
                   ? 'bg-red-50 border-red-200'
                   : issue.severity === 'high'
-                  ? 'bg-orange-50 border-orange-200'
-                  : 'bg-yellow-50 border-yellow-200'
+                    ? 'bg-orange-50 border-orange-200'
+                    : 'bg-yellow-50 border-yellow-200'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -107,8 +110,8 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
                     issue.severity === 'critical'
                       ? 'bg-red-500'
                       : issue.severity === 'high'
-                      ? 'bg-orange-500'
-                      : 'bg-yellow-500'
+                        ? 'bg-orange-500'
+                        : 'bg-yellow-500'
                   }`}
                 />
                 <div>
@@ -123,7 +126,6 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
         </div>
       )}
 
-      {/* Parent Zone Info */}
       <section>
         <h4 className="font-medium text-gray-900 mb-3">Parent Zone Delegation</h4>
         <div className="bg-gray-50 rounded-lg p-4">
@@ -140,14 +142,13 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
         </div>
       </section>
 
-      {/* Name Servers */}
       <section>
         <h4 className="font-medium text-gray-900 mb-3">Name Servers</h4>
         <div className="space-y-2">
           {delegation.nameServers.length > 0 ? (
-            delegation.nameServers.map((ns, idx) => (
+            delegation.nameServers.map((ns) => (
               <div
-                key={idx}
+                key={`${ns.name}-${ns.source}`}
                 className="flex items-center justify-between p-3 bg-white border rounded-lg"
               >
                 <code className="font-mono text-sm">{ns.name}</code>
@@ -160,20 +161,20 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
         </div>
       </section>
 
-      {/* Glue Records */}
       <section>
         <h4 className="font-medium text-gray-900 mb-3">Glue Records</h4>
         {delegation.glue.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {delegation.glue.map((g, idx) => (
-              <div key={idx} className="p-3 bg-white border rounded-lg">
+            {delegation.glue.map((g) => (
+              <div
+                key={`${g.name}-${g.type}-${g.address}`}
+                className="p-3 bg-white border rounded-lg"
+              >
                 <div className="font-mono text-sm">{g.name}</div>
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={`text-xs px-2 py-0.5 rounded ${
-                      g.type === 'A'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-purple-100 text-purple-800'
+                      g.type === 'A' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
                     }`}
                   >
                     {g.type}
@@ -188,7 +189,6 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
         )}
       </section>
 
-      {/* Status Badges */}
       <section className="flex items-center gap-3 pt-4 border-t">
         <StatusBadge
           label="DNSSEC"
@@ -222,8 +222,7 @@ function StatusBadge({
 
   return (
     <div className={`px-3 py-1.5 rounded-lg text-sm ${colors[color]}`}>
-      <span className="font-medium">{label}:</span>{' '}
-      <span className="capitalize">{status}</span>
+      <span className="font-medium">{label}:</span> <span className="capitalize">{status}</span>
     </div>
   );
 }

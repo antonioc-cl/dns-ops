@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { MailCheckResult } from './types.js';
 
 interface MailCheckResultsProps {
@@ -9,7 +10,6 @@ export function MailCheckResults({ result }: MailCheckResultsProps) {
     <div className="space-y-4">
       <h3 className="font-semibold text-gray-900">Mail Check Results</h3>
 
-      {/* DMARC */}
       <RecordCard
         label="DMARC"
         present={result.dmarc.present}
@@ -18,26 +18,24 @@ export function MailCheckResults({ result }: MailCheckResultsProps) {
         description="Domain-based Message Authentication, Reporting, and Conformance"
       />
 
-      {/* DKIM */}
       <RecordCard
         label="DKIM"
         present={result.dkim.present}
         valid={result.dkim.valid}
         errors={result.dkim.errors}
         description="DomainKeys Identified Mail"
-        extra={result.dkim.present ? (
-          <span className="text-xs text-gray-500">
-            Selector: <code className="bg-gray-100 px-1 rounded">{result.dkim.selector}</code>
-            {result.dkim.selectorProvenance && (
-              <span className="ml-2 text-gray-400">
-                (via {result.dkim.selectorProvenance})
-              </span>
-            )}
-          </span>
-        ) : null}
+        extra={
+          result.dkim.present ? (
+            <span className="text-xs text-gray-500">
+              Selector: <code className="bg-gray-100 px-1 rounded">{result.dkim.selector}</code>
+              {result.dkim.selectorProvenance && (
+                <span className="ml-2 text-gray-400">(via {result.dkim.selectorProvenance})</span>
+              )}
+            </span>
+          ) : null
+        }
       />
 
-      {/* SPF */}
       <RecordCard
         label="SPF"
         present={result.spf.present}
@@ -55,13 +53,11 @@ interface RecordCardProps {
   valid: boolean;
   errors?: string[];
   description: string;
-  extra?: React.ReactNode;
+  extra?: ReactNode;
 }
 
 function RecordCard({ label, present, valid, errors, description, extra }: RecordCardProps) {
-  const status = present 
-    ? (valid ? 'success' : 'warning')
-    : 'error';
+  const status = present ? (valid ? 'success' : 'warning') : 'error';
 
   const statusConfig = {
     success: {
@@ -106,8 +102,8 @@ function RecordCard({ label, present, valid, errors, description, extra }: Recor
 
       {errors && errors.length > 0 && (
         <div className="mt-3 text-sm text-red-700">
-          {errors.map((error, i) => (
-            <p key={i}>• {error}</p>
+          {errors.map((error) => (
+            <p key={error}>• {error}</p>
           ))}
         </div>
       )}
@@ -117,7 +113,14 @@ function RecordCard({ label, present, valid, errors, description, extra }: Recor
 
 function CheckIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   );
@@ -125,15 +128,34 @@ function CheckIcon({ className }: { className?: string }) {
 
 function WarningIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+      />
     </svg>
   );
 }
 
 function XIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
   );

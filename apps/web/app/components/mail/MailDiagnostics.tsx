@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { MailCheckResult } from './types.js';
 import { MailCheckResults } from './MailCheckResults.js';
 import { RemediationForm } from './RemediationForm.js';
+import type { MailCheckResult } from './types.js';
 
 interface MailDiagnosticsProps {
   domain: string;
@@ -77,12 +77,16 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
         </p>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800" role="alert">
+          <div
+            className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800"
+            role="alert"
+          >
             {error}
           </div>
         )}
 
         <button
+          type="button"
           onClick={handleCheck}
           disabled={isChecking}
           aria-busy={isChecking}
@@ -102,9 +106,11 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h4 className="font-semibold text-yellow-900 mb-2">Issues Detected</h4>
           <p className="text-yellow-800 text-sm mb-3">
-            Some mail security records are missing or misconfigured. Request remediation to fix these issues.
+            Some mail security records are missing or misconfigured. Request remediation to fix
+            these issues.
           </p>
           <button
+            type="button"
             onClick={() => setShowRemediation(true)}
             className="focus-ring min-h-10 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
           >
@@ -125,6 +131,7 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
 
       <div className="flex gap-3">
         <button
+          type="button"
           onClick={handleCheck}
           disabled={isChecking}
           aria-busy={isChecking}

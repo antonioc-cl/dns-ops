@@ -7,15 +7,15 @@
  * - Dig: Familiar dig-style output
  */
 
-import { useState, type KeyboardEvent } from 'react';
 import type { Observation } from '@dns-ops/db/schema';
 import {
-  observationsToRecordSets,
-  groupRecordsByType,
   formatRecordValue,
   getRecordTypeDescription,
+  groupRecordsByType,
   observationsToDigFormat,
+  observationsToRecordSets,
 } from '@dns-ops/parsing';
+import { type KeyboardEvent, useId, useState } from 'react';
 
 interface DNSViewsProps {
   observations: Observation[];
@@ -31,17 +31,18 @@ const VIEW_MODES: { id: ViewMode; label: string; description: string }[] = [
 
 export function DNSViews({ observations }: DNSViewsProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('parsed');
+  const viewIdPrefix = useId();
+
+  const getTabId = (mode: ViewMode) => `${viewIdPrefix}-dns-view-tab-${mode}`;
+  const getPanelId = (mode: ViewMode) => `${viewIdPrefix}-dns-view-panel-${mode}`;
 
   const focusModeTab = (mode: ViewMode) => {
     requestAnimationFrame(() => {
-      document.getElementById(`dns-view-tab-${mode}`)?.focus();
+      document.getElementById(getTabId(mode))?.focus();
     });
   };
 
-  const handleModeKeyDown = (
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number
-  ) => {
+  const handleModeKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     if (event.key === 'ArrowRight') {
       event.preventDefault();
       const next = VIEW_MODES[(index + 1) % VIEW_MODES.length];
@@ -81,29 +82,31 @@ export function DNSViews({ observations }: DNSViewsProps) {
         current={viewMode}
         onChange={setViewMode}
         onKeyDown={handleModeKeyDown}
+        getTabId={getTabId}
+        getPanelId={getPanelId}
       />
 
       <div className="mt-4">
         <div
           role="tabpanel"
-          id="dns-view-panel-parsed"
-          aria-labelledby="dns-view-tab-parsed"
+          id={getPanelId('parsed')}
+          aria-labelledby={getTabId('parsed')}
           hidden={viewMode !== 'parsed'}
         >
           {viewMode === 'parsed' && <ParsedView observations={observations} />}
         </div>
         <div
           role="tabpanel"
-          id="dns-view-panel-raw"
-          aria-labelledby="dns-view-tab-raw"
+          id={getPanelId('raw')}
+          aria-labelledby={getTabId('raw')}
           hidden={viewMode !== 'raw'}
         >
           {viewMode === 'raw' && <RawView observations={observations} />}
         </div>
         <div
           role="tabpanel"
-          id="dns-view-panel-dig"
-          aria-labelledby="dns-view-tab-dig"
+          id={getPanelId('dig')}
+          aria-labelledby={getTabId('dig')}
           hidden={viewMode !== 'dig'}
         >
           {viewMode === 'dig' && <DigView observations={observations} />}
@@ -117,10 +120,14 @@ function ViewModeSelector({
   current,
   onChange,
   onKeyDown,
+  getTabId,
+  getPanelId,
 }: {
   current: ViewMode;
   onChange: (mode: ViewMode) => void;
   onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, index: number) => void;
+  getTabId: (mode: ViewMode) => string;
+  getPanelId: (mode: ViewMode) => string;
 }) {
   return (
     <div className="rounded-lg bg-gray-100 p-1" role="tablist" aria-label="DNS view mode">
@@ -128,10 +135,11 @@ function ViewModeSelector({
         {VIEW_MODES.map((mode, index) => (
           <button
             key={mode.id}
-            id={`dns-view-tab-${mode.id}`}
+            type="button"
+            id={getTabId(mode.id)}
             role="tab"
             aria-selected={current === mode.id}
-            aria-controls={`dns-view-panel-${mode.id}`}
+            aria-controls={getPanelId(mode.id)}
             tabIndex={current === mode.id ? 0 : -1}
             onClick={() => onChange(mode.id)}
             onKeyDown={(event) => onKeyDown(event, index)}
@@ -158,9 +166,7 @@ function ParsedView({ observations }: { observations: Observation[] }) {
 
   if (recordSets.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        No successful observations to display
-      </div>
+      <div className="text-center py-8 text-gray-500">No successful observations to display</div>
     );
   }
 
@@ -181,25 +187,59 @@ function ParsedView({ observations }: { observations: Observation[] }) {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">TTL</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sources</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                  >
+                    TTL
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Value
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Sources
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {records.map((record, idx) => (
                   <tr key={`${record.name}-${idx}`}>
                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">{record.ttl != null ? `${record.ttl}s` : '—'}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">
+                      {record.ttl != null ? `${record.ttl}s` : '—'}
+                    </td>
                     <td className="px-4 py-2 text-sm">
                       <div className="space-y-1">
-                        {record.values.map((value, vidx) => (
-                          <div key={vidx} className="font-mono text-gray-800">
-                            {formatRecordValue(record.type, value)}
-                          </div>
-                        ))}
+                        {record.values.map((value) => {
+                          const valueKey =
+                            typeof value === 'string' ? value : JSON.stringify(value);
+                          return (
+                            <div
+                              key={`${record.name}-${record.type}-${valueKey}`}
+                              className="font-mono text-gray-800"
+                            >
+                              {formatRecordValue(record.type, value)}
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
                     <td className="px-4 py-2 text-sm text-gray-600">
@@ -245,7 +285,9 @@ function RawView({ observations }: { observations: Observation[] }) {
             <div className="flex items-center justify-between">
               <span className="font-medium">
                 {obs.queryName} {obs.queryType}
-                <span className="ml-2 text-sm text-gray-500">from {obs.vantageIdentifier || obs.vantageType}</span>
+                <span className="ml-2 text-sm text-gray-500">
+                  from {obs.vantageIdentifier || obs.vantageType}
+                </span>
               </span>
               <StatusBadge status={obs.status} />
             </div>
@@ -340,7 +382,6 @@ function StatusBadge({ status }: { status: string }) {
 function DigView({ observations }: { observations: Observation[] }) {
   const [showAll, setShowAll] = useState(false);
 
-  // For many observations, show a summary first
   const displayObservations = showAll ? observations : observations.slice(0, 5);
   const hasMore = observations.length > 5;
 
@@ -354,6 +395,7 @@ function DigView({ observations }: { observations: Observation[] }) {
 
       {hasMore && !showAll && (
         <button
+          type="button"
           onClick={() => setShowAll(true)}
           className="focus-ring mt-2 text-sm text-blue-600 hover:text-blue-800"
         >

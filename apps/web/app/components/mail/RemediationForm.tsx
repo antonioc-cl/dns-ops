@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useId, useState } from 'react';
 import { ISSUE_LABELS, type IssueType } from './types.js';
 
 interface RemediationFormProps {
@@ -17,9 +18,23 @@ interface FormErrors {
   general?: string;
 }
 
-export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess }: RemediationFormProps) {
+export function RemediationForm({
+  domain,
+  snapshotId,
+  issues,
+  onClose,
+  onSuccess,
+}: RemediationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const idPrefix = useId();
+
+  const contactEmailId = `${idPrefix}-contact-email`;
+  const contactNameId = `${idPrefix}-contact-name`;
+  const contactPhoneId = `${idPrefix}-contact-phone`;
+  const priorityId = `${idPrefix}-priority`;
+  const notesId = `${idPrefix}-notes`;
+
   const [formData, setFormData] = useState({
     contactEmail: '',
     contactName: '',
@@ -35,7 +50,7 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
   };
 
   const validatePhone = (phone: string): boolean => {
-    if (!phone) return true; // Optional
+    if (!phone) return true;
     const phoneRegex = /^\+?[\d\s-]{8,20}$/;
     return phoneRegex.test(phone);
   };
@@ -104,10 +119,10 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
   };
 
   const toggleIssue = (issue: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       selectedIssues: prev.selectedIssues.includes(issue)
-        ? prev.selectedIssues.filter(i => i !== issue)
+        ? prev.selectedIssues.filter((i) => i !== issue)
         : [...prev.selectedIssues, issue],
     }));
   };
@@ -120,77 +135,75 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
       </p>
 
       {errors.general && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm" role="alert">
+        <div
+          className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm"
+          role="alert"
+        >
           {errors.general}
         </div>
       )}
 
-      {/* Contact Email */}
       <div>
-        <label htmlFor="remediation-contact-email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor={contactEmailId} className="block text-sm font-medium text-gray-700">
           Contact Email *
         </label>
         <input
-          id="remediation-contact-email"
+          id={contactEmailId}
           type="email"
           value={formData.contactEmail}
-          onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, contactEmail: e.target.value }))}
           className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="admin@example.com"
           autoComplete="email"
         />
-        {errors.contactEmail && (
-          <p className="mt-1 text-sm text-red-600">{errors.contactEmail}</p>
-        )}
+        {errors.contactEmail && <p className="mt-1 text-sm text-red-600">{errors.contactEmail}</p>}
       </div>
 
-      {/* Contact Name */}
       <div>
-        <label htmlFor="remediation-contact-name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor={contactNameId} className="block text-sm font-medium text-gray-700">
           Contact Name *
         </label>
         <input
-          id="remediation-contact-name"
+          id={contactNameId}
           type="text"
           value={formData.contactName}
-          onChange={(e) => setFormData(prev => ({ ...prev, contactName: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, contactName: e.target.value }))}
           className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="John Doe"
           autoComplete="name"
         />
-        {errors.contactName && (
-          <p className="mt-1 text-sm text-red-600">{errors.contactName}</p>
-        )}
+        {errors.contactName && <p className="mt-1 text-sm text-red-600">{errors.contactName}</p>}
       </div>
 
-      {/* Phone */}
       <div>
-        <label htmlFor="remediation-contact-phone" className="block text-sm font-medium text-gray-700">
+        <label htmlFor={contactPhoneId} className="block text-sm font-medium text-gray-700">
           Phone (optional)
         </label>
         <input
-          id="remediation-contact-phone"
+          id={contactPhoneId}
           type="tel"
           value={formData.contactPhone}
-          onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, contactPhone: e.target.value }))}
           className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="+1 555-123-4567"
           autoComplete="tel"
         />
-        {errors.contactPhone && (
-          <p className="mt-1 text-sm text-red-600">{errors.contactPhone}</p>
-        )}
+        {errors.contactPhone && <p className="mt-1 text-sm text-red-600">{errors.contactPhone}</p>}
       </div>
 
-      {/* Priority */}
       <div>
-        <label htmlFor="remediation-priority" className="block text-sm font-medium text-gray-700">
+        <label htmlFor={priorityId} className="block text-sm font-medium text-gray-700">
           Priority
         </label>
         <select
-          id="remediation-priority"
+          id={priorityId}
           value={formData.priority}
-          onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as typeof formData.priority }))}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              priority: e.target.value as typeof formData.priority,
+            }))
+          }
           className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
         >
           <option value="low">Low</option>
@@ -200,14 +213,11 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
         </select>
       </div>
 
-      {/* Issues */}
       <fieldset>
-        <legend className="block text-sm font-medium text-gray-700">
-          Issues to Fix *
-        </legend>
+        <legend className="block text-sm font-medium text-gray-700">Issues to Fix *</legend>
         <div className="mt-2 space-y-2">
           {issues.map((issue) => {
-            const checkboxId = `remediation-issue-${issue}`
+            const checkboxId = `${idPrefix}-issue-${issue}`;
             return (
               <label key={issue} htmlFor={checkboxId} className="flex items-center">
                 <input
@@ -221,30 +231,26 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
                   {ISSUE_LABELS[issue as IssueType] || issue}
                 </span>
               </label>
-            )
+            );
           })}
         </div>
-        {errors.issues && (
-          <p className="mt-1 text-sm text-red-600">{errors.issues}</p>
-        )}
+        {errors.issues && <p className="mt-1 text-sm text-red-600">{errors.issues}</p>}
       </fieldset>
 
-      {/* Notes */}
       <div>
-        <label htmlFor="remediation-notes" className="block text-sm font-medium text-gray-700">
+        <label htmlFor={notesId} className="block text-sm font-medium text-gray-700">
           Additional Notes
         </label>
         <textarea
-          id="remediation-notes"
+          id={notesId}
           value={formData.notes}
-          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+          onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
           rows={3}
           className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="Any additional context..."
         />
       </div>
 
-      {/* Actions */}
       <div className="flex flex-wrap gap-3 pt-4">
         <button
           type="submit"

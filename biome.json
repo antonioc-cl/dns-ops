@@ -1,14 +1,36 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
-  "organizeImports": {
-    "enabled": true
+  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "files": {
+    "includes": ["**", "!apps/web/app/routeTree.gen.ts"]
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "useButtonType": "error",
+        "noSvgWithoutTitle": "error",
+        "useSemanticElements": "error",
+        "noLabelWithoutControl": "error",
+        "noStaticElementInteractions": "error",
+        "noNoninteractiveElementToInteractiveRole": "error"
+      },
+      "correctness": {
+        "useUniqueElementIds": "error",
+        "useExhaustiveDependencies": "error"
+      },
       "suspicious": {
-        "noExplicitAny": "warn"
+        "noExplicitAny": "error",
+        "noArrayIndexKey": "error",
+        "noUnknownAtRules": "off",
+        "noControlCharactersInRegex": "error"
       }
     }
   },
@@ -21,7 +43,7 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
-      "trailingComma": "es5"
+      "trailingCommas": "es5"
     }
   }
 }
