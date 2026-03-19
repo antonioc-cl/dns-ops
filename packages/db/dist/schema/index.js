@@ -177,7 +177,7 @@ export const observations = pgTable('observations', {
     responseTimeMs: integer('response_time_ms'),
     // DNS response details
     responseCode: integer('response_code'),
-    flags: jsonb('flags'), // AA, TC, RD, RA, etc.
+    flags: jsonb('flags').$type(), // AA, TC, RD, RA, etc.
     // Raw sections (stored as JSON for flexibility)
     answerSection: jsonb('answer_section').$type(),
     authoritySection: jsonb('authority_section').$type(),

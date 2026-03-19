@@ -9,7 +9,7 @@
  * - Ruleset version
  */
 
-import type { Observation, RecordSet, Finding } from '@dns-ops/db/schema';
+import type { RecordSet, Finding } from '@dns-ops/db/schema';
 
 export interface SnapshotDiffResult {
   snapshotA: {

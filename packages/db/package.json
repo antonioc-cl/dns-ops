@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Shared database client and schema for DNS Ops Workbench",
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",

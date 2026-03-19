@@ -5,8 +5,8 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
-import { SnapshotRepository, ObservationRepository } from '@dns-ops/db/repos';
+import type { Env } from '../types.js';
+import { SnapshotRepository, ObservationRepository } from '@dns-ops/db';
 
 export const delegationRoutes = new Hono<Env>();
 

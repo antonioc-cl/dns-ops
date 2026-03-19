@@ -4,8 +4,6 @@
  * Handle punycode encoding/decoding for international domain names.
  */
 
-/// <reference types="node" />
-
 // Simple punycode implementation for DNS Ops
 // In production, consider using the 'punycode' package
 
@@ -31,8 +29,8 @@ export function toPunycode(unicode: string): string {
 
   // For production, use: return punycode.toASCII(unicode);
   // This is a placeholder that marks non-ASCII domains
-  console.warn('Punycode conversion not fully implemented, using placeholder');
-  return PREFIX + 'placeholder-' + Buffer.from(unicode).toString('base64').toLowerCase();
+  // FIXME: Replace with proper punycode library
+  return PREFIX + 'placeholder-' + btoa(encodeURIComponent(unicode)).toLowerCase();
 }
 
 /**
@@ -47,7 +45,6 @@ export function toUnicode(punycode: string): string {
 
   // For production, use: return punycode.toUnicode(punycode);
   // This is a placeholder
-  console.warn('Punycode conversion not fully implemented, using placeholder');
   return punycode.slice(PREFIX.length);
 }
 

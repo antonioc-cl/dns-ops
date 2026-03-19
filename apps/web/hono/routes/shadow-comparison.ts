@@ -6,9 +6,9 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
+import type { Env } from '../types.js';
 import { shadowComparator, shadowStore, type LegacyToolOutput } from '@dns-ops/rules';
-import { FindingRepository, SnapshotRepository } from '@dns-ops/db/repos';
+import { FindingRepository, SnapshotRepository } from '@dns-ops/db';
 
 export const shadowComparisonRoutes = new Hono<Env>();
 

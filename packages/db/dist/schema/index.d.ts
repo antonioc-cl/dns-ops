@@ -699,7 +699,7 @@ export declare const observations: import("drizzle-orm/pg-core").PgTableWithColu
             tableName: "observations";
             dataType: "json";
             columnType: "PgJsonb";
-            data: unknown;
+            data: Record<string, boolean>;
             driverParam: unknown;
             notNull: false;
             hasDefault: false;

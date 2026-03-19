@@ -123,3 +123,23 @@
 {"ts":"2026-03-19T12:49:06.414Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/index.ts"}
 {"ts":"2026-03-19T12:51:43.643Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/idn/index.ts"}
 {"ts":"2026-03-19T12:51:52.867Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/tsconfig.json"}
+{"ts":"2026-03-19T12:52:49.068Z","type":"commit","agent":"OakDragon","preview":"Complete database adapter pattern migration - Create SimpleDatabaseAdapter with type-safe operations - Migrate all repositories to use IDatabaseAdapter: * DomainRepository * SnapshotRepository * ObservationRepository * RecordSetRepository * RemediationRepository * Portfolio repositories (DomainNote, DomainTag, SavedFilter, AuditEvent, TemplateOverride, MonitoredDomain, Alert) - Remove problematic union type usage - Add factory functions for creating adapters - Fix import paths throughout Build status: ✅ contracts - builds successfully ✅ db - builds successfully ⏸️ parsing - needs @types/node resolution ⏸️ testkit - needs .js extension fixes ⏸️ rules - waiting on dependencies ⏸️ web - waiting on dependencies ⏸️ collector - waiting on dependencies"}
+{"ts":"2026-03-19T12:55:17.615Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/.pi/self-learning-memory/artifacts/92cb9d37-5968-42bb-a492-f451d44ef059/MIGRATION_COMPLETE_REPORT.md"}
+{"ts":"2026-03-19T12:55:53.129Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/STATUS_REPORT.md"}
+{"ts":"2026-03-19T14:13:06.057Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit/src/index.ts"}
+{"ts":"2026-03-19T14:13:06.058Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit/src/benchmark-corpus/index.ts"}
+{"ts":"2026-03-19T14:13:17.822Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit/src/benchmark-corpus/index.ts"}
+{"ts":"2026-03-19T14:13:56.818Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/diff/snapshot-diff.ts"}
+{"ts":"2026-03-19T14:13:56.838Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dig/format.ts"}
+{"ts":"2026-03-19T14:13:56.838Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dns/index.ts"}
+{"ts":"2026-03-19T14:13:56.849Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dns/recordset.ts"}
+{"ts":"2026-03-19T14:15:06.824Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/diff/snapshot-diff.ts"}
+{"ts":"2026-03-19T14:15:06.825Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dig/format.ts"}
+{"ts":"2026-03-19T14:15:06.825Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dns/index.ts"}
+{"ts":"2026-03-19T14:15:06.825Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/dns/recordset.ts"}
+{"ts":"2026-03-19T14:15:44.562Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/package.json"}
+{"ts":"2026-03-19T14:16:08.135Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/tsconfig.json"}
+{"ts":"2026-03-19T14:16:37.455Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/tsconfig.json"}
+{"ts":"2026-03-19T14:17:00.289Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/idn/index.ts"}
+{"ts":"2026-03-19T14:19:21.961Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing/src/diff/snapshot-diff.ts"}
+{"ts":"2026-03-19T14:19:56.556Z","type":"edit","agent":"OakDragon","target":"/Users/antonio/Documents/PROYECTOS/dns-ops/packages/db/src/schema/index.ts"}

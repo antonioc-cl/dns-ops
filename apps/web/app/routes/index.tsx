@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { DomainInput } from '../components/DomainInput.js'
 
-export const Route = createFileRoute('/' as any)({
+export const Route = createFileRoute('/')({
   component: HomeComponent,
 })
 

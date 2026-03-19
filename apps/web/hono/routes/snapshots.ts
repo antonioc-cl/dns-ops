@@ -8,8 +8,8 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
-import { SnapshotRepository, DomainRepository, FindingRepository } from '@dns-ops/db/repos';
+import type { Env } from '../types.js';
+import { SnapshotRepository, DomainRepository, FindingRepository } from '@dns-ops/db';
 import { compareSnapshots } from '@dns-ops/parsing/diff';
 
 export const snapshotRoutes = new Hono<Env>();

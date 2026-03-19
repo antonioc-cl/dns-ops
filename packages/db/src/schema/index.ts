@@ -247,7 +247,7 @@ export const observations = pgTable(
     
     // DNS response details
     responseCode: integer('response_code'),
-    flags: jsonb('flags'), // AA, TC, RD, RA, etc.
+    flags: jsonb('flags').$type<Record<string, boolean>>(), // AA, TC, RD, RA, etc.
     
     // Raw sections (stored as JSON for flexibility)
     answerSection: jsonb('answer_section').$type<DNSRecord[]>(),

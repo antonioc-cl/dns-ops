@@ -11,7 +11,7 @@
  * - intentionally-misconfigured: Test zones with deliberate issues
  * - edge-cases: IDN, wildcards, NXDOMAIN, NODATA, stale IPs
  */
-import type { ZoneManagement, ResultState } from '../../../contracts/src/enums';
+import type { ZoneManagement, ResultState } from '@dns-ops/contracts';
 export interface BenchmarkCase {
     /** Unique identifier for the test case */
     id: string;

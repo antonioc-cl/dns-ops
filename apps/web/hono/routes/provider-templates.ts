@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
+import type { Env } from '../types.js';
 import {
   templateStorage,
   compareToTemplate,
@@ -14,7 +14,7 @@ import {
   type KnownProvider,
   PROVIDER_TEMPLATES,
 } from '@dns-ops/rules';
-import { RecordSetRepository, SnapshotRepository } from '@dns-ops/db/repos';
+import { RecordSetRepository, SnapshotRepository } from '@dns-ops/db';
 
 export const providerTemplateRoutes = new Hono<Env>();
 

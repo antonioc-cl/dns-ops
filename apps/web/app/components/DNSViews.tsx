@@ -38,16 +38,6 @@ interface DNSViewsProps {
   observations: UIObservation[];
 }
 
-interface ParsedRecordSet {
-  name: string;
-  type: string;
-  ttl?: number;
-  values: string[];
-  sourceVantages: string[];
-  isConsistent: boolean;
-  consolidationNotes?: string;
-}
-
 type ViewMode = 'parsed' | 'raw' | 'dig';
 
 const VIEW_MODES: { id: ViewMode; label: string; description: string }[] = [
@@ -180,8 +170,8 @@ function ViewModeSelector({
 // ==================== PARSED VIEW ====================
 
 function ParsedView({ observations }: { observations: UIObservation[] }) {
-  const recordSets = observationsToRecordSets(observations) as ParsedRecordSet[];
-  const grouped = groupRecordsByType(recordSets) as Map<string, ParsedRecordSet[]>;
+  const recordSets = observationsToRecordSets(observations);
+  const grouped = groupRecordsByType(recordSets);
 
   if (recordSets.length === 0) {
     return (
@@ -193,7 +183,7 @@ function ParsedView({ observations }: { observations: UIObservation[] }) {
 
   return (
     <div className="space-y-6">
-      {Array.from(grouped.entries()).map(([type, records]: [string, ParsedRecordSet[]]) => (
+      {Array.from(grouped.entries()).map(([type, records]) => (
         <section key={type} className="border rounded-lg overflow-hidden">
           <div className="bg-gray-50 px-4 py-2 border-b">
             <h4 className="font-semibold text-gray-900">

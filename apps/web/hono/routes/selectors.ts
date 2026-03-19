@@ -5,8 +5,8 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
-import { ObservationRepository, SnapshotRepository } from '@dns-ops/db/repos';
+import type { Env } from '../types.js';
+import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 
 export const selectorRoutes = new Hono<Env>();
 

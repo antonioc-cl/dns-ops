@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
+import type { Env } from '../types.js';
 import { RulesEngine, Ruleset, RuleContext } from '@dns-ops/rules';
 import {
   authoritativeFailureRule,
@@ -26,7 +26,7 @@ import {
   bimiRule,
   mailRules,
 } from '@dns-ops/rules';
-import { ObservationRepository, RecordSetRepository, SnapshotRepository, DomainRepository } from '@dns-ops/db/repos';
+import { ObservationRepository, RecordSetRepository, SnapshotRepository, DomainRepository } from '@dns-ops/db';
 
 export const findingsRoutes = new Hono<Env>();
 

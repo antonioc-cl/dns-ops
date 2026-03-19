@@ -3,4 +3,4 @@
 // This package contains test fixtures, benchmark corpus, golden tests,
 // and test helpers for the entire monorepo.
 
-export * from './benchmark-corpus/index';
+export * from './benchmark-corpus/index.js';

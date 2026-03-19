@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
+import type { Env } from '../types.js';
 import {
   DomainRepository,
   DomainNoteRepository,
@@ -14,7 +14,7 @@ import {
   SavedFilterRepository,
   AuditEventRepository,
   TemplateOverrideRepository,
-} from '@dns-ops/db/repos';
+} from '@dns-ops/db';
 import { like, and, eq, or, inArray, desc } from 'drizzle-orm';
 import { domains, findings, snapshots } from '@dns-ops/db/schema';
 

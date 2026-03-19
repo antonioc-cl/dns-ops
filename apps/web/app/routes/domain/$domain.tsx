@@ -9,7 +9,7 @@ import { DelegationPanel } from '../../components/DelegationPanel.js'
 import { MailDiagnostics } from '../../components/mail/index.js'
 import type { Observation, Snapshot } from '@dns-ops/db/schema'
 
-export const Route = createFileRoute('/domain/$domain' as any)({
+export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
   loader: async ({ params }: any) => {
     // Fetch latest snapshot

@@ -1,14 +1,14 @@
 import { Hono } from 'hono'
-import type { Env } from '../types'
-import { findingsRoutes } from './findings'
-import { legacyToolsRoutes } from './legacy-tools'
-import { selectorRoutes } from './selectors'
-import { delegationRoutes } from './delegation'
-import { mailRoutes } from './mail'
-import { shadowComparisonRoutes } from './shadow-comparison'
-import { providerTemplateRoutes } from './provider-templates'
-import { snapshotRoutes } from './snapshots'
-import { portfolioRoutes } from './portfolio'
+import type { Env } from '../types.js'
+import { findingsRoutes } from './findings.js'
+import { legacyToolsRoutes } from './legacy-tools.js'
+import { selectorRoutes } from './selectors.js'
+import { delegationRoutes } from './delegation.js'
+import { mailRoutes } from './mail.js'
+import { shadowComparisonRoutes } from './shadow-comparison.js'
+import { providerTemplateRoutes } from './provider-templates.js'
+import { snapshotRoutes } from './snapshots.js'
+import { portfolioRoutes } from './portfolio.js'
 
 export const apiRoutes = new Hono<Env>()
 
@@ -42,7 +42,7 @@ apiRoutes.route('/portfolio', portfolioRoutes)
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
   const domain = c.req.param('domain')
-  const db = c.get('db')
+  const db = c.get('db').getDrizzle()
 
   try {
     const domainRecord = await db.query.domains.findFirst({
@@ -72,7 +72,7 @@ apiRoutes.get('/domain/:domain/latest', async (c) => {
 // Get observations for a snapshot
 apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
   const snapshotId = c.req.param('snapshotId')
-  const db = c.get('db')
+  const db = c.get('db').getDrizzle()
 
   try {
     const observations = await db.query.observations.findMany({
@@ -90,7 +90,7 @@ apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
 // Get record sets for a snapshot
 apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
   const snapshotId = c.req.param('snapshotId')
-  const db = c.get('db')
+  const db = c.get('db').getDrizzle()
 
   try {
     const recordSets = await db.query.recordSets.findMany({
