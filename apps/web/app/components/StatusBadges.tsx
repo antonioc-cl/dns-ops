@@ -1,4 +1,4 @@
-import type { ZoneManagement, ResultState, Severity, Confidence } from '@dns-ops/contracts';
+import type { Confidence, ResultState, Severity, ZoneManagement } from '@dns-ops/contracts';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -17,7 +17,9 @@ function Badge({ children, color }: BadgeProps) {
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[color]}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[color]}`}
+    >
       {children}
     </span>
   );
@@ -36,11 +38,7 @@ export function ZoneManagementBadge({ type }: ZoneManagementBadgeProps) {
 
   const { color, label } = config[type];
 
-  return (
-    <Badge color={color}>
-      {label}
-    </Badge>
-  );
+  return <Badge color={color}>{label}</Badge>;
 }
 
 interface ResultStateBadgeProps {
@@ -56,11 +54,7 @@ export function ResultStateBadge({ state }: ResultStateBadgeProps) {
 
   const { color, label } = config[state];
 
-  return (
-    <Badge color={color}>
-      {label}
-    </Badge>
-  );
+  return <Badge color={color}>{label}</Badge>;
 }
 
 interface SeverityBadgeProps {
@@ -76,11 +70,7 @@ export function SeverityBadge({ severity }: SeverityBadgeProps) {
     info: { color: 'gray' as const },
   };
 
-  return (
-    <Badge color={config[severity].color}>
-      {severity}
-    </Badge>
-  );
+  return <Badge color={config[severity].color}>{severity}</Badge>;
 }
 
 interface ConfidenceBadgeProps {
@@ -96,10 +86,5 @@ export function ConfidenceBadge({ level }: ConfidenceBadgeProps) {
     heuristic: { color: 'purple' as const },
   };
 
-  return (
-    <Badge color={config[level].color}>
-      {level}
-    </Badge>
-  );
+  return <Badge color={config[level].color}>{level}</Badge>;
 }
-

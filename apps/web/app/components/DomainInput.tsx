@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { normalizeDomain } from '../lib/domain.js';
 
 interface DomainInputProps {
@@ -55,13 +55,13 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
             Analyze
           </button>
         </div>
-        
+
         {normalizedDomain && normalizedDomain !== input.trim().toLowerCase() && (
           <p className="text-sm text-gray-600">
             Will query: <code className="px-1 py-0.5 bg-gray-100 rounded">{normalizedDomain}</code>
           </p>
         )}
-        
+
         {error && (
           <p className="text-sm text-red-600" role="alert">
             {error}
