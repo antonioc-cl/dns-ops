@@ -4,9 +4,9 @@
  * Endpoints for retrieving discovered DKIM selectors with provenance.
  */
 
+import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
-import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 
 export const selectorRoutes = new Hono<Env>();
 
@@ -33,9 +33,7 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
 
     // Filter for DKIM observations (selector._domainkey.domain)
     const dkimObservations = observations.filter(
-      (obs) =>
-        obs.queryType === 'TXT' &&
-        obs.queryName.includes('_domainkey')
+      (obs) => obs.queryType === 'TXT' && obs.queryName.includes('_domainkey')
     );
 
     // Parse selectors from query names
@@ -83,13 +81,15 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
       count: selectors.length,
       found: selectors.filter((s) => s.found).length,
     });
-
   } catch (error) {
     console.error('Error fetching selectors:', error);
-    return c.json({
-      error: 'Failed to fetch selectors',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch selectors',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -110,21 +110,20 @@ selectorRoutes.get('/domain/:domain/selectors/suggest', async (c) => {
     const snapshot = (await obsResponse.json()) as { id: string };
 
     // Get observations
-    const observations = (await fetch(
-      `/api/snapshot/${snapshot.id}/observations`
-    ).then((r) => r.json())) as Array<{
+    const observations = (await fetch(`/api/snapshot/${snapshot.id}/observations`).then((r) =>
+      r.json()
+    )) as Array<{
       queryType: string;
       answerSection?: Array<{ data: string }>;
     }>;
 
     // Simple provider detection from MX
-    const mxObs = observations.find((o: { queryType: string }) => o.queryType === 'MX');
+    const mxObs = observations.find((o) => o.queryType === 'MX');
     let provider: string | null = null;
     let suggestedSelectors: string[] = [];
 
-    if (mxObs?.answerSection?.length > 0) {
-      const mxData = mxObs.answerSection[0].data.toLowerCase();
-
+    const mxData = mxObs?.answerSection?.[0]?.data?.toLowerCase();
+    if (mxData) {
       if (mxData.includes('google')) {
         provider = 'google-workspace';
         suggestedSelectors = ['google', '20210112'];
@@ -142,11 +141,13 @@ selectorRoutes.get('/domain/:domain/selectors/suggest', async (c) => {
         ? `Detected ${provider} - suggested selectors based on provider templates`
         : 'No provider detected - try common selectors',
     });
-
   } catch (error) {
-    return c.json({
-      error: 'Failed to suggest selectors',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to suggest selectors',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });

@@ -5,10 +5,12 @@
  * Enables safe cutover by comparing new rules against legacy outputs.
  */
 
+import { SnapshotRepository } from '@dns-ops/db';
+import { findings as findingsTable } from '@dns-ops/db/schema';
+import { type LegacyToolOutput, shadowComparator, shadowStore } from '@dns-ops/rules';
+import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
-import { shadowComparator, shadowStore, type LegacyToolOutput } from '@dns-ops/rules';
-import { FindingRepository, SnapshotRepository } from '@dns-ops/db';
 
 export const shadowComparisonRoutes = new Hono<Env>();
 
@@ -22,15 +24,17 @@ shadowComparisonRoutes.post('/compare', async (c) => {
   const { snapshotId, legacyOutput } = body;
 
   if (!snapshotId || !legacyOutput) {
-    return c.json({
-      error: 'Missing required fields',
-      required: ['snapshotId', 'legacyOutput'],
-    }, 400);
+    return c.json(
+      {
+        error: 'Missing required fields',
+        required: ['snapshotId', 'legacyOutput'],
+      },
+      400
+    );
   }
 
   try {
     // Fetch findings for this snapshot
-    const findingRepo = new FindingRepository(db);
     const snapshotRepo = new SnapshotRepository(db);
 
     const snapshot = await snapshotRepo.findById(snapshotId);
@@ -38,15 +42,18 @@ shadowComparisonRoutes.post('/compare', async (c) => {
       return c.json({ error: 'Snapshot not found' }, 404);
     }
 
-    const findings = await findingRepo.findBySnapshotId(snapshotId);
+    const findings = await db.selectWhere(findingsTable, eq(findingsTable.snapshotId, snapshotId));
 
     // Validate legacy output format
     const validatedLegacy = validateLegacyOutput(legacyOutput);
-    if (!validatedLegacy.valid) {
-      return c.json({
-        error: 'Invalid legacy output format',
-        details: validatedLegacy.errors,
-      }, 400);
+    if (!validatedLegacy.valid || !validatedLegacy.data) {
+      return c.json(
+        {
+          error: 'Invalid legacy output format',
+          details: validatedLegacy.errors,
+        },
+        400
+      );
     }
 
     // Perform comparison
@@ -66,13 +73,15 @@ shadowComparisonRoutes.post('/compare', async (c) => {
       status: result.status,
       metrics: result.metrics,
     });
-
   } catch (error) {
     console.error('Shadow comparison error:', error);
-    return c.json({
-      error: 'Failed to perform shadow comparison',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to perform shadow comparison',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -87,11 +96,11 @@ shadowComparisonRoutes.get('/stats', async (c) => {
 
     return c.json({
       stats,
-      pendingAdjudication: mismatches.filter(m => !m.adjudication).length,
+      pendingAdjudication: mismatches.filter((m) => !m.adjudication).length,
       recentMismatches: mismatches
-        .filter(m => !m.adjudication)
+        .filter((m) => !m.adjudication)
         .slice(0, 10)
-        .map(m => ({
+        .map((m) => ({
           id: m.id,
           domain: m.domain,
           status: m.status,
@@ -99,13 +108,15 @@ shadowComparisonRoutes.get('/stats', async (c) => {
           comparedAt: m.comparedAt,
         })),
     });
-
   } catch (error) {
     console.error('Shadow stats error:', error);
-    return c.json({
-      error: 'Failed to get shadow comparison statistics',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to get shadow comparison statistics',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -123,13 +134,15 @@ shadowComparisonRoutes.get('/:id', async (c) => {
     }
 
     return c.json({ comparison });
-
   } catch (error) {
     console.error('Shadow comparison get error:', error);
-    return c.json({
-      error: 'Failed to get shadow comparison',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to get shadow comparison',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -142,12 +155,20 @@ shadowComparisonRoutes.post('/:id/adjudicate', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const { adjudication, notes, operator } = body;
 
-  const validAdjudications = ['new-correct', 'legacy-correct', 'both-wrong', 'acceptable-difference'];
+  const validAdjudications = [
+    'new-correct',
+    'legacy-correct',
+    'both-wrong',
+    'acceptable-difference',
+  ];
   if (!adjudication || !validAdjudications.includes(adjudication)) {
-    return c.json({
-      error: 'Invalid adjudication',
-      validOptions: validAdjudications,
-    }, 400);
+    return c.json(
+      {
+        error: 'Invalid adjudication',
+        validOptions: validAdjudications,
+      },
+      400
+    );
   }
 
   try {
@@ -166,13 +187,15 @@ shadowComparisonRoutes.post('/:id/adjudicate', async (c) => {
       message: 'Adjudication recorded',
       comparison: updated,
     });
-
   } catch (error) {
     console.error('Shadow adjudication error:', error);
-    return c.json({
-      error: 'Failed to adjudicate shadow comparison',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to adjudicate shadow comparison',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -188,7 +211,7 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
     return c.json({
       domain,
       count: comparisons.length,
-      comparisons: comparisons.map(c => ({
+      comparisons: comparisons.map((c) => ({
         id: c.id,
         status: c.status,
         summary: c.summary,
@@ -196,13 +219,15 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
         adjudication: c.adjudication,
       })),
     });
-
   } catch (error) {
     console.error('Shadow domain lookup error:', error);
-    return c.json({
-      error: 'Failed to get domain comparisons',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to get domain comparisons',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -210,7 +235,11 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
 // Helper Functions
 // =============================================================================
 
-function validateLegacyOutput(output: unknown): { valid: boolean; data?: LegacyToolOutput; errors?: string[] } {
+function validateLegacyOutput(output: unknown): {
+  valid: boolean;
+  data?: LegacyToolOutput;
+  errors?: string[];
+} {
   const errors: string[] = [];
 
   if (!output || typeof output !== 'object') {

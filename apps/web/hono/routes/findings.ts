@@ -5,28 +5,33 @@
  * Includes DNS rules and Mail rules (Bead 09).
  */
 
-import { Hono } from 'hono';
-import type { Env } from '../types.js';
-import { RulesEngine, Ruleset, RuleContext } from '@dns-ops/rules';
+import {
+  DomainRepository,
+  ObservationRepository,
+  RecordSetRepository,
+  SnapshotRepository,
+} from '@dns-ops/db';
+// Import mail rules from Bead 09
 import {
   authoritativeFailureRule,
   authoritativeMismatchRule,
-  recursiveAuthoritativeMismatchRule,
+  bimiRule,
   cnameCoexistenceRule,
+  dkimRule,
+  dmarcRule,
+  mailRules,
+  mtaStsRule,
+  mxPresenceRule,
+  type RuleContext,
+  RulesEngine,
+  type Ruleset,
+  recursiveAuthoritativeMismatchRule,
+  spfRule,
+  tlsRptRule,
   unmanagedZonePartialCoverageRule,
 } from '@dns-ops/rules';
-// Import mail rules from Bead 09
-import {
-  mxPresenceRule,
-  spfRule,
-  dmarcRule,
-  dkimRule,
-  mtaStsRule,
-  tlsRptRule,
-  bimiRule,
-  mailRules,
-} from '@dns-ops/rules';
-import { ObservationRepository, RecordSetRepository, SnapshotRepository, DomainRepository } from '@dns-ops/db';
+import { Hono } from 'hono';
+import type { Env } from '../types.js';
 
 export const findingsRoutes = new Hono<Env>();
 
@@ -102,8 +107,8 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
     const { findings, suggestions } = engine.evaluate(context);
 
     // Categorize findings
-    const dnsFindings = findings.filter(f => f.type.startsWith('dns.'));
-    const mailFindings = findings.filter(f => f.type.startsWith('mail.'));
+    const dnsFindings = findings.filter((f) => f.type.startsWith('dns.'));
+    const mailFindings = findings.filter((f) => f.type.startsWith('mail.'));
 
     return c.json({
       snapshotId,
@@ -123,13 +128,15 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
         mail: mailFindings,
       },
     });
-
   } catch (error) {
     console.error('Error evaluating findings:', error);
-    return c.json({
-      error: 'Failed to evaluate findings',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to evaluate findings',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -204,13 +211,15 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
       findings,
       suggestions,
     });
-
   } catch (error) {
     console.error('Error evaluating mail findings:', error);
-    return c.json({
-      error: 'Failed to evaluate mail findings',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to evaluate mail findings',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -227,7 +236,8 @@ findingsRoutes.post('/snapshot/:snapshotId/evaluate', async (c) => {
   // Full ruleset versioning will be implemented in a future bead
 
   const availableRuleTypes = ['dns', 'mail'];
-  const selectedTypes = ruleTypes?.filter((t: string) => availableRuleTypes.includes(t)) || availableRuleTypes;
+  const selectedTypes =
+    ruleTypes?.filter((t: string) => availableRuleTypes.includes(t)) || availableRuleTypes;
 
   return c.json({
     snapshotId,
@@ -253,7 +263,9 @@ interface MailConfiguration {
   recommendations: string[];
 }
 
-function analyzeMailConfiguration(findings: Array<{ type: string; severity: string; description: string }>): MailConfiguration {
+function analyzeMailConfiguration(
+  findings: Array<{ type: string; severity: string; description: string }>
+): MailConfiguration {
   const config: MailConfiguration = {
     hasMx: false,
     hasSpf: false,

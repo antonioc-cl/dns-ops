@@ -4,12 +4,8 @@
  * API endpoints for mail diagnostics and remediation requests.
  */
 
+import { createPostgresClient, createSimpleAdapter, RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
-import {
-  RemediationRepository,
-  createPostgresClient,
-  createSimpleAdapter,
-} from '@dns-ops/db';
 
 interface CollectMailRequest {
   domain?: string;
@@ -30,8 +26,7 @@ interface RemediationRequest {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[\d\s-]{8,20}$/;
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validateCollectMail(data: CollectMailRequest): string | null {
   if (!data.domain || data.domain.length > 253) return 'Domain is required';

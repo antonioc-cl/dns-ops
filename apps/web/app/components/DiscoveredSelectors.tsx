@@ -5,12 +5,17 @@
  * with their provenance and confidence levels.
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DiscoveredSelector {
   selector: string;
   found: boolean;
-  provenance: 'managed-zone-config' | 'operator-supplied' | 'provider-heuristic' | 'common-dictionary' | 'not-found';
+  provenance:
+    | 'managed-zone-config'
+    | 'operator-supplied'
+    | 'provider-heuristic'
+    | 'common-dictionary'
+    | 'not-found';
   confidence: 'certain' | 'high' | 'medium' | 'low' | 'heuristic';
   provider?: string;
 }
@@ -46,11 +51,19 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
   }, [snapshotId]);
 
   if (loading) {
-    return <div className="text-sm text-gray-500" role="status" aria-live="polite" aria-busy="true">Discovering DKIM selectors...</div>;
+    return (
+      <output className="block text-sm text-gray-500" aria-live="polite" aria-busy="true">
+        Discovering DKIM selectors...
+      </output>
+    );
   }
 
   if (error) {
-    return <div className="text-sm text-red-600" role="alert">Error: {error}</div>;
+    return (
+      <div className="text-sm text-red-600" role="alert">
+        Error: {error}
+      </div>
+    );
   }
 
   if (selectors.length === 0) {
@@ -72,20 +85,26 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
         <div
           key={sel.selector}
           className={`p-3 rounded-lg border ${
-            sel.found
-              ? 'bg-green-50 border-green-200'
-              : 'bg-gray-50 border-gray-200'
+            sel.found ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
           }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <code className="text-sm font-mono font-medium">
-                {sel.selector}._domainkey
-              </code>
+              <code className="text-sm font-mono font-medium">{sel.selector}._domainkey</code>
               {sel.found && (
                 <span className="text-green-600">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </span>
               )}
@@ -94,17 +113,15 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
           </div>
 
           <div className="mt-2 text-xs text-gray-600">
-            <span className="font-medium">Source:</span>{' '}
-            {formatProvenance(sel.provenance)}
-            {sel.provider && (
-              <span className="ml-2 text-blue-600">({sel.provider})</span>
-            )}
+            <span className="font-medium">Source:</span> {formatProvenance(sel.provenance)}
+            {sel.provider && <span className="ml-2 text-blue-600">({sel.provider})</span>}
           </div>
         </div>
       ))}
 
       <p className="text-xs text-gray-500 mt-3">
-        Selectors discovered using a 5-level precedence strategy (managed config → operator supplied → provider heuristic → common dictionary → not found).
+        Selectors discovered using a 5-level precedence strategy (managed config → operator supplied
+        → provider heuristic → common dictionary → not found).
       </p>
     </div>
   );
@@ -120,7 +137,9 @@ function ConfidenceBadge({ confidence }: { confidence: string }) {
   };
 
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[confidence] || styles.heuristic}`}>
+    <span
+      className={`px-2 py-0.5 rounded text-xs font-medium ${styles[confidence] || styles.heuristic}`}
+    >
       {confidence}
     </span>
   );

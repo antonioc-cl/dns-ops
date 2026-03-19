@@ -5,16 +5,16 @@
  * Enables expected-vs-actual validation for supported mail providers.
  */
 
-import { Hono } from 'hono';
-import type { Env } from '../types.js';
+import { RecordSetRepository, SnapshotRepository } from '@dns-ops/db';
 import {
-  templateStorage,
   compareToTemplate,
   detectProviderFromDns,
   type KnownProvider,
   PROVIDER_TEMPLATES,
+  templateStorage,
 } from '@dns-ops/rules';
-import { RecordSetRepository, SnapshotRepository } from '@dns-ops/db';
+import { Hono } from 'hono';
+import type { Env } from '../types.js';
 
 export const providerTemplateRoutes = new Hono<Env>();
 
@@ -27,7 +27,7 @@ providerTemplateRoutes.get('/providers', async (c) => {
     const templates = templateStorage.getAllTemplates();
 
     return c.json({
-      providers: templates.map(t => ({
+      providers: templates.map((t) => ({
         id: t.id,
         provider: t.provider,
         name: t.name,
@@ -42,13 +42,15 @@ providerTemplateRoutes.get('/providers', async (c) => {
         },
       })),
     });
-
   } catch (error) {
     console.error('Provider list error:', error);
-    return c.json({
-      error: 'Failed to list provider templates',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to list provider templates',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -62,10 +64,13 @@ providerTemplateRoutes.get('/providers/:provider', async (c) => {
   try {
     const template = templateStorage.getTemplate(provider);
     if (!template) {
-      return c.json({
-        error: 'Provider template not found',
-        availableProviders: Object.keys(PROVIDER_TEMPLATES),
-      }, 404);
+      return c.json(
+        {
+          error: 'Provider template not found',
+          availableProviders: Object.keys(PROVIDER_TEMPLATES),
+        },
+        404
+      );
     }
 
     return c.json({
@@ -78,18 +83,20 @@ providerTemplateRoutes.get('/providers/:provider', async (c) => {
         knownSelectors: template.knownSelectors,
         expected: template.expected,
         detection: {
-          mxPatterns: template.detection.mxPatterns.map(p => p.source),
-          spfPatterns: template.detection.spfPatterns.map(p => p.source),
+          mxPatterns: template.detection.mxPatterns.map((p) => p.source),
+          spfPatterns: template.detection.spfPatterns.map((p) => p.source),
         },
       },
     });
-
   } catch (error) {
     console.error('Provider get error:', error);
-    return c.json({
-      error: 'Failed to get provider template',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to get provider template',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -103,9 +110,12 @@ providerTemplateRoutes.post('/compare-to-provider', async (c) => {
   const { snapshotId, provider } = body;
 
   if (!snapshotId) {
-    return c.json({
-      error: 'Missing required field: snapshotId',
-    }, 400);
+    return c.json(
+      {
+        error: 'Missing required field: snapshotId',
+      },
+      400
+    );
   }
 
   try {
@@ -126,21 +136,21 @@ providerTemplateRoutes.post('/compare-to-provider', async (c) => {
     // Auto-detect provider if not specified
     let targetProvider: KnownProvider = provider;
     if (!targetProvider) {
-      const detection = detectProviderFromDns(
-        actual.mx || [],
-        actual.spf || undefined
-      );
+      const detection = detectProviderFromDns(actual.mx || [], actual.spf || undefined);
       targetProvider = detection.provider;
     }
 
     // Validate provider exists
     const template = templateStorage.getTemplate(targetProvider);
     if (!template) {
-      return c.json({
-        error: 'Provider template not found',
-        requestedProvider: targetProvider,
-        availableProviders: Object.keys(PROVIDER_TEMPLATES),
-      }, 404);
+      return c.json(
+        {
+          error: 'Provider template not found',
+          requestedProvider: targetProvider,
+          availableProviders: Object.keys(PROVIDER_TEMPLATES),
+        },
+        404
+      );
     }
 
     // Perform comparison
@@ -151,7 +161,9 @@ providerTemplateRoutes.post('/compare-to-provider', async (c) => {
       snapshotId,
       provider: targetProvider,
       providerName: template.name,
-      detectionConfidence: provider ? undefined : detectProviderFromDns(actual.mx || [], actual.spf).confidence,
+      detectionConfidence: provider
+        ? undefined
+        : detectProviderFromDns(actual.mx || [], actual.spf).confidence,
       comparison: {
         overallMatch: comparison.overallMatch,
         matches: comparison.matches,
@@ -166,13 +178,15 @@ providerTemplateRoutes.post('/compare-to-provider', async (c) => {
         dmarc: template.expected.dmarc,
       },
     });
-
   } catch (error) {
     console.error('Provider comparison error:', error);
-    return c.json({
-      error: 'Failed to compare to provider template',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to compare to provider template',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -185,9 +199,12 @@ providerTemplateRoutes.post('/detect-provider', async (c) => {
   const { mxRecords, spfRecord } = body;
 
   if (!mxRecords || !Array.isArray(mxRecords)) {
-    return c.json({
-      error: 'Missing required field: mxRecords (array)',
-    }, 400);
+    return c.json(
+      {
+        error: 'Missing required field: mxRecords (array)',
+      },
+      400
+    );
   }
 
   try {
@@ -199,20 +216,23 @@ providerTemplateRoutes.post('/detect-provider', async (c) => {
         confidence: detection.confidence,
         evidence: detection.evidence,
       },
-      template: detection.provider !== 'unknown'
-        ? {
-            name: PROVIDER_TEMPLATES[detection.provider].name,
-            knownSelectors: PROVIDER_TEMPLATES[detection.provider].knownSelectors,
-          }
-        : null,
+      template:
+        detection.provider !== 'unknown'
+          ? {
+              name: PROVIDER_TEMPLATES[detection.provider].name,
+              knownSelectors: PROVIDER_TEMPLATES[detection.provider].knownSelectors,
+            }
+          : null,
     });
-
   } catch (error) {
     console.error('Provider detection error:', error);
-    return c.json({
-      error: 'Failed to detect provider',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to detect provider',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -226,9 +246,12 @@ providerTemplateRoutes.post('/providers/:provider/selectors', async (c) => {
   const { selector } = body;
 
   if (!selector || typeof selector !== 'string') {
-    return c.json({
-      error: 'Missing required field: selector (string)',
-    }, 400);
+    return c.json(
+      {
+        error: 'Missing required field: selector (string)',
+      },
+      400
+    );
   }
 
   try {
@@ -244,13 +267,15 @@ providerTemplateRoutes.post('/providers/:provider/selectors', async (c) => {
       provider,
       knownSelectors: templateStorage.getTemplate(provider)?.knownSelectors,
     });
-
   } catch (error) {
     console.error('Add selector error:', error);
-    return c.json({
-      error: 'Failed to add selector',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to add selector',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -258,11 +283,13 @@ providerTemplateRoutes.post('/providers/:provider/selectors', async (c) => {
 // Helper Functions
 // =============================================================================
 
-function buildActualConfig(recordSets: Array<{
-  type: string;
-  name: string;
-  values: string[];
-}>): {
+function buildActualConfig(
+  recordSets: Array<{
+    type: string;
+    name: string;
+    values: string[];
+  }>
+): {
   mx?: string[];
   spf?: string;
   dmarc?: string;
@@ -283,7 +310,7 @@ function buildActualConfig(recordSets: Array<{
 
     // SPF (TXT record containing v=spf1)
     if (rs.type === 'TXT') {
-      const spfValue = rs.values.find(v => v.includes('v=spf1'));
+      const spfValue = rs.values.find((v) => v.includes('v=spf1'));
       if (spfValue) {
         actual.spf = spfValue;
       }
@@ -291,7 +318,7 @@ function buildActualConfig(recordSets: Array<{
 
     // DMARC (_dmarc.domain)
     if (rs.type === 'TXT' && rs.name.includes('_dmarc')) {
-      const dmarcValue = rs.values.find(v => v.includes('v=DMARC1'));
+      const dmarcValue = rs.values.find((v) => v.includes('v=DMARC1'));
       if (dmarcValue) {
         actual.dmarc = dmarcValue;
       }
