@@ -12,7 +12,7 @@
  * 8. BIMI presence (info only)
  */
 import { describe, it, expect } from 'vitest';
-import { mxPresenceRule, spfRule, dmarcRule, dkimRule, mtaStsRule, tlsRptRule, bimiRule, mailRules, } from './rules';
+import { mxPresenceRule, spfRule, dmarcRule, dkimRule, mtaStsRule, tlsRptRule, bimiRule, mailRules, } from './rules.js';
 // Test helpers
 function createMockObservation(overrides = {}) {
     return {

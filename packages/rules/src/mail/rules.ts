@@ -12,8 +12,8 @@
  * 8. BIMI as info-only
  */
 
-import type { Observation } from '@dns-ops/db/schema';
-import type { Rule, RuleContext, RuleResult } from '../engine';
+import type { Observation } from '@dns-ops/db';
+import type { Rule, RuleContext, RuleResult } from '../engine/index.js';
 import { parseSPF, parseDMARC } from '@dns-ops/parsing';
 
 // =============================================================================

@@ -5,7 +5,7 @@
  * Enables safe cutover by identifying mismatches before switching authority.
  */
 
-import type { NewFinding } from '@dns-ops/db/schema';
+import type { NewFinding } from '@dns-ops/db';
 
 // =============================================================================
 // Shadow Comparison Types

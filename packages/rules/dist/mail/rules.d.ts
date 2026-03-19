@@ -11,7 +11,7 @@
  * 7. TLS-RPT TXT presence
  * 8. BIMI as info-only
  */
-import type { Rule } from '../engine';
+import type { Rule } from '../engine/index.js';
 export declare const mxPresenceRule: Rule;
 export declare const spfRule: Rule;
 export declare const dmarcRule: Rule;

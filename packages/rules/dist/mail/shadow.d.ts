@@ -4,7 +4,7 @@
  * Compares new mail rule findings against legacy DMARC/DKIM tool outputs.
  * Enables safe cutover by identifying mismatches before switching authority.
  */
-import type { NewFinding } from '@dns-ops/db/schema';
+import type { NewFinding } from '@dns-ops/db';
 export interface ShadowComparisonResult {
     snapshotId: string;
     domain: string;

@@ -17,8 +17,8 @@ import {
   recursiveAuthoritativeMismatchRule,
   cnameCoexistenceRule,
   unmanagedZonePartialCoverageRule,
-} from './rules';
-import type { RuleContext } from '../engine';
+} from './rules.js';
+import type { RuleContext } from '../engine/index.js';
 
 // Test helpers
 function createMockObservation(overrides: Partial<Observation> = {}): Observation {

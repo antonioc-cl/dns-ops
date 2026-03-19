@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Observation, RecordSet } from '@dns-ops/db/schema';
+import type { Observation, RecordSet } from '@dns-ops/db';
 import {
   mxPresenceRule,
   spfRule,
@@ -23,8 +23,8 @@ import {
   tlsRptRule,
   bimiRule,
   mailRules,
-} from './rules';
-import type { RuleContext } from '../engine';
+} from './rules.js';
+import type { RuleContext } from '../engine/index.js';
 
 // Test helpers
 function createMockObservation(overrides: Partial<Observation> = {}): Observation {

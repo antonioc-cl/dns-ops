@@ -10,8 +10,8 @@
  */
 
 import type { Observation, RecordSet } from '@dns-ops/db/schema';
-import type { Rule, RuleContext, RuleResult } from '../engine';
-import { createEvidence, inferBlastRadius, isReviewOnly } from '../engine';
+import type { Rule, RuleContext, RuleResult } from '../engine/index.js';
+import { inferBlastRadius, isReviewOnly } from '../engine/index.js';
 
 // =============================================================================
 // Rule 1: Authoritative Failure Detection
@@ -40,7 +40,6 @@ export const authoritativeFailureRule: Rule = {
     for (const [queryKey, queryFailures] of failuresByQuery) {
       const [name, type] = queryKey.split('|');
       const failureTypes = [...new Set(queryFailures.map((f) => f.status))];
-      const primaryFailure = queryFailures[0];
 
       const severity = failureTypes.includes('timeout') ? 'high' : 'medium';
       const blastRadius = inferBlastRadius(context.zoneManagement, type);
@@ -178,7 +177,7 @@ export const recursiveAuthoritativeMismatchRule: Rule = {
       authObs: Observation[];
     }> = [];
 
-    for (const [key, rs] of recordSetsByQuery) {
+    for (const [key] of recordSetsByQuery) {
       const [name, type] = key.split('|');
 
       const recursiveObs = context.observations.filter(

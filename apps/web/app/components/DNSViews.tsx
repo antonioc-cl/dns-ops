@@ -8,6 +8,7 @@
  */
 
 import { useState, type KeyboardEvent } from 'react';
+import type { Observation } from '@dns-ops/db/schema';
 import {
   observationsToRecordSets,
   groupRecordsByType,
@@ -16,26 +17,8 @@ import {
   observationsToDigFormat,
 } from '@dns-ops/parsing';
 
-interface UIObservation {
-  id: string;
-  queryName: string;
-  queryType: string;
-  vantageIdentifier?: string | null;
-  vantageType: string;
-  status: string;
-  responseCode?: number | null;
-  responseTimeMs?: number | null;
-  queriedAt: string | Date;
-  flags?: unknown;
-  answerSection?: unknown;
-  authoritySection?: unknown;
-  additionalSection?: unknown;
-  errorMessage?: string | null;
-  rawResponse?: string | null;
-}
-
 interface DNSViewsProps {
-  observations: UIObservation[];
+  observations: Observation[];
 }
 
 type ViewMode = 'parsed' | 'raw' | 'dig';
@@ -169,7 +152,7 @@ function ViewModeSelector({
 
 // ==================== PARSED VIEW ====================
 
-function ParsedView({ observations }: { observations: UIObservation[] }) {
+function ParsedView({ observations }: { observations: Observation[] }) {
   const recordSets = observationsToRecordSets(observations);
   const grouped = groupRecordsByType(recordSets);
 
@@ -249,7 +232,7 @@ function ParsedView({ observations }: { observations: UIObservation[] }) {
 
 // ==================== RAW VIEW ====================
 
-function RawView({ observations }: { observations: UIObservation[] }) {
+function RawView({ observations }: { observations: Observation[] }) {
   return (
     <div className="space-y-4">
       {observations.map((obs) => (
@@ -354,7 +337,7 @@ function StatusBadge({ status }: { status: string }) {
 
 // ==================== DIG VIEW ====================
 
-function DigView({ observations }: { observations: UIObservation[] }) {
+function DigView({ observations }: { observations: Observation[] }) {
   const [showAll, setShowAll] = useState(false);
 
   // For many observations, show a summary first

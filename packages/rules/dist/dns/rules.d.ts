@@ -8,7 +8,7 @@
  * 4. CNAME coexistence conflict
  * 5. Partial coverage for unmanaged zones
  */
-import type { Rule } from '../engine';
+import type { Rule } from '../engine/index.js';
 export declare const authoritativeFailureRule: Rule;
 export declare const authoritativeMismatchRule: Rule;
 export declare const recursiveAuthoritativeMismatchRule: Rule;

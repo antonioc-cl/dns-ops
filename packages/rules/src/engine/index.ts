@@ -10,8 +10,8 @@ import type {
   RecordSet,
   NewFinding,
   NewSuggestion,
-} from '../../../db/src/schema';
-import type { Severity, Confidence, RiskPosture, BlastRadius } from '../../../contracts/src/enums';
+} from '@dns-ops/db';
+import type { Severity, Confidence, BlastRadius } from '@dns-ops/contracts';
 
 export interface RuleContext {
   snapshotId: string;

@@ -9,7 +9,7 @@
  * 5. Partial coverage finding for unmanaged zones
  */
 import { describe, it, expect } from 'vitest';
-import { authoritativeFailureRule, authoritativeMismatchRule, recursiveAuthoritativeMismatchRule, cnameCoexistenceRule, unmanagedZonePartialCoverageRule, } from './rules';
+import { authoritativeFailureRule, authoritativeMismatchRule, recursiveAuthoritativeMismatchRule, cnameCoexistenceRule, unmanagedZonePartialCoverageRule, } from './rules.js';
 // Test helpers
 function createMockObservation(overrides = {}) {
     return {

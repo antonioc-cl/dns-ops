@@ -8,7 +8,7 @@
  * 4. CNAME coexistence conflict
  * 5. Partial coverage for unmanaged zones
  */
-import { inferBlastRadius, isReviewOnly } from '../engine';
+import { inferBlastRadius, isReviewOnly } from '../engine/index.js';
 // =============================================================================
 // Rule 1: Authoritative Failure Detection
 // =============================================================================
@@ -29,7 +29,6 @@ export const authoritativeFailureRule = {
         for (const [queryKey, queryFailures] of failuresByQuery) {
             const [name, type] = queryKey.split('|');
             const failureTypes = [...new Set(queryFailures.map((f) => f.status))];
-            const primaryFailure = queryFailures[0];
             const severity = failureTypes.includes('timeout') ? 'high' : 'medium';
             const blastRadius = inferBlastRadius(context.zoneManagement, type);
             const confidence = failureTypes.length === queryFailures.length ? 'certain' : 'high';
@@ -141,7 +140,7 @@ export const recursiveAuthoritativeMismatchRule = {
         }
         // For each query, compare recursive and authoritative results
         const mismatches = [];
-        for (const [key, rs] of recordSetsByQuery) {
+        for (const [key] of recordSetsByQuery) {
             const [name, type] = key.split('|');
             const recursiveObs = context.observations.filter((obs) => obs.queryName.toLowerCase() === name.toLowerCase() &&
                 obs.queryType === type &&

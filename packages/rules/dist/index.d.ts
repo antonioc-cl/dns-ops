@@ -3,10 +3,10 @@
  *
  * Deterministic rules engine and rule packs for DNS, mail, and delegation analysis.
  */
-export * from './engine/index';
-export * from './dns/rules';
-export * from './mail/rules';
-export * from './mail/templates';
-export * from './mail/shadow';
-export type { Rule, RuleContext, RuleResult, Ruleset, RulesEngine } from './engine/index';
+export * from './engine/index.js';
+export * from './dns/rules.js';
+export * from './mail/rules.js';
+export * from './mail/templates.js';
+export * from './mail/shadow.js';
+export type { Rule, RuleContext, RuleResult, Ruleset, RulesEngine } from './engine/index.js';
 //# sourceMappingURL=index.d.ts.map

@@ -4,11 +4,11 @@
  * Deterministic rules engine and rule packs for DNS, mail, and delegation analysis.
  */
 // Engine
-export * from './engine/index';
+export * from './engine/index.js';
 // DNS Rules
-export * from './dns/rules';
+export * from './dns/rules.js';
 // Mail Rules (Bead 09)
-export * from './mail/rules';
-export * from './mail/templates';
-export * from './mail/shadow';
+export * from './mail/rules.js';
+export * from './mail/templates.js';
+export * from './mail/shadow.js';
 //# sourceMappingURL=index.js.map
