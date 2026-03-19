@@ -3,14 +3,16 @@
  *
  * API endpoints for:
  * - Listing snapshots per domain
- * - Comparing snapshots (before/after, vantage-to-vantage)
+ * - Comparing snapshots (before/after)
  * - Diff highlighting for records, TTLs, findings, scope
  */
 
+import { DomainRepository, SnapshotRepository } from '@dns-ops/db';
+import { findings, recordSets } from '@dns-ops/db/schema';
+import { compareSnapshots } from '@dns-ops/parsing';
+import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
-import { SnapshotRepository, DomainRepository, FindingRepository } from '@dns-ops/db';
-import { compareSnapshots } from '@dns-ops/parsing/diff';
 
 export const snapshotRoutes = new Hono<Env>();
 
@@ -34,15 +36,16 @@ snapshotRoutes.get('/:domain', async (c) => {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
-    const snapshots = await snapshotRepo.findByDomainId(domain.id, { limit, offset });
+    const allSnapshots = await snapshotRepo.findByDomain(domain.id, limit + offset);
+    const snapshots = allSnapshots.slice(offset, offset + limit);
 
     return c.json({
       domain: domainName,
       total: snapshots.length,
-      snapshots: snapshots.map(s => ({
+      snapshots: snapshots.map((s) => ({
         id: s.id,
         createdAt: s.createdAt,
-        rulesetVersion: s.rulesetVersion,
+        rulesetVersion: s.rulesetVersionId,
         queryScope: {
           names: s.queriedNames,
           types: s.queriedTypes,
@@ -50,13 +53,15 @@ snapshotRoutes.get('/:domain', async (c) => {
         },
       })),
     });
-
   } catch (error) {
     console.error('Snapshot list error:', error);
-    return c.json({
-      error: 'Failed to fetch snapshots',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch snapshots',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -80,7 +85,7 @@ snapshotRoutes.get('/:domain/:id', async (c) => {
       id: snapshot.id,
       domainId: snapshot.domainId,
       createdAt: snapshot.createdAt,
-      rulesetVersion: snapshot.rulesetVersion,
+      rulesetVersion: snapshot.rulesetVersionId,
       queryScope: {
         names: snapshot.queriedNames,
         types: snapshot.queriedTypes,
@@ -88,13 +93,15 @@ snapshotRoutes.get('/:domain/:id', async (c) => {
       },
       metadata: snapshot.metadata,
     });
-
   } catch (error) {
     console.error('Snapshot detail error:', error);
-    return c.json({
-      error: 'Failed to fetch snapshot',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch snapshot',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -105,20 +112,22 @@ snapshotRoutes.get('/:domain/:id', async (c) => {
 snapshotRoutes.post('/:domain/diff', async (c) => {
   const db = c.get('db');
   const domainName = c.req.param('domain');
-  const body = await c.req.json().catch(() => ({}));
+  const body = await c.req.json().catch(() => ({}) as { snapshotA?: string; snapshotB?: string });
   const { snapshotA, snapshotB } = body;
 
   if (!snapshotA || !snapshotB) {
-    return c.json({
-      error: 'Both snapshotA and snapshotB IDs are required',
-      example: { snapshotA: 'snap-123', snapshotB: 'snap-456' },
-    }, 400);
+    return c.json(
+      {
+        error: 'Both snapshotA and snapshotB IDs are required',
+        example: { snapshotA: 'snap-123', snapshotB: 'snap-456' },
+      },
+      400
+    );
   }
 
   try {
     const domainRepo = new DomainRepository(db);
     const snapshotRepo = new SnapshotRepository(db);
-    const findingRepo = new FindingRepository(db);
 
     const domain = await domainRepo.findByName(domainName);
     if (!domain) {
@@ -140,17 +149,20 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
 
     // Verify snapshots belong to this domain
     if (snapA.domainId !== domain.id || snapB.domainId !== domain.id) {
-      return c.json({
-        error: 'Snapshots do not belong to the specified domain',
-      }, 400);
+      return c.json(
+        {
+          error: 'Snapshots do not belong to the specified domain',
+        },
+        400
+      );
     }
 
     // Fetch records and findings for both snapshots
     const [recordsA, recordsB, findingsA, findingsB] = await Promise.all([
-      snapshotRepo.getRecords(snapshotA),
-      snapshotRepo.getRecords(snapshotB),
-      findingRepo.findBySnapshotId(snapshotA),
-      findingRepo.findBySnapshotId(snapshotB),
+      db.selectWhere(recordSets, eq(recordSets.snapshotId, snapshotA)),
+      db.selectWhere(recordSets, eq(recordSets.snapshotId, snapshotB)),
+      db.selectWhere(findings, eq(findings.snapshotId, snapshotA)),
+      db.selectWhere(findings, eq(findings.snapshotId, snapshotB)),
     ]);
 
     // Generate diff
@@ -158,7 +170,7 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
       {
         id: snapA.id,
         createdAt: snapA.createdAt,
-        rulesetVersion: snapA.rulesetVersion,
+        rulesetVersion: String(snapA.rulesetVersionId || 'unknown'),
         queriedNames: snapA.queriedNames,
         queriedTypes: snapA.queriedTypes,
         vantages: snapA.vantages,
@@ -166,7 +178,7 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
       {
         id: snapB.id,
         createdAt: snapB.createdAt,
-        rulesetVersion: snapB.rulesetVersion,
+        rulesetVersion: String(snapB.rulesetVersionId || 'unknown'),
         queriedNames: snapB.queriedNames,
         queriedTypes: snapB.queriedTypes,
         vantages: snapB.vantages,
@@ -184,13 +196,15 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
         ? 'Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes.'
         : undefined,
     });
-
   } catch (error) {
     console.error('Snapshot diff error:', error);
-    return c.json({
-      error: 'Failed to compare snapshots',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to compare snapshots',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -211,7 +225,7 @@ snapshotRoutes.get('/:domain/latest', async (c) => {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
-    const snapshots = await snapshotRepo.findByDomainId(domain.id, { limit: 1 });
+    const snapshots = await snapshotRepo.findByDomain(domain.id, 1);
 
     if (snapshots.length === 0) {
       return c.json({ error: 'No snapshots found for domain' }, 404);
@@ -223,20 +237,22 @@ snapshotRoutes.get('/:domain/latest', async (c) => {
       id: snapshot.id,
       domain: domainName,
       createdAt: snapshot.createdAt,
-      rulesetVersion: snapshot.rulesetVersion,
+      rulesetVersion: snapshot.rulesetVersionId,
       queryScope: {
         names: snapshot.queriedNames,
         types: snapshot.queriedTypes,
         vantages: snapshot.vantages,
       },
     });
-
   } catch (error) {
     console.error('Latest snapshot error:', error);
-    return c.json({
-      error: 'Failed to fetch latest snapshot',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch latest snapshot',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -257,22 +273,24 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
-    const snapshots = await snapshotRepo.findByDomainId(domain.id, { limit: 2 });
+    const snapshots = await snapshotRepo.findByDomain(domain.id, 2);
 
     if (snapshots.length < 2) {
-      return c.json({
-        error: 'Need at least 2 snapshots to compare',
-        availableSnapshots: snapshots.length,
-      }, 400);
+      return c.json(
+        {
+          error: 'Need at least 2 snapshots to compare',
+          availableSnapshots: snapshots.length,
+        },
+        400
+      );
     }
 
-    // Redirect to diff endpoint with the two latest snapshots
     return c.json({
       message: 'Use these snapshot IDs to compare',
-      snapshots: snapshots.map(s => ({
+      snapshots: snapshots.map((s) => ({
         id: s.id,
         createdAt: s.createdAt,
-        rulesetVersion: s.rulesetVersion,
+        rulesetVersion: s.rulesetVersionId,
       })),
       diffEndpoint: `/api/snapshots/${domainName}/diff`,
       requestBody: {
@@ -280,12 +298,14 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
         snapshotB: snapshots[0].id,
       },
     });
-
   } catch (error) {
     console.error('Compare latest error:', error);
-    return c.json({
-      error: 'Failed to prepare comparison',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to prepare comparison',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
