@@ -6,7 +6,7 @@
  * - Null MX detection
  * - DKIM selector discovery with provenance tracking
  */
-import { discoverSelectors, buildDkimQueryNames, parseSpfRecord, isDmarcRecord, isMtaStsRecord, } from './selector-discovery';
+import { discoverSelectors, buildDkimQueryNames, parseSpfRecord, isDmarcRecord, isMtaStsRecord, isNullMx as checkIsNullMx, } from './selector-discovery.js';
 /**
  * Generate mail-related DNS queries
  *
@@ -55,7 +55,7 @@ export async function generateMailQueries(domain, existingResults = [], config =
 /**
  * Analyze mail-related DNS results
  */
-export function analyzeMailResults(results) {
+export async function analyzeMailResults(results) {
     let mx = null;
     let spf = null;
     let dmarc = null;
@@ -69,7 +69,7 @@ export function analyzeMailResults(results) {
         // MX record
         if (result.query.type === 'MX' && !result.query.name.includes('_')) {
             mx = result;
-            if (isNullMx(result)) {
+            if (checkIsNullMx(result)) {
                 isNullMx = true;
             }
         }
@@ -102,7 +102,7 @@ export function analyzeMailResults(results) {
         }
     }
     // Detect provider from MX results
-    const { detectProvider } = await import('./selector-discovery');
+    const { detectProvider } = await import('./selector-discovery.js');
     const provider = detectProvider(mx ? [mx] : []);
     return {
         mx,

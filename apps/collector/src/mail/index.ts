@@ -14,6 +14,6 @@ export {
   type DKIMCheckResult,
   type SelectorProvenance,
   type ProviderSelectorInfo,
-} from './checker';
+} from './checker.js';
 
 export { resolveTXT } from './dns.js';

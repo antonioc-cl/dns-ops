@@ -9,7 +9,7 @@
  * 5. No selector found → partial
  */
 
-import type { DNSQueryResult } from '../dns/types';
+import type { DNSQueryResult } from '../dns/types.js';
 
 export interface SelectorDiscoveryConfig {
   managedSelectors?: string[];
@@ -155,7 +155,7 @@ function isValidSelector(selector: string): boolean {
  * Implements 5-level precedence strategy
  */
 export async function discoverSelectors(
-  domain: string,
+  _domain: string,
   dnsResults: DNSQueryResult[],
   config: SelectorDiscoveryConfig = {}
 ): Promise<SelectorDiscoveryResult> {

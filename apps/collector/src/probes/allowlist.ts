@@ -5,7 +5,7 @@
  * Prevents arbitrary outbound probing.
  */
 
-import type { DNSQueryResult } from '../dns/types';
+import type { DNSQueryResult } from '../dns/types.js';
 
 export interface AllowlistEntry {
   type: 'mx' | 'mta-sts' | 'smtp' | 'custom';

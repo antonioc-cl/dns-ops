@@ -16,7 +16,6 @@ monitoringRoutes.post('/check', async (c) => {
     const { schedule = 'daily' } = body;
     try {
         const monitoredRepo = new MonitoredDomainRepository(db);
-        const alertRepo = new AlertRepository(db);
         const domainRepo = new DomainRepository(db);
         // Get domains scheduled for this check
         const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule);
@@ -32,7 +31,7 @@ monitoringRoutes.post('/check', async (c) => {
             }
             // Check daily alert limit
             const alertRepo = new AlertRepository(db);
-            const allAlerts = await alertRepo.findWhere({ monitoredDomainId: monitored.id });
+            const allAlerts = await alertRepo.findByMonitoredDomain(monitored.id);
             const todayCount = allAlerts.filter((a) => {
                 const alertDate = new Date(a.createdAt);
                 const today = new Date();

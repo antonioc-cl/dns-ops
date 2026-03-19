@@ -6,10 +6,10 @@
  * - Null MX detection
  * - DKIM selector discovery with provenance tracking
  */
-import type { DNSQueryResult } from '../dns/types';
-import { type SelectorDiscoveryResult } from './selector-discovery';
+import type { DNSQueryResult } from '../dns/types.js';
+import { type SelectorDiscoveryResult } from './selector-discovery.js';
 export interface MailCollectionConfig {
-    domain: string;
+    domain?: string;
     operatorSelectors?: string[];
     managedSelectors?: string[];
     skipDictionary?: boolean;
@@ -44,7 +44,7 @@ export declare function generateMailQueries(domain: string, existingResults?: DN
 /**
  * Analyze mail-related DNS results
  */
-export declare function analyzeMailResults(results: DNSQueryResult[]): {
+export declare function analyzeMailResults(results: DNSQueryResult[]): Promise<{
     mx: DNSQueryResult | null;
     spf: string | null;
     dmarc: DNSQueryResult | null;
@@ -53,7 +53,7 @@ export declare function analyzeMailResults(results: DNSQueryResult[]): {
     tlsRpt: DNSQueryResult | null;
     isNullMx: boolean;
     provider: string;
-};
+}>;
 /**
  * Check if a domain has valid mail configuration
  */

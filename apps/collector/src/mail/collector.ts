@@ -7,20 +7,20 @@
  * - DKIM selector discovery with provenance tracking
  */
 
-import type { DNSQueryResult } from '../dns/types';
+import type { DNSQueryResult } from '../dns/types.js';
 import {
   discoverSelectors,
   buildDkimQueryNames,
-  isNullMx,
   parseSpfRecord,
   isDmarcRecord,
   isMtaStsRecord,
+  isNullMx as checkIsNullMx,
   type SelectorDiscoveryConfig,
   type SelectorDiscoveryResult,
-} from './selector-discovery';
+} from './selector-discovery.js';
 
 export interface MailCollectionConfig {
-  domain: string;
+  domain?: string;
   operatorSelectors?: string[];
   managedSelectors?: string[];
   skipDictionary?: boolean;
@@ -102,9 +102,9 @@ export async function generateMailQueries(
 /**
  * Analyze mail-related DNS results
  */
-export function analyzeMailResults(
+export async function analyzeMailResults(
   results: DNSQueryResult[]
-): {
+): Promise<{
   mx: DNSQueryResult | null;
   spf: string | null;
   dmarc: DNSQueryResult | null;
@@ -113,7 +113,7 @@ export function analyzeMailResults(
   tlsRpt: DNSQueryResult | null;
   isNullMx: boolean;
   provider: string;
-} {
+}> {
   let mx: DNSQueryResult | null = null;
   let spf: string | null = null;
   let dmarc: DNSQueryResult | null = null;
@@ -128,7 +128,7 @@ export function analyzeMailResults(
     // MX record
     if (result.query.type === 'MX' && !result.query.name.includes('_')) {
       mx = result;
-      if (isNullMx(result)) {
+      if (checkIsNullMx(result)) {
         isNullMx = true;
       }
     }
@@ -167,7 +167,7 @@ export function analyzeMailResults(
   }
 
   // Detect provider from MX results
-  const { detectProvider } = await import('./selector-discovery');
+  const { detectProvider } = await import('./selector-discovery.js');
   const provider = detectProvider(mx ? [mx] : []);
 
   return {

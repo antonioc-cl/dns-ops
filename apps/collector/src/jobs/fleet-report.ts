@@ -78,8 +78,8 @@ fleetReportRoutes.post('/run', async (c) => {
         // Get observations
         const observations = await observationRepo.findBySnapshotId(snapshot.id);
 
-        // Run checks
-        const checkResults = await runChecks(domainName, observations, checks);
+        // Run checks (with type assertion for compatibility)
+        const checkResults = await runChecks(domainName, observations as any, checks);
 
         results.push({
           domain: domainName,

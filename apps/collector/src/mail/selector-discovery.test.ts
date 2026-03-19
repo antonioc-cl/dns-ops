@@ -15,8 +15,8 @@ import {
   detectProvider,
   getProviderSelectors,
   COMMON_SELECTORS,
-} from './selector-discovery';
-import type { DNSQueryResult } from '../dns/types';
+} from './selector-discovery.js';
+import type { DNSQueryResult } from '../dns/types.js';
 
 // Test helpers
 function createMockDNSResult(overrides: Partial<DNSQueryResult> = {}): DNSQueryResult {

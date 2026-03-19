@@ -12,7 +12,7 @@ import {
   checkSPF,
   PROVIDER_SELECTORS,
   type MailCheckResult,
-} from './checker';
+} from './checker.js';
 
 // Mock DNS resolution
 vi.mock('./dns', () => ({

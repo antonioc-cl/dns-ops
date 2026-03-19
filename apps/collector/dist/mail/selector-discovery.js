@@ -114,7 +114,7 @@ function isValidSelector(selector) {
  * Main selector discovery function
  * Implements 5-level precedence strategy
  */
-export async function discoverSelectors(domain, dnsResults, config = {}) {
+export async function discoverSelectors(_domain, dnsResults, config = {}) {
     const { managedSelectors = [], operatorSelectors = [], skipDictionary = false, maxSelectors = 10, } = config;
     const attempts = [];
     let selectors = [];

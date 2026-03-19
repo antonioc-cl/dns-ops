@@ -48,7 +48,7 @@ fleetReportRoutes.post('/run', async (c) => {
                     continue;
                 }
                 // Get latest snapshot
-                const snapshots = await snapshotRepo.findByDomainId(domain.id, { limit: 1 });
+                const snapshots = await snapshotRepo.findByDomain(domain.id, 1);
                 const snapshot = snapshots[0];
                 if (!snapshot) {
                     errors.push({
@@ -59,7 +59,7 @@ fleetReportRoutes.post('/run', async (c) => {
                 }
                 // Get observations
                 const observations = await observationRepo.findBySnapshotId(snapshot.id);
-                // Run checks
+                // Run checks (with type assertion for compatibility)
                 const checkResults = await runChecks(domainName, observations, checks);
                 results.push({
                     domain: domainName,

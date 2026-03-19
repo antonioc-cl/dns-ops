@@ -8,7 +8,7 @@
  * 4. Common selector dictionary
  * 5. No selector found → partial
  */
-import type { DNSQueryResult } from '../dns/types';
+import type { DNSQueryResult } from '../dns/types.js';
 export interface SelectorDiscoveryConfig {
     managedSelectors?: string[];
     operatorSelectors?: string[];
@@ -42,7 +42,7 @@ export declare function getProviderSelectors(provider: string): string[];
  * Main selector discovery function
  * Implements 5-level precedence strategy
  */
-export declare function discoverSelectors(domain: string, dnsResults: DNSQueryResult[], config?: SelectorDiscoveryConfig): Promise<SelectorDiscoveryResult>;
+export declare function discoverSelectors(_domain: string, dnsResults: DNSQueryResult[], config?: SelectorDiscoveryConfig): Promise<SelectorDiscoveryResult>;
 /**
  * Build DKIM query names from selectors
  */

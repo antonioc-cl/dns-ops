@@ -33,9 +33,9 @@ probeRoutes.post('/mta-sts', async (c) => {
         checkAllowlist: true,
     });
     return c.json({
+        ...result,
         domain,
         txtRecordId: txtValidation.id,
-        ...result,
     });
 });
 /**
@@ -51,8 +51,12 @@ probeRoutes.post('/smtp-starttls', async (c) => {
         if (mxRecords && Array.isArray(mxRecords)) {
             const mockResults = [{
                     query: { name: hostname, type: 'MX' },
+                    vantage: { type: 'public-recursive', identifier: 'mock' },
                     success: true,
                     answers: mxRecords.map((mx) => ({ name: hostname, type: 'MX', ttl: 300, data: mx })),
+                    authority: [],
+                    additional: [],
+                    responseTime: 0,
                 }];
             probeAllowlist.generateFromDnsResults(hostname, mockResults);
         }
@@ -76,8 +80,12 @@ probeRoutes.post('/smtp-starttls', async (c) => {
         // Generate allowlist
         const mockResults = [{
                 query: { name: 'probe', type: 'MX' },
+                vantage: { type: 'public-recursive', identifier: 'mock' },
                 success: true,
                 answers: hosts.map(h => ({ name: 'probe', type: 'MX', ttl: 300, data: `${h.priority} ${h.hostname}.` })),
+                authority: [],
+                additional: [],
+                responseTime: 0,
             }];
         probeAllowlist.generateFromDnsResults('probe', mockResults);
         const results = await probeMXHosts(hosts, {

@@ -4,7 +4,7 @@
  * Ensures probes only target destinations derived from DNS results.
  * Prevents arbitrary outbound probing.
  */
-import type { DNSQueryResult } from '../dns/types';
+import type { DNSQueryResult } from '../dns/types.js';
 export interface AllowlistEntry {
     type: 'mx' | 'mta-sts' | 'smtp' | 'custom';
     hostname: string;
