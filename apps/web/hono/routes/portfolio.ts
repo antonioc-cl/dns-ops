@@ -5,17 +5,17 @@
  * saved filters, and template management.
  */
 
-import { Hono } from 'hono';
-import type { Env } from '../types.js';
 import {
+  AuditEventRepository,
   DomainNoteRepository,
   DomainTagRepository,
   SavedFilterRepository,
-  AuditEventRepository,
   TemplateOverrideRepository,
 } from '@dns-ops/db';
-import { like, and, eq, or, inArray, desc } from 'drizzle-orm';
 import { domains, findings, snapshots } from '@dns-ops/db/schema';
+import { and, desc, eq, inArray, like, or } from 'drizzle-orm';
+import { Hono } from 'hono';
+import type { Env } from '../types.js';
 
 export const portfolioRoutes = new Hono<Env>();
 
@@ -27,14 +27,7 @@ portfolioRoutes.post('/search', async (c) => {
   const db = c.get('db');
   const tenantId = c.get('tenantId') || 'default';
   const body = await c.req.json().catch(() => ({}));
-  const {
-    query,
-    tags,
-    severities,
-    zoneManagement,
-    limit = 20,
-    offset = 0,
-  } = body;
+  const { query, tags, severities, zoneManagement, limit = 20, offset = 0 } = body;
 
   try {
     const tagRepo = new DomainTagRepository(db);
@@ -43,12 +36,13 @@ portfolioRoutes.post('/search', async (c) => {
     const conditions = [eq(domains.tenantId, tenantId)];
 
     if (query) {
-      conditions.push(
-        or(
-          like(domains.name, `%${query}%`),
-          like(domains.normalizedName, `%${query}%`)
-        )
+      const queryCondition = or(
+        like(domains.name, `%${query}%`),
+        like(domains.normalizedName, `%${query}%`)
       );
+      if (queryCondition) {
+        conditions.push(queryCondition);
+      }
     }
 
     if (zoneManagement?.length > 0) {
@@ -57,7 +51,7 @@ portfolioRoutes.post('/search', async (c) => {
 
     // Get domains
     let domainIds: string[] = [];
-    
+
     if (tags?.length > 0) {
       // Filter by tags first
       domainIds = await tagRepo.findDomainsByTags(tags, tenantId);
@@ -67,7 +61,9 @@ portfolioRoutes.post('/search', async (c) => {
       conditions.push(inArray(domains.id, domainIds));
     }
 
-    const whereClause = and(...(conditions.filter(Boolean) as any));
+    const whereClause =
+      (conditions.length > 1 ? and(...conditions) : conditions[0]) ??
+      eq(domains.tenantId, tenantId);
 
     // Fetch matching domains
     const results = await db.getDrizzle().query.domains.findMany({
@@ -117,7 +113,6 @@ portfolioRoutes.post('/search', async (c) => {
       limit,
       offset,
     });
-
   } catch (error) {
     console.error('Portfolio search error:', error);
     return c.json({ error: 'Search failed' }, 500);
@@ -136,7 +131,7 @@ portfolioRoutes.get('/domains/:domainId/notes', async (c) => {
     const noteRepo = new DomainNoteRepository(db);
     const notes = await noteRepo.findByDomainId(domainId);
     return c.json({ notes });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to fetch notes' }, 500);
   }
 });
@@ -176,7 +171,7 @@ portfolioRoutes.post('/domains/:domainId/notes', async (c) => {
     });
 
     return c.json({ note }, 201);
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to create note' }, 500);
   }
 });
@@ -199,6 +194,9 @@ portfolioRoutes.put('/notes/:noteId', async (c) => {
     }
 
     const updated = await noteRepo.update(noteId, { content });
+    if (!updated) {
+      return c.json({ error: 'Note not found' }, 404);
+    }
 
     await auditRepo.create({
       action: 'domain_note_updated',
@@ -211,7 +209,7 @@ portfolioRoutes.put('/notes/:noteId', async (c) => {
     });
 
     return c.json({ note: updated });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to update note' }, 500);
   }
 });
@@ -243,7 +241,7 @@ portfolioRoutes.delete('/notes/:noteId', async (c) => {
     });
 
     return c.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to delete note' }, 500);
   }
 });
@@ -260,7 +258,7 @@ portfolioRoutes.get('/domains/:domainId/tags', async (c) => {
     const tagRepo = new DomainTagRepository(db);
     const tags = await tagRepo.findByDomainId(domainId);
     return c.json({ tags });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to fetch tags' }, 500);
   }
 });
@@ -300,7 +298,7 @@ portfolioRoutes.post('/domains/:domainId/tags', async (c) => {
     });
 
     return c.json({ tag: created }, 201);
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to add tag' }, 500);
   }
 });
@@ -328,7 +326,7 @@ portfolioRoutes.delete('/domains/:domainId/tags/:tag', async (c) => {
     });
 
     return c.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to remove tag' }, 500);
   }
 });
@@ -346,7 +344,7 @@ portfolioRoutes.get('/filters', async (c) => {
     const filterRepo = new SavedFilterRepository(db);
     const filters = await filterRepo.findByTenant(tenantId, actorId);
     return c.json({ filters });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to fetch filters' }, 500);
   }
 });
@@ -385,7 +383,7 @@ portfolioRoutes.post('/filters', async (c) => {
     });
 
     return c.json({ filter }, 201);
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to create filter' }, 500);
   }
 });
@@ -411,6 +409,9 @@ portfolioRoutes.put('/filters/:filterId', async (c) => {
     }
 
     const updated = await filterRepo.update(filterId, body);
+    if (!updated) {
+      return c.json({ error: 'Filter not found' }, 404);
+    }
 
     await auditRepo.create({
       action: 'filter_updated',
@@ -423,7 +424,7 @@ portfolioRoutes.put('/filters/:filterId', async (c) => {
     });
 
     return c.json({ filter: updated });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to update filter' }, 500);
   }
 });
@@ -455,7 +456,7 @@ portfolioRoutes.delete('/filters/:filterId', async (c) => {
     });
 
     return c.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to delete filter' }, 500);
   }
 });
@@ -471,11 +472,9 @@ portfolioRoutes.get('/templates/overrides', async (c) => {
 
   try {
     const overrideRepo = new TemplateOverrideRepository(db);
-    const overrides = providerKey
-      ? await overrideRepo.findByProvider(providerKey, tenantId)
-      : [];
+    const overrides = providerKey ? await overrideRepo.findByProvider(providerKey, tenantId) : [];
     return c.json({ overrides });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to fetch overrides' }, 500);
   }
 });
@@ -514,7 +513,7 @@ portfolioRoutes.post('/templates/overrides', async (c) => {
     });
 
     return c.json({ override }, 201);
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to create override' }, 500);
   }
 });
@@ -551,7 +550,7 @@ portfolioRoutes.put('/templates/overrides/:overrideId', async (c) => {
     });
 
     return c.json({ override: updated });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to update override' }, 500);
   }
 });
@@ -583,7 +582,7 @@ portfolioRoutes.delete('/templates/overrides/:overrideId', async (c) => {
     });
 
     return c.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to delete override' }, 500);
   }
 });
@@ -601,7 +600,7 @@ portfolioRoutes.get('/audit', async (c) => {
     const auditRepo = new AuditEventRepository(db);
     const events = await auditRepo.findByTenant(tenantId, limit);
     return c.json({ events });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to fetch audit log' }, 500);
   }
 });
