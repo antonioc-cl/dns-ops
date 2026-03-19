@@ -1,47 +1,43 @@
-import { eq, and } from 'drizzle-orm'
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
-import type { DrizzleD1Database } from 'drizzle-orm/d1'
+import { eq } from 'drizzle-orm'
+import type { IDatabaseAdapter } from '../database/simple-adapter.js'
 import { observations, type Observation, type NewObservation } from '../schema/index.js'
-import * as schema from '../schema/index.js'
-
-type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>
 
 export class ObservationRepository {
-  constructor(private db: DB) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findById(id: string): Promise<Observation | null> {
-    const results = await this.db.select()
-      .from(observations)
-      .where(eq(observations.id, id))
-      .limit(1)
-
-    return results[0] || null
+    const result = await this.db.selectOne(observations, eq(observations.id, id))
+    return result || null
   }
 
   async findBySnapshotId(snapshotId: string): Promise<Observation[]> {
-    return this.db.select()
-      .from(observations)
-      .where(eq(observations.snapshotId, snapshotId))
-      .orderBy(observations.queryName, observations.queryType)
+    const results = await this.db.selectWhere(
+      observations,
+      eq(observations.snapshotId, snapshotId)
+    )
+    // Sort by queryName and queryType
+    return results.sort((a, b) => {
+      const nameCompare = a.queryName.localeCompare(b.queryName)
+      if (nameCompare !== 0) return nameCompare
+      return a.queryType.localeCompare(b.queryType)
+    })
   }
 
   async findByQuery(snapshotId: string, name: string, type: string): Promise<Observation[]> {
-    return this.db.select()
-      .from(observations)
-      .where(and(
-        eq(observations.snapshotId, snapshotId),
-        eq(observations.queryName, name),
-        eq(observations.queryType, type)
-      ))
+    const results = await this.db.select(observations)
+    return results.filter(o =>
+      o.snapshotId === snapshotId &&
+      o.queryName === name &&
+      o.queryType === type
+    )
   }
 
   async create(data: NewObservation): Promise<Observation> {
-    const results = await this.db.insert(observations).values(data).returning()
-    return results[0]
+    return this.db.insert(observations, data)
   }
 
   async createMany(data: NewObservation[]): Promise<Observation[]> {
     if (data.length === 0) return []
-    return this.db.insert(observations).values(data).returning()
+    return this.db.insertMany(observations, data)
   }
 }

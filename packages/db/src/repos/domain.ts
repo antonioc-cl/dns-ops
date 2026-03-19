@@ -4,8 +4,8 @@
  * Repository pattern for domain operations using the database adapter.
  */
 
-import { eq, like, desc } from 'drizzle-orm';
-import type { IDatabaseAdapter } from '../database/adapter.js';
+import { eq } from 'drizzle-orm';
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
 import { domains, type Domain, type NewDomain } from '../schema/index.js';
 
 export interface DomainFilter {

@@ -7,34 +7,134 @@
  * - Dig: Familiar dig-style output
  */
 
-import { useState } from 'react';
-import type { Observation } from '@dns-ops/db/schema';
+import { useState, type KeyboardEvent } from 'react';
 import {
   observationsToRecordSets,
   groupRecordsByType,
   formatRecordValue,
   getRecordTypeDescription,
-  toDigFormat,
   observationsToDigFormat,
 } from '@dns-ops/parsing';
 
+interface UIObservation {
+  id: string;
+  queryName: string;
+  queryType: string;
+  vantageIdentifier?: string | null;
+  vantageType: string;
+  status: string;
+  responseCode?: number | null;
+  responseTimeMs?: number | null;
+  queriedAt: string | Date;
+  flags?: unknown;
+  answerSection?: unknown;
+  authoritySection?: unknown;
+  additionalSection?: unknown;
+  errorMessage?: string | null;
+  rawResponse?: string | null;
+}
+
 interface DNSViewsProps {
-  observations: Observation[];
+  observations: UIObservation[];
+}
+
+interface ParsedRecordSet {
+  name: string;
+  type: string;
+  ttl?: number;
+  values: string[];
+  sourceVantages: string[];
+  isConsistent: boolean;
+  consolidationNotes?: string;
 }
 
 type ViewMode = 'parsed' | 'raw' | 'dig';
 
+const VIEW_MODES: { id: ViewMode; label: string; description: string }[] = [
+  { id: 'parsed', label: 'Parsed', description: 'Structured record view' },
+  { id: 'raw', label: 'Raw', description: 'Complete response data' },
+  { id: 'dig', label: 'Dig', description: 'CLI-style output' },
+];
+
 export function DNSViews({ observations }: DNSViewsProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('parsed');
 
+  const focusModeTab = (mode: ViewMode) => {
+    requestAnimationFrame(() => {
+      document.getElementById(`dns-view-tab-${mode}`)?.focus();
+    });
+  };
+
+  const handleModeKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      const next = VIEW_MODES[(index + 1) % VIEW_MODES.length];
+      setViewMode(next.id);
+      focusModeTab(next.id);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      const prevIndex = (index - 1 + VIEW_MODES.length) % VIEW_MODES.length;
+      const prev = VIEW_MODES[prevIndex];
+      setViewMode(prev.id);
+      focusModeTab(prev.id);
+      return;
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault();
+      const first = VIEW_MODES[0];
+      setViewMode(first.id);
+      focusModeTab(first.id);
+      return;
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault();
+      const last = VIEW_MODES[VIEW_MODES.length - 1];
+      setViewMode(last.id);
+      focusModeTab(last.id);
+    }
+  };
+
   return (
     <div>
-      <ViewModeSelector current={viewMode} onChange={setViewMode} />
+      <ViewModeSelector
+        current={viewMode}
+        onChange={setViewMode}
+        onKeyDown={handleModeKeyDown}
+      />
 
       <div className="mt-4">
-        {viewMode === 'parsed' && <ParsedView observations={observations} />}
-        {viewMode === 'raw' && <RawView observations={observations} />}
-        {viewMode === 'dig' && <DigView observations={observations} />}
+        <div
+          role="tabpanel"
+          id="dns-view-panel-parsed"
+          aria-labelledby="dns-view-tab-parsed"
+          hidden={viewMode !== 'parsed'}
+        >
+          {viewMode === 'parsed' && <ParsedView observations={observations} />}
+        </div>
+        <div
+          role="tabpanel"
+          id="dns-view-panel-raw"
+          aria-labelledby="dns-view-tab-raw"
+          hidden={viewMode !== 'raw'}
+        >
+          {viewMode === 'raw' && <RawView observations={observations} />}
+        </div>
+        <div
+          role="tabpanel"
+          id="dns-view-panel-dig"
+          aria-labelledby="dns-view-tab-dig"
+          hidden={viewMode !== 'dig'}
+        >
+          {viewMode === 'dig' && <DigView observations={observations} />}
+        </div>
       </div>
     </div>
   );
@@ -43,41 +143,45 @@ export function DNSViews({ observations }: DNSViewsProps) {
 function ViewModeSelector({
   current,
   onChange,
+  onKeyDown,
 }: {
   current: ViewMode;
   onChange: (mode: ViewMode) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, index: number) => void;
 }) {
-  const modes: { id: ViewMode; label: string; description: string }[] = [
-    { id: 'parsed', label: 'Parsed', description: 'Structured record view' },
-    { id: 'raw', label: 'Raw', description: 'Complete response data' },
-    { id: 'dig', label: 'Dig', description: 'CLI-style output' },
-  ];
-
   return (
-    <div className="flex space-x-1 rounded-lg bg-gray-100 p-1">
-      {modes.map((mode) => (
-        <button
-          key={mode.id}
-          onClick={() => onChange(mode.id)}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-all ${
-            current === mode.id
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-          title={mode.description}
-        >
-          {mode.label}
-        </button>
-      ))}
+    <div className="rounded-lg bg-gray-100 p-1" role="tablist" aria-label="DNS view mode">
+      <div className="flex space-x-1">
+        {VIEW_MODES.map((mode, index) => (
+          <button
+            key={mode.id}
+            id={`dns-view-tab-${mode.id}`}
+            role="tab"
+            aria-selected={current === mode.id}
+            aria-controls={`dns-view-panel-${mode.id}`}
+            tabIndex={current === mode.id ? 0 : -1}
+            onClick={() => onChange(mode.id)}
+            onKeyDown={(event) => onKeyDown(event, index)}
+            className={`focus-ring flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+              current === mode.id
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            title={mode.description}
+          >
+            {mode.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
 // ==================== PARSED VIEW ====================
 
-function ParsedView({ observations }: { observations: Observation[] }) {
-  const recordSets = observationsToRecordSets(observations);
-  const grouped = groupRecordsByType(recordSets);
+function ParsedView({ observations }: { observations: UIObservation[] }) {
+  const recordSets = observationsToRecordSets(observations) as ParsedRecordSet[];
+  const grouped = groupRecordsByType(recordSets) as Map<string, ParsedRecordSet[]>;
 
   if (recordSets.length === 0) {
     return (
@@ -89,7 +193,7 @@ function ParsedView({ observations }: { observations: Observation[] }) {
 
   return (
     <div className="space-y-6">
-      {Array.from(grouped.entries()).map(([type, records]) => (
+      {Array.from(grouped.entries()).map(([type, records]: [string, ParsedRecordSet[]]) => (
         <section key={type} className="border rounded-lg overflow-hidden">
           <div className="bg-gray-50 px-4 py-2 border-b">
             <h4 className="font-semibold text-gray-900">
@@ -115,7 +219,7 @@ function ParsedView({ observations }: { observations: Observation[] }) {
                 {records.map((record, idx) => (
                   <tr key={`${record.name}-${idx}`}>
                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{record.ttl}s</td>
+                    <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">{record.ttl != null ? `${record.ttl}s` : '—'}</td>
                     <td className="px-4 py-2 text-sm">
                       <div className="space-y-1">
                         {record.values.map((value, vidx) => (
@@ -155,7 +259,7 @@ function ParsedView({ observations }: { observations: Observation[] }) {
 
 // ==================== RAW VIEW ====================
 
-function RawView({ observations }: { observations: Observation[] }) {
+function RawView({ observations }: { observations: UIObservation[] }) {
   return (
     <div className="space-y-4">
       {observations.map((obs) => (
@@ -182,7 +286,7 @@ function RawView({ observations }: { observations: Observation[] }) {
               </div>
               <div>
                 <span className="text-gray-500">Response Time:</span>{' '}
-                <span>{obs.responseTimeMs}ms</span>
+                <span className="tabular-nums">{obs.responseTimeMs}ms</span>
               </div>
               <div>
                 <span className="text-gray-500">Queried At:</span>{' '}
@@ -190,7 +294,7 @@ function RawView({ observations }: { observations: Observation[] }) {
               </div>
             </div>
 
-            {obs.flags && (
+            {Boolean(obs.flags) && (
               <div>
                 <span className="text-gray-500 text-sm">Flags:</span>
                 <pre className="mt-1 text-xs bg-gray-50 p-2 rounded">
@@ -260,7 +364,7 @@ function StatusBadge({ status }: { status: string }) {
 
 // ==================== DIG VIEW ====================
 
-function DigView({ observations }: { observations: Observation[] }) {
+function DigView({ observations }: { observations: UIObservation[] }) {
   const [showAll, setShowAll] = useState(false);
 
   // For many observations, show a summary first
@@ -271,14 +375,14 @@ function DigView({ observations }: { observations: Observation[] }) {
     <div>
       <div className="bg-gray-900 text-gray-100 rounded-lg overflow-hidden">
         <div className="p-4 font-mono text-sm whitespace-pre overflow-x-auto">
-          {observationsToDigFormat(displayObservations)}
+          {String(observationsToDigFormat(displayObservations))}
         </div>
       </div>
 
       {hasMore && !showAll && (
         <button
           onClick={() => setShowAll(true)}
-          className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+          className="focus-ring mt-2 text-sm text-blue-600 hover:text-blue-800"
         >
           Show all {observations.length} observations...
         </button>

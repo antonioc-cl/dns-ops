@@ -2,7 +2,7 @@ import type { ZoneManagement, ResultState, Severity, Confidence } from '@dns-ops
 
 interface BadgeProps {
   children: React.ReactNode;
-  color: 'gray' | 'green' | 'yellow' | 'red' | 'blue' | 'purple';
+  color: 'gray' | 'green' | 'yellow' | 'red' | 'blue' | 'purple' | 'orange';
 }
 
 function Badge({ children, color }: BadgeProps) {
@@ -13,6 +13,7 @@ function Badge({ children, color }: BadgeProps) {
     red: 'bg-red-100 text-red-800',
     blue: 'bg-blue-100 text-blue-800',
     purple: 'bg-purple-100 text-purple-800',
+    orange: 'bg-orange-100 text-orange-800',
   };
 
   return (
@@ -102,5 +103,3 @@ export function ConfidenceBadge({ level }: ConfidenceBadgeProps) {
   );
 }
 
-// Orange color for severity
-const orangeClasses = 'bg-orange-100 text-orange-800';

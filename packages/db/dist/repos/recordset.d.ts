@@ -1,17 +1,13 @@
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { type RecordSet, type NewRecordSet } from '../schema';
-import * as schema from '../schema';
-type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
+import { type RecordSet, type NewRecordSet } from '../schema/index.js';
 export declare class RecordSetRepository {
     private db;
-    constructor(db: DB);
+    constructor(db: IDatabaseAdapter);
     findById(id: string): Promise<RecordSet | null>;
     findBySnapshotId(snapshotId: string): Promise<RecordSet[]>;
     findByNameAndType(snapshotId: string, name: string, type: string): Promise<RecordSet | null>;
     create(data: NewRecordSet): Promise<RecordSet>;
     createMany(data: NewRecordSet[]): Promise<RecordSet[]>;
-    update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet>;
+    update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet | undefined>;
 }
-export {};
 //# sourceMappingURL=recordset.d.ts.map

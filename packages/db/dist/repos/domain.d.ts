@@ -1,17 +1,18 @@
 /**
- * DNS Ops Workbench - Domain Repository
+ * Domain Repository
  *
- * Repository pattern for domain operations.
- * Provides type-safe database access with common query patterns.
+ * Repository pattern for domain operations using the database adapter.
  */
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { type Domain, type NewDomain } from '../schema';
-import * as schema from '../schema';
-type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
+import { type Domain, type NewDomain } from '../schema/index.js';
+export interface DomainFilter {
+    tenantId?: string;
+    zoneManagement?: 'managed' | 'unmanaged' | 'unknown';
+    search?: string;
+}
 export declare class DomainRepository {
     private db;
-    constructor(db: DB);
+    constructor(db: IDatabaseAdapter);
     /**
      * Find a domain by ID
      */
@@ -21,13 +22,20 @@ export declare class DomainRepository {
      */
     findByName(normalizedName: string): Promise<Domain | undefined>;
     /**
+     * Find a domain by its exact name (case-insensitive)
+     */
+    findByExactName(name: string): Promise<Domain | undefined>;
+    /**
      * Search domains by name pattern
      */
     searchByName(pattern: string, limit?: number): Promise<Domain[]>;
     /**
-     * Get all domains for a tenant
+     * Find all domains matching filter criteria
      */
-    findByTenant(tenantId: string, limit?: number): Promise<Domain[]>;
+    findAll(filter?: DomainFilter, options?: {
+        limit?: number;
+        offset?: number;
+    }): Promise<Domain[]>;
     /**
      * Get domains by zone management type
      */
@@ -58,7 +66,10 @@ export declare class DomainRepository {
     /**
      * Count total domains
      */
-    count(): Promise<number>;
+    count(filter?: DomainFilter): Promise<number>;
+    /**
+     * Delete a domain by ID
+     */
+    delete(id: string): Promise<Domain | undefined>;
 }
-export {};
 //# sourceMappingURL=domain.d.ts.map

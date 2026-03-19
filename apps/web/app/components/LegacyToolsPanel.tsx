@@ -6,14 +6,15 @@
  * (tracked via shadow comparison in Bead 09).
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   defaultLegacyToolsConfig,
   buildDmarcLink,
   buildDkimLink,
   logLegacyToolAccess,
+  type LegacyToolConfig,
   type LegacyToolsConfig,
-} from '../config/legacy-tools';
+} from '../config/legacy-tools.js';
 
 interface LegacyToolsPanelProps {
   domain: string;
@@ -96,7 +97,7 @@ export function LegacyToolsPanel({ domain, detectedSelectors = [] }: LegacyTools
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => handleDkimClick(selector)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="focus-ring text-sm text-blue-600 hover:text-blue-800"
                 >
                   Validate in legacy tool →
                 </a>
@@ -130,7 +131,7 @@ interface ToolCardProps {
 
 function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth }: ToolCardProps) {
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-150 motion-reduce:transition-none">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
           {icon === 'dmarc' ? (
@@ -156,7 +157,7 @@ function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth 
           <div className="flex items-center gap-3 mt-3">
             <button
               onClick={onView}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+              className="focus-ring min-h-10 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
             >
               Open Tool
             </button>
@@ -164,7 +165,7 @@ function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth 
               href={externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="focus-ring text-sm text-gray-500 hover:text-gray-700"
             >
               Open in new tab →
             </a>
@@ -178,27 +179,95 @@ function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth 
 interface DeepLinkModalProps {
   tool: 'dmarc' | 'dkim';
   domain: string;
-  config: { name: string; baseUrl: string };
+  config: LegacyToolConfig;
   onClose: () => void;
 }
 
 function DeepLinkModal({ tool, domain, config, onClose }: DeepLinkModalProps) {
+  const continueRef = useRef<HTMLAnchorElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const previousActiveElement = document.activeElement as HTMLElement | null;
+    const originalOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    continueRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!dialogRef.current) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      );
+
+      const focusables = Array.from(focusableElements);
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+      previousActiveElement?.focus();
+    };
+  }, [onClose]);
+
+  const destinationUrl = tool === 'dmarc' ? buildDmarcLink(config, domain) : buildDkimLink(config, domain);
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="legacy-tool-modal-title"
+        aria-describedby="legacy-tool-modal-description"
+        className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+      >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Open {config.name}</h3>
+          <h3 id="legacy-tool-modal-title" className="text-lg font-semibold text-gray-900">
+            Open {config.name}
+          </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            aria-label="Close dialog"
+            className="focus-ring min-h-10 min-w-10 rounded text-gray-400 hover:text-gray-600"
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <p className="text-sm text-gray-600 mb-4">
+        <p id="legacy-tool-modal-description" className="text-sm text-gray-600 mb-4">
           You are about to navigate to the legacy {tool.toUpperCase()} tool for{' '}
           <strong>{domain}</strong>. Domain context will be pre-filled.
         </p>
@@ -210,17 +279,18 @@ function DeepLinkModal({ tool, domain, config, onClose }: DeepLinkModalProps) {
 
         <div className="flex items-center gap-3">
           <a
-            href={tool === 'dmarc' ? buildDmarcLink(config, domain) : buildDkimLink(config, domain)}
+            ref={continueRef}
+            href={destinationUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white text-center font-medium rounded-lg hover:bg-blue-700"
+            className="focus-ring flex-1 min-h-10 px-4 py-2 bg-blue-600 text-white text-center font-medium rounded-lg hover:bg-blue-700"
           >
             Continue to Tool
           </a>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:text-gray-900"
+            className="focus-ring min-h-10 px-4 py-2 text-gray-700 hover:text-gray-900"
           >
             Cancel
           </button>

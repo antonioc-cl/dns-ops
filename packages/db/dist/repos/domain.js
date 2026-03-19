@@ -1,11 +1,10 @@
 /**
- * DNS Ops Workbench - Domain Repository
+ * Domain Repository
  *
- * Repository pattern for domain operations.
- * Provides type-safe database access with common query patterns.
+ * Repository pattern for domain operations using the database adapter.
  */
-import { eq, like, desc, sql } from 'drizzle-orm';
-import { domains } from '../schema';
+import { eq } from 'drizzle-orm';
+import { domains } from '../schema/index.js';
 export class DomainRepository {
     db;
     constructor(db) {
@@ -15,66 +14,66 @@ export class DomainRepository {
      * Find a domain by ID
      */
     async findById(id) {
-        const result = await this.db
-            .select()
-            .from(domains)
-            .where(eq(domains.id, id))
-            .limit(1);
-        return result[0];
+        return this.db.selectOne(domains, eq(domains.id, id));
     }
     /**
      * Find a domain by its normalized name
      */
     async findByName(normalizedName) {
-        const result = await this.db
-            .select()
-            .from(domains)
-            .where(eq(domains.normalizedName, normalizedName.toLowerCase()))
-            .limit(1);
-        return result[0];
+        return this.db.selectOne(domains, eq(domains.normalizedName, normalizedName.toLowerCase()));
+    }
+    /**
+     * Find a domain by its exact name (case-insensitive)
+     */
+    async findByExactName(name) {
+        return this.db.selectOne(domains, eq(domains.name, name.toLowerCase()));
     }
     /**
      * Search domains by name pattern
      */
     async searchByName(pattern, limit = 20) {
-        return this.db
-            .select()
-            .from(domains)
-            .where(like(domains.normalizedName, `%${pattern.toLowerCase()}%`))
-            .limit(limit);
+        const allDomains = await this.db.select(domains);
+        return allDomains
+            .filter(d => d.normalizedName.includes(pattern.toLowerCase()))
+            .slice(0, limit);
     }
     /**
-     * Get all domains for a tenant
+     * Find all domains matching filter criteria
      */
-    async findByTenant(tenantId, limit = 100) {
-        return this.db
-            .select()
-            .from(domains)
-            .where(eq(domains.tenantId, tenantId))
-            .limit(limit);
+    async findAll(filter = {}, options = {}) {
+        let results = await this.db.select(domains);
+        if (filter.tenantId) {
+            results = results.filter(d => d.tenantId === filter.tenantId);
+        }
+        if (filter.zoneManagement) {
+            results = results.filter(d => d.zoneManagement === filter.zoneManagement);
+        }
+        if (filter.search) {
+            const searchLower = filter.search.toLowerCase();
+            results = results.filter(d => d.normalizedName.includes(searchLower) ||
+                d.name.toLowerCase().includes(searchLower));
+        }
+        // Apply pagination
+        const offset = options.offset || 0;
+        const limit = options.limit || results.length;
+        return results.slice(offset, offset + limit);
     }
     /**
      * Get domains by zone management type
      */
     async findByZoneManagement(zoneManagement, limit = 100) {
-        return this.db
-            .select()
-            .from(domains)
-            .where(eq(domains.zoneManagement, zoneManagement))
-            .limit(limit);
+        const results = await this.db.selectWhere(domains, eq(domains.zoneManagement, zoneManagement));
+        return results.slice(0, limit);
     }
     /**
      * Create a new domain
      */
     async create(data) {
-        const result = await this.db
-            .insert(domains)
-            .values({
+        const result = await this.db.insert(domains, {
             ...data,
             normalizedName: data.normalizedName || data.name.toLowerCase(),
-        })
-            .returning();
-        return result[0];
+        });
+        return result;
     }
     /**
      * Create a new domain or return existing if name already exists
@@ -90,15 +89,9 @@ export class DomainRepository {
      * Update domain metadata
      */
     async update(id, data) {
-        const result = await this.db
-            .update(domains)
-            .set({
+        return this.db.updateOne(domains, {
             ...data,
-            updatedAt: new Date(),
-        })
-            .where(eq(domains.id, id))
-            .returning();
-        return result[0];
+        }, eq(domains.id, id));
     }
     /**
      * Update zone management status
@@ -111,21 +104,27 @@ export class DomainRepository {
      */
     async list(options = {}) {
         const { limit = 100, offset = 0 } = options;
-        return this.db
-            .select()
-            .from(domains)
-            .orderBy(desc(domains.createdAt))
-            .limit(limit)
-            .offset(offset);
+        const results = await this.db.select(domains);
+        return results.slice(offset, offset + limit);
     }
     /**
      * Count total domains
      */
-    async count() {
-        const result = await this.db
-            .select({ count: sql `count(*)` })
-            .from(domains);
-        return result[0]?.count || 0;
+    async count(filter = {}) {
+        let results = await this.db.select(domains);
+        if (filter.tenantId) {
+            results = results.filter(d => d.tenantId === filter.tenantId);
+        }
+        if (filter.zoneManagement) {
+            results = results.filter(d => d.zoneManagement === filter.zoneManagement);
+        }
+        return results.length;
+    }
+    /**
+     * Delete a domain by ID
+     */
+    async delete(id) {
+        return this.db.deleteOne(domains, eq(domains.id, id));
     }
 }
 //# sourceMappingURL=domain.js.map

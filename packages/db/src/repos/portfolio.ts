@@ -5,24 +5,30 @@
  * and template overrides.
  */
 
-import { eq, and, desc, inArray, sql } from 'drizzle-orm';
-import type { DbClient } from '../client.js';
+import { eq } from 'drizzle-orm';
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
 import {
   domainNotes,
   domainTags,
   savedFilters,
   auditEvents,
   templateOverrides,
+  monitoredDomains,
+  alerts,
   type NewDomainNote,
   type NewDomainTag,
   type NewSavedFilter,
   type NewAuditEvent,
   type NewTemplateOverride,
+  type NewMonitoredDomain,
+  type NewAlert,
   type DomainNote,
   type DomainTag,
   type SavedFilter,
   type AuditEvent,
   type TemplateOverride,
+  type MonitoredDomain,
+  type Alert,
 } from '../schema/index.js';
 
 // =============================================================================
@@ -30,37 +36,36 @@ import {
 // =============================================================================
 
 export class DomainNoteRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByDomainId(domainId: string): Promise<DomainNote[]> {
-    return this.db.query.domainNotes.findMany({
-      where: eq(domainNotes.domainId, domainId),
-      orderBy: desc(domainNotes.createdAt),
-    });
+    const results = await this.db.selectWhere(
+      domainNotes,
+      eq(domainNotes.domainId, domainId)
+    );
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async findById(id: string): Promise<DomainNote | undefined> {
-    return this.db.query.domainNotes.findFirst({
-      where: eq(domainNotes.id, id),
-    });
+    return this.db.selectOne(domainNotes, eq(domainNotes.id, id));
   }
 
   async create(data: NewDomainNote): Promise<DomainNote> {
-    const [note] = await this.db.insert(domainNotes).values(data).returning();
-    return note;
+    return this.db.insert(domainNotes, data);
   }
 
-  async update(id: string, data: Partial<NewDomainNote>): Promise<DomainNote> {
-    const [note] = await this.db
-      .update(domainNotes)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(domainNotes.id, id))
-      .returning();
-    return note;
+  async update(id: string, data: Partial<NewDomainNote>): Promise<DomainNote | undefined> {
+    return this.db.updateOne(
+      domainNotes,
+      { ...data, updatedAt: new Date() },
+      eq(domainNotes.id, id)
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(domainNotes).where(eq(domainNotes.id, id));
+    await this.db.deleteOne(domainNotes, eq(domainNotes.id, id));
   }
 }
 
@@ -69,50 +74,52 @@ export class DomainNoteRepository {
 // =============================================================================
 
 export class DomainTagRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByDomainId(domainId: string): Promise<DomainTag[]> {
-    return this.db.query.domainTags.findMany({
-      where: eq(domainTags.domainId, domainId),
-      orderBy: desc(domainTags.createdAt),
-    });
+    const results = await this.db.selectWhere(
+      domainTags,
+      eq(domainTags.domainId, domainId)
+    );
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async findByTag(tag: string, tenantId?: string): Promise<DomainTag[]> {
-    const conditions = [eq(domainTags.tag, tag)];
+    let results = await this.db.select(domainTags);
+    results = results.filter(r => r.tag === tag);
     if (tenantId) {
-      conditions.push(eq(domainTags.tenantId, tenantId));
+      results = results.filter(r => r.tenantId === tenantId);
     }
-    return this.db.query.domainTags.findMany({
-      where: and(...conditions),
-    });
+    return results;
   }
 
   async findDomainsByTags(tags: string[], tenantId?: string): Promise<string[]> {
-    const conditions = [inArray(domainTags.tag, tags)];
+    let results = await this.db.select(domainTags);
+    results = results.filter(r => tags.includes(r.tag));
     if (tenantId) {
-      conditions.push(eq(domainTags.tenantId, tenantId));
+      results = results.filter(r => r.tenantId === tenantId);
     }
-    const results = await this.db.query.domainTags.findMany({
-      where: and(...conditions),
-      columns: { domainId: true },
-    });
     return [...new Set(results.map(r => r.domainId))];
   }
 
   async create(data: NewDomainTag): Promise<DomainTag> {
-    const [tag] = await this.db.insert(domainTags).values(data).returning();
-    return tag;
+    return this.db.insert(domainTags, data);
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(domainTags).where(eq(domainTags.id, id));
+    await this.db.deleteOne(domainTags, eq(domainTags.id, id));
   }
 
   async deleteByDomainAndTag(domainId: string, tag: string): Promise<void> {
-    await this.db
-      .delete(domainTags)
-      .where(and(eq(domainTags.domainId, domainId), eq(domainTags.tag, tag)));
+    const results = await this.db.select(domainTags);
+    const toDelete = results.find(
+      r => r.domainId === domainId && r.tag === tag
+    );
+    if (toDelete) {
+      await this.db.deleteOne(domainTags, eq(domainTags.id, toDelete.id));
+    }
   }
 }
 
@@ -121,47 +128,41 @@ export class DomainTagRepository {
 // =============================================================================
 
 export class SavedFilterRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByTenant(tenantId: string, userId?: string): Promise<SavedFilter[]> {
-    const conditions = [
-      eq(savedFilters.tenantId, tenantId),
-    ];
+    let results = await this.db.select(savedFilters);
+    results = results.filter(r => r.tenantId === tenantId);
     
     if (userId) {
-      conditions.push(
-        sql`${savedFilters.createdBy} = ${userId} OR ${savedFilters.isShared} = true`
+      results = results.filter(
+        r => r.createdBy === userId || r.isShared
       );
     }
     
-    return this.db.query.savedFilters.findMany({
-      where: and(...conditions),
-      orderBy: desc(savedFilters.updatedAt),
-    });
+    return results.sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
   }
 
   async findById(id: string): Promise<SavedFilter | undefined> {
-    return this.db.query.savedFilters.findFirst({
-      where: eq(savedFilters.id, id),
-    });
+    return this.db.selectOne(savedFilters, eq(savedFilters.id, id));
   }
 
   async create(data: NewSavedFilter): Promise<SavedFilter> {
-    const [filter] = await this.db.insert(savedFilters).values(data).returning();
-    return filter;
+    return this.db.insert(savedFilters, data);
   }
 
-  async update(id: string, data: Partial<NewSavedFilter>): Promise<SavedFilter> {
-    const [filter] = await this.db
-      .update(savedFilters)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(savedFilters.id, id))
-      .returning();
-    return filter;
+  async update(id: string, data: Partial<NewSavedFilter>): Promise<SavedFilter | undefined> {
+    return this.db.updateOne(
+      savedFilters,
+      { ...data, updatedAt: new Date() },
+      eq(savedFilters.id, id)
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(savedFilters).where(eq(savedFilters.id, id));
+    await this.db.deleteOne(savedFilters, eq(savedFilters.id, id));
   }
 }
 
@@ -170,42 +171,46 @@ export class SavedFilterRepository {
 // =============================================================================
 
 export class AuditEventRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByEntity(entityType: string, entityId: string): Promise<AuditEvent[]> {
-    return this.db.query.auditEvents.findMany({
-      where: and(
-        eq(auditEvents.entityType, entityType),
-        eq(auditEvents.entityId, entityId)
-      ),
-      orderBy: desc(auditEvents.createdAt),
-    });
+    const results = await this.db.select(auditEvents);
+    return results
+      .filter(
+        r => r.entityType === entityType && r.entityId === entityId
+      )
+      .sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   }
 
   async findByActor(actorId: string, limit: number = 100): Promise<AuditEvent[]> {
-    return this.db.query.auditEvents.findMany({
-      where: eq(auditEvents.actorId, actorId),
-      orderBy: desc(auditEvents.createdAt),
-      limit,
-    });
+    const results = await this.db.select(auditEvents);
+    return results
+      .filter(r => r.actorId === actorId)
+      .sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, limit);
   }
 
   async findByTenant(tenantId: string, limit: number = 100): Promise<AuditEvent[]> {
-    return this.db.query.auditEvents.findMany({
-      where: eq(auditEvents.tenantId, tenantId),
-      orderBy: desc(auditEvents.createdAt),
-      limit,
-    });
+    const results = await this.db.select(auditEvents);
+    return results
+      .filter(r => r.tenantId === tenantId)
+      .sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, limit);
   }
 
   async create(data: NewAuditEvent): Promise<AuditEvent> {
-    const [event] = await this.db.insert(auditEvents).values(data).returning();
-    return event;
+    return this.db.insert(auditEvents, data);
   }
 
   async createBatch(data: NewAuditEvent[]): Promise<AuditEvent[]> {
     if (data.length === 0) return [];
-    return this.db.insert(auditEvents).values(data).returning();
+    return this.db.insertMany(auditEvents, data);
   }
 }
 
@@ -214,22 +219,19 @@ export class AuditEventRepository {
 // =============================================================================
 
 export class TemplateOverrideRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByProvider(providerKey: string, tenantId?: string): Promise<TemplateOverride[]> {
-    const conditions = [eq(templateOverrides.providerKey, providerKey)];
+    let results = await this.db.select(templateOverrides);
+    results = results.filter(r => r.providerKey === providerKey);
     if (tenantId) {
-      conditions.push(eq(templateOverrides.tenantId, tenantId));
+      results = results.filter(r => r.tenantId === tenantId);
     }
-    return this.db.query.templateOverrides.findMany({
-      where: and(...conditions),
-    });
+    return results;
   }
 
   async findById(id: string): Promise<TemplateOverride | undefined> {
-    return this.db.query.templateOverrides.findFirst({
-      where: eq(templateOverrides.id, id),
-    });
+    return this.db.selectOne(templateOverrides, eq(templateOverrides.id, id));
   }
 
   async findApplicable(
@@ -238,43 +240,38 @@ export class TemplateOverrideRepository {
     domainName: string,
     tenantId?: string
   ): Promise<TemplateOverride | undefined> {
-    const conditions = [
-      eq(templateOverrides.providerKey, providerKey),
-      eq(templateOverrides.templateKey, templateKey),
-    ];
+    let results = await this.db.select(templateOverrides);
+    results = results.filter(
+      r => r.providerKey === providerKey && r.templateKey === templateKey
+    );
     
     if (tenantId) {
-      conditions.push(eq(templateOverrides.tenantId, tenantId));
+      results = results.filter(r => r.tenantId === tenantId);
     }
 
-    const overrides = await this.db.query.templateOverrides.findMany({
-      where: and(...conditions),
-    });
-
     // Find first override that applies to this domain (or applies to all)
-    return overrides.find(o => 
-      !o.appliesToDomains || 
-      o.appliesToDomains.length === 0 ||
-      o.appliesToDomains.includes(domainName)
+    return results.find(
+      o =>
+        !o.appliesToDomains ||
+        o.appliesToDomains.length === 0 ||
+        o.appliesToDomains.includes(domainName)
     );
   }
 
   async create(data: NewTemplateOverride): Promise<TemplateOverride> {
-    const [override] = await this.db.insert(templateOverrides).values(data).returning();
-    return override;
+    return this.db.insert(templateOverrides, data);
   }
 
-  async update(id: string, data: Partial<NewTemplateOverride>): Promise<TemplateOverride> {
-    const [override] = await this.db
-      .update(templateOverrides)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(templateOverrides.id, id))
-      .returning();
-    return override;
+  async update(id: string, data: Partial<NewTemplateOverride>): Promise<TemplateOverride | undefined> {
+    return this.db.updateOne(
+      templateOverrides,
+      { ...data, updatedAt: new Date() },
+      eq(templateOverrides.id, id)
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(templateOverrides).where(eq(templateOverrides.id, id));
+    await this.db.deleteOne(templateOverrides, eq(templateOverrides.id, id));
   }
 }
 
@@ -282,56 +279,56 @@ export class TemplateOverrideRepository {
 // MONITORED DOMAINS REPOSITORY (Bead 15)
 // =============================================================================
 
-import { monitoredDomains, alerts, type NewMonitoredDomain, type NewAlert, type MonitoredDomain, type Alert } from '../schema/index.js';
-
 export class MonitoredDomainRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByTenant(tenantId: string): Promise<MonitoredDomain[]> {
-    return this.db.query.monitoredDomains.findMany({
-      where: eq(monitoredDomains.tenantId, tenantId),
-      orderBy: desc(monitoredDomains.createdAt),
-    });
+    const results = await this.db.selectWhere(
+      monitoredDomains,
+      eq(monitoredDomains.tenantId, tenantId)
+    );
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async findActiveBySchedule(schedule: 'hourly' | 'daily' | 'weekly'): Promise<MonitoredDomain[]> {
-    return this.db.query.monitoredDomains.findMany({
-      where: and(
-        eq(monitoredDomains.schedule, schedule),
-        eq(monitoredDomains.isActive, true)
-      ),
-    });
+    const results = await this.db.select(monitoredDomains);
+    return results.filter(
+      r => r.schedule === schedule && r.isActive
+    );
   }
 
   async findByDomainId(domainId: string): Promise<MonitoredDomain | undefined> {
-    return this.db.query.monitoredDomains.findFirst({
-      where: eq(monitoredDomains.domainId, domainId),
-    });
+    const results = await this.db.selectWhere(
+      monitoredDomains,
+      eq(monitoredDomains.domainId, domainId)
+    );
+    return results[0];
   }
 
   async create(data: NewMonitoredDomain): Promise<MonitoredDomain> {
-    const [monitored] = await this.db.insert(monitoredDomains).values(data).returning();
-    return monitored;
+    return this.db.insert(monitoredDomains, data);
   }
 
-  async update(id: string, data: Partial<NewMonitoredDomain>): Promise<MonitoredDomain> {
-    const [monitored] = await this.db
-      .update(monitoredDomains)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(monitoredDomains.id, id))
-      .returning();
-    return monitored;
+  async update(id: string, data: Partial<NewMonitoredDomain>): Promise<MonitoredDomain | undefined> {
+    return this.db.updateOne(
+      monitoredDomains,
+      { ...data, updatedAt: new Date() },
+      eq(monitoredDomains.id, id)
+    );
   }
 
   async updateLastCheck(id: string): Promise<void> {
-    await this.db
-      .update(monitoredDomains)
-      .set({ lastCheckAt: new Date() })
-      .where(eq(monitoredDomains.id, id));
+    await this.db.updateOne(
+      monitoredDomains,
+      { lastCheckAt: new Date() },
+      eq(monitoredDomains.id, id)
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(monitoredDomains).where(eq(monitoredDomains.id, id));
+    await this.db.deleteOne(monitoredDomains, eq(monitoredDomains.id, id));
   }
 }
 
@@ -340,52 +337,51 @@ export class MonitoredDomainRepository {
 // =============================================================================
 
 export class AlertRepository {
-  constructor(private db: DbClient) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findByMonitoredDomain(monitoredDomainId: string): Promise<Alert[]> {
-    return this.db.query.alerts.findMany({
-      where: eq(alerts.monitoredDomainId, monitoredDomainId),
-      orderBy: desc(alerts.createdAt),
-    });
+    const results = await this.db.selectWhere(
+      alerts,
+      eq(alerts.monitoredDomainId, monitoredDomainId)
+    );
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async findPending(tenantId?: string): Promise<Alert[]> {
-    const conditions = [eq(alerts.status, 'pending')];
+    let results = await this.db.selectWhere(alerts, eq(alerts.status, 'pending'));
     if (tenantId) {
-      conditions.push(eq(alerts.tenantId, tenantId));
+      results = results.filter(r => r.tenantId === tenantId);
     }
-    return this.db.query.alerts.findMany({
-      where: and(...conditions),
-      orderBy: desc(alerts.createdAt),
-    });
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   async findByDedupKey(dedupKey: string, since: Date): Promise<Alert[]> {
-    return this.db.query.alerts.findMany({
-      where: and(
-        eq(alerts.dedupKey, dedupKey),
-        sql`${alerts.createdAt} > ${since}`
-      ),
-    });
+    const results = await this.db.select(alerts);
+    return results.filter(
+      r => r.dedupKey === dedupKey && new Date(r.createdAt) > since
+    );
   }
 
   async create(data: NewAlert): Promise<Alert> {
-    const [alert] = await this.db.insert(alerts).values(data).returning();
-    return alert;
+    return this.db.insert(alerts, data);
   }
 
   async updateStatus(
-    id: string, 
+    id: string,
     status: 'pending' | 'sent' | 'suppressed' | 'acknowledged' | 'resolved',
     metadata?: { acknowledgedBy?: string; resolutionNote?: string }
-  ): Promise<Alert> {
+  ): Promise<Alert | undefined> {
     const update: Partial<NewAlert> = { status };
-    
+
     if (status === 'acknowledged' && metadata?.acknowledgedBy) {
       update.acknowledgedAt = new Date();
       update.acknowledgedBy = metadata.acknowledgedBy;
     }
-    
+
     if (status === 'resolved') {
       update.resolvedAt = new Date();
       if (metadata?.resolutionNote) {
@@ -393,19 +389,14 @@ export class AlertRepository {
       }
     }
 
-    const [alert] = await this.db
-      .update(alerts)
-      .set(update)
-      .where(eq(alerts.id, id))
-      .returning();
-    return alert;
+    return this.db.updateOne(alerts, update, eq(alerts.id, id));
   }
 
-  async acknowledge(id: string, acknowledgedBy: string): Promise<Alert> {
+  async acknowledge(id: string, acknowledgedBy: string): Promise<Alert | undefined> {
     return this.updateStatus(id, 'acknowledged', { acknowledgedBy });
   }
 
-  async resolve(id: string, resolutionNote?: string): Promise<Alert> {
+  async resolve(id: string, resolutionNote?: string): Promise<Alert | undefined> {
     return this.updateStatus(id, 'resolved', { resolutionNote });
   }
 }

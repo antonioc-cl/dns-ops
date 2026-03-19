@@ -4,6 +4,8 @@
  * Handle punycode encoding/decoding for international domain names.
  */
 
+/// <reference types="node" />
+
 // Simple punycode implementation for DNS Ops
 // In production, consider using the 'punycode' package
 

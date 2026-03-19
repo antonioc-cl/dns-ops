@@ -37,7 +37,7 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
         return res.json();
       })
       .then((data) => {
-        setData(data);
+        setData(data as FindingsData);
         setLoading(false);
       })
       .catch((err) => {
@@ -56,15 +56,15 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
 
   if (loading) {
     return (
-      <div className="py-4 text-gray-500">
-        <div className="animate-pulse">Analyzing DNS data...</div>
+      <div className="py-4 text-gray-500" role="status" aria-live="polite" aria-busy="true">
+        <div className="motion-safe:animate-pulse">Analyzing DNS data...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="py-4 text-red-600">
+      <div className="py-4 text-red-600" role="alert">
         Error loading findings: {error}
       </div>
     );
@@ -141,7 +141,9 @@ function FindingCard({
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 text-left hover:bg-black/5 transition-colors"
+        aria-expanded={expanded}
+        aria-controls={`finding-details-${finding.id}`}
+        className="focus-ring w-full px-4 py-3 text-left hover:bg-black/5 transition-colors duration-150"
       >
         <div className="flex items-start gap-3">
           <SeverityIcon severity={finding.severity} />
@@ -166,7 +168,7 @@ function FindingCard({
             </div>
           </div>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${
+            className={`w-5 h-5 text-gray-400 transition-transform duration-150 motion-reduce:transition-none ${
               expanded ? 'rotate-180' : ''
             }`}
             fill="none"
@@ -184,7 +186,7 @@ function FindingCard({
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-gray-200/50 bg-white">
+        <div id={`finding-details-${finding.id}`} className="px-4 pb-4 border-t border-gray-200/50 bg-white">
           {/* Evidence Links */}
           {finding.evidence && finding.evidence.length > 0 && (
             <div className="mt-3">

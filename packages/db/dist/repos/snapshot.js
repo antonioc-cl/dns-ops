@@ -4,8 +4,8 @@
  * Repository pattern for snapshot operations.
  * Snapshots represent point-in-time collections of DNS data.
  */
-import { eq, desc, sql } from 'drizzle-orm';
-import { snapshots } from '../schema';
+import { eq } from 'drizzle-orm';
+import { snapshots } from '../schema/index.js';
 export class SnapshotRepository {
     db;
     constructor(db) {
@@ -15,100 +15,70 @@ export class SnapshotRepository {
      * Find a snapshot by ID
      */
     async findById(id) {
-        const result = await this.db
-            .select()
-            .from(snapshots)
-            .where(eq(snapshots.id, id))
-            .limit(1);
-        return result[0];
+        return this.db.selectOne(snapshots, eq(snapshots.id, id));
     }
     /**
      * Get all snapshots for a domain
      */
     async findByDomain(domainId, limit = 50) {
-        return this.db
-            .select()
-            .from(snapshots)
-            .where(eq(snapshots.domainId, domainId))
-            .orderBy(desc(snapshots.createdAt))
-            .limit(limit);
+        const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
+        // Sort by createdAt desc and limit
+        return results
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, limit);
     }
     /**
      * Get the most recent snapshot for a domain
      */
     async findLatestByDomain(domainId) {
-        const result = await this.db
-            .select()
-            .from(snapshots)
-            .where(eq(snapshots.domainId, domainId))
-            .orderBy(desc(snapshots.createdAt))
-            .limit(1);
-        return result[0];
+        const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
+        // Sort by createdAt desc and return first
+        return results
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
     }
     /**
      * Get snapshots by result state
      */
     async findByState(state, limit = 100) {
-        return this.db
-            .select()
-            .from(snapshots)
-            .where(eq(snapshots.resultState, state))
-            .orderBy(desc(snapshots.createdAt))
-            .limit(limit);
+        const results = await this.db.selectWhere(snapshots, eq(snapshots.resultState, state));
+        return results
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, limit);
     }
     /**
      * Create a new snapshot
      */
     async create(data) {
-        const result = await this.db
-            .insert(snapshots)
-            .values(data)
-            .returning();
-        return result[0];
+        return this.db.insert(snapshots, data);
     }
     /**
      * Update snapshot with error information
      */
     async updateError(id, errorMessage) {
-        const result = await this.db
-            .update(snapshots)
-            .set({ errorMessage })
-            .where(eq(snapshots.id, id))
-            .returning();
-        return result[0];
+        return this.db.updateOne(snapshots, { errorMessage }, eq(snapshots.id, id));
     }
     /**
      * Update snapshot with collection duration
      */
     async updateDuration(id, durationMs) {
-        const result = await this.db
-            .update(snapshots)
-            .set({ collectionDurationMs: durationMs })
-            .where(eq(snapshots.id, id))
-            .returning();
-        return result[0];
+        return this.db.updateOne(snapshots, { collectionDurationMs: durationMs }, eq(snapshots.id, id));
     }
     /**
      * List snapshots with pagination
      */
     async list(options = {}) {
         const { limit = 100, offset = 0 } = options;
-        return this.db
-            .select()
-            .from(snapshots)
-            .orderBy(desc(snapshots.createdAt))
-            .limit(limit)
-            .offset(offset);
+        const results = await this.db.select(snapshots);
+        return results
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(offset, offset + limit);
     }
     /**
      * Count snapshots by domain
      */
     async countByDomain(domainId) {
-        const result = await this.db
-            .select({ count: sql `count(*)` })
-            .from(snapshots)
-            .where(eq(snapshots.domainId, domainId));
-        return result[0]?.count || 0;
+        const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
+        return results.length;
     }
 }
 //# sourceMappingURL=snapshot.js.map

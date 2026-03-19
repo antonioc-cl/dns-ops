@@ -99,7 +99,7 @@ export declare const remediationRequests: import("drizzle-orm/pg-core").PgTableW
             tableName: "remediation_requests";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "critical" | "high" | "medium" | "low";
+            data: "low" | "medium" | "high" | "critical";
             driverParam: string;
             notNull: true;
             hasDefault: true;
@@ -123,7 +123,7 @@ export declare const remediationRequests: import("drizzle-orm/pg-core").PgTableW
             tableName: "remediation_requests";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "resolved" | "closed" | "open" | "in-progress";
+            data: "open" | "in-progress" | "resolved" | "closed";
             driverParam: string;
             notNull: true;
             hasDefault: true;

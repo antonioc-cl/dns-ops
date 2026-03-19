@@ -15,6 +15,10 @@ interface DiscoveredSelector {
   provider?: string;
 }
 
+interface SelectorResponse {
+  selectors?: DiscoveredSelector[];
+}
+
 interface DiscoveredSelectorsProps {
   snapshotId: string;
 }
@@ -31,7 +35,8 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
     fetch(`/api/snapshot/${snapshotId}/selectors`)
       .then((res) => res.json())
       .then((data) => {
-        setSelectors(data.selectors || []);
+        const payload = data as SelectorResponse;
+        setSelectors(payload.selectors || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -41,11 +46,11 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
   }, [snapshotId]);
 
   if (loading) {
-    return <div className="text-sm text-gray-500">Discovering DKIM selectors...</div>;
+    return <div className="text-sm text-gray-500" role="status" aria-live="polite" aria-busy="true">Discovering DKIM selectors...</div>;
   }
 
   if (error) {
-    return <div className="text-sm text-red-600">Error: {error}</div>;
+    return <div className="text-sm text-red-600" role="alert">Error: {error}</div>;
   }
 
   if (selectors.length === 0) {
@@ -99,10 +104,7 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
       ))}
 
       <p className="text-xs text-gray-500 mt-3">
-        Selectors discovered using 5-level precedence strategy. 
-        <a href="#" className="text-blue-600 hover:underline ml-1">
-          Learn more
-        </a>
+        Selectors discovered using a 5-level precedence strategy (managed config → operator supplied → provider heuristic → common dictionary → not found).
       </p>
     </div>
   );

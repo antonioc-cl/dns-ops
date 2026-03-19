@@ -23,8 +23,16 @@ interface DelegationIssue {
   details: unknown;
 }
 
+interface DelegationResponse {
+  delegation?: DelegationData;
+}
+
+interface DelegationIssuesResponse {
+  issues?: DelegationIssue[];
+}
+
 interface DelegationPanelProps {
-  snapshotId: string;
+  snapshotId: string | null;
 }
 
 export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
@@ -42,8 +50,10 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
       fetch(`/api/snapshot/${snapshotId}/delegation/issues`).then((r) => r.json()),
     ])
       .then(([delegationData, issuesData]) => {
-        setDelegation(delegationData.delegation);
-        setIssues(issuesData.issues || []);
+        const delegationPayload = delegationData as DelegationResponse;
+        const issuesPayload = issuesData as DelegationIssuesResponse;
+        setDelegation(delegationPayload.delegation || null);
+        setIssues(issuesPayload.issues || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -54,14 +64,14 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
 
   if (loading) {
     return (
-      <div className="py-8 text-center">
-        <div className="animate-pulse text-gray-500">Loading delegation data...</div>
+      <div className="py-8 text-center" role="status" aria-live="polite" aria-busy="true">
+        <div className="motion-safe:animate-pulse text-gray-500">Loading delegation data...</div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="py-4 text-red-600">Error: {error}</div>;
+    return <div className="py-4 text-red-600" role="alert">Error: {error}</div>;
   }
 
   if (!delegation) {

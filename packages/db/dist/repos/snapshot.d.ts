@@ -4,14 +4,11 @@
  * Repository pattern for snapshot operations.
  * Snapshots represent point-in-time collections of DNS data.
  */
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { DrizzleD1Database } from 'drizzle-orm/d1';
-import { type Snapshot, type NewSnapshot } from '../schema';
-import * as schema from '../schema';
-type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
+import { type Snapshot, type NewSnapshot } from '../schema/index.js';
 export declare class SnapshotRepository {
     private db;
-    constructor(db: DB);
+    constructor(db: IDatabaseAdapter);
     /**
      * Find a snapshot by ID
      */
@@ -52,5 +49,4 @@ export declare class SnapshotRepository {
      */
     countByDomain(domainId: string): Promise<number>;
 }
-export {};
 //# sourceMappingURL=snapshot.d.ts.map

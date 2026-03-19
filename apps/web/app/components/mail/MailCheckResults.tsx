@@ -1,4 +1,4 @@
-import type { MailCheckResult } from './types';
+import type { MailCheckResult } from './types.js';
 
 interface MailCheckResultsProps {
   result: MailCheckResult;

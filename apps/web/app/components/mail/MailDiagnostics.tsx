@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { MailCheckResult } from './types';
-import { MailCheckResults } from './MailCheckResults';
-import { RemediationForm } from './RemediationForm';
+import type { MailCheckResult } from './types.js';
+import { MailCheckResults } from './MailCheckResults.js';
+import { RemediationForm } from './RemediationForm.js';
 
 interface MailDiagnosticsProps {
   domain: string;
@@ -29,12 +29,12 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as { error?: string };
         throw new Error(data.error || 'Mail check failed');
       }
 
-      const data = await response.json();
-      setResults(data.results);
+      const data = (await response.json()) as { results?: MailCheckResult };
+      setResults(data.results || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -77,7 +77,7 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
         </p>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800" role="alert">
             {error}
           </div>
         )}
@@ -85,7 +85,8 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
         <button
           onClick={handleCheck}
           disabled={isChecking}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          aria-busy={isChecking}
+          className="focus-ring min-h-10 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
         >
           {isChecking ? 'Checking...' : 'Run Mail Check'}
         </button>
@@ -105,7 +106,7 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
           </p>
           <button
             onClick={() => setShowRemediation(true)}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+            className="focus-ring min-h-10 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
           >
             Request Remediation
           </button>
@@ -126,7 +127,8 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
         <button
           onClick={handleCheck}
           disabled={isChecking}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          aria-busy={isChecking}
+          className="focus-ring min-h-10 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
         >
           {isChecking ? 'Checking...' : 'Re-check'}
         </button>

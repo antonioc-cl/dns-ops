@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { normalizeDomain, DomainValidationError } from '../lib/domain';
+import { useState, useMemo, type FormEvent } from 'react';
+import { normalizeDomain } from '../lib/domain.js';
 
 interface DomainInputProps {
   onSubmit: (domain: string) => void;
@@ -19,15 +19,15 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
     }
   }, [input]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
       const domain = normalizeDomain(input);
       onSubmit(domain);
-    } catch (err) {
-      if (err instanceof DomainValidationError) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
         setError('Invalid domain name');
@@ -44,13 +44,13 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="example.com"
-            className="flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="focus-ring flex-1 px-4 py-3 text-lg border border-gray-300 rounded-lg"
             aria-label="Domain name"
           />
           <button
             type="submit"
             disabled={!normalizedDomain}
-            className="px-6 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="focus-ring px-6 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Analyze
           </button>

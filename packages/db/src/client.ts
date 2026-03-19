@@ -8,14 +8,14 @@
 import { drizzle as drizzlePg, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzleD1, type DrizzleD1Database } from 'drizzle-orm/d1';
 import { Pool } from 'pg';
-import * as schema from './schema.js';
-import { PostgresAdapter, D1Adapter, type IDatabaseAdapter } from './database/adapter.js';
+import * as schema from './schema/index.js';
+import { type IDatabaseAdapter } from './database/simple-adapter.js';
 
 // Export schema for convenience
-export * from './schema.js';
+export * from './schema/index.js';
 
 // Re-export adapter types
-export { type IDatabaseAdapter } from './database/adapter.js';
+export { type IDatabaseAdapter } from './database/simple-adapter.js';
 
 // Database type - can be PostgreSQL or D1
 export type Database = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
@@ -75,6 +75,8 @@ export function createD1Client(d1Binding: D1Database): DrizzleD1Database<typeof 
 // ADAPTER FACTORIES (RECOMMENDED APPROACH)
 // =============================================================================
 
+import { createSimpleAdapter } from './database/simple-adapter.js';
+
 /**
  * Create a database adapter based on environment
  * 
@@ -85,7 +87,7 @@ export function createAdapterFromConfig(config: DBConfig): IDatabaseAdapter {
   // Use D1 if binding is provided (Cloudflare Workers)
   if (config.d1Binding) {
     const db = drizzleD1(config.d1Binding, { schema });
-    return new D1Adapter(db);
+    return createSimpleAdapter(db, 'd1');
   }
   
   // Otherwise use PostgreSQL
@@ -99,7 +101,7 @@ export function createAdapterFromConfig(config: DBConfig): IDatabaseAdapter {
   });
   
   const db = drizzlePg(pool, { schema });
-  return new PostgresAdapter(db);
+  return createSimpleAdapter(db, 'postgres');
 }
 
 /**
@@ -112,7 +114,7 @@ export function createPostgresAdapter(connectionString: string): IDatabaseAdapte
   });
   
   const db = drizzlePg(pool, { schema });
-  return new PostgresAdapter(db);
+  return createSimpleAdapter(db, 'postgres');
 }
 
 /**
@@ -120,5 +122,5 @@ export function createPostgresAdapter(connectionString: string): IDatabaseAdapte
  */
 export function createD1Adapter(d1Binding: D1Database): IDatabaseAdapter {
   const db = drizzleD1(d1Binding, { schema });
-  return new D1Adapter(db);
+  return createSimpleAdapter(db, 'd1');
 }

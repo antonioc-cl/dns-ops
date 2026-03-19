@@ -1,0 +1,194 @@
+/**
+ * RecordSet Normalization
+ *
+ * Convert observations into normalized RecordSets for querying and display.
+ * Aggregates multiple vantage points for the same name/type.
+ */
+/**
+ * Group observations by name and type
+ */
+function groupByNameType(observations) {
+    const groups = new Map();
+    for (const obs of observations) {
+        const key = `${obs.queryName.toLowerCase()}|${obs.queryType}`;
+        if (!groups.has(key)) {
+            groups.set(key, []);
+        }
+        groups.get(key).push(obs);
+    }
+    return groups;
+}
+/**
+ * Extract values from DNS records
+ */
+function extractValues(records) {
+    const values = [];
+    for (const record of records) {
+        if (record.type === 'MX' && record.priority !== undefined) {
+            values.push(`${record.priority} ${record.data}`);
+        }
+        else {
+            values.push(record.data);
+        }
+    }
+    return [...new Set(values)]; // Deduplicate
+}
+/**
+ * Check if two value arrays are equal (ignoring order)
+ */
+function valuesEqual(a, b) {
+    if (a.length !== b.length)
+        return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((v, i) => v === sortedB[i]);
+}
+/**
+ * Normalize observations into RecordSets
+ *
+ * Handles mixed success/failure states across vantages.
+ * Failed observations are included in metadata but don't contribute values.
+ */
+export function observationsToRecordSets(observations) {
+    const groups = groupByNameType(observations);
+    const records = [];
+    for (const [key, group] of groups) {
+        const [name, type] = key.split('|');
+        // Separate successful and failed observations
+        const successfulObs = group.filter(obs => obs.status === 'success');
+        const failedObs = group.filter(obs => obs.status !== 'success');
+        // Extract all values from successful observations
+        const allValues = [];
+        const vantages = [];
+        const observationIds = [];
+        const vantageValues = new Map();
+        for (const obs of successfulObs) {
+            const vantageId = obs.vantageIdentifier || obs.vantageType;
+            vantages.push(vantageId);
+            observationIds.push(obs.id);
+            const values = extractValues(obs.answerSection || []);
+            allValues.push(...values);
+            vantageValues.set(vantageId, values);
+        }
+        // Include failed observations in metadata
+        for (const obs of failedObs) {
+            const vantageId = obs.vantageIdentifier || obs.vantageType;
+            vantages.push(`${vantageId} (${obs.status})`);
+            observationIds.push(obs.id);
+        }
+        // Deduplicate values
+        const uniqueValues = [...new Set(allValues)];
+        // Check consistency across vantages (only successful ones)
+        let isConsistent = true;
+        const notes = [];
+        if (vantageValues.size > 1) {
+            const firstEntry = vantageValues.values().next();
+            if (firstEntry.value) {
+                const firstValues = firstEntry.value;
+                for (const [, values] of vantageValues) {
+                    if (!valuesEqual(firstValues, values)) {
+                        isConsistent = false;
+                        notes.push('Values differ across vantages');
+                        break;
+                    }
+                }
+            }
+        }
+        // Note any failures
+        if (failedObs.length > 0) {
+            const failureTypes = [...new Set(failedObs.map(o => o.status))];
+            notes.push(`Failures from ${failedObs.length} vantage(s): ${failureTypes.join(', ')}`);
+            isConsistent = false;
+        }
+        // Calculate average TTL
+        const ttls = successfulObs
+            .flatMap(obs => (obs.answerSection || []).map(r => r.ttl))
+            .filter((ttl) => ttl !== undefined);
+        const avgTtl = ttls.length > 0
+            ? Math.round(ttls.reduce((a, b) => a + b, 0) / ttls.length)
+            : 0;
+        records.push({
+            name,
+            type,
+            ttl: avgTtl,
+            values: uniqueValues,
+            sourceVantages: [...new Set(vantages)],
+            sourceObservationIds: observationIds,
+            isConsistent,
+            consolidationNotes: notes.length > 0 ? notes.join('; ') : undefined,
+        });
+    }
+    return records;
+}
+/**
+ * Group records by type for organized display
+ */
+export function groupRecordsByType(records) {
+    const groups = new Map();
+    for (const record of records) {
+        if (!groups.has(record.type)) {
+            groups.set(record.type, []);
+        }
+        groups.get(record.type).push(record);
+    }
+    // Sort types in preferred order
+    const typeOrder = ['SOA', 'NS', 'A', 'AAAA', 'CNAME', 'MX', 'TXT', 'CAA'];
+    const sortedGroups = new Map();
+    for (const type of typeOrder) {
+        if (groups.has(type)) {
+            sortedGroups.set(type, groups.get(type));
+        }
+    }
+    // Add any remaining types
+    for (const [type, recs] of groups) {
+        if (!sortedGroups.has(type)) {
+            sortedGroups.set(type, recs);
+        }
+    }
+    return sortedGroups;
+}
+/**
+ * Format record value for display
+ */
+export function formatRecordValue(type, value) {
+    switch (type) {
+        case 'MX': {
+            const match = value.match(/^(\d+)\s+(.+)$/);
+            if (match) {
+                return `${match[2]} (priority: ${match[1]})`;
+            }
+            return value;
+        }
+        case 'SOA': {
+            const parts = value.split(' ');
+            if (parts.length >= 2) {
+                return `Primary: ${parts[0]}, Contact: ${parts[1]}`;
+            }
+            return value;
+        }
+        case 'TXT':
+            // Remove surrounding quotes if present
+            return value.replace(/^"/, '').replace(/"$/, '');
+        default:
+            return value;
+    }
+}
+/**
+ * Get record type description
+ */
+export function getRecordTypeDescription(type) {
+    const descriptions = {
+        A: 'IPv4 Address',
+        AAAA: 'IPv6 Address',
+        CNAME: 'Canonical Name',
+        MX: 'Mail Exchange',
+        NS: 'Name Server',
+        SOA: 'Start of Authority',
+        TXT: 'Text',
+        CAA: 'Certification Authority Authorization',
+        PTR: 'Pointer',
+        SRV: 'Service',
+    };
+    return descriptions[type] || type;
+}
+//# sourceMappingURL=recordset.js.map

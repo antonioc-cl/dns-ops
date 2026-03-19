@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ISSUE_LABELS, type IssueType } from './types';
+import { ISSUE_LABELS, type IssueType } from './types.js';
 
 interface RemediationFormProps {
   domain: string;
@@ -88,7 +88,7 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as { error?: string };
         throw new Error(data.error || 'Failed to submit request');
       }
 
@@ -120,22 +120,24 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
       </p>
 
       {errors.general && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm" role="alert">
           {errors.general}
         </div>
       )}
 
       {/* Contact Email */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor="remediation-contact-email" className="block text-sm font-medium text-gray-700">
           Contact Email *
         </label>
         <input
+          id="remediation-contact-email"
           type="email"
           value={formData.contactEmail}
           onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="admin@example.com"
+          autoComplete="email"
         />
         {errors.contactEmail && (
           <p className="mt-1 text-sm text-red-600">{errors.contactEmail}</p>
@@ -144,15 +146,17 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
 
       {/* Contact Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor="remediation-contact-name" className="block text-sm font-medium text-gray-700">
           Contact Name *
         </label>
         <input
+          id="remediation-contact-name"
           type="text"
           value={formData.contactName}
           onChange={(e) => setFormData(prev => ({ ...prev, contactName: e.target.value }))}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="John Doe"
+          autoComplete="name"
         />
         {errors.contactName && (
           <p className="mt-1 text-sm text-red-600">{errors.contactName}</p>
@@ -161,15 +165,17 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
 
       {/* Phone */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor="remediation-contact-phone" className="block text-sm font-medium text-gray-700">
           Phone (optional)
         </label>
         <input
+          id="remediation-contact-phone"
           type="tel"
           value={formData.contactPhone}
           onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="+1 555-123-4567"
+          autoComplete="tel"
         />
         {errors.contactPhone && (
           <p className="mt-1 text-sm text-red-600">{errors.contactPhone}</p>
@@ -178,13 +184,14 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
 
       {/* Priority */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor="remediation-priority" className="block text-sm font-medium text-gray-700">
           Priority
         </label>
         <select
+          id="remediation-priority"
           value={formData.priority}
           onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as typeof formData.priority }))}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
         >
           <option value="low">Low</option>
           <option value="medium">Medium</option>
@@ -194,57 +201,62 @@ export function RemediationForm({ domain, snapshotId, issues, onClose, onSuccess
       </div>
 
       {/* Issues */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
+      <fieldset>
+        <legend className="block text-sm font-medium text-gray-700">
           Issues to Fix *
-        </label>
+        </legend>
         <div className="mt-2 space-y-2">
-          {issues.map((issue) => (
-            <label key={issue} className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.selectedIssues.includes(issue)}
-                onChange={() => toggleIssue(issue)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">
-                {ISSUE_LABELS[issue as IssueType] || issue}
-              </span>
-            </label>
-          ))}
+          {issues.map((issue) => {
+            const checkboxId = `remediation-issue-${issue}`
+            return (
+              <label key={issue} htmlFor={checkboxId} className="flex items-center">
+                <input
+                  id={checkboxId}
+                  type="checkbox"
+                  checked={formData.selectedIssues.includes(issue)}
+                  onChange={() => toggleIssue(issue)}
+                  className="focus-ring rounded border-gray-300 text-blue-600"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  {ISSUE_LABELS[issue as IssueType] || issue}
+                </span>
+              </label>
+            )
+          })}
         </div>
         {errors.issues && (
           <p className="mt-1 text-sm text-red-600">{errors.issues}</p>
         )}
-      </div>
+      </fieldset>
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor="remediation-notes" className="block text-sm font-medium text-gray-700">
           Additional Notes
         </label>
         <textarea
+          id="remediation-notes"
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="focus-ring mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           placeholder="Any additional context..."
         />
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-4">
+      <div className="flex flex-wrap gap-3 pt-4">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+          className="focus-ring min-h-10 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Request'}
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+          className="focus-ring min-h-10 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
         >
           Cancel
         </button>

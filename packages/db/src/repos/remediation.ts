@@ -4,8 +4,8 @@
  * Database operations for remediation requests.
  */
 
-import { eq, desc, and, inArray, sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { eq } from 'drizzle-orm';
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
 import {
   remediationRequests,
   type RemediationRequest,
@@ -13,33 +13,23 @@ import {
 } from '../schema/remediation.js';
 
 export class RemediationRepository {
-  constructor(private db: NodePgDatabase) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   /**
    * Create a new remediation request
    */
   async create(data: NewRemediationRequest): Promise<RemediationRequest> {
-    const [result] = await this.db
-      .insert(remediationRequests)
-      .values(data)
-      .returning();
-
-    if (!result) {
-      throw new Error('Failed to create remediation request');
-    }
-
-    return result;
+    return this.db.insert(remediationRequests, data);
   }
 
   /**
    * Find remediation request by ID
    */
   async findById(id: string): Promise<RemediationRequest | null> {
-    const [result] = await this.db
-      .select()
-      .from(remediationRequests)
-      .where(eq(remediationRequests.id, id));
-
+    const result = await this.db.selectOne(
+      remediationRequests,
+      eq(remediationRequests.id, id)
+    );
     return result || null;
   }
 
@@ -47,22 +37,26 @@ export class RemediationRepository {
    * Find all remediation requests for a domain
    */
   async findByDomain(domain: string): Promise<RemediationRequest[]> {
-    return this.db
-      .select()
-      .from(remediationRequests)
-      .where(eq(remediationRequests.domain, domain))
-      .orderBy(desc(remediationRequests.createdAt));
+    const results = await this.db.selectWhere(
+      remediationRequests,
+      eq(remediationRequests.domain, domain)
+    );
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   /**
    * Find remediation requests by snapshot ID
    */
   async findBySnapshotId(snapshotId: string): Promise<RemediationRequest[]> {
-    return this.db
-      .select()
-      .from(remediationRequests)
-      .where(eq(remediationRequests.snapshotId, snapshotId))
-      .orderBy(desc(remediationRequests.createdAt));
+    const results = await this.db.selectWhere(
+      remediationRequests,
+      eq(remediationRequests.snapshotId, snapshotId)
+    );
+    return results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }
 
   /**
@@ -72,17 +66,13 @@ export class RemediationRepository {
     status: RemediationRequest['status'],
     limit?: number
   ): Promise<RemediationRequest[]> {
-    let query = this.db
-      .select()
-      .from(remediationRequests)
-      .where(eq(remediationRequests.status, status))
-      .orderBy(desc(remediationRequests.createdAt));
-
-    if (limit) {
-      query = query.limit(limit);
-    }
-
-    return query;
+    const results = await this.db.selectWhere(
+      remediationRequests,
+      eq(remediationRequests.status, status)
+    );
+    return results
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
   }
 
   /**
@@ -106,11 +96,11 @@ export class RemediationRepository {
       updates.resolvedAt = new Date();
     }
 
-    const [result] = await this.db
-      .update(remediationRequests)
-      .set(updates)
-      .where(eq(remediationRequests.id, id))
-      .returning();
+    const result = await this.db.updateOne(
+      remediationRequests,
+      updates,
+      eq(remediationRequests.id, id)
+    );
 
     return result || null;
   }
@@ -119,15 +109,15 @@ export class RemediationRepository {
    * Close a remediation request
    */
   async close(id: string, reason?: string): Promise<RemediationRequest | null> {
-    const [result] = await this.db
-      .update(remediationRequests)
-      .set({
+    const result = await this.db.updateOne(
+      remediationRequests,
+      {
         status: 'closed',
         notes: reason,
         updatedAt: new Date(),
-      })
-      .where(eq(remediationRequests.id, id))
-      .returning();
+      },
+      eq(remediationRequests.id, id)
+    );
 
     return result || null;
   }
@@ -142,60 +132,44 @@ export class RemediationRepository {
     limit?: number;
     offset?: number;
   }): Promise<RemediationRequest[]> {
-    let conditions = [];
+    let results = await this.db.select(remediationRequests);
 
     if (options?.domains?.length) {
-      conditions.push(inArray(remediationRequests.domain, options.domains));
+      results = results.filter(r => options.domains!.includes(r.domain));
     }
 
     if (options?.statuses?.length) {
-      conditions.push(inArray(remediationRequests.status, options.statuses));
+      results = results.filter(r => options.statuses!.includes(r.status));
     }
 
     if (options?.priorities?.length) {
-      conditions.push(inArray(remediationRequests.priority, options.priorities));
+      results = results.filter(r => options.priorities!.includes(r.priority));
     }
 
-    let query = this.db
-      .select()
-      .from(remediationRequests)
-      .orderBy(desc(remediationRequests.createdAt));
+    // Sort by createdAt desc
+    results = results.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    // Apply pagination
+    const offset = options?.offset || 0;
+    const limit = options?.limit || results.length;
 
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-
-    return query;
+    return results.slice(offset, offset + limit);
   }
 
   /**
    * Count remediation requests by status
    */
   async countByStatus(): Promise<Record<RemediationRequest['status'], number>> {
-    const results = await this.db
-      .select({
-        status: remediationRequests.status,
-        count: sql<number>`count(*)`,
-      })
-      .from(remediationRequests)
-      .groupBy(remediationRequests.status);
+    const results = await this.db.select(remediationRequests);
 
-    return results.reduce<
-      Record<RemediationRequest['status'], number>
-    >(
-      (acc, row: { status: RemediationRequest['status']; count: number | bigint }) => {
-        acc[row.status] = Number(row.count);
-        return acc;
-      },
-      { open: 0, 'in-progress': 0, resolved: 0, closed: 0 }
-    );
+    const counts = { open: 0, 'in-progress': 0, resolved: 0, closed: 0 };
+
+    for (const row of results) {
+      counts[row.status]++;
+    }
+
+    return counts;
   }
 }

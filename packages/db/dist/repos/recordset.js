@@ -1,45 +1,41 @@
-import { eq, and } from 'drizzle-orm';
-import { recordSets } from '../schema';
+import { eq } from 'drizzle-orm';
+import { recordSets } from '../schema/index.js';
 export class RecordSetRepository {
     db;
     constructor(db) {
         this.db = db;
     }
     async findById(id) {
-        const results = await this.db.select()
-            .from(recordSets)
-            .where(eq(recordSets.id, id))
-            .limit(1);
-        return results[0] || null;
+        const result = await this.db.selectOne(recordSets, eq(recordSets.id, id));
+        return result || null;
     }
     async findBySnapshotId(snapshotId) {
-        return this.db.select()
-            .from(recordSets)
-            .where(eq(recordSets.snapshotId, snapshotId))
-            .orderBy(recordSets.type, recordSets.name);
+        const results = await this.db.selectWhere(recordSets, eq(recordSets.snapshotId, snapshotId));
+        // Sort by type and name
+        return results.sort((a, b) => {
+            const typeCompare = a.type.localeCompare(b.type);
+            if (typeCompare !== 0)
+                return typeCompare;
+            return a.name.localeCompare(b.name);
+        });
     }
     async findByNameAndType(snapshotId, name, type) {
-        const results = await this.db.select()
-            .from(recordSets)
-            .where(and(eq(recordSets.snapshotId, snapshotId), eq(recordSets.name, name), eq(recordSets.type, type)))
-            .limit(1);
-        return results[0] || null;
+        const results = await this.db.select(recordSets);
+        const match = results.find(r => r.snapshotId === snapshotId &&
+            r.name === name &&
+            r.type === type);
+        return match || null;
     }
     async create(data) {
-        const results = await this.db.insert(recordSets).values(data).returning();
-        return results[0];
+        return this.db.insert(recordSets, data);
     }
     async createMany(data) {
         if (data.length === 0)
             return [];
-        return this.db.insert(recordSets).values(data).returning();
+        return this.db.insertMany(recordSets, data);
     }
     async update(id, data) {
-        const results = await this.db.update(recordSets)
-            .set(data)
-            .where(eq(recordSets.id, id))
-            .returning();
-        return results[0];
+        return this.db.updateOne(recordSets, data, eq(recordSets.id, id));
     }
 }
 //# sourceMappingURL=recordset.js.map

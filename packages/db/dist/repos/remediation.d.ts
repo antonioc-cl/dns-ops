@@ -3,11 +3,11 @@
  *
  * Database operations for remediation requests.
  */
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { type RemediationRequest, type NewRemediationRequest } from '../schema/remediation';
+import type { IDatabaseAdapter } from '../database/simple-adapter.js';
+import { type RemediationRequest, type NewRemediationRequest } from '../schema/remediation.js';
 export declare class RemediationRepository {
     private db;
-    constructor(db: NodePgDatabase);
+    constructor(db: IDatabaseAdapter);
     /**
      * Create a new remediation request
      */

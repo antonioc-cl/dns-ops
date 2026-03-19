@@ -769,4 +769,4 @@ export {
   remediationPriorityEnum,
   type RemediationRequest,
   type NewRemediationRequest,
-} from './remediation';
+} from './remediation.js';

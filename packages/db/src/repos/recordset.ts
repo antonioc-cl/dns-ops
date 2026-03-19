@@ -1,58 +1,48 @@
-import { eq, and } from 'drizzle-orm'
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
-import type { DrizzleD1Database } from 'drizzle-orm/d1'
+import { eq } from 'drizzle-orm'
+import type { IDatabaseAdapter } from '../database/simple-adapter.js'
 import { recordSets, type RecordSet, type NewRecordSet } from '../schema/index.js'
-import * as schema from '../schema/index.js'
-
-type DB = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>
 
 export class RecordSetRepository {
-  constructor(private db: DB) {}
+  constructor(private db: IDatabaseAdapter) {}
 
   async findById(id: string): Promise<RecordSet | null> {
-    const results = await this.db.select()
-      .from(recordSets)
-      .where(eq(recordSets.id, id))
-      .limit(1)
-
-    return results[0] || null
+    const result = await this.db.selectOne(recordSets, eq(recordSets.id, id))
+    return result || null
   }
 
   async findBySnapshotId(snapshotId: string): Promise<RecordSet[]> {
-    return this.db.select()
-      .from(recordSets)
-      .where(eq(recordSets.snapshotId, snapshotId))
-      .orderBy(recordSets.type, recordSets.name)
+    const results = await this.db.selectWhere(
+      recordSets,
+      eq(recordSets.snapshotId, snapshotId)
+    )
+    // Sort by type and name
+    return results.sort((a, b) => {
+      const typeCompare = a.type.localeCompare(b.type)
+      if (typeCompare !== 0) return typeCompare
+      return a.name.localeCompare(b.name)
+    })
   }
 
   async findByNameAndType(snapshotId: string, name: string, type: string): Promise<RecordSet | null> {
-    const results = await this.db.select()
-      .from(recordSets)
-      .where(and(
-        eq(recordSets.snapshotId, snapshotId),
-        eq(recordSets.name, name),
-        eq(recordSets.type, type)
-      ))
-      .limit(1)
-
-    return results[0] || null
+    const results = await this.db.select(recordSets)
+    const match = results.find(r =>
+      r.snapshotId === snapshotId &&
+      r.name === name &&
+      r.type === type
+    )
+    return match || null
   }
 
   async create(data: NewRecordSet): Promise<RecordSet> {
-    const results = await this.db.insert(recordSets).values(data).returning()
-    return results[0]
+    return this.db.insert(recordSets, data)
   }
 
   async createMany(data: NewRecordSet[]): Promise<RecordSet[]> {
     if (data.length === 0) return []
-    return this.db.insert(recordSets).values(data).returning()
+    return this.db.insertMany(recordSets, data)
   }
 
-  async update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet> {
-    const results = await this.db.update(recordSets)
-      .set(data)
-      .where(eq(recordSets.id, id))
-      .returning()
-    return results[0]
+  async update(id: string, data: Partial<NewRecordSet>): Promise<RecordSet | undefined> {
+    return this.db.updateOne(recordSets, data, eq(recordSets.id, id))
   }
 }
