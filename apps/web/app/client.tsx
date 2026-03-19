@@ -1,4 +1,13 @@
-import { hydrateRoot } from 'react-dom/client'
-import { StartClient } from '@tanstack/react-start/client'
+import { StartClient } from '@tanstack/react-start/client';
+import { hydrateRoot } from 'react-dom/client';
+import { createRouter } from './router.js';
 
-hydrateRoot(document, <StartClient />)
+const router = createRouter();
+
+function bootstrap() {
+  hydrateRoot(document, <StartClient router={router} />);
+}
+
+bootstrap();
+
+export default bootstrap;

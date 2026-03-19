@@ -1,4 +1,4 @@
-import { defineConfig } from '@tanstack/react-start/config'
+import { defineConfig } from '@tanstack/react-start/config';
 
 export default defineConfig({
   server: {
@@ -9,4 +9,4 @@ export default defineConfig({
     routesDirectory: 'app/routes',
     generatedRouteTree: 'app/routeTree.gen.ts',
   },
-})
+});
