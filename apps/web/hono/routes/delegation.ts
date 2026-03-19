@@ -4,9 +4,9 @@
  * Endpoints for delegation analysis and visualization.
  */
 
+import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
-import { SnapshotRepository, ObservationRepository } from '@dns-ops/db';
 
 export const delegationRoutes = new Hono<Env>();
 
@@ -29,7 +29,9 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation', async (c) => {
     }
 
     // Check if snapshot has delegation metadata
-    const hasDelegationData = (snapshot as unknown as { metadata?: { hasDelegationData?: boolean } }).metadata?.hasDelegationData;
+    const hasDelegationData = (
+      snapshot as unknown as { metadata?: { hasDelegationData?: boolean } }
+    ).metadata?.hasDelegationData;
     if (!hasDelegationData) {
       return c.json({
         snapshotId,
@@ -57,14 +59,17 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation', async (c) => {
     // Build delegation response
     const delegation = {
       domain: snapshot.domainName,
-      parentZone: (snapshot as unknown as { metadata?: { parentZone?: string } }).metadata?.parentZone,
+      parentZone: (snapshot as unknown as { metadata?: { parentZone?: string } }).metadata
+        ?.parentZone,
       nameServers: nsObservations
         .filter((obs) => obs.status === 'success')
         .flatMap((obs) =>
-          (obs.answerSection || []).filter((a) => a.type === 'NS').map((a) => ({
-            name: a.data,
-            source: obs.vantageIdentifier,
-          }))
+          (obs.answerSection || [])
+            .filter((a) => a.type === 'NS')
+            .map((a) => ({
+              name: a.data,
+              source: obs.vantageIdentifier,
+            }))
         ),
       glue: glueObservations
         .filter((obs) => obs.status === 'success')
@@ -73,21 +78,27 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation', async (c) => {
           type: obs.queryType,
           address: obs.answerSection?.[0]?.data,
         })),
-      hasDivergence: (snapshot as unknown as { metadata?: { hasDivergence?: boolean } }).metadata?.hasDivergence || false,
-      hasDnssec: (snapshot as unknown as { metadata?: { hasDnssec?: boolean } }).metadata?.hasDnssec || false,
+      hasDivergence:
+        (snapshot as unknown as { metadata?: { hasDivergence?: boolean } }).metadata
+          ?.hasDivergence || false,
+      hasDnssec:
+        (snapshot as unknown as { metadata?: { hasDnssec?: boolean } }).metadata?.hasDnssec ||
+        false,
     };
 
     return c.json({
       snapshotId,
       delegation,
     });
-
   } catch (error) {
     console.error('Error fetching delegation:', error);
-    return c.json({
-      error: 'Failed to fetch delegation data',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch delegation data',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -105,25 +116,31 @@ delegationRoutes.get('/domain/:domain/delegation/latest', async (c) => {
     // Find latest snapshot with delegation data
     const snapshots = await snapshotRepo.findByDomain(domain);
     const snapshotWithDelegation = snapshots.find(
-      (s) => (s as unknown as { metadata?: { hasDelegationData?: boolean } }).metadata?.hasDelegationData
+      (s) =>
+        (s as unknown as { metadata?: { hasDelegationData?: boolean } }).metadata?.hasDelegationData
     );
 
     if (!snapshotWithDelegation) {
-      return c.json({
-        domain,
-        message: 'No delegation data available for this domain',
-      }, 404);
+      return c.json(
+        {
+          domain,
+          message: 'No delegation data available for this domain',
+        },
+        404
+      );
     }
 
     // Redirect to the snapshot-specific endpoint
     return c.redirect(`/api/snapshot/${snapshotWithDelegation.id}/delegation`);
-
   } catch (error) {
     console.error('Error fetching latest delegation:', error);
-    return c.json({
-      error: 'Failed to fetch delegation data',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch delegation data',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -177,9 +194,7 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', async (c) => {
         details: {
           vantages: successfulNs.map((o) => ({
             source: o.vantageIdentifier,
-            ns: (o.answerSection || [])
-              .filter((a) => a.type === 'NS')
-              .map((a) => a.data),
+            ns: (o.answerSection || []).filter((a) => a.type === 'NS').map((a) => a.data),
           })),
         },
       });
@@ -214,12 +229,14 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', async (c) => {
       issues,
       issueCount: issues.length,
     });
-
   } catch (error) {
     console.error('Error fetching delegation issues:', error);
-    return c.json({
-      error: 'Failed to fetch delegation issues',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to fetch delegation issues',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
