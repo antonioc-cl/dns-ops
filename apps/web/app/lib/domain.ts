@@ -1,6 +1,6 @@
 /**
  * Domain normalization utilities
- * 
+ *
  * Ensures consistent domain representation across the application.
  * Handles: case normalization, trailing dots, IDN/punycode conversion
  */
@@ -11,25 +11,25 @@
 export function normalizeDomain(input: string): string {
   // Trim whitespace
   let normalized = input.trim();
-  
+
   // Convert to lowercase
   normalized = normalized.toLowerCase();
-  
+
   // Remove trailing dot if present
   if (normalized.endsWith('.')) {
     normalized = normalized.slice(0, -1);
   }
-  
+
   // Convert IDN to punycode if needed
   if (containsUnicode(normalized)) {
     normalized = toPunycode(normalized);
   }
-  
+
   // Validate domain format
   if (!isValidDomain(normalized)) {
     throw new DomainValidationError(`Invalid domain: ${input}`);
   }
-  
+
   return normalized;
 }
 
@@ -37,7 +37,7 @@ export function normalizeDomain(input: string): string {
  * Check if string contains unicode characters
  */
 function containsUnicode(str: string): boolean {
-  return /[^\x00-\x7F]/.test(str);
+  return /[^\p{ASCII}]/u.test(str);
 }
 
 /**
@@ -63,15 +63,15 @@ function isValidDomain(domain: string): boolean {
   if (!domain || domain.length === 0) {
     return false;
   }
-  
+
   if (domain.length > 253) {
     return false;
   }
-  
+
   if (domain.includes(' ')) {
     return false;
   }
-  
+
   // Each label must be 1-63 characters
   const labels = domain.split('.');
   for (const label of labels) {
@@ -79,7 +79,7 @@ function isValidDomain(domain: string): boolean {
       return false;
     }
   }
-  
+
   return true;
 }
 
