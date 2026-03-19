@@ -8,5 +8,5 @@ export * from './dns/rules.js';
 export * from './mail/rules.js';
 export * from './mail/templates.js';
 export * from './mail/shadow.js';
-export type { Rule, RuleContext, RuleResult, Ruleset, RulesEngine } from './engine/index.js';
+export type { Rule, RuleContext, RuleResult, Ruleset } from './engine/index.js';
 //# sourceMappingURL=index.d.ts.map

@@ -12,8 +12,10 @@ import {
   probeSMTPStarttls,
   probeMXHosts,
   validateMTASTSTxtRecord,
-} from '../probes';
-import type { DNSQueryResult } from '../dns/types';
+} from '../probes/index.js';
+import type { DNSQueryResult } from '../dns/types.js';
+import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
+import type { AllowlistEntry } from '../probes/allowlist.js';
 
 export const probeRoutes = new Hono();
 
@@ -120,8 +122,8 @@ probeRoutes.post('/smtp-starttls', async (c) => {
       hosts: results,
       summary: {
         total: results.length,
-        successful: results.filter(r => r.success).length,
-        supportsStarttls: results.filter(r => r.supportsStarttls).length,
+        successful: results.filter((r: SMTPProbeResult) => r.success).length,
+        supportsStarttls: results.filter((r: SMTPProbeResult) => r.supportsStarttls).length,
       },
     });
   }
@@ -150,7 +152,7 @@ probeRoutes.post('/allowlist/generate', async (c) => {
   return c.json({
     domain,
     entriesAdded: entries.length,
-    entries: entries.map(e => ({
+    entries: entries.map((e: AllowlistEntry) => ({
       type: e.type,
       hostname: e.hostname,
       port: e.port,
@@ -184,7 +186,7 @@ probeRoutes.get('/allowlist', (c) => {
  */
 probeRoutes.get('/ssrf-check/:target', async (c) => {
   const target = c.req.param('target');
-  const { checkSSRF } = await import('../probes');
+  const { checkSSRF } = await import('../probes/index.js');
   
   const result = checkSSRF(target);
 

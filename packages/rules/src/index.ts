@@ -16,4 +16,4 @@ export * from './mail/templates.js';
 export * from './mail/shadow.js';
 
 // Re-export types
-export type { Rule, RuleContext, RuleResult, Ruleset, RulesEngine } from './engine/index.js';
+export type { Rule, RuleContext, RuleResult, Ruleset } from './engine/index.js';

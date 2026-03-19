@@ -5,26 +5,8 @@
  * Supports both recursive and authoritative resolution.
  */
 
-import * as dns from 'dns';
-import { promisify } from 'util';
-import type { DNSQuery, DNSQueryResult, VantageInfo, DNSFlags, DNSAnswer } from './types';
-
-const dnsResolve = promisify(dns.resolve);
-const dnsResolveAny = promisify(dns.resolveAny);
-const dnsResolveNs = promisify(dns.resolveNs);
-
-// DNS response codes
-const RESPONSE_CODES: Record<number, string> = {
-  0: 'NOERROR',
-  1: 'FORMERR',
-  2: 'SERVFAIL',
-  3: 'NXDOMAIN',
-  4: 'NOTIMP',
-  5: 'REFUSED',
-};
-
-// Default TTL when Node.js dns module doesn't expose it (which is most methods)
-const DEFAULT_TTL = 300;
+import { promises as dns } from 'dns';
+import type { DNSQuery, DNSQueryResult, VantageInfo, DNSAnswer } from './types.js';
 
 export class DNSResolver {
   /**
@@ -139,7 +121,7 @@ export class DNSResolver {
   private async queryA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const addresses = await resolver.resolve4(name);
     return {
-      answers: addresses.map((addr) => ({
+      answers: addresses.map((addr: string) => ({
         name,
         type: 'A',
         ttl: 300, // Default TTL
@@ -151,7 +133,7 @@ export class DNSResolver {
   private async queryAAAA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const addresses = await resolver.resolve6(name);
     return {
-      answers: addresses.map((addr) => ({
+      answers: addresses.map((addr: string) => ({
         name,
         type: 'AAAA',
         ttl: 300,
@@ -163,7 +145,7 @@ export class DNSResolver {
   private async queryMX(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveMx(name);
     return {
-      answers: records.map((mx) => ({
+      answers: records.map((mx: { priority: number; exchange: string }) => ({
         name,
         type: 'MX',
         ttl: 300,
@@ -175,7 +157,7 @@ export class DNSResolver {
   private async queryTXT(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveTxt(name);
     return {
-      answers: records.map((txt) => ({
+      answers: records.map((txt: string[]) => ({
         name,
         type: 'TXT',
         ttl: 300,
@@ -187,7 +169,7 @@ export class DNSResolver {
   private async queryNS(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveNs(name);
     return {
-      answers: records.map((ns) => ({
+      answers: records.map((ns: string) => ({
         name,
         type: 'NS',
         ttl: 300,
@@ -199,7 +181,7 @@ export class DNSResolver {
   private async queryCNAME(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveCname(name);
     return {
-      answers: records.map((cname) => ({
+      answers: records.map((cname: string) => ({
         name,
         type: 'CNAME',
         ttl: 300,
@@ -209,14 +191,24 @@ export class DNSResolver {
   }
 
   private async querySOA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
-    const records = await resolver.resolveSoa(name);
+    const soa = await resolver.resolveSoa(name) as {
+      nsname: string;
+      hostmaster: string;
+      serial: number;
+      refresh: number;
+      retry: number;
+      expire: number;
+      minttl?: number;
+      minimumTTL?: number;
+    };
+    const minTTL = soa.minttl ?? soa.minimumTTL ?? 300;
     return {
-      answers: records.map((soa) => ({
+      answers: [{
         name,
         type: 'SOA',
-        ttl: soa.minimumTTL || 300,
-        data: `${soa.nsname} ${soa.hostmaster} ${soa.serial} ${soa.refresh} ${soa.retry} ${soa.expire} ${soa.minimumTTL}`,
-      })),
+        ttl: minTTL,
+        data: `${soa.nsname} ${soa.hostmaster} ${soa.serial} ${soa.refresh} ${soa.retry} ${soa.expire} ${minTTL}`,
+      }],
     };
   }
 
@@ -224,13 +216,14 @@ export class DNSResolver {
     // Node.js doesn't have native CAA support, use resolveAny and filter
     try {
       const records = await resolver.resolveAny(name);
-      const caaRecords = records.filter((r: any) => r.type === 'CAA');
+      const caaRecords = (records as Array<{ type: string; critical?: number; issue?: string; value?: string }>)
+        .filter((r) => r.type === 'CAA');
       return {
-        answers: caaRecords.map((caa: any) => ({
+        answers: caaRecords.map((caa) => ({
           name,
           type: 'CAA',
           ttl: 300,
-          data: `${caa.critical} ${caa.issue} "${caa.value}"`,
+          data: `${caa.critical ?? 0} ${caa.issue ?? ''} "${caa.value ?? ''}"`,
         })),
       };
     } catch {

@@ -5,8 +5,8 @@
  * Validates policy format and extracts mode/max_age/mx directives.
  */
 
-import { validateUrl, checkSSRF } from './ssrf-guard';
-import { probeAllowlist } from './allowlist';
+import { validateUrl } from './ssrf-guard.js';
+import { probeAllowlist } from './allowlist.js';
 
 export interface MTASTSProbeResult {
   success: boolean;
@@ -188,7 +188,7 @@ export async function fetchMTASTSPolicy(
  * Validate that a domain has valid MTA-STS TXT record before fetching policy
  */
 export async function validateMTASTSTxtRecord(
-  domain: string,
+  _domain: string,
   txtRecords: string[]
 ): Promise<{ valid: boolean; id?: string; error?: string }> {
   // Look for _mta-sts TXT record

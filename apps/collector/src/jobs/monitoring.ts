@@ -5,14 +5,15 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
+import type { Env } from '../types.js';
 import {
   MonitoredDomainRepository,
   AlertRepository,
   DomainRepository,
-} from '@dns-ops/db/repos';
-import { and, eq, sql } from 'drizzle-orm';
-import { alerts } from '@dns-ops/db/schema';
+} from '@dns-ops/db';
+
+// Alert type for type annotations
+type Alert = Awaited<ReturnType<AlertRepository['findPending']>>[number];
 
 export const monitoringRoutes = new Hono<Env>();
 
@@ -27,7 +28,6 @@ monitoringRoutes.post('/check', async (c) => {
 
   try {
     const monitoredRepo = new MonitoredDomainRepository(db);
-    const alertRepo = new AlertRepository(db);
     const domainRepo = new DomainRepository(db);
 
     // Get domains scheduled for this check
@@ -46,16 +46,16 @@ monitoringRoutes.post('/check', async (c) => {
         }
       }
 
-      // Check daily alert limit using database-level filtering for efficiency
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayAlerts = await db.query.alerts.findMany({
-        where: and(
-          eq(alerts.monitoredDomainId, monitored.id),
-          sql`${alerts.createdAt} >= ${today}`
-        ),
-      });
-      if (todayAlerts.length >= monitored.maxAlertsPerDay) {
+      // Check daily alert limit
+      const alertRepo = new AlertRepository(db);
+      const allAlerts = await alertRepo.findByMonitoredDomain(monitored.id);
+      const todayCount = allAlerts.filter((a: Alert) => {
+        const alertDate = new Date(a.createdAt);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return alertDate >= today;
+      }).length;
+      if (todayCount >= monitored.maxAlertsPerDay) {
         continue; // Hit daily limit
       }
 
@@ -177,10 +177,10 @@ monitoringRoutes.get('/reports/shared', async (c) => {
 
     // Aggregate by severity
     const bySeverity = {
-      critical: activeAlerts.filter((a) => a.severity === 'critical').length,
-      high: activeAlerts.filter((a) => a.severity === 'high').length,
-      medium: activeAlerts.filter((a) => a.severity === 'medium').length,
-      low: activeAlerts.filter((a) => a.severity === 'low').length,
+      critical: activeAlerts.filter((a: Alert) => a.severity === 'critical').length,
+      high: activeAlerts.filter((a: Alert) => a.severity === 'high').length,
+      medium: activeAlerts.filter((a: Alert) => a.severity === 'medium').length,
+      low: activeAlerts.filter((a: Alert) => a.severity === 'low').length,
     };
 
     return c.json({
@@ -190,7 +190,7 @@ monitoringRoutes.get('/reports/shared', async (c) => {
         bySeverity,
       },
       // Note: Domain names and internal notes redacted for shared view
-      alertSummary: activeAlerts.slice(0, 10).map((a) => ({
+      alertSummary: activeAlerts.slice(0, 10).map((a: Alert) => ({
         id: a.id,
         title: a.title,
         severity: a.severity,

@@ -5,17 +5,17 @@
  */
 
 // SSRF Guard
-export { checkSSRF, validateUrl, checkResolvedIP } from './ssrf-guard';
-export type { SSRFCheckResult } from './ssrf-guard';
+export { checkSSRF, validateUrl, checkResolvedIP } from './ssrf-guard.js';
+export type { SSRFCheckResult } from './ssrf-guard.js';
 
 // Allowlist
-export { ProbeAllowlist, probeAllowlist } from './allowlist';
-export type { AllowlistEntry } from './allowlist';
+export { ProbeAllowlist, probeAllowlist } from './allowlist.js';
+export type { AllowlistEntry } from './allowlist.js';
 
 // MTA-STS Probe
-export { fetchMTASTSPolicy, validateMTASTSTxtRecord } from './mta-sts';
-export type { MTASTSProbeResult, MTASTSPolicy } from './mta-sts';
+export { fetchMTASTSPolicy, validateMTASTSTxtRecord } from './mta-sts.js';
+export type { MTASTSProbeResult, MTASTSPolicy } from './mta-sts.js';
 
 // SMTP STARTTLS Probe
-export { probeSMTPStarttls, probeMXHosts } from './smtp-starttls';
-export type { SMTPProbeResult } from './smtp-starttls';
+export { probeSMTPStarttls, probeMXHosts } from './smtp-starttls.js';
+export type { SMTPProbeResult } from './smtp-starttls.js';

@@ -4,7 +4,7 @@
  * Coordinates DNS queries across multiple vantages and stores results.
  */
 
-import { DNSResolver } from './resolver';
+import { DNSResolver } from './resolver.js';
 import type {
   CollectionConfig,
   CollectionResult,
@@ -12,27 +12,25 @@ import type {
   DNSQuery,
   DNSQueryResult,
   VantageInfo,
-} from './types';
-import type { Database } from '@dns-ops/db';
-import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db/repos';
+  DNSAnswer,
+} from './types.js';
+import type { IDatabaseAdapter } from '@dns-ops/db';
+import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db';
 import { observationsToRecordSets } from '@dns-ops/parsing';
-import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db/schema';
-import { generateMailQueries } from '../mail/collector';
-import { DelegationCollector } from '../delegation/collector';
+import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db';
+import { DelegationCollector } from '../delegation/collector.js';
 
 export class DNSCollector {
   private resolver: DNSResolver;
   private config: CollectionConfig;
-  private db: Database;
   private domainRepo: DomainRepository;
   private snapshotRepo: SnapshotRepository;
   private observationRepo: ObservationRepository;
   private recordSetRepo: RecordSetRepository;
 
-  constructor(config: CollectionConfig, db: Database) {
+  constructor(config: CollectionConfig, db: IDatabaseAdapter) {
     this.config = config;
     this.resolver = new DNSResolver();
-    this.db = db;
     this.domainRepo = new DomainRepository(db);
     this.snapshotRepo = new SnapshotRepository(db);
     this.observationRepo = new ObservationRepository(db);
@@ -174,7 +172,7 @@ export class DNSCollector {
     operatorSelectors?: string[],
     managedSelectors?: string[]
   ): Promise<DNSQuery[]> {
-    const { generateMailQueries: generateMailQueriesFunc } = await import('../mail/collector');
+    const { generateMailQueries: generateMailQueriesFunc } = await import('../mail/collector.js');
 
     const mailResult = await generateMailQueriesFunc(domain, [], {
       domain,
@@ -233,7 +231,7 @@ export class DNSCollector {
       );
 
       if (nsResult.success && nsResult.answers.length > 0) {
-        return nsResult.answers.map((a) => a.data.replace(/\.$/, ''));
+        return nsResult.answers.map((a: DNSAnswer) => a.data.replace(/\.$/, ''));
       }
     } catch (error) {
       console.error('Failed to discover NS records:', error);
@@ -247,7 +245,7 @@ export class DNSCollector {
    */
   private calculateResultState(
     results: DNSQueryResult[],
-    errors: CollectionError[]
+    _errors: CollectionError[]
   ): 'complete' | 'partial' | 'failed' {
     if (results.length === 0) {
       return 'failed';
@@ -273,7 +271,7 @@ export class DNSCollector {
   private async storeResults(
     results: DNSQueryResult[],
     resultState: 'complete' | 'partial' | 'failed',
-    delegationData?: import('../delegation/collector').DelegationSummary | null
+    delegationData?: import('../delegation/collector.js').DelegationSummary | null
   ): Promise<string> {
     const { domain, zoneManagement, triggeredBy } = this.config;
 
@@ -301,7 +299,7 @@ export class DNSCollector {
       metadata: delegationData ? {
         hasDelegationData: true,
         parentZone: delegationData.parentZone,
-        nsServers: delegationData.parentNs.map(ns => ns.data),
+        nsServers: delegationData.parentNs.map((ns: DNSAnswer) => ns.data),
         hasDivergence: delegationData.hasDivergence,
         lameDelegations: delegationData.lameDelegations.length,
         hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
@@ -327,19 +325,19 @@ export class DNSCollector {
         authenticated: result.flags.ad,
         checkingDisabled: result.flags.cd,
       } : null,
-      answerSection: result.answers.map(a => ({
+      answerSection: result.answers.map((a: DNSAnswer) => ({
         name: a.name,
         type: a.type,
         ttl: a.ttl,
         data: a.data,
       })),
-      authoritySection: result.authority.map(a => ({
+      authoritySection: result.authority.map((a: DNSAnswer) => ({
         name: a.name,
         type: a.type,
         ttl: a.ttl,
         data: a.data,
       })),
-      additionalSection: result.additional.map(a => ({
+      additionalSection: result.additional.map((a: DNSAnswer) => ({
         name: a.name,
         type: a.type,
         ttl: a.ttl,

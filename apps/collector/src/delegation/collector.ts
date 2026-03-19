@@ -9,8 +9,8 @@
  * - Lame delegation detection
  */
 
-import { DNSResolver } from '../dns/resolver';
-import type { DNSQuery, DNSQueryResult, VantageInfo, DNSAnswer } from '../dns/types';
+import { DNSResolver } from '../dns/resolver.js';
+import type { DNSQuery, DNSQueryResult, VantageInfo, DNSAnswer } from '../dns/types.js';
 
 export interface DelegationSummary {
   domain: string;
@@ -151,13 +151,13 @@ export class DelegationCollector {
 
     // Glue is A/AAAA records for NS targets in the same zone
     const nsTargets = result.answers
-      .filter((a) => a.type === 'NS')
-      .map((a) => a.data.toLowerCase());
+      .filter((a: DNSAnswer) => a.type === 'NS')
+      .map((a: DNSAnswer) => a.data.toLowerCase());
 
     return result.additional.filter(
-      (record) =>
+      (record: DNSAnswer) =>
         (record.type === 'A' || record.type === 'AAAA') &&
-        nsTargets.some((target) => record.name.toLowerCase() === target)
+        nsTargets.some((target: string) => record.name.toLowerCase() === target)
     );
   }
 
@@ -215,12 +215,12 @@ export class DelegationCollector {
       if (successful.length < 2) continue;
 
       // Compare answers
-      const firstAnswers = successful[0].result.answers.map((a) => a.data).sort();
+      const firstAnswers = successful[0].result.answers.map((a: DNSAnswer) => a.data).sort();
       const divergentServers: string[] = [successful[0].server];
       const differentAnswers: DNSAnswer[][] = [successful[0].result.answers];
 
       for (let i = 1; i < successful.length; i++) {
-        const currentAnswers = successful[i].result.answers.map((a) => a.data).sort();
+        const currentAnswers = successful[i].result.answers.map((a: DNSAnswer) => a.data).sort();
         
         if (!this.arraysEqual(firstAnswers, currentAnswers)) {
           divergentServers.push(successful[i].server);
@@ -312,8 +312,8 @@ export class DelegationCollector {
 
     // 2. Extract NS servers
     const nsServers = parentResult.answers
-      .filter((a) => a.type === 'NS')
-      .map((a) => a.data.replace(/\.$/, ''));
+      .filter((a: DNSAnswer) => a.type === 'NS')
+      .map((a: DNSAnswer) => a.data.replace(/\.$/, ''));
 
     // 3. Query each authoritative server
     const authResponses = await this.collectFromAuthoritativeServers(
@@ -337,7 +337,7 @@ export class DelegationCollector {
     return {
       domain: this.domain,
       parentZone: this.getParentZone(this.domain),
-      parentNs: parentResult.answers.filter((a) => a.type === 'NS'),
+      parentNs: parentResult.answers.filter((a: DNSAnswer) => a.type === 'NS'),
       authoritativeResponses: authResponses,
       glueRecords,
       missingGlue,
@@ -367,8 +367,8 @@ export class DelegationCollector {
       );
 
       const hasRrsig = 
-        sampleQuery.authority?.some((r) => r.type === 'RRSIG') ||
-        sampleQuery.answers?.some((r) => r.type === 'RRSIG');
+        sampleQuery.authority?.some((r: DNSAnswer) => r.type === 'RRSIG') ||
+        sampleQuery.answers?.some((r: DNSAnswer) => r.type === 'RRSIG');
 
       return {
         hasRrsig,
@@ -406,4 +406,4 @@ export type {
   DNSQueryResult,
   DNSAnswer,
   VantageInfo,
-} from '../dns/types';
+} from '../dns/types.js';

@@ -4,7 +4,7 @@
  * Performs DMARC, DKIM, and SPF checks for email security validation.
  */
 
-import { resolveTXT } from './dns';
+import { resolveTXT } from './dns.js';
 import { parseDMARC, parseSPF, type DMARCRecord, type SPFRecord } from '@dns-ops/parsing';
 
 export interface MailCheckResult {

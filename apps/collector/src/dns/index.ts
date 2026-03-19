@@ -4,6 +4,6 @@
  * Exports DNS collection functionality.
  */
 
-export * from './types';
-export * from './resolver';
-export * from './collector';
+export * from './types.js';
+export * from './resolver.js';
+export * from './collector.js';

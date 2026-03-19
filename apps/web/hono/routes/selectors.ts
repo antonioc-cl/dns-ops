@@ -107,12 +107,15 @@ selectorRoutes.get('/domain/:domain/selectors/suggest', async (c) => {
       return c.json({ error: 'No data for domain' }, 404);
     }
 
-    const snapshot = await obsResponse.json();
+    const snapshot = (await obsResponse.json()) as { id: string };
 
     // Get observations
-    const observations = await fetch(
+    const observations = (await fetch(
       `/api/snapshot/${snapshot.id}/observations`
-    ).then((r) => r.json());
+    ).then((r) => r.json())) as Array<{
+      queryType: string;
+      answerSection?: Array<{ data: string }>;
+    }>;
 
     // Simple provider detection from MX
     const mxObs = observations.find((o: { queryType: string }) => o.queryType === 'MX');

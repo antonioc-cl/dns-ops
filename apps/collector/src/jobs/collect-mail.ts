@@ -5,12 +5,12 @@
  */
 
 import { Hono } from 'hono';
-import { performMailCheck, PROVIDER_SELECTORS, type MailCheckResult } from '../mail/checker';
+import { performMailCheck, type MailCheckResult } from '../mail/checker.js';
 import {
-  createPostgresClient,
+  createPostgresAdapter,
   ObservationRepository,
+  type NewObservation,
 } from '@dns-ops/db';
-import type { NewObservation } from '@dns-ops/db/schema';
 
 export const collectMailRoutes = new Hono();
 
@@ -55,7 +55,7 @@ collectMailRoutes.post('/mail', async (c) => {
       if (!dbUrl) {
         return c.json({ error: 'DATABASE_URL not configured' }, 500);
       }
-      const db = createPostgresClient(dbUrl);
+      const db = createPostgresAdapter(dbUrl);
       const observationRepo = new ObservationRepository(db);
 
       observationCount = await storeMailObservations(

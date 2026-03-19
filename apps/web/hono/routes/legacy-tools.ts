@@ -14,8 +14,6 @@ export const legacyToolsRoutes = new Hono<Env>();
  * Log access to legacy tools for shadow comparison analysis
  */
 legacyToolsRoutes.post('/log', async (c) => {
-  const db = c.get('db');
-
   try {
     const body = await c.req.json();
     const { tool, domain, action, timestamp, metadata } = body;

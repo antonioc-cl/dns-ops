@@ -76,7 +76,7 @@ export class ProbeAllowlist {
             domain,
             queryType: result.query.type,
             queryName: result.query.name,
-            answerData: result.answers.map(a => a.data).join(', '),
+            answerData: result.answers.map((a: { data: string }) => a.data).join(', ')
           },
           expiresAt,
         };

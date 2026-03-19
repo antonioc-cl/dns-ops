@@ -8,7 +8,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
 import {
-  DomainRepository,
   DomainNoteRepository,
   DomainTagRepository,
   SavedFilterRepository,
@@ -38,7 +37,6 @@ portfolioRoutes.post('/search', async (c) => {
   } = body;
 
   try {
-    const domainRepo = new DomainRepository(db);
     const tagRepo = new DomainTagRepository(db);
 
     // Build conditions
@@ -69,9 +67,11 @@ portfolioRoutes.post('/search', async (c) => {
       conditions.push(inArray(domains.id, domainIds));
     }
 
+    const whereClause = and(...(conditions.filter(Boolean) as any));
+
     // Fetch matching domains
-    const results = await db.query.domains.findMany({
-      where: and(...conditions),
+    const results = await db.getDrizzle().query.domains.findMany({
+      where: whereClause,
       limit,
       offset,
       orderBy: desc(domains.updatedAt),
@@ -80,7 +80,7 @@ portfolioRoutes.post('/search', async (c) => {
     // Get findings for severity filtering
     const filteredDomains = await Promise.all(
       results.map(async (domain) => {
-        const latestSnapshot = await db.query.snapshots.findFirst({
+        const latestSnapshot = await db.getDrizzle().query.snapshots.findFirst({
           where: eq(snapshots.domainId, domain.id),
           orderBy: desc(snapshots.createdAt),
         });
@@ -89,7 +89,7 @@ portfolioRoutes.post('/search', async (c) => {
           return { ...domain, findings: [], latestSnapshot: null };
         }
 
-        const domainFindings = await db.query.findings.findMany({
+        const domainFindings = await db.getDrizzle().query.findings.findMany({
           where: and(
             eq(findings.snapshotId, latestSnapshot.id),
             severities?.length > 0 ? inArray(findings.severity, severities) : undefined
@@ -536,6 +536,9 @@ portfolioRoutes.put('/templates/overrides/:overrideId', async (c) => {
     }
 
     const updated = await overrideRepo.update(overrideId, body);
+    if (!updated) {
+      return c.json({ error: 'Override not found' }, 404);
+    }
 
     await auditRepo.create({
       action: 'template_override_updated',

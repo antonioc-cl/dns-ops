@@ -6,8 +6,8 @@
  */
 
 import { Hono } from 'hono';
-import type { Env } from '../types';
-import { SnapshotRepository, DomainRepository, ObservationRepository } from '@dns-ops/db/repos';
+import type { Env } from '../types.js';
+import { SnapshotRepository, DomainRepository, ObservationRepository } from '@dns-ops/db';
 
 export const fleetReportRoutes = new Hono<Env>();
 
@@ -64,7 +64,7 @@ fleetReportRoutes.post('/run', async (c) => {
         }
 
         // Get latest snapshot
-        const snapshots = await snapshotRepo.findByDomainId(domain.id, { limit: 1 });
+        const snapshots = await snapshotRepo.findByDomain(domain.id, 1);
         const snapshot = snapshots[0];
 
         if (!snapshot) {
@@ -241,7 +241,7 @@ interface CheckResult {
 }
 
 async function runChecks(
-  domain: string,
+  _domain: string,
   observations: Array<{ queryType: string; queryName: string; status: string; answerSection?: Array<{ data: string }> }>,
   checkTypes: string[]
 ): Promise<CheckResult[]> {

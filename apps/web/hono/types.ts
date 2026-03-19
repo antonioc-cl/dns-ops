@@ -6,5 +6,8 @@ export type Env = {
   }
   Variables: {
     db: SimpleDatabaseAdapter
+    tenantId?: string
+    actorId?: string
+    actorEmail?: string
   }
 }

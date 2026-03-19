@@ -16,4 +16,4 @@ export {
   type ProviderSelectorInfo,
 } from './checker';
 
-export { resolveTXT } from './dns';
+export { resolveTXT } from './dns.js';

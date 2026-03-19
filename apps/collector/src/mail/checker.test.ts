@@ -19,7 +19,7 @@ vi.mock('./dns', () => ({
   resolveTXT: vi.fn(),
 }));
 
-import { resolveTXT } from './dns';
+import { resolveTXT } from './dns.js';
 
 const mockedResolveTXT = vi.mocked(resolveTXT);
 

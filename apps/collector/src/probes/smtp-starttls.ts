@@ -7,8 +7,8 @@
 
 import * as net from 'net';
 import * as tls from 'tls';
-import { checkSSRF } from './ssrf-guard';
-import { probeAllowlist } from './allowlist';
+import { checkSSRF } from './ssrf-guard.js';
+import { probeAllowlist } from './allowlist.js';
 
 export interface SMTPProbeResult {
   success: boolean;
@@ -234,8 +234,8 @@ export async function probeSMTPStarttls(
       tlsVersion: tlsInfo.version,
       tlsCipher: tlsInfo.name,
       certificate: cert.subject ? {
-        subject: cert.subject.CN || cert.subject.O || 'Unknown',
-        issuer: cert.issuer.CN || cert.issuer.O || 'Unknown',
+        subject: String(cert.subject.CN || cert.subject.O || 'Unknown'),
+        issuer: String(cert.issuer.CN || cert.issuer.O || 'Unknown'),
         validFrom: cert.valid_from,
         validTo: cert.valid_to,
         fingerprint: cert.fingerprint,

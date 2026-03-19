@@ -5,9 +5,9 @@
  */
 
 import { Hono } from 'hono';
-import { DNSCollector } from '../dns/collector';
-import type { CollectionConfig } from '../dns/types';
-import { createPostgresClient } from '@dns-ops/db';
+import { DNSCollector } from '../dns/collector.js';
+import type { CollectionConfig } from '../dns/types.js';
+import { createPostgresAdapter } from '@dns-ops/db';
 
 export const collectDomainRoutes = new Hono();
 
@@ -51,7 +51,7 @@ collectDomainRoutes.post('/domain', async (c) => {
     if (!dbUrl) {
       return c.json({ error: 'DATABASE_URL not configured' }, 500);
     }
-    const db = createPostgresClient(dbUrl);
+    const db = createPostgresAdapter(dbUrl);
 
     // Run collection
     const collector = new DNSCollector(config, db);

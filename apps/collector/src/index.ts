@@ -9,11 +9,11 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { collectDomainRoutes } from './jobs/collect-domain';
-import { collectMailRoutes } from './jobs/collect-mail';
-import { probeRoutes } from './jobs/probe-routes';
-import { fleetReportRoutes } from './jobs/fleet-report';
-import { monitoringRoutes } from './jobs/monitoring';
+import { collectDomainRoutes } from './jobs/collect-domain.js';
+import { collectMailRoutes } from './jobs/collect-mail.js';
+import { probeRoutes } from './jobs/probe-routes.js';
+import { fleetReportRoutes } from './jobs/fleet-report.js';
+import { monitoringRoutes } from './jobs/monitoring.js';
 
 const app = new Hono();
 

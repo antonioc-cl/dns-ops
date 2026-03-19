@@ -5,38 +5,99 @@
  */
 
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
 import {
   RemediationRepository,
   createPostgresClient,
+  createSimpleAdapter,
 } from '@dns-ops/db';
 
-const remediationSchema = z.object({
-  domain: z.string().min(1).max(253),
-  snapshotId: z.string().uuid().optional(),
-  contactEmail: z.string().email().max(254),
-  contactName: z.string().min(2).max(100),
-  contactPhone: z.string()
-    .regex(/^\+?[\d\s-]{8,20}$/, 'Valid phone number required')
-    .optional(),
-  priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
-  issues: z.array(z.string()).min(1, 'At least one issue must be selected'),
-  notes: z.string().max(1000).optional(),
-});
+interface CollectMailRequest {
+  domain?: string;
+  preferredProvider?: 'google' | 'microsoft' | 'zoho' | 'other';
+  explicitSelectors?: string[];
+}
 
-const collectMailSchema = z.object({
-  domain: z.string().min(1).max(253),
-  preferredProvider: z.enum(['google', 'microsoft', 'zoho', 'other']).optional(),
-  explicitSelectors: z.array(z.string()).optional(),
-});
+interface RemediationRequest {
+  domain?: string;
+  snapshotId?: string;
+  contactEmail?: string;
+  contactName?: string;
+  contactPhone?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  issues?: string[];
+  notes?: string;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^\+?[\d\s-]{8,20}$/;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validateCollectMail(data: CollectMailRequest): string | null {
+  if (!data.domain || data.domain.length > 253) return 'Domain is required';
+  if (
+    data.preferredProvider &&
+    !['google', 'microsoft', 'zoho', 'other'].includes(data.preferredProvider)
+  ) {
+    return 'Invalid preferredProvider';
+  }
+  if (data.explicitSelectors && !Array.isArray(data.explicitSelectors)) {
+    return 'explicitSelectors must be an array';
+  }
+  return null;
+}
+
+function validateRemediation(data: RemediationRequest): string | null {
+  if (!data.domain || data.domain.length > 253) return 'Domain is required';
+  if (!data.contactEmail || !EMAIL_RE.test(data.contactEmail)) {
+    return 'Valid contactEmail is required';
+  }
+  if (!data.contactName || data.contactName.trim().length < 2) {
+    return 'contactName must be at least 2 characters';
+  }
+  if (data.snapshotId && !UUID_RE.test(data.snapshotId)) {
+    return 'snapshotId must be a UUID';
+  }
+  if (data.contactPhone && !PHONE_RE.test(data.contactPhone)) {
+    return 'Valid phone number required';
+  }
+  if (data.priority && !['low', 'medium', 'high', 'critical'].includes(data.priority)) {
+    return 'Invalid priority';
+  }
+  if (!data.issues || !Array.isArray(data.issues) || data.issues.length === 0) {
+    return 'At least one issue must be selected';
+  }
+  if (data.notes && data.notes.length > 1000) {
+    return 'notes must be <= 1000 chars';
+  }
+  return null;
+}
+
+function getRemediationRepo() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    return { error: 'Database not configured' as const };
+  }
+  const db = createPostgresClient(dbUrl);
+  const adapter = createSimpleAdapter(db, 'postgres');
+  return { repo: new RemediationRepository(adapter) };
+}
 
 export const mailRoutes = new Hono()
   // Trigger mail check via collector
-  .post('/collect/mail', zValidator('json', collectMailSchema), async (c) => {
-    const data = c.req.valid('json');
+  .post('/collect/mail', async (c) => {
+    let data: CollectMailRequest;
+    try {
+      data = (await c.req.json()) as CollectMailRequest;
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400);
+    }
 
-    // Forward to collector service
+    const validationError = validateCollectMail(data);
+    if (validationError) {
+      return c.json({ error: validationError }, 400);
+    }
+
     const collectorUrl = process.env.COLLECTOR_URL || 'http://localhost:3001';
 
     try {
@@ -47,7 +108,7 @@ export const mailRoutes = new Hono()
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json().catch(() => ({}))) as { message?: string };
         return c.json({ error: error.message || 'Collector error' }, response.status);
       }
 
@@ -60,90 +121,104 @@ export const mailRoutes = new Hono()
   })
 
   // Create remediation request
-  .post('/remediation', zValidator('json', remediationSchema), async (c) => {
-    const data = c.req.valid('json');
+  .post('/remediation', async (c) => {
+    let data: RemediationRequest;
+    try {
+      data = (await c.req.json()) as RemediationRequest;
+    } catch {
+      return c.json({ error: 'Invalid JSON body' }, 400);
+    }
 
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      return c.json({ error: 'Database not configured' }, 500);
+    const validationError = validateRemediation(data);
+    if (validationError) {
+      return c.json({ error: validationError }, 400);
+    }
+
+    const db = getRemediationRepo();
+    if ('error' in db) {
+      return c.json({ error: db.error }, 500);
     }
 
     try {
-      const db = createPostgresClient(dbUrl);
-      const remediationRepo = new RemediationRepository(db);
-
-      const request = await remediationRepo.create({
+      const request = await db.repo.create({
         snapshotId: data.snapshotId,
-        domain: data.domain,
-        contactEmail: data.contactEmail,
-        contactName: data.contactName,
+        domain: data.domain as string,
+        contactEmail: data.contactEmail as string,
+        contactName: data.contactName as string,
         contactPhone: data.contactPhone,
-        issues: data.issues,
-        priority: data.priority,
+        issues: data.issues as string[],
+        priority: data.priority || 'medium',
         notes: data.notes,
         status: 'open',
       });
 
-      return c.json({
-        id: request.id,
-        domain: request.domain,
-        status: request.status,
-        createdAt: request.createdAt,
-      }, 201);
+      return c.json(
+        {
+          id: request.id,
+          domain: request.domain,
+          status: request.status,
+          createdAt: request.createdAt,
+        },
+        201
+      );
     } catch (error) {
       console.error('Remediation creation error:', error);
-      return c.json({
-        error: 'Failed to create remediation request',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }, 500);
+      return c.json(
+        {
+          error: 'Failed to create remediation request',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
     }
   })
 
   // Get remediation requests for a domain
   .get('/remediation/:domain', async (c) => {
     const domain = c.req.param('domain');
+    const db = getRemediationRepo();
 
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      return c.json({ error: 'Database not configured' }, 500);
+    if ('error' in db) {
+      return c.json({ error: db.error }, 500);
     }
 
     try {
-      const db = createPostgresClient(dbUrl);
-      const remediationRepo = new RemediationRepository(db);
-
-      const requests = await remediationRepo.findByDomain(domain);
-
+      const requests = await db.repo.findByDomain(domain);
       return c.json(requests);
     } catch (error) {
       console.error('Remediation fetch error:', error);
-      return c.json({
-        error: 'Failed to fetch remediation requests',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }, 500);
+      return c.json(
+        {
+          error: 'Failed to fetch remediation requests',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
     }
   })
 
   // Update remediation status
   .patch('/remediation/:id', async (c) => {
     const id = c.req.param('id');
-    const body = await c.req.json();
+    const body = (await c.req.json().catch(() => ({}))) as {
+      status?: string;
+      assignedTo?: string;
+    };
     const { status, assignedTo } = body;
 
     if (!status || !['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
       return c.json({ error: 'Valid status required' }, 400);
     }
 
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      return c.json({ error: 'Database not configured' }, 500);
+    const nextStatus = status as 'open' | 'in-progress' | 'resolved' | 'closed';
+
+    const db = getRemediationRepo();
+    if ('error' in db) {
+      return c.json({ error: db.error }, 500);
     }
 
     try {
-      const db = createPostgresClient(dbUrl);
-      const remediationRepo = new RemediationRepository(db);
-
-      const updated = await remediationRepo.updateStatus(id, status, assignedTo);
+      const updated = await db.repo.updateStatus(id, nextStatus, assignedTo);
 
       if (!updated) {
         return c.json({ error: 'Remediation request not found' }, 404);
@@ -152,9 +227,12 @@ export const mailRoutes = new Hono()
       return c.json(updated);
     } catch (error) {
       console.error('Remediation update error:', error);
-      return c.json({
-        error: 'Failed to update remediation request',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }, 500);
+      return c.json(
+        {
+          error: 'Failed to update remediation request',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
     }
   });

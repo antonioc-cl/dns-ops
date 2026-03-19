@@ -4,4 +4,4 @@
  * Parent zone, authoritative, and DNSSEC delegation evidence.
  */
 
-export * from './collector';
+export * from './collector.js';

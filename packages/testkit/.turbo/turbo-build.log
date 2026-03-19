@@ -2,6 +2,3 @@
 > @dns-ops/testkit@0.1.0 build /Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit
 > tsc
 
-src/benchmark-corpus/index.ts(15,50): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean '../../../contracts/src/enums.js'?
-src/index.ts(6,15): error TS2835: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './benchmark-corpus/index.js'?
- ELIFECYCLE  Command failed with exit code 2.
