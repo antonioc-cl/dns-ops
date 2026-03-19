@@ -52,14 +52,16 @@ legacyToolsRoutes.post('/log', async (c) => {
       logged: true,
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error('Error logging legacy tool access:', error);
     // Return 200 even on error to not break the user experience
-    return c.json({
-      success: false,
-      error: 'Failed to log access',
-    }, 200);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to log access',
+      },
+      200
+    );
   }
 });
 

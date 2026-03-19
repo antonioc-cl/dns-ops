@@ -55,7 +55,10 @@ export function buildDmarcLink(config: LegacyToolConfig, domain: string): string
   const url = new URL(config.baseUrl);
   url.searchParams.set('domain', domain);
   url.searchParams.set('source', 'dns-ops-workbench');
-  url.searchParams.set('returnUrl', encodeURIComponent(`${window.location.origin}/domain/${domain}?tab=mail`));
+  url.searchParams.set(
+    'returnUrl',
+    encodeURIComponent(`${window.location.origin}/domain/${domain}?tab=mail`)
+  );
   return url.toString();
 }
 
@@ -73,7 +76,10 @@ export function buildDkimLink(config: LegacyToolConfig, domain: string, selector
     url.searchParams.set('selector', selector);
   }
   url.searchParams.set('source', 'dns-ops-workbench');
-  url.searchParams.set('returnUrl', encodeURIComponent(`${window.location.origin}/domain/${domain}?tab=mail`));
+  url.searchParams.set(
+    'returnUrl',
+    encodeURIComponent(`${window.location.origin}/domain/${domain}?tab=mail`)
+  );
   return url.toString();
 }
 
