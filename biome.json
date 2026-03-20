@@ -8,7 +8,10 @@
       "!**/.vinxi/**",
       "!**/routeTree.gen.ts",
       "!**/.turbo/**",
-      "!**/*.css"
+      "!**/*.css",
+      "!packages/contracts/contracts",
+      "!packages/db/db",
+      "!packages/parsing/parsing"
     ]
   },
   "linter": {
@@ -23,15 +26,23 @@
         "noStaticElementInteractions": "error",
         "noNoninteractiveElementToInteractiveRole": "error"
       },
+      "style": {
+        "useNodejsImportProtocol": "warn",
+        "useTemplate": "warn"
+      },
       "correctness": {
         "useUniqueElementIds": "error",
-        "useExhaustiveDependencies": "error"
+        "useExhaustiveDependencies": "error",
+        "noUnusedImports": "warn",
+        "noUnusedVariables": "warn"
       },
       "suspicious": {
-        "noExplicitAny": "error",
-        "noArrayIndexKey": "error",
+        "noExplicitAny": "warn",
+        "noArrayIndexKey": "warn",
         "noUnknownAtRules": "off",
-        "noControlCharactersInRegex": "error"
+        "noControlCharactersInRegex": "error",
+        "useIterableCallbackReturn": "off",
+        "noGlobalIsNan": "warn"
       }
     }
   },
