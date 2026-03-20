@@ -44,6 +44,7 @@ import {
   unmanagedZonePartialCoverageRule,
 } from '@dns-ops/rules';
 import { DelegationCollector } from '../delegation/collector.js';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
 import { DNSResolver } from './resolver.js';
 import type {
   CollectionConfig,
@@ -58,6 +59,8 @@ import type {
 // Current ruleset version - keep in sync with web app findings.ts
 const CURRENT_RULESET_VERSION = '1.2.0';
 const CURRENT_RULESET_NAME = 'DNS and Mail Rules';
+
+const logger = getCollectorLogger();
 
 /**
  * Create the combined ruleset with DNS and Mail rules
@@ -161,7 +164,7 @@ export class DNSCollector {
         const delegationCollector = new DelegationCollector(this.config.domain);
         delegationData = await delegationCollector.collectDelegationSummary('8.8.8.8');
       } catch (error) {
-        console.error('Delegation collection failed:', error);
+        logger.warn('Delegation collection failed', { domain: this.config.domain, error: error instanceof Error ? error.message : String(error) });
         // Don't fail the entire collection if delegation fails
       }
     }
@@ -326,7 +329,7 @@ export class DNSCollector {
         return nsResult.answers.map((a: DNSAnswer) => a.data.replace(/\.$/, ''));
       }
     } catch (error) {
-      console.error('Failed to discover NS records:', error);
+      logger.warn('Failed to discover NS records', { domain: this.config.domain, error: error instanceof Error ? error.message : String(error) });
     }
 
     return [];
@@ -501,9 +504,7 @@ export class DNSCollector {
     );
 
     if (findingsCount > 0) {
-      console.log(
-        `[Collector] Persisted ${findingsCount} findings and ${suggestionsCount} suggestions for ${domain}`
-      );
+      logger.info('Persisted findings', { domain, findingsCount, suggestionsCount });
     }
 
     return snapshot.id;
@@ -656,7 +657,7 @@ export class DNSCollector {
       };
     } catch (error) {
       // Log error but don't fail the collection
-      console.error('Error evaluating and persisting findings:', error);
+      logger.error('Error evaluating and persisting findings', error instanceof Error ? error : new Error(String(error)), { domain: this.config.domain });
       return { findingsCount: 0, suggestionsCount: 0 };
     }
   }

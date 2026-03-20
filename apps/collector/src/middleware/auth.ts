@@ -15,6 +15,9 @@
 import { getTenantUUID } from '@dns-ops/contracts';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types.js';
+import { getCollectorLogger } from './error-tracking.js';
+
+const logger = getCollectorLogger();
 
 /**
  * Auth context from verified identity
@@ -42,7 +45,7 @@ function extractInternalSecret(
   }
 
   if (internalSecret !== expectedSecret) {
-    console.warn('Invalid internal secret attempt');
+    logger.warn('Invalid internal secret attempt', { method: c.req.method, path: c.req.path });
     return null;
   }
 
@@ -82,7 +85,7 @@ function extractApiKey(
   // Validate against expected secret
   const expectedSecret = process.env.API_KEY_SECRET;
   if (expectedSecret && secret !== expectedSecret) {
-    console.warn('Invalid API key attempt');
+    logger.warn('Invalid API key attempt', { tenantId, method: c.req.method, path: c.req.path });
     return null;
   }
 

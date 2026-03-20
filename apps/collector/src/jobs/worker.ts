@@ -19,12 +19,20 @@ import { type ConnectionOptions, type Job, Worker } from 'bullmq';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
 import {
+  getCollectorLogger,
+  trackJobComplete,
+  trackJobError,
+  trackJobStart,
+} from '../middleware/error-tracking.js';
+import {
   type CollectDomainJobData,
   type FleetReportJobData,
   getRedisConnection,
   type MonitoringRefreshJobData,
   QUEUE_NAMES,
 } from './queue.js';
+
+const logger = getCollectorLogger();
 
 // =============================================================================
 // Database Helper
@@ -51,8 +59,14 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
   error?: string;
 }> {
   const { domain, zoneManagement, triggeredBy, includeMailRecords, dkimSelectors } = job.data;
+  const startTime = Date.now();
 
-  console.log(`[Worker] Processing collect-domain job for ${domain} (triggered by ${triggeredBy})`);
+  trackJobStart({
+    jobId: job.id || 'unknown',
+    jobType: 'collect-domain',
+    domain,
+    triggeredBy,
+  });
 
   try {
     const db = getDbAdapter();
@@ -71,15 +85,30 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
 
     await job.updateProgress(100);
 
+    trackJobComplete({
+      jobId: job.id || 'unknown',
+      jobType: 'collect-domain',
+      domain,
+      durationMs: Date.now() - startTime,
+      result: 'success',
+      snapshotId: result.snapshotId,
+    });
+
     return {
       success: true,
       snapshotId: result.snapshotId,
     };
   } catch (error) {
-    console.error(`[Worker] collect-domain failed for ${domain}:`, error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    trackJobError(err, {
+      jobId: job.id || 'unknown',
+      jobType: 'collect-domain',
+      domain,
+      durationMs: Date.now() - startTime,
+    });
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: err.message,
     };
   }
 }
@@ -94,10 +123,11 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
   error?: string;
 }> {
   const { monitoredDomainId, domainId, domainName, schedule } = job.data;
+  const startTime = Date.now();
 
   // Handle scheduled placeholder jobs - these trigger batch refreshes
   if (monitoredDomainId === 'scheduled') {
-    console.log(`[Worker] Processing scheduled ${schedule} monitoring refresh`);
+    logger.info('Processing scheduled monitoring refresh', { schedule, jobId: job.id });
     // For scheduled jobs, we would query monitored domains and queue individual refreshes
     // This is a simplified implementation - full implementation needs MonitoredDomainRepository queries
     return {
@@ -106,7 +136,12 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
     };
   }
 
-  console.log(`[Worker] Processing monitoring refresh for ${domainName} (${schedule})`);
+  trackJobStart({
+    jobId: job.id || 'unknown',
+    jobType: 'monitoring-refresh',
+    domain: domainName,
+    schedule,
+  });
 
   try {
     const db = getDbAdapter();
@@ -131,15 +166,30 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
 
     await job.updateProgress(100);
 
+    trackJobComplete({
+      jobId: job.id || 'unknown',
+      jobType: 'monitoring-refresh',
+      domain: domainName,
+      durationMs: Date.now() - startTime,
+      result: 'success',
+      snapshotId: result.snapshotId,
+    });
+
     return {
       success: true,
       snapshotId: result.snapshotId,
     };
   } catch (error) {
-    console.error(`[Worker] monitoring-refresh failed for ${domainName}:`, error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    trackJobError(err, {
+      jobId: job.id || 'unknown',
+      jobType: 'monitoring-refresh',
+      domain: domainName,
+      durationMs: Date.now() - startTime,
+    });
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: err.message,
     };
   }
 }
@@ -154,10 +204,14 @@ async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
   error?: string;
 }> {
   const { inventory, checks, triggeredBy } = job.data;
+  const startTime = Date.now();
 
-  console.log(
-    `[Worker] Processing fleet report for ${inventory.length} domains (triggered by ${triggeredBy})`
-  );
+  trackJobStart({
+    jobId: job.id || 'unknown',
+    jobType: 'fleet-report',
+    triggeredBy,
+    domainCount: inventory.length,
+  });
 
   try {
     const db = getDbAdapter();
@@ -203,16 +257,33 @@ async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
       checksApplied: checks,
     };
 
+    const reportId = `report-${Date.now()}`;
+
+    trackJobComplete({
+      jobId: job.id || 'unknown',
+      jobType: 'fleet-report',
+      durationMs: Date.now() - startTime,
+      result: 'success',
+      reportId,
+      processedDomains: results.length,
+      totalFindings: summary.totalFindings,
+    });
+
     return {
       success: true,
-      reportId: `report-${Date.now()}`,
+      reportId,
       summary,
     };
   } catch (error) {
-    console.error(`[Worker] fleet-report failed:`, error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    trackJobError(err, {
+      jobId: job.id || 'unknown',
+      jobType: 'fleet-report',
+      durationMs: Date.now() - startTime,
+    });
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: err.message,
     };
   }
 }
@@ -231,11 +302,11 @@ let reportsWorker: Worker | null = null;
 export async function startWorkers(): Promise<void> {
   const connection = getRedisConnection();
   if (!connection) {
-    console.warn('[Worker] Redis not available - workers not started');
+    logger.warn('Redis not available - workers not started');
     return;
   }
 
-  console.log('[Worker] Starting job workers...');
+  logger.info('Starting job workers...');
 
   const connectionOptions: ConnectionOptions = connection as ConnectionOptions;
 
@@ -252,11 +323,11 @@ export async function startWorkers(): Promise<void> {
   );
 
   collectionWorker.on('completed', (job) => {
-    console.log(`[Worker] Collection job ${job.id} completed`);
+    logger.debug('Collection job completed', { jobId: job.id });
   });
 
   collectionWorker.on('failed', (job, error) => {
-    console.error(`[Worker] Collection job ${job?.id} failed:`, error.message);
+    logger.error('Collection job failed', error, { jobId: job?.id });
   });
 
   // Monitoring worker
@@ -272,11 +343,11 @@ export async function startWorkers(): Promise<void> {
   );
 
   monitoringWorker.on('completed', (job) => {
-    console.log(`[Worker] Monitoring job ${job.id} completed`);
+    logger.debug('Monitoring job completed', { jobId: job.id });
   });
 
   monitoringWorker.on('failed', (job, error) => {
-    console.error(`[Worker] Monitoring job ${job?.id} failed:`, error.message);
+    logger.error('Monitoring job failed', error, { jobId: job?.id });
   });
 
   // Reports worker
@@ -292,21 +363,21 @@ export async function startWorkers(): Promise<void> {
   );
 
   reportsWorker.on('completed', (job) => {
-    console.log(`[Worker] Reports job ${job.id} completed`);
+    logger.debug('Reports job completed', { jobId: job.id });
   });
 
   reportsWorker.on('failed', (job, error) => {
-    console.error(`[Worker] Reports job ${job?.id} failed:`, error.message);
+    logger.error('Reports job failed', error, { jobId: job?.id });
   });
 
-  console.log('[Worker] All workers started');
+  logger.info('All workers started');
 }
 
 /**
  * Stop all workers gracefully
  */
 export async function stopWorkers(): Promise<void> {
-  console.log('[Worker] Stopping workers...');
+  logger.info('Stopping workers...');
 
   const workers = [collectionWorker, monitoringWorker, reportsWorker];
 
@@ -320,7 +391,7 @@ export async function stopWorkers(): Promise<void> {
   monitoringWorker = null;
   reportsWorker = null;
 
-  console.log('[Worker] All workers stopped');
+  logger.info('All workers stopped');
 }
 
 /**

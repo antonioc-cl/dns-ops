@@ -16,7 +16,10 @@ import { isValidDomain, normalizeDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
+import { getCollectorLogger, trackCollectionError, trackCollectionResult } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
+
+const logger = getCollectorLogger();
 
 export const collectDomainRoutes = new Hono<Env>();
 
@@ -85,6 +88,14 @@ collectDomainRoutes.post('/domain', async (c) => {
     const collector = new DNSCollector(config, db);
     const result = await collector.collect();
 
+    trackCollectionResult({
+      domain: normalizedDomain,
+      snapshotId: result.snapshotId,
+      recordCount: result.observationCount,
+      durationMs: result.duration,
+      resultState: result.resultState,
+    });
+
     const response: CollectDomainResponse = {
       success: true,
       domain: normalizedDomain,
@@ -95,10 +106,11 @@ collectDomainRoutes.post('/domain', async (c) => {
     };
     return c.json(response, 201);
   } catch (err) {
-    console.error('Collection error:', err);
+    const error = err instanceof Error ? err : new Error(String(err));
+    trackCollectionError(error, { domain: 'unknown' });
     const errResponse: ApiErrorResponse = {
       error: 'Collection failed',
-      message: err instanceof Error ? err.message : 'Unknown error',
+      message: error.message,
       code: 'COLLECTION_ERROR',
     };
     return c.json(errResponse, 500);
@@ -139,11 +151,12 @@ collectDomainRoutes.get('/status/:snapshotId', async (c) => {
       errorMessage: snapshot.errorMessage,
     });
   } catch (error) {
-    console.error('Status check error:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Status check error', err, { snapshotId });
     return c.json(
       {
         error: 'Failed to check status',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: err.message,
         snapshotId,
       },
       500
