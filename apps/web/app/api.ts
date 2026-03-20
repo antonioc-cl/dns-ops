@@ -1,12 +1,18 @@
 import { createStartAPIHandler } from '@tanstack/react-start/api';
 import { getEvent } from '@tanstack/react-start/server';
 import { Hono } from 'hono';
-import { dbMiddleware } from '../hono/middleware/db.js';
+import { authMiddleware, dbMiddleware } from '../hono/middleware/index.js';
 import { apiRoutes } from '../hono/routes/api.js';
 import type { Env } from '../hono/types.js';
 
 const app = new Hono<Env>();
+
+// Global middleware - order matters
+// 1. DB middleware first to ensure database is available
 app.use('*', dbMiddleware);
+// 2. Auth middleware to populate tenant/actor context
+app.use('*', authMiddleware);
+
 app.route('/api', apiRoutes);
 
 export default createStartAPIHandler(({ request }) => {
