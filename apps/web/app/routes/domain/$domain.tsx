@@ -559,6 +559,17 @@ function HistoryTab({ domain }: { domain: string }) {
   const [copiedSnapshotId, setCopiedSnapshotId] = useState<string | null>(null);
   const [showDetailedDiff, setShowDetailedDiff] = useState(false);
 
+  // Manual comparison state
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedSnapshots, setSelectedSnapshots] = useState<[string | null, string | null]>([
+    null,
+    null,
+  ]);
+  const [manualDiff, setManualDiff] = useState<SnapshotCompareLatestResponse['diff'] | null>(null);
+  const [manualDiffWarnings, setManualDiffWarnings] = useState<string[]>([]);
+  const [manualDiffLoading, setManualDiffLoading] = useState(false);
+  const [manualDiffError, setManualDiffError] = useState<string | null>(null);
+
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     setHistoryError(null);
@@ -607,6 +618,66 @@ function HistoryTab({ domain }: { domain: string }) {
     }
   };
 
+  const handleToggleSnapshotSelection = (snapshotId: string) => {
+    setSelectedSnapshots(([first, second]) => {
+      // If already selected, deselect it
+      if (first === snapshotId) return [second, null];
+      if (second === snapshotId) return [first, null];
+
+      // If we have two selected, replace the second
+      if (first !== null && second !== null) {
+        return [first, snapshotId];
+      }
+
+      // Add to first empty slot
+      if (first === null) return [snapshotId, second];
+      return [first, snapshotId];
+    });
+  };
+
+  const handleCompareSelected = async () => {
+    const [snapshotAId, snapshotBId] = selectedSnapshots;
+    if (!snapshotAId || !snapshotBId) return;
+
+    setManualDiffLoading(true);
+    setManualDiffError(null);
+
+    try {
+      const encodedDomain = encodeURIComponent(domain);
+      const response = await fetch(`/api/snapshots/${encodedDomain}/diff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snapshotA: snapshotAId, snapshotB: snapshotBId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Comparison failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as SnapshotCompareLatestResponse;
+      setManualDiff(data.diff || null);
+      setManualDiffWarnings(data.warnings || []);
+    } catch (error) {
+      setManualDiffError(error instanceof Error ? error.message : 'Failed to compare snapshots');
+      setManualDiff(null);
+    } finally {
+      setManualDiffLoading(false);
+    }
+  };
+
+  const handleClearComparison = () => {
+    setSelectedSnapshots([null, null]);
+    setManualDiff(null);
+    setManualDiffWarnings([]);
+    setManualDiffError(null);
+  };
+
+  const getSelectionIndex = (snapshotId: string): number | null => {
+    if (selectedSnapshots[0] === snapshotId) return 1;
+    if (selectedSnapshots[1] === snapshotId) return 2;
+    return null;
+  };
+
   useEffect(() => {
     void loadHistory();
   }, [loadHistory]);
@@ -645,16 +716,116 @@ function HistoryTab({ domain }: { domain: string }) {
           <h3 className="font-semibold text-gray-900">Snapshot History</h3>
           <p className="text-sm text-gray-500">Latest 20 snapshots for {domain}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            void loadHistory();
-          }}
-          className="focus-ring min-h-10 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200"
-        >
-          Refresh History
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setCompareMode(!compareMode);
+              if (compareMode) handleClearComparison();
+            }}
+            className={`focus-ring min-h-10 px-4 py-2 rounded-lg transition-colors ${
+              compareMode
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            {compareMode ? 'Exit Compare' : 'Compare Mode'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void loadHistory();
+            }}
+            className="focus-ring min-h-10 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {/* Compare Mode Selection UI */}
+      {compareMode && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h4 className="font-medium text-purple-900">Manual Comparison</h4>
+              <p className="text-sm text-purple-700">
+                {selectedSnapshots[0] && selectedSnapshots[1]
+                  ? 'Two snapshots selected. Click Compare to see differences.'
+                  : selectedSnapshots[0]
+                    ? 'Select one more snapshot to compare.'
+                    : 'Select two snapshots from the list below to compare them.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {(selectedSnapshots[0] || selectedSnapshots[1]) && (
+                <button
+                  type="button"
+                  onClick={handleClearComparison}
+                  className="focus-ring min-h-9 px-3 py-1.5 text-sm text-purple-700 hover:text-purple-900 hover:bg-purple-100 rounded-lg"
+                >
+                  Clear Selection
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  void handleCompareSelected();
+                }}
+                disabled={!selectedSnapshots[0] || !selectedSnapshots[1] || manualDiffLoading}
+                className="focus-ring min-h-9 px-4 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {manualDiffLoading ? 'Comparing...' : 'Compare Selected'}
+              </button>
+            </div>
+          </div>
+
+          {/* Selected snapshots preview */}
+          {(selectedSnapshots[0] || selectedSnapshots[1]) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              {selectedSnapshots[0] && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-200 text-purple-800">
+                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-purple-600 text-white text-xs font-bold">
+                    A
+                  </span>
+                  <span className="font-mono text-xs">{selectedSnapshots[0].slice(0, 8)}...</span>
+                </span>
+              )}
+              {selectedSnapshots[0] && selectedSnapshots[1] && (
+                <span className="text-purple-600">vs</span>
+              )}
+              {selectedSnapshots[1] && (
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-200 text-purple-800">
+                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-purple-600 text-white text-xs font-bold">
+                    B
+                  </span>
+                  <span className="font-mono text-xs">{selectedSnapshots[1].slice(0, 8)}...</span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Manual Comparison Results */}
+      {compareMode && manualDiffError && (
+        <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-700" role="alert">
+          {manualDiffError}
+        </div>
+      )}
+
+      {compareMode && manualDiff && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-gray-900">Comparison Results</h4>
+            <span className="text-sm text-gray-500">
+              {new Date(manualDiff.snapshotA.createdAt).toLocaleDateString()} →{' '}
+              {new Date(manualDiff.snapshotB.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+          <SnapshotDiffPanel diff={manualDiff} warnings={manualDiffWarnings} />
+        </div>
+      )}
 
       {latestDiff?.summary && (
         <div className="space-y-3">
@@ -729,6 +900,14 @@ function HistoryTab({ domain }: { domain: string }) {
             <caption className="sr-only">Recent snapshots for {domain}</caption>
             <thead className="bg-gray-50">
               <tr>
+                {compareMode && (
+                  <th
+                    scope="col"
+                    className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16"
+                  >
+                    Select
+                  </th>
+                )}
                 <th
                   scope="col"
                   className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
@@ -762,34 +941,67 @@ function HistoryTab({ domain }: { domain: string }) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {snapshots.map((snapshot) => (
-                <tr key={snapshot.id} className="hover:bg-gray-50 transition-colors duration-150">
-                  <td className="px-4 py-2 text-sm text-gray-700 tabular-nums">
-                    {new Date(snapshot.createdAt).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-gray-700">
-                    {snapshot.rulesetVersion || 'N/A'}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-gray-600">
-                    {snapshot.queryScope?.names?.length || 0} names ·{' '}
-                    {snapshot.queryScope?.types?.length || 0} types ·{' '}
-                    {snapshot.queryScope?.vantages?.length || 0} vantages
-                  </td>
-                  <td className="px-4 py-2 text-xs font-mono text-gray-500">{snapshot.id}</td>
-                  <td className="px-4 py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handleCopySnapshotId(snapshot.id);
-                      }}
-                      className="focus-ring min-h-9 rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
-                      aria-label={`Copy snapshot ID ${snapshot.id}`}
-                    >
-                      {copiedSnapshotId === snapshot.id ? 'Copied' : 'Copy ID'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {snapshots.map((snapshot) => {
+                const selectionIndex = getSelectionIndex(snapshot.id);
+                const isSelected = selectionIndex !== null;
+
+                return (
+                  <tr
+                    key={snapshot.id}
+                    className={`transition-colors duration-150 ${
+                      isSelected
+                        ? 'bg-purple-50 hover:bg-purple-100'
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    {compareMode && (
+                      <td className="px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSnapshotSelection(snapshot.id)}
+                          className={`focus-ring w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                            isSelected
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-200 text-gray-600 hover:bg-purple-200 hover:text-purple-700'
+                          }`}
+                          aria-label={
+                            isSelected
+                              ? `Deselect snapshot ${snapshot.id}`
+                              : `Select snapshot ${snapshot.id} for comparison`
+                          }
+                          aria-pressed={isSelected}
+                        >
+                          {isSelected ? (selectionIndex === 1 ? 'A' : 'B') : '+'}
+                        </button>
+                      </td>
+                    )}
+                    <td className="px-4 py-2 text-sm text-gray-700 tabular-nums">
+                      {new Date(snapshot.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-700">
+                      {snapshot.rulesetVersion || 'N/A'}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-600">
+                      {snapshot.queryScope?.names?.length || 0} names ·{' '}
+                      {snapshot.queryScope?.types?.length || 0} types ·{' '}
+                      {snapshot.queryScope?.vantages?.length || 0} vantages
+                    </td>
+                    <td className="px-4 py-2 text-xs font-mono text-gray-500">{snapshot.id}</td>
+                    <td className="px-4 py-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleCopySnapshotId(snapshot.id);
+                        }}
+                        className="focus-ring min-h-9 rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                        aria-label={`Copy snapshot ID ${snapshot.id}`}
+                      >
+                        {copiedSnapshotId === snapshot.id ? 'Copied' : 'Copy ID'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
