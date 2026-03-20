@@ -14,6 +14,8 @@ export {
 // Domain repositories
 export { type DomainFilter, DomainRepository } from './domain.js';
 export { FindingRepository } from './finding.js';
+// Mail evidence repositories
+export { DkimSelectorRepository, MailEvidenceRepository } from './mail-evidence.js';
 export { ObservationRepository } from './observation.js';
 // Portfolio repositories
 export {

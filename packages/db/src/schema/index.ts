@@ -749,3 +749,19 @@ export {
   remediationRequests,
   remediationStatusEnum,
 } from './remediation.js';
+
+// =============================================================================
+// MAIL EVIDENCE EXPORTS
+// =============================================================================
+
+export {
+  type DkimSelector,
+  dkimSelectors,
+  type MailEvidence,
+  mailEvidence,
+  mailProviderEnum,
+  type NewDkimSelector,
+  type NewMailEvidence,
+  selectorConfidenceEnum,
+  selectorProvenanceEnum,
+} from './mail.js';
