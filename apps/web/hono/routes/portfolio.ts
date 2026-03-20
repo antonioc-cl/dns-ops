@@ -111,8 +111,16 @@ portfolioRoutes.post('/search', async (c) => {
         });
 
         if (!latestSnapshot) {
-          return { ...domain, findings: [], latestSnapshot: null };
+          return {
+            ...domain,
+            findings: [],
+            findingsEvaluated: false,
+            latestSnapshot: null,
+          };
         }
+
+        // Check if findings were evaluated (rulesetVersionId set on snapshot)
+        const findingsEvaluated = latestSnapshot.rulesetVersionId !== null;
 
         const hasSeverityFilter = severities && severities.length > 0;
         const domainFindings = await db.getDrizzle().query.findings.findMany({
@@ -122,15 +130,22 @@ portfolioRoutes.post('/search', async (c) => {
           ),
         });
 
-        // Filter out if severity filter doesn't match
-        if (hasSeverityFilter && domainFindings.length === 0) {
+        // Filter out if severity filter doesn't match AND findings were evaluated
+        // Don't filter out if findings weren't evaluated (might have matching findings once evaluated)
+        if (hasSeverityFilter && domainFindings.length === 0 && findingsEvaluated) {
           return null;
         }
 
         return {
           ...domain,
           findings: domainFindings,
-          latestSnapshot,
+          findingsEvaluated,
+          latestSnapshot: {
+            id: latestSnapshot.id,
+            createdAt: latestSnapshot.createdAt,
+            resultState: latestSnapshot.resultState,
+            rulesetVersionId: latestSnapshot.rulesetVersionId,
+          },
         };
       })
     );

@@ -531,10 +531,13 @@ export class DNSCollector {
       const ruleset = createCombinedRuleset();
       const engine = new RulesEngine(ruleset);
 
-      // Ensure ruleset version exists in DB
+      // Ensure ruleset version exists in DB and get its ID
+      let rulesetVersionId: string;
       const existingVersion = await this.rulesetVersionRepo.findByVersion(ruleset.version);
-      if (!existingVersion) {
-        await this.rulesetVersionRepo.create({
+      if (existingVersion) {
+        rulesetVersionId = existingVersion.id;
+      } else {
+        const newVersion = await this.rulesetVersionRepo.create({
           version: ruleset.version,
           name: ruleset.name,
           description: ruleset.description || '',
@@ -547,7 +550,11 @@ export class DNSCollector {
           active: true,
           createdBy: this.config.triggeredBy || 'collector',
         });
+        rulesetVersionId = newVersion.id;
       }
+
+      // Update snapshot with ruleset version to indicate findings were evaluated
+      await this.snapshotRepo.updateRulesetVersion(snapshotId, rulesetVersionId);
 
       // Create rule context
       const context: RuleContext = {

@@ -93,4 +93,16 @@ export class SnapshotRepository {
     const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
     return results.length;
   }
+
+  /**
+   * Update snapshot's ruleset version ID
+   *
+   * Called after findings evaluation to mark the snapshot as having been
+   * analyzed with a specific ruleset version. This allows downstream consumers
+   * to distinguish between "no findings" (empty but evaluated) and
+   * "findings not yet evaluated" (rulesetVersionId is null).
+   */
+  async updateRulesetVersion(id: string, rulesetVersionId: string): Promise<Snapshot | undefined> {
+    return this.db.updateOne(snapshots, { rulesetVersionId }, eq(snapshots.id, id));
+  }
 }

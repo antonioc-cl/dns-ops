@@ -45,7 +45,8 @@ snapshotRoutes.get('/:domain', async (c) => {
       snapshots: snapshots.map((s) => ({
         id: s.id,
         createdAt: s.createdAt,
-        rulesetVersion: s.rulesetVersionId,
+        rulesetVersionId: s.rulesetVersionId,
+        findingsEvaluated: s.rulesetVersionId !== null,
         queryScope: {
           names: s.queriedNames,
           types: s.queriedTypes,
@@ -95,7 +96,8 @@ snapshotRoutes.get('/:domain/latest', async (c) => {
       id: snapshot.id,
       domain: domainName,
       createdAt: snapshot.createdAt,
-      rulesetVersion: snapshot.rulesetVersionId,
+      rulesetVersionId: snapshot.rulesetVersionId,
+      findingsEvaluated: snapshot.rulesetVersionId !== null,
       queryScope: {
         names: snapshot.queriedNames,
         types: snapshot.queriedTypes,
@@ -134,7 +136,8 @@ snapshotRoutes.get('/:domain/:id', async (c) => {
       id: snapshot.id,
       domainId: snapshot.domainId,
       createdAt: snapshot.createdAt,
-      rulesetVersion: snapshot.rulesetVersionId,
+      rulesetVersionId: snapshot.rulesetVersionId,
+      findingsEvaluated: snapshot.rulesetVersionId !== null,
       queryScope: {
         names: snapshot.queriedNames,
         types: snapshot.queriedTypes,
@@ -214,6 +217,10 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
       db.selectWhere(findings, eq(findings.snapshotId, snapshotB)),
     ]);
 
+    // Check if findings were evaluated for each snapshot
+    const findingsEvaluatedA = snapA.rulesetVersionId !== null;
+    const findingsEvaluatedB = snapB.rulesetVersionId !== null;
+
     // Generate diff
     const diff = compareSnapshots(
       {
@@ -234,13 +241,39 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
       },
       recordsA,
       recordsB,
-      findingsA,
-      findingsB
+      // Only include findings if they were evaluated
+      findingsEvaluatedA ? findingsA : [],
+      findingsEvaluatedB ? findingsB : []
     );
+
+    // Build warnings
+    const warnings: string[] = [];
+    if (diff.comparison.scopeChanges) {
+      warnings.push(
+        'Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes.'
+      );
+    }
+    if (!findingsEvaluatedA || !findingsEvaluatedB) {
+      warnings.push(
+        `Findings comparison incomplete: ${
+          !findingsEvaluatedA && !findingsEvaluatedB
+            ? 'neither snapshot has been evaluated'
+            : !findingsEvaluatedA
+              ? 'snapshot A has not been evaluated'
+              : 'snapshot B has not been evaluated'
+        }. Re-evaluate old snapshots via POST /api/snapshot/:id/evaluate to see finding changes.`
+      );
+    }
 
     return c.json({
       domain: domainName,
       diff,
+      findingsEvaluated: {
+        snapshotA: findingsEvaluatedA,
+        snapshotB: findingsEvaluatedB,
+      },
+      warnings: warnings.length > 0 ? warnings : undefined,
+      // Legacy field for backwards compatibility
       ambiguityWarning: diff.comparison.scopeChanges
         ? 'Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes.'
         : undefined,
@@ -297,6 +330,10 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       db.selectWhere(findings, eq(findings.snapshotId, snapB.id)),
     ]);
 
+    // Check if findings were evaluated for each snapshot
+    const findingsEvaluatedA = snapA.rulesetVersionId !== null;
+    const findingsEvaluatedB = snapB.rulesetVersionId !== null;
+
     const diff = compareSnapshots(
       {
         id: snapA.id,
@@ -316,11 +353,33 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       },
       recordsA,
       recordsB,
-      findingsA,
-      findingsB
+      // Only include findings if they were evaluated
+      findingsEvaluatedA ? findingsA : [],
+      findingsEvaluatedB ? findingsB : []
     );
 
-    return c.json({ diff });
+    // Build warnings if findings weren't evaluated
+    const warnings: string[] = [];
+    if (!findingsEvaluatedA || !findingsEvaluatedB) {
+      warnings.push(
+        `Findings comparison incomplete: ${
+          !findingsEvaluatedA && !findingsEvaluatedB
+            ? 'neither snapshot has been evaluated'
+            : !findingsEvaluatedA
+              ? 'older snapshot has not been evaluated'
+              : 'newer snapshot has not been evaluated'
+        }. Re-evaluate via POST /api/snapshot/:id/evaluate.`
+      );
+    }
+
+    return c.json({
+      diff,
+      findingsEvaluated: {
+        older: findingsEvaluatedA,
+        newer: findingsEvaluatedB,
+      },
+      warnings: warnings.length > 0 ? warnings : undefined,
+    });
   } catch (error) {
     console.error('Compare latest error:', error);
     return c.json(
