@@ -11,13 +11,14 @@ import {
   type ApiErrorResponse,
   validateCollectDomainRequest,
 } from '@dns-ops/contracts';
-import { createPostgresAdapter } from '@dns-ops/db';
-import { normalizeDomain, isValidDomain } from '@dns-ops/parsing';
+import { createPostgresAdapter, SnapshotRepository } from '@dns-ops/db';
+import { isValidDomain, normalizeDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
+import type { Env } from '../types.js';
 
-export const collectDomainRoutes = new Hono();
+export const collectDomainRoutes = new Hono<Env>();
 
 /**
  * POST /api/collect/domain
@@ -106,14 +107,48 @@ collectDomainRoutes.post('/domain', async (c) => {
 
 /**
  * GET /api/collect/status/:snapshotId
- * Check collection status
+ * Check collection status by looking up the snapshot in the database
  */
 collectDomainRoutes.get('/status/:snapshotId', async (c) => {
-  // TODO: Implement status check if using async job queue
-  return c.json({
-    snapshotId: c.req.param('snapshotId'),
-    status: 'completed',
-  });
+  const db = c.get('db');
+  const snapshotId = c.req.param('snapshotId');
+
+  try {
+    const snapshotRepo = new SnapshotRepository(db);
+    const snapshot = await snapshotRepo.findById(snapshotId);
+
+    if (!snapshot) {
+      return c.json(
+        {
+          error: 'Snapshot not found',
+          snapshotId,
+        },
+        404
+      );
+    }
+
+    // Map resultState to status response
+    const status = snapshot.resultState; // 'complete', 'partial', or 'failed'
+
+    return c.json({
+      snapshotId,
+      status,
+      domain: snapshot.domainId, // Note: this is domainId, not domain name
+      createdAt: snapshot.createdAt,
+      completedAt: snapshot.createdAt, // Collection is synchronous, so same as created
+      errorMessage: snapshot.errorMessage,
+    });
+  } catch (error) {
+    console.error('Status check error:', error);
+    return c.json(
+      {
+        error: 'Failed to check status',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        snapshotId,
+      },
+      500
+    );
+  }
 });
 
 // Domain validation is now handled by @dns-ops/parsing.isValidDomain
