@@ -16,11 +16,20 @@ interface DelegationData {
   hasDnssec: boolean;
 }
 
+interface ObservationEvidence {
+  queryName: string;
+  queryType: string;
+  source: string;
+  status: string;
+  data?: Record<string, unknown>;
+}
+
 interface DelegationIssue {
   type: string;
   severity: string;
   description: string;
   details: unknown;
+  evidence?: ObservationEvidence[];
 }
 
 interface DelegationResponse {
@@ -94,34 +103,7 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
       {issues.length > 0 && (
         <div className="space-y-3">
           {issues.map((issue) => (
-            <div
-              key={`${issue.type}-${issue.severity}-${issue.description}`}
-              className={`p-4 rounded-lg border ${
-                issue.severity === 'critical'
-                  ? 'bg-red-50 border-red-200'
-                  : issue.severity === 'high'
-                    ? 'bg-orange-50 border-orange-200'
-                    : 'bg-yellow-50 border-yellow-200'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className={`w-2 h-2 rounded-full mt-2 ${
-                    issue.severity === 'critical'
-                      ? 'bg-red-500'
-                      : issue.severity === 'high'
-                        ? 'bg-orange-500'
-                        : 'bg-yellow-500'
-                  }`}
-                />
-                <div>
-                  <h4 className="font-medium text-gray-900">{issue.description}</h4>
-                  <p className="text-sm text-gray-600 mt-1 capitalize">
-                    {issue.type.replace(/-/g, ' ')} • {issue.severity} severity
-                  </p>
-                </div>
-              </div>
-            </div>
+            <IssueCard key={`${issue.type}-${issue.severity}-${issue.description}`} issue={issue} />
           ))}
         </div>
       )}
@@ -201,6 +183,117 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
           color={delegation.hasDivergence ? 'red' : 'green'}
         />
       </section>
+    </div>
+  );
+}
+
+function IssueCard({ issue }: { issue: DelegationIssue }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasEvidence = issue.evidence && issue.evidence.length > 0;
+
+  const severityColors = {
+    critical: { bg: 'bg-red-50 border-red-200', dot: 'bg-red-500' },
+    high: { bg: 'bg-orange-50 border-orange-200', dot: 'bg-orange-500' },
+    medium: { bg: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500' },
+    low: { bg: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500' },
+  };
+
+  const colors = severityColors[issue.severity as keyof typeof severityColors] || severityColors.medium;
+
+  return (
+    <div className={`rounded-lg border ${colors.bg}`}>
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <div className={`w-2 h-2 rounded-full mt-2 ${colors.dot}`} />
+          <div className="flex-1">
+            <h4 className="font-medium text-gray-900">{issue.description}</h4>
+            <p className="text-sm text-gray-600 mt-1 capitalize">
+              {issue.type.replace(/-/g, ' ')} • {issue.severity} severity
+            </p>
+          </div>
+          {hasEvidence && (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            >
+              <svg
+                className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              Evidence
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Expandable Evidence Section */}
+      {expanded && hasEvidence && (
+        <div className="border-t border-gray-200 bg-white/50 p-4">
+          <h5 className="text-xs font-medium text-gray-500 uppercase mb-3">
+            Observation Evidence ({issue.evidence!.length})
+          </h5>
+          <div className="space-y-3">
+            {issue.evidence!.map((evidence, idx) => (
+              <EvidenceCard key={idx} evidence={evidence} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EvidenceCard({ evidence }: { evidence: ObservationEvidence }) {
+  const [showRaw, setShowRaw] = useState(false);
+
+  const statusColors: Record<string, string> = {
+    success: 'bg-green-100 text-green-700',
+    error: 'bg-red-100 text-red-700',
+    timeout: 'bg-yellow-100 text-yellow-700',
+    nodata: 'bg-gray-100 text-gray-600',
+  };
+
+  return (
+    <div className="p-3 bg-white rounded border border-gray-200">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <code className="text-sm font-mono text-gray-900">{evidence.queryName}</code>
+            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">
+              {evidence.queryType}
+            </span>
+            <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${statusColors[evidence.status] || 'bg-gray-100 text-gray-600'}`}>
+              {evidence.status}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Source: <span className="font-medium">{evidence.source}</span>
+          </p>
+        </div>
+        {evidence.data && (
+          <button
+            type="button"
+            onClick={() => setShowRaw(!showRaw)}
+            className="text-xs text-blue-600 hover:text-blue-700 ml-2"
+          >
+            {showRaw ? 'Hide' : 'Raw'}
+          </button>
+        )}
+      </div>
+
+      {/* Raw observation data */}
+      {showRaw && evidence.data && (
+        <div className="mt-2 p-2 bg-gray-900 rounded text-xs overflow-x-auto">
+          <pre className="text-gray-100 font-mono whitespace-pre-wrap">
+            {JSON.stringify(evidence.data, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
