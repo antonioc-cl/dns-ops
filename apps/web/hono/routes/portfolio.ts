@@ -16,6 +16,15 @@ import { domains, findings, snapshots } from '@dns-ops/db/schema';
 import { and, desc, eq, inArray, like, or } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import {
+  boolean,
+  integer,
+  optionalArray,
+  optionalString,
+  requiredString,
+  validateBody,
+  validationErrorResponse,
+} from '../middleware/validation.js';
 import type { Env } from '../types.js';
 
 export const portfolioRoutes = new Hono<Env>();
@@ -33,8 +42,21 @@ portfolioRoutes.post('/search', async (c) => {
   if (!tenantId) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
-  const body = await c.req.json().catch(() => ({}));
-  const { query, tags, severities, zoneManagement, limit = 20, offset = 0 } = body;
+
+  const validation = await validateBody(c, {
+    query: optionalString('query', { maxLength: 253 }),
+    tags: optionalArray<string>('tags'),
+    severities: optionalArray<string>('severities'),
+    zoneManagement: optionalArray<string>('zoneManagement'),
+    limit: integer('limit', { min: 1, max: 100, required: false }),
+    offset: integer('offset', { min: 0, required: false }),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
+  }
+
+  const { query, tags, severities, zoneManagement, limit = 20, offset = 0 } = validation.data;
 
   try {
     const tagRepo = new DomainTagRepository(db);
@@ -52,14 +74,14 @@ portfolioRoutes.post('/search', async (c) => {
       }
     }
 
-    if (zoneManagement?.length > 0) {
-      conditions.push(inArray(domains.zoneManagement, zoneManagement));
+    if (zoneManagement && zoneManagement.length > 0) {
+      conditions.push(inArray(domains.zoneManagement, zoneManagement as ('managed' | 'unmanaged' | 'unknown')[]));
     }
 
     // Get domains
     let domainIds: string[] = [];
 
-    if (tags?.length > 0) {
+    if (tags && tags.length > 0) {
       // Filter by tags first
       domainIds = await tagRepo.findDomainsByTags(tags, tenantId);
       if (domainIds.length === 0) {
@@ -92,15 +114,16 @@ portfolioRoutes.post('/search', async (c) => {
           return { ...domain, findings: [], latestSnapshot: null };
         }
 
+        const hasSeverityFilter = severities && severities.length > 0;
         const domainFindings = await db.getDrizzle().query.findings.findMany({
           where: and(
             eq(findings.snapshotId, latestSnapshot.id),
-            severities?.length > 0 ? inArray(findings.severity, severities) : undefined
+            hasSeverityFilter ? inArray(findings.severity, severities as ('critical' | 'high' | 'medium' | 'low' | 'info')[]) : undefined
           ),
         });
 
         // Filter out if severity filter doesn't match
-        if (severities?.length > 0 && domainFindings.length === 0) {
+        if (hasSeverityFilter && domainFindings.length === 0) {
           return null;
         }
 
@@ -148,12 +171,16 @@ portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (
   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const domainId = c.req.param('domainId');
-  const body = await c.req.json().catch(() => ({}));
-  const { content } = body;
 
-  if (!content?.trim()) {
-    return c.json({ error: 'Content is required' }, 400);
+  const validation = await validateBody(c, {
+    content: requiredString('content', { minLength: 1, maxLength: 10000 }),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
   }
+
+  const { content } = validation.data;
 
   try {
     const noteRepo = new DomainNoteRepository(db);
@@ -188,8 +215,16 @@ portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const noteId = c.req.param('noteId');
-  const body = await c.req.json().catch(() => ({}));
-  const { content } = body;
+
+  const validation = await validateBody(c, {
+    content: requiredString('content', { minLength: 1, maxLength: 10000 }),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
+  }
+
+  const { content } = validation.data;
 
   try {
     const noteRepo = new DomainNoteRepository(db);
@@ -275,14 +310,21 @@ portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c
   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const domainId = c.req.param('domainId');
-  const body = await c.req.json().catch(() => ({}));
-  const { tag } = body;
 
-  if (!tag?.trim()) {
-    return c.json({ error: 'Tag is required' }, 400);
+  const validation = await validateBody(c, {
+    tag: requiredString('tag', {
+      minLength: 1,
+      maxLength: 64,
+      pattern: /^[a-zA-Z0-9_-]+$/,
+      patternMessage: 'tag must contain only letters, numbers, underscores, and hyphens',
+    }),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
   }
 
-  const normalizedTag = tag.trim().toLowerCase();
+  const normalizedTag = validation.data.tag.trim().toLowerCase();
 
   try {
     const tagRepo = new DomainTagRepository(db);
@@ -360,12 +402,19 @@ portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
   const db = c.get('db');
   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const body = await c.req.json().catch(() => ({}));
-  const { name, description, criteria, isShared } = body;
 
-  if (!name?.trim()) {
-    return c.json({ error: 'Filter name is required' }, 400);
+  const validation = await validateBody(c, {
+    name: requiredString('name', { minLength: 1, maxLength: 100 }),
+    description: optionalString('description', { maxLength: 500 }),
+    criteria: (value: unknown) => (value && typeof value === 'object' ? value : {}) as Record<string, unknown>,
+    isShared: boolean('isShared', false),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
   }
+
+  const { name, description, criteria, isShared } = validation.data;
 
   try {
     const filterRepo = new SavedFilterRepository(db);
@@ -490,12 +539,24 @@ portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) =
   const db = c.get('db');
   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const body = await c.req.json().catch(() => ({}));
-  const { providerKey, templateKey, overrideData, appliesToDomains } = body;
 
-  if (!providerKey || !templateKey || !overrideData) {
-    return c.json({ error: 'providerKey, templateKey, and overrideData are required' }, 400);
+  const validation = await validateBody(c, {
+    providerKey: requiredString('providerKey', { minLength: 1, maxLength: 64 }),
+    templateKey: requiredString('templateKey', { minLength: 1, maxLength: 64 }),
+    overrideData: (value: unknown) => {
+      if (!value || typeof value !== 'object') {
+        throw new Error('overrideData must be an object');
+      }
+      return value as Record<string, unknown>;
+    },
+    appliesToDomains: optionalArray<string>('appliesToDomains'),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
   }
+
+  const { providerKey, templateKey, overrideData, appliesToDomains } = validation.data;
 
   try {
     const overrideRepo = new TemplateOverrideRepository(db);
