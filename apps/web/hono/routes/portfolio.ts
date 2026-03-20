@@ -29,7 +29,10 @@ portfolioRoutes.use('*', requireAuth);
 
 portfolioRoutes.post('/search', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
   const body = await c.req.json().catch(() => ({}));
   const { query, tags, severities, zoneManagement, limit = 20, offset = 0 } = body;
 
