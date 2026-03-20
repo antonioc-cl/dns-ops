@@ -20,10 +20,10 @@ export * from './dns/recordset.js';
 
 // IDN exports
 export {
+  fromPunycode,
   isPunycode,
   isValidDomain,
   normalizeDomain,
   toPunycode,
-  toUnicode,
 } from './idn/index.js';
 export * from './mail/index.js';

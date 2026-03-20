@@ -10,6 +10,6 @@ export * from './dig/index.js';
 export { getWildcardBase, isWildcard, normalizeDomain as normalizeDNSDomain, parseDNSAnswer, parseTXTRecord, } from './dns/index.js';
 export * from './dns/recordset.js';
 // IDN exports
-export { isPunycode, isValidDomain, normalizeDomain, toPunycode, toUnicode, } from './idn/index.js';
+export { fromPunycode, isPunycode, isValidDomain, normalizeDomain, toPunycode, } from './idn/index.js';
 export * from './mail/index.js';
 //# sourceMappingURL=index.js.map

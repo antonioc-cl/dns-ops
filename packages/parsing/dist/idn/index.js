@@ -2,9 +2,9 @@
  * IDN (Internationalized Domain Name) Utilities
  *
  * Handle punycode encoding/decoding for international domain names.
+ * Uses the 'punycode' package for proper RFC 3492 implementation.
  */
-// Simple punycode implementation for DNS Ops
-// In production, consider using the 'punycode' package
+import { toASCII, toUnicode } from 'punycode';
 const PREFIX = 'xn--';
 /**
  * Check if a domain name is punycode encoded
@@ -14,8 +14,7 @@ export function isPunycode(name) {
 }
 /**
  * Convert Unicode domain to Punycode (ASCII)
- * Note: This is a simplified implementation
- * For production, use the 'punycode' npm package
+ * Uses proper RFC 3492 implementation via the punycode package
  */
 export function toPunycode(unicode) {
     // Check if already ASCII
@@ -23,23 +22,19 @@ export function toPunycode(unicode) {
     if (/^[\x00-\x7F]+$/.test(unicode)) {
         return unicode.toLowerCase();
     }
-    // For production, use: return punycode.toASCII(unicode);
-    // This is a placeholder that marks non-ASCII domains
-    // FIXME: Replace with proper punycode library
-    return `${PREFIX}placeholder-${btoa(encodeURIComponent(unicode)).toLowerCase()}`;
+    // Use proper punycode conversion
+    return toASCII(unicode.toLowerCase());
 }
 /**
  * Convert Punycode to Unicode
- * Note: This is a simplified implementation
- * For production, use the 'punycode' npm package
+ * Uses proper RFC 3492 implementation via the punycode package
  */
-export function toUnicode(punycode) {
+export function fromPunycode(punycode) {
     if (!isPunycode(punycode)) {
         return punycode.toLowerCase();
     }
-    // For production, use: return punycode.toUnicode(punycode);
-    // This is a placeholder
-    return punycode.slice(PREFIX.length);
+    // Use proper punycode conversion
+    return toUnicode(punycode);
 }
 /**
  * Normalize a domain name (handles IDN conversion)
@@ -52,7 +47,7 @@ export function normalizeDomain(name) {
     let punycode;
     if (isPunycode(clean)) {
         punycode = clean;
-        unicode = toUnicode(clean);
+        unicode = fromPunycode(clean);
         // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentional ASCII check
     }
     else if (/^[\x00-\x7F]+$/.test(clean)) {
@@ -74,6 +69,7 @@ export function normalizeDomain(name) {
 }
 /**
  * Validate domain name format
+ * Handles both ASCII and Unicode domains
  */
 export function isValidDomain(name) {
     if (!name || name.length > 253) {
@@ -87,12 +83,23 @@ export function isValidDomain(name) {
         if (label.length === 0 || label.length > 63) {
             return false;
         }
-        // Labels can contain letters, digits, and hyphens
-        // But cannot start or end with hyphens
-        if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) {
-            // Allow punycode prefix
-            if (!label.startsWith(PREFIX)) {
-                return false;
+        // Try to convert to punycode first (handles unicode)
+        try {
+            const asciiLabel = toASCII(label);
+            // Validate the ASCII representation
+            if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(asciiLabel)) {
+                // Allow punycode prefix
+                if (!asciiLabel.startsWith(PREFIX)) {
+                    return false;
+                }
+            }
+        }
+        catch {
+            // If conversion fails, check if it's valid ASCII
+            if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)) {
+                if (!label.startsWith(PREFIX)) {
+                    return false;
+                }
             }
         }
     }

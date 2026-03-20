@@ -1,1 +1,2 @@
 $ tsc --noEmit
+src/index.ts(27,3): error TS2724: '"./idn/index.js"' has no exported member named 'toUnicode'. Did you mean 'toPunycode'?
