@@ -13,8 +13,14 @@ import {
   ProviderBaselineRepository,
   ShadowComparisonRepository,
   SnapshotRepository,
+  TemplateOverrideRepository,
 } from '@dns-ops/db';
-import type { LegacyToolOutput as DBLegacyToolOutput, FieldComparison } from '@dns-ops/db/schema';
+import type {
+  LegacyToolOutput as DBLegacyToolOutput,
+  FieldComparison,
+  ProviderBaseline,
+  TemplateOverride,
+} from '@dns-ops/db/schema';
 import { findings as findingsTable } from '@dns-ops/db/schema';
 import { type LegacyToolOutput, shadowComparator } from '@dns-ops/rules';
 import { eq } from 'drizzle-orm';
@@ -328,26 +334,97 @@ shadowComparisonRoutes.get('/legacy-logs', async (c) => {
 });
 
 /**
+ * Apply template overrides to a provider baseline
+ * Overrides can modify baseline properties like dkimSelectors, mxPatterns, spfIncludes
+ */
+function applyOverrides(
+  baseline: ProviderBaseline,
+  overrides: TemplateOverride[],
+  domainName?: string
+): ProviderBaseline & { overridesApplied: string[] } {
+  const result = { ...baseline };
+  const overridesApplied: string[] = [];
+
+  for (const override of overrides) {
+    // Check if override applies to this domain (if domainName specified)
+    if (
+      domainName &&
+      override.appliesToDomains &&
+      override.appliesToDomains.length > 0 &&
+      !override.appliesToDomains.includes(domainName)
+    ) {
+      continue;
+    }
+
+    // Merge override data into baseline
+    const overrideData = override.overrideData as Record<string, unknown>;
+
+    // Apply specific override fields
+    if (overrideData.dkimSelectors && Array.isArray(overrideData.dkimSelectors)) {
+      result.dkimSelectors = overrideData.dkimSelectors as string[];
+    }
+    if (overrideData.mxPatterns && Array.isArray(overrideData.mxPatterns)) {
+      result.mxPatterns = overrideData.mxPatterns as string[];
+    }
+    if (overrideData.spfIncludes && Array.isArray(overrideData.spfIncludes)) {
+      result.spfIncludes = overrideData.spfIncludes as string[];
+    }
+
+    // Merge baseline object (deep merge for nested properties)
+    if (overrideData.baseline && typeof overrideData.baseline === 'object') {
+      result.baseline = {
+        ...(result.baseline as Record<string, unknown>),
+        ...(overrideData.baseline as Record<string, unknown>),
+      };
+    }
+
+    overridesApplied.push(override.id);
+  }
+
+  return { ...result, overridesApplied };
+}
+
+/**
  * GET /api/shadow-comparison/provider-baselines
- * Get active provider baselines (read-only reference data)
+ * Get active provider baselines with template overrides applied
+ *
+ * Query params:
+ *   - tenantId: Filter overrides by tenant (optional)
+ *   - domainName: Apply only domain-specific overrides (optional)
  */
 shadowComparisonRoutes.get('/provider-baselines', async (c) => {
   const db = c.get('db');
+  const tenantId = c.req.query('tenantId');
+  const domainName = c.req.query('domainName');
 
   try {
     const baselineRepo = new ProviderBaselineRepository(db);
+    const overrideRepo = new TemplateOverrideRepository(db);
+
     const baselines = await baselineRepo.findActive();
 
+    // Apply template overrides to each baseline
+    const baselinesWithOverrides = await Promise.all(
+      baselines.map(async (b) => {
+        const overrides = await overrideRepo.findByProvider(b.providerKey, tenantId);
+        const withOverrides = applyOverrides(b, overrides, domainName);
+
+        return {
+          providerKey: withOverrides.providerKey,
+          providerName: withOverrides.providerName,
+          baseline: withOverrides.baseline,
+          dkimSelectors: withOverrides.dkimSelectors,
+          mxPatterns: withOverrides.mxPatterns,
+          spfIncludes: withOverrides.spfIncludes,
+          version: withOverrides.version,
+          overridesApplied: withOverrides.overridesApplied,
+        };
+      })
+    );
+
     return c.json({
-      baselines: baselines.map((b) => ({
-        providerKey: b.providerKey,
-        providerName: b.providerName,
-        baseline: b.baseline,
-        dkimSelectors: b.dkimSelectors,
-        mxPatterns: b.mxPatterns,
-        spfIncludes: b.spfIncludes,
-        version: b.version,
-      })),
+      baselines: baselinesWithOverrides,
+      overridesActive: baselinesWithOverrides.some((b) => b.overridesApplied.length > 0),
     });
   } catch (error) {
     console.error('Provider baselines error:', error);
@@ -363,21 +440,36 @@ shadowComparisonRoutes.get('/provider-baselines', async (c) => {
 
 /**
  * GET /api/shadow-comparison/provider-baselines/:providerKey
- * Get a specific provider baseline
+ * Get a specific provider baseline with template overrides applied
+ *
+ * Query params:
+ *   - tenantId: Filter overrides by tenant (optional)
+ *   - domainName: Apply only domain-specific overrides (optional)
  */
 shadowComparisonRoutes.get('/provider-baselines/:providerKey', async (c) => {
   const providerKey = c.req.param('providerKey');
   const db = c.get('db');
+  const tenantId = c.req.query('tenantId');
+  const domainName = c.req.query('domainName');
 
   try {
     const baselineRepo = new ProviderBaselineRepository(db);
+    const overrideRepo = new TemplateOverrideRepository(db);
+
     const baseline = await baselineRepo.findByProviderKey(providerKey);
 
     if (!baseline) {
       return c.json({ error: 'Provider baseline not found' }, 404);
     }
 
-    return c.json({ baseline });
+    // Apply template overrides
+    const overrides = await overrideRepo.findByProvider(providerKey, tenantId);
+    const withOverrides = applyOverrides(baseline, overrides, domainName);
+
+    return c.json({
+      baseline: withOverrides,
+      overridesApplied: withOverrides.overridesApplied,
+    });
   } catch (error) {
     console.error('Provider baseline error:', error);
     return c.json(
