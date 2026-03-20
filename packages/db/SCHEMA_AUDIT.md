@@ -207,8 +207,25 @@ Tables in the schema may be defined but not fully consumed by runtime code. This
 
 | Table | Status | Gap |
 |-------|--------|-----|
-| `vantage_points` | Repository exists | No UI or seeding; used in queries |
+| `vantage_points` | Schema only | No repository; vantage info stored inline in observations |
 | `template_overrides` | Repository exists | UI exists; no management API |
+
+### De-scoped / Backlog Tables
+
+| Table | Reason | Future Use |
+|-------|--------|------------|
+| `vantage_points` | Observations use inline `vantage_type` and `vantage_identifier` | Future: normalize for vantage management UI |
+
+**vantage_points rationale:**
+The `vantage_points` table was designed for a future vantage point management feature. Currently:
+- Observations store `vantage_type` (public-recursive, authoritative, etc.) inline
+- Observations store `vantage_identifier` (resolver IP, NS name) inline
+- The `vantage_id` FK in observations is nullable and unused
+
+When to implement:
+- When operators need to manage custom vantage points
+- When reporting requires vantage point grouping
+- When multi-region collection is implemented
 
 ### Seeding
 
