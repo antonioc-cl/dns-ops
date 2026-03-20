@@ -105,8 +105,14 @@ function createMockData(): MockData {
               queryName: 'divergent.com',
               queryType: 'NS',
               groups: [
-                { servers: ['ns1.divergent.com'], signature: 'ns1.divergent.com,ns2.divergent.com' },
-                { servers: ['ns2.divergent.com'], signature: 'ns1.divergent.com,ns3.divergent.com' },
+                {
+                  servers: ['ns1.divergent.com'],
+                  signature: 'ns1.divergent.com,ns2.divergent.com',
+                },
+                {
+                  servers: ['ns2.divergent.com'],
+                  signature: 'ns1.divergent.com,ns3.divergent.com',
+                },
               ],
               totalServers: 2,
             },
@@ -150,9 +156,7 @@ function createMockData(): MockData {
         vantageType: 'parent-zone',
         vantageIdentifier: 'a.gtld-servers.net',
         status: 'success',
-        answerSection: [
-          { name: 'ns1.example.com', type: 'A', data: '192.0.2.1', ttl: 172800 },
-        ],
+        answerSection: [{ name: 'ns1.example.com', type: 'A', data: '192.0.2.1', ttl: 172800 }],
       },
       {
         id: 'obs-glue-2',
@@ -162,9 +166,7 @@ function createMockData(): MockData {
         vantageType: 'parent-zone',
         vantageIdentifier: 'a.gtld-servers.net',
         status: 'success',
-        answerSection: [
-          { name: 'ns2.example.com', type: 'A', data: '192.0.2.2', ttl: 172800 },
-        ],
+        answerSection: [{ name: 'ns2.example.com', type: 'A', data: '192.0.2.2', ttl: 172800 }],
       },
       // Observations for snap-with-divergence with different NS answers
       {

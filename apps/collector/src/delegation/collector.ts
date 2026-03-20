@@ -421,7 +421,6 @@ export class DelegationCollector {
     if (error.includes('refused') || error.includes('ECONNREFUSED')) return 'refused';
     return 'error';
   }
-
 }
 
 // Re-export types for convenience

@@ -90,7 +90,7 @@ export declare const shadowComparisons: import("drizzle-orm/pg-core").PgTableWit
             tableName: "shadow_comparisons";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "match" | "mismatch" | "partial-match" | "error";
+            data: "match" | "error" | "mismatch" | "partial-match";
             driverParam: string;
             notNull: true;
             hasDefault: false;

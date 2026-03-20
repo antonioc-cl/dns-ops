@@ -2,9 +2,10 @@
  * DKIM Selectors API Routes
  *
  * Endpoints for retrieving discovered DKIM selectors with provenance.
+ * Provenance/confidence/provider are stored at collection time in dkim_selectors table.
  */
 
-import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
+import { DkimSelectorRepository, ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
 
@@ -13,6 +14,9 @@ export const selectorRoutes = new Hono<Env>();
 /**
  * GET /api/snapshot/:snapshotId/selectors
  * Get discovered DKIM selectors with provenance
+ *
+ * Returns selector data from dkim_selectors table which stores provenance
+ * at collection time (not inferred from selector names).
  */
 selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
   const snapshotId = c.req.param('snapshotId');
@@ -20,7 +24,7 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
 
   try {
     const snapshotRepo = new SnapshotRepository(db);
-    const observationRepo = new ObservationRepository(db);
+    const selectorRepo = new DkimSelectorRepository(db);
 
     // Fetch snapshot
     const snapshot = await snapshotRepo.findById(snapshotId);
@@ -28,45 +32,42 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
       return c.json({ error: 'Snapshot not found' }, 404);
     }
 
-    // Fetch DKIM-related observations
+    // Fetch selectors from dkim_selectors table (with stored provenance)
+    const storedSelectors = await selectorRepo.findBySnapshotId(snapshotId);
+
+    // If we have stored selectors, use them (provenance was persisted at collection time)
+    if (storedSelectors.length > 0) {
+      const selectors = storedSelectors.map((s) => ({
+        selector: s.selector,
+        found: s.found,
+        provenance: s.provenance,
+        confidence: s.confidence,
+        provider: s.provider || undefined,
+        queryName: `${s.selector}._domainkey.${s.domain}`,
+        recordData: s.recordData || undefined,
+        isValid: s.isValid,
+        validationError: s.validationError || undefined,
+      }));
+
+      return c.json({
+        snapshotId,
+        selectors,
+        count: selectors.length,
+        found: selectors.filter((s) => s.found).length,
+        source: 'persisted', // Indicates data came from stored provenance
+      });
+    }
+
+    // Fallback: Check observations if no dkim_selectors records exist
+    // This handles legacy snapshots collected before provenance persistence
+    const observationRepo = new ObservationRepository(db);
     const observations = await observationRepo.findBySnapshotId(snapshotId);
 
-    // Filter for DKIM observations (selector._domainkey.domain)
     const dkimObservations = observations.filter(
       (obs) => obs.queryType === 'TXT' && obs.queryName.includes('_domainkey')
     );
 
-    // Parse selectors from query names
-    const selectors = dkimObservations.map((obs) => {
-      const selectorMatch = obs.queryName.match(/^([^.]+)\._domainkey\./);
-      const selector = selectorMatch ? selectorMatch[1] : 'unknown';
-
-      // Determine provenance from observation metadata if available
-      // For now, we infer from the query pattern
-      let provenance: string = 'common-dictionary';
-      let confidence: string = 'low';
-
-      // Check for provider-specific patterns
-      if (selector.includes('google')) {
-        provenance = 'provider-heuristic';
-        confidence = 'medium';
-      } else if (selector.startsWith('selector')) {
-        provenance = 'provider-heuristic';
-        confidence = 'medium';
-      }
-
-      return {
-        selector,
-        found: obs.status === 'success' && obs.answerSection && obs.answerSection.length > 0,
-        provenance,
-        confidence,
-        queryName: obs.queryName,
-        status: obs.status,
-      };
-    });
-
-    // If no DKIM observations found, the collector didn't discover any
-    if (selectors.length === 0) {
+    if (dkimObservations.length === 0) {
       return c.json({
         snapshotId,
         selectors: [],
@@ -75,11 +76,28 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
       });
     }
 
+    // Parse selectors from observations (legacy fallback with inferred provenance)
+    const selectors = dkimObservations.map((obs) => {
+      const selectorMatch = obs.queryName.match(/^([^.]+)\._domainkey\./);
+      const selector = selectorMatch ? selectorMatch[1] : 'unknown';
+
+      // Legacy inference - provenance unknown for old snapshots
+      return {
+        selector,
+        found: obs.status === 'success' && obs.answerSection && obs.answerSection.length > 0,
+        provenance: 'unknown' as const, // Mark as unknown for legacy data
+        confidence: 'heuristic' as const,
+        queryName: obs.queryName,
+        status: obs.status,
+      };
+    });
+
     return c.json({
       snapshotId,
       selectors,
       count: selectors.length,
       found: selectors.filter((s) => s.found).length,
+      source: 'inferred', // Indicates data was inferred from observations
     });
   } catch (error) {
     console.error('Error fetching selectors:', error);

@@ -242,6 +242,8 @@ async function storeDkimSelectors(
   const selectors: NewDkimSelector[] = [];
 
   // Map provenance from checker to DB enum
+  // Checker uses: 'managed', 'heuristic', 'operator', 'provider', 'default'
+  // DB uses: 'managed-zone-config', 'operator-supplied', 'provider-heuristic', 'common-dictionary', 'not-found'
   const mapProvenance = (
     provenance?: string
   ):
@@ -258,6 +260,8 @@ async function storeDkimSelectors(
       case 'provider':
         return 'provider-heuristic';
       case 'dictionary':
+      case 'default': // 'default' from checker means common dictionary was used
+      case 'heuristic':
         return 'common-dictionary';
       default:
         return 'not-found';

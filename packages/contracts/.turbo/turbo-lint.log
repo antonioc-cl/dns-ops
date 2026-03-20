@@ -87,9 +87,6 @@ src/dns.ts:39:5 lint/complexity/noUselessSwitchCase  FIXABLE  ━━━━━━
   
      37  37 │       case DNS_RCODE.SERVFAIL:
      38  38 │       case DNS_RCODE.FORMERR:
-Checked 8 files in 142ms. No fixes applied.
-Found 1 warning.
-Found 4 infos.
      39     │ - ····case·DNS_RCODE.NOTIMP:
      40  39 │       default:
      41  40 │         return 'error';
@@ -138,7 +135,10 @@ src/env.ts:148:11 lint/suspicious/noGlobalIsNan  FIXABLE  ━━━━━━━�
     150 │ 
   
   i See the MDN documentation for more details.
+Checked 8 files in 148ms. No fixes applied.
+Found 1 warning.
   
+Found 4 infos.
   i Unsafe fix: Use Number.isNaN instead.
   
     146 146 │   function isValidPort(value: string): boolean {

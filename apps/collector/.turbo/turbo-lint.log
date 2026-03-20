@@ -1,4 +1,70 @@
 $ biome check src
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 35.
+Checked 40 files in 460ms. No fixes applied.
+Found 55 warnings.
+src/config/env.ts:39:11 lint/suspicious/noGlobalIsNan  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! isNaN is unsafe. It attempts a type coercion. Use Number.isNaN instead.
+  
+    37 │     validate: (v) => {
+    38 │       const port = parseInt(v, 10);
+  > 39 │       if (isNaN(port) || port < 1 || port > 65535) {
+       │           ^^^^^
+    40 │         return 'Must be a valid port number (1-65535)';
+    41 │       }
+  
+  i See the MDN documentation for more details.
+  
+  i Unsafe fix: Use Number.isNaN instead.
+  
+     37  37 │       validate: (v) => {
+     38  38 │         const port = parseInt(v, 10);
+     39     │ - ······if·(isNaN(port)·||·port·<·1·||·port·>·65535)·{
+         39 │ + ······if·(Number.isNaN(port)·||·port·<·1·||·port·>·65535)·{
+     40  40 │           return 'Must be a valid port number (1-65535)';
+     41  41 │         }
+  
+
+src/delegation/collector.ts:255:9 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    253 │           });
+    254 │         }
+  > 255 │         groupsBySignature.get(signature)!.servers.push(resp.server);
+        │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    256 │       }
+    257 │ 
+  
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
+  
+    253 253 │             });
+    254 254 │           }
+    255     │ - ········groupsBySignature.get(signature)!.servers.push(resp.server);
+        255 │ + ········groupsBySignature.get(signature)?.servers.push(resp.server);
+    256 256 │         }
+    257 257 │   
+  
+
+src/dns/integration.test.ts:18:15 lint/correctness/noUnusedImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Several of these imports are unused.
+  
+    16 │ import { beforeAll, describe, expect, it } from 'vitest';
+    17 │ import { DNSResolver } from './resolver.js';
+  > 18 │ import type { DNSQueryResult, VantageInfo } from './types.js';
+       │               ^^^^^^^^^^^^^^
+    19 │ 
+    20 │ // Well-known test domains with predictable behavior
+  
+  i Unused imports might be the result of an incomplete refactoring.
+  
+  i Unsafe fix: Remove the unused imports.
+  
+    18 │ import·type·{·DNSQueryResult,·VantageInfo·}·from·'./types.js';
+       │               ----------------                                
+
 src/dns/query-plan.test.ts:55:56 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Unexpected any. Specify a different type.
@@ -216,61 +282,24 @@ src/dns/query-plan.test.ts:115:31 lint/suspicious/noExplicitAny ━━━━━�
   i any disables many type checking rules. Its use should be avoided.
   
 
-src/dns/query-plan.test.ts:119:43 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+src/jobs/queue.ts:86:3 lint/style/noNonNullAssertion  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  ! Unexpected any. Specify a different type.
+  ! Forbidden non-null assertion.
   
-    118 │     it('should include DKIM selector queries', async () => {
-  > 119 │       const queries = await (collector as any).generateQueries();
-        │                                           ^^^
-    120 │ 
-    121 │       // Should have some DKIM selector queries
+    84 │   });
+    85 │ 
+  > 86 │   redisConnection!.on('error', (err: Error) => {
+       │   ^^^^^^^^^^^^^^^^
+    87 │     console.error('[Queue] Redis connection error:', err.message);
+    88 │   });
   
-  i any disables many type checking rules. Its use should be avoided.
+  i Unsafe fix: Replace with optional chain operator ?. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator
   
-
-src/dns/query-plan.test.ts:122:46 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Unexpected any. Specify a different type.
-  
-    121 │       // Should have some DKIM selector queries
-  > 122 │       const dkimQueries = queries.filter((q: any) => q.name.includes('_domainkey'));
-        │                                              ^^^
-    123 │       expect(dkimQueries.length).toBeGreaterThan(0);
-    124 │     });
-  
-  i any disables many type checking rules. Its use should be avoided.
-  
-
-src/dns/query-plan.test.ts:132:19 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Unexpected any. Specify a different type.
-  
-    130 │           queryNames: ['test.example.com', 'api.example.com'],
-    131 │         },
-  > 132 │         mockDb as any
-        │                   ^^^
-    133 │       );
-    134 │ 
-  
-  i any disables many type checking rules. Its use should be avoided.
-  
-
-The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
-Diagnostics not shown: 34.
-src/dns/query-plan.test.ts:135:51 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Checked 40 files in 259ms. No fixes applied.
-Found 54 warnings.
-
-  ! Unexpected any. Specify a different type.
-  
-    133 │       );
-    134 │ 
-  > 135 │       const queries = await (explicitCollector as any).generateQueries();
-        │                                                   ^^^
-    136 │ 
-    137 │       // Should only query the explicit names
-  
-  i any disables many type checking rules. Its use should be avoided.
+     84  84 │     });
+     85  85 │   
+     86     │ - ··redisConnection!.on('error',·(err:·Error)·=>·{
+         86 │ + ··redisConnection?.on('error',·(err:·Error)·=>·{
+     87  87 │       console.error('[Queue] Redis connection error:', err.message);
+     88  88 │     });
   
 

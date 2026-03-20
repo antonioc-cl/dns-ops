@@ -142,7 +142,15 @@ interface ToolCardProps {
   available: boolean;
 }
 
-function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth, available }: ToolCardProps) {
+function ToolCard({
+  title,
+  description,
+  icon,
+  onView,
+  externalUrl,
+  requiresAuth,
+  available,
+}: ToolCardProps) {
   if (!available) {
     return (
       <div className="border rounded-lg p-4 opacity-60">

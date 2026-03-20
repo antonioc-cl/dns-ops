@@ -108,7 +108,7 @@ export const snapshots = pgTable('snapshots', {
     triggeredBy: varchar('triggered_by', { length: 100 }).notNull(), // user ID or 'system'
     collectionDurationMs: integer('collection_duration_ms'),
     errorMessage: text('error_message'),
-    // Collection and delegation metadata (Bead 12, Bead dns-ops-1j4.5.5)
+    // Collection and delegation metadata (Bead 12, dns-ops-1j4.5.5, dns-ops-1j4.6.4)
     metadata: jsonb('metadata').$type(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({

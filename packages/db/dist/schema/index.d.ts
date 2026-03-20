@@ -396,8 +396,26 @@ export declare const snapshots: import("drizzle-orm/pg-core").PgTableWithColumns
                 parentZone?: string;
                 nsServers?: string[];
                 hasDivergence?: boolean;
-                lameDelegations?: number;
+                divergenceDetails?: Array<{
+                    queryName: string;
+                    queryType: string;
+                    groups: Array<{
+                        servers: string[];
+                        signature: string;
+                    }>;
+                    totalServers: number;
+                }>;
+                lameDelegations?: Array<{
+                    server: string;
+                    reason: "not-authoritative" | "timeout" | "refused" | "error";
+                }>;
+                missingGlue?: string[];
                 hasDnssec?: boolean;
+                dnssec?: {
+                    adFlagSet?: boolean;
+                    hasDnskey?: boolean;
+                    hasDs?: boolean;
+                };
             };
             driverParam: unknown;
             notNull: false;
@@ -652,7 +670,7 @@ export declare const observations: import("drizzle-orm/pg-core").PgTableWithColu
             tableName: "observations";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "error" | "success" | "timeout" | "refused" | "truncated" | "nxdomain" | "nodata";
+            data: "timeout" | "refused" | "error" | "success" | "truncated" | "nxdomain" | "nodata";
             driverParam: string;
             notNull: true;
             hasDefault: false;

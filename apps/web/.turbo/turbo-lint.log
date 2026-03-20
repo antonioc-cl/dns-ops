@@ -1,4 +1,22 @@
 $ biome check .
+hono/routes/alerts.ts:43:26 lint/correctness/useParseIntRadix  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Missing radix parameter
+  
+    41 │     | 'resolved'
+    42 │     | undefined;
+  > 43 │   const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+       │                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    44 │ 
+    45 │   const alertRepo = new AlertRepository(db);
+  
+  i Add a non-fractional number between 2 and 36
+  
+  i Unsafe fix: Add a radix of 10
+  
+    43 │ ··const·limit·=·Math.min(parseInt(c.req.query('limit')·||·'50',·10),·100);
+       │                                                               ++++        
+
 app/components/MailFindingsPanel.tsx:127:28 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Avoid using the index of an array as key property in an element.
@@ -47,27 +65,6 @@ app/components/MailFindingsPanel.tsx:141:28 lint/suspicious/noArrayIndexKey ━�
   i The order of the items may change, and this also affects performances and component state.
   
   i Check the React documentation. 
-  
-
-hono/middleware/validation.test.ts:187:24 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ! Template literals are preferred over string concatenation.
-  
-    185 │   it('throws on too long domain', () => {
-    186 │     const validator = domainName('domain');
-  > 187 │     const longDomain = 'a'.repeat(254) + '.com';
-        │                        ^^^^^^^^^^^^^^^^^^^^^^^^
-    188 │     expect(() => validator(longDomain)).toThrow('at most 253 characters');
-    189 │   });
-  
-  i Unsafe fix: Use a template literal.
-  
-    185 185 │     it('throws on too long domain', () => {
-    186 186 │       const validator = domainName('domain');
-    187     │ - ····const·longDomain·=·'a'.repeat(254)·+·'.com';
-        187 │ + ····const·longDomain·=·`${'a'.repeat(254)}.com`;
-    188 188 │       expect(() => validator(longDomain)).toThrow('at most 253 characters');
-    189 189 │     });
   
 
 hono/middleware/validation.ts:296:36 lint/suspicious/noGlobalIsNan  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━
@@ -265,9 +262,14 @@ hono/routes/portfolio.ts:194:38 suppressions/unused ━━━━━━━━━�
 
   ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
   
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 13.
     192 │   const db = c.get('db');
     193 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+Checked 55 files in 523ms. No fixes applied.
   > 194 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+Found 32 warnings.
+Found 1 info.
         │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     195 │   const domainId = c.req.param('domainId');
     196 │ 
@@ -285,7 +287,3 @@ hono/routes/portfolio.ts:238:38 suppressions/unused ━━━━━━━━━�
     240 │ 
   
 
-The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
-Diagnostics not shown: 12.
-Checked 53 files in 646ms. No fixes applied.
-Found 32 warnings.
