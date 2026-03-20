@@ -43,7 +43,7 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
     );
   }
 
-  return next();
+  await next();
 });
 
 /**
