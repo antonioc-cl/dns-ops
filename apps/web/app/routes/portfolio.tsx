@@ -14,8 +14,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
 import { AuditLogPanel } from '../components/AuditLogPanel.js';
+import { FleetReportsPanel } from '../components/FleetReportsPanel.js';
 import { MonitoredDomainsPanel } from '../components/MonitoredDomainsPanel.js';
 import { type CurrentFilters, SavedFiltersPanel } from '../components/SavedFiltersPanel.js';
+import { SharedReportsPanel } from '../components/SharedReportsPanel.js';
 import { TemplateOverridesPanel } from '../components/TemplateOverridesPanel.js';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -391,6 +393,12 @@ function PortfolioComponent() {
 
       {/* Monitored Domains */}
       <MonitoredDomainsPanel />
+
+      {/* Fleet Reports & Shared Reports */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <FleetReportsPanel />
+        <SharedReportsPanel />
+      </div>
 
       {/* Management Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
