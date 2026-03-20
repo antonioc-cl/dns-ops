@@ -2,22 +2,46 @@
  * DNS Collection Orchestrator
  *
  * Coordinates DNS queries across multiple vantages and stores results.
+ * Evaluates rules and persists findings immediately after collection.
  */
 
 import type {
   IDatabaseAdapter,
+  NewFinding,
   NewObservation,
   NewRecordSet,
   NewSnapshot,
+  NewSuggestion,
   Observation,
+  RecordSet,
 } from '@dns-ops/db';
 import {
   DomainRepository,
+  FindingRepository,
   ObservationRepository,
   RecordSetRepository,
+  RulesetVersionRepository,
   SnapshotRepository,
+  SuggestionRepository,
 } from '@dns-ops/db';
 import { observationsToRecordSets } from '@dns-ops/parsing';
+import {
+  authoritativeFailureRule,
+  authoritativeMismatchRule,
+  bimiRule,
+  cnameCoexistenceRule,
+  dkimRule,
+  dmarcRule,
+  mtaStsRule,
+  mxPresenceRule,
+  recursiveAuthoritativeMismatchRule,
+  type RuleContext,
+  RulesEngine,
+  type Ruleset,
+  spfRule,
+  tlsRptRule,
+  unmanagedZonePartialCoverageRule,
+} from '@dns-ops/rules';
 import { DelegationCollector } from '../delegation/collector.js';
 import { DNSResolver } from './resolver.js';
 import type {
@@ -30,6 +54,39 @@ import type {
   VantageInfo,
 } from './types.js';
 
+// Current ruleset version - keep in sync with web app findings.ts
+const CURRENT_RULESET_VERSION = '1.2.0';
+const CURRENT_RULESET_NAME = 'DNS and Mail Rules';
+
+/**
+ * Create the combined ruleset with DNS and Mail rules
+ */
+function createCombinedRuleset(): Ruleset {
+  return {
+    id: 'dns-mail-v1',
+    version: CURRENT_RULESET_VERSION,
+    name: CURRENT_RULESET_NAME,
+    description: 'Combined DNS and mail analysis rules',
+    rules: [
+      // DNS rules
+      authoritativeFailureRule,
+      authoritativeMismatchRule,
+      recursiveAuthoritativeMismatchRule,
+      cnameCoexistenceRule,
+      unmanagedZonePartialCoverageRule,
+      // Mail rules
+      mxPresenceRule,
+      spfRule,
+      dmarcRule,
+      dkimRule,
+      mtaStsRule,
+      tlsRptRule,
+      bimiRule,
+    ],
+    createdAt: new Date(),
+  };
+}
+
 export class DNSCollector {
   private resolver: DNSResolver;
   private config: CollectionConfig;
@@ -37,6 +94,9 @@ export class DNSCollector {
   private snapshotRepo: SnapshotRepository;
   private observationRepo: ObservationRepository;
   private recordSetRepo: RecordSetRepository;
+  private findingRepo: FindingRepository;
+  private suggestionRepo: SuggestionRepository;
+  private rulesetVersionRepo: RulesetVersionRepository;
 
   constructor(config: CollectionConfig, db: IDatabaseAdapter) {
     this.config = config;
@@ -45,6 +105,9 @@ export class DNSCollector {
     this.snapshotRepo = new SnapshotRepository(db);
     this.observationRepo = new ObservationRepository(db);
     this.recordSetRepo = new RecordSetRepository(db);
+    this.findingRepo = new FindingRepository(db);
+    this.suggestionRepo = new SuggestionRepository(db);
+    this.rulesetVersionRepo = new RulesetVersionRepository(db);
   }
 
   /**
@@ -382,7 +445,28 @@ export class DNSCollector {
     const createdObservations = await this.observationRepo.createMany(observationData);
 
     // Create recordsets from observations
-    await this.createRecordSetsFromObservations(snapshot.id, createdObservations);
+    const createdRecordSets = await this.createRecordSetsFromObservations(
+      snapshot.id,
+      createdObservations
+    );
+
+    // Evaluate rules and persist findings immediately
+    // This ensures findings are available for portfolio views without
+    // requiring a separate API call
+    const { findingsCount, suggestionsCount } = await this.evaluateAndPersistFindings(
+      snapshot.id,
+      domainRecord.id,
+      domain,
+      zoneManagement as 'managed' | 'unmanaged' | 'unknown',
+      createdObservations,
+      createdRecordSets
+    );
+
+    if (findingsCount > 0) {
+      console.log(
+        `[Collector] Persisted ${findingsCount} findings and ${suggestionsCount} suggestions for ${domain}`
+      );
+    }
 
     return snapshot.id;
   }
@@ -406,7 +490,7 @@ export class DNSCollector {
   private async createRecordSetsFromObservations(
     snapshotId: string,
     observations: Observation[]
-  ): Promise<void> {
+  ): Promise<RecordSet[]> {
     const normalizedRecords = observationsToRecordSets(observations);
 
     const recordSetData: NewRecordSet[] = normalizedRecords.map((record) => ({
@@ -422,7 +506,124 @@ export class DNSCollector {
     }));
 
     if (recordSetData.length > 0) {
-      await this.recordSetRepo.createMany(recordSetData);
+      return this.recordSetRepo.createMany(recordSetData);
+    }
+
+    return [];
+  }
+
+  /**
+   * Evaluate rules and persist findings for a snapshot
+   *
+   * This is called automatically after collection to ensure findings are
+   * immediately available for portfolio views and other consumers.
+   */
+  private async evaluateAndPersistFindings(
+    snapshotId: string,
+    domainId: string,
+    domainName: string,
+    zoneManagement: 'managed' | 'unmanaged' | 'unknown',
+    observations: Observation[],
+    recordSets: RecordSet[]
+  ): Promise<{ findingsCount: number; suggestionsCount: number }> {
+    try {
+      // Create ruleset and engine
+      const ruleset = createCombinedRuleset();
+      const engine = new RulesEngine(ruleset);
+
+      // Ensure ruleset version exists in DB
+      const existingVersion = await this.rulesetVersionRepo.findByVersion(ruleset.version);
+      if (!existingVersion) {
+        await this.rulesetVersionRepo.create({
+          version: ruleset.version,
+          name: ruleset.name,
+          description: ruleset.description || '',
+          rules: ruleset.rules.map((r: { id: string; name: string; version: string; enabled: boolean }) => ({
+            id: r.id,
+            name: r.name,
+            version: r.version,
+            enabled: r.enabled !== false,
+          })),
+          active: true,
+          createdBy: this.config.triggeredBy || 'collector',
+        });
+      }
+
+      // Create rule context
+      const context: RuleContext = {
+        snapshotId,
+        domainId,
+        domainName,
+        zoneManagement,
+        observations,
+        recordSets,
+        rulesetVersion: ruleset.version,
+      };
+
+      // Evaluate rules
+      const { findings, suggestions } = engine.evaluate(context);
+
+      if (findings.length === 0) {
+        return { findingsCount: 0, suggestionsCount: 0 };
+      }
+
+      // Persist findings
+      const findingsToInsert: NewFinding[] = findings.map((f) => ({
+        snapshotId,
+        type: f.type,
+        title: f.title,
+        description: f.description,
+        severity: f.severity,
+        confidence: f.confidence,
+        riskPosture: f.riskPosture,
+        blastRadius: f.blastRadius,
+        reviewOnly: f.reviewOnly,
+        evidence: f.evidence,
+        ruleId: f.ruleId,
+        ruleVersion: f.ruleVersion,
+      }));
+
+      const persistedFindings = await this.findingRepo.createMany(findingsToInsert);
+
+      // Build finding ID map for suggestion linking
+      const findingIdMap = new Map<string, string>();
+      for (let i = 0; i < findings.length; i++) {
+        const originalId = findings[i].id;
+        const persistedId = persistedFindings[i]?.id;
+        if (originalId && persistedId) {
+          findingIdMap.set(originalId, persistedId);
+        }
+      }
+
+      // Persist suggestions with corrected finding IDs
+      const suggestionsToInsert: NewSuggestion[] = [];
+      for (const s of suggestions) {
+        const persistedFindingId = findingIdMap.get(s.findingId);
+        if (persistedFindingId) {
+          suggestionsToInsert.push({
+            findingId: persistedFindingId,
+            title: s.title,
+            description: s.description,
+            action: s.action,
+            riskPosture: s.riskPosture,
+            blastRadius: s.blastRadius,
+            reviewOnly: s.reviewOnly ?? false,
+          });
+        }
+      }
+
+      if (suggestionsToInsert.length > 0) {
+        await this.suggestionRepo.createMany(suggestionsToInsert);
+      }
+
+      return {
+        findingsCount: persistedFindings.length,
+        suggestionsCount: suggestionsToInsert.length,
+      };
+    } catch (error) {
+      // Log error but don't fail the collection
+      console.error('Error evaluating and persisting findings:', error);
+      return { findingsCount: 0, suggestionsCount: 0 };
     }
   }
 }
