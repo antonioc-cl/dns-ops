@@ -122,6 +122,48 @@ describe('Fleet Report Routes', () => {
       expect(json.templates[0]).toHaveProperty('name');
       expect(json.templates[0]).toHaveProperty('checks');
     });
+
+    it('should include mail-security-baseline template with mail checks', async () => {
+      const res = await app.request('/api/fleet-report/templates');
+      const json = await res.json();
+
+      const mailTemplate = json.templates.find(
+        (t: { id: string }) => t.id === 'mail-security-baseline'
+      );
+      expect(mailTemplate).toBeDefined();
+      expect(mailTemplate.checks).toContain('spf');
+      expect(mailTemplate.checks).toContain('dmarc');
+      expect(mailTemplate.checks).toContain('dkim');
+      expect(mailTemplate.checks).toContain('mx');
+    });
+
+    it('should include infrastructure-audit template with infrastructure and delegation checks', async () => {
+      const res = await app.request('/api/fleet-report/templates');
+      const json = await res.json();
+
+      const infraTemplate = json.templates.find(
+        (t: { id: string }) => t.id === 'infrastructure-audit'
+      );
+      expect(infraTemplate).toBeDefined();
+      expect(infraTemplate.checks).toContain('infrastructure');
+      expect(infraTemplate.checks).toContain('delegation');
+    });
+
+    it('should include pre-migration-check template with all check types', async () => {
+      const res = await app.request('/api/fleet-report/templates');
+      const json = await res.json();
+
+      const migrationTemplate = json.templates.find(
+        (t: { id: string }) => t.id === 'pre-migration-check'
+      );
+      expect(migrationTemplate).toBeDefined();
+      expect(migrationTemplate.checks).toContain('spf');
+      expect(migrationTemplate.checks).toContain('dmarc');
+      expect(migrationTemplate.checks).toContain('dkim');
+      expect(migrationTemplate.checks).toContain('mx');
+      expect(migrationTemplate.checks).toContain('infrastructure');
+      expect(migrationTemplate.checks).toContain('delegation');
+    });
   });
 
   describe('POST /api/fleet-report/import-csv', () => {

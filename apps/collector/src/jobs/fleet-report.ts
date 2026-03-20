@@ -294,13 +294,28 @@ function findingsToCheckResults(findings: Finding[], checkTypes: string[]): Chec
   const results: CheckResult[] = [];
 
   // Map finding types to check categories
+  // These must match actual rule IDs from packages/rules/src/dns/rules.ts and mail/rules.ts
   const checkCategoryMap: Record<string, string[]> = {
     spf: ['mail.no-spf-record', 'mail.spf-present', 'mail.spf-permissive-all'],
     dmarc: ['mail.no-dmarc-record', 'mail.dmarc-present', 'mail.dmarc-policy-none'],
     mx: ['mail.no-mx-record', 'mail.mx-present', 'mail.null-mx-configured'],
     dkim: ['mail.no-dkim-queried', 'mail.dkim-keys-present', 'mail.dkim-no-valid-keys'],
-    infrastructure: ['dns.authoritative-timeout', 'dns.authoritative-refused', 'dns.auth-mismatch'],
-    delegation: ['dns.lame-delegation', 'dns.divergent-ns', 'dns.missing-glue'],
+    // Infrastructure checks: authoritative server health and consistency
+    infrastructure: [
+      'dns.authoritative-timeout', // From dns.auth-failure.v1
+      'dns.authoritative-refused', // From dns.auth-failure.v1
+      'dns.authoritative-error', // From dns.auth-failure.v1
+      'dns.authoritative-mismatch', // From dns.auth-mismatch.v1
+      'dns.recursive-authoritative-mismatch', // From dns.recursive-auth-mismatch.v1
+    ],
+    // Delegation checks: NS record and glue consistency
+    // Note: Specific delegation rules to be added in future bead
+    delegation: [
+      'dns.lame-delegation', // Placeholder: nameserver doesn't respond authoritatively
+      'dns.divergent-ns', // Placeholder: NS records differ between parent/child
+      'dns.missing-glue', // Placeholder: in-zone NS without glue at parent
+      'dns.ns-mismatch', // Catches NS-related inconsistencies via prefix
+    ],
   };
 
   for (const checkType of checkTypes) {
