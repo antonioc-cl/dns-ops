@@ -16,3 +16,15 @@ export {
   requireWritePermission,
 } from './authorization.js';
 export { dbMiddleware } from './db.js';
+export {
+  createErrorHandler,
+  createErrorTrackingMiddleware,
+  createNotFoundHandler,
+  createRequestLoggingMiddleware,
+  getWebLogger,
+  trackError,
+  trackInfo,
+  trackWarning,
+  type ErrorContext,
+  type ErrorTrackingConfig,
+} from './error-tracking.js';
