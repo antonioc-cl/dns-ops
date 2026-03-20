@@ -114,7 +114,62 @@ describe('DelegationCollector', () => {
 
       expect(divergence.hasDivergence).toBe(true);
       expect(divergence.divergenceDetails).toHaveLength(1);
-      expect(divergence.divergenceDetails[0].serversWithDifferentAnswers).toHaveLength(2);
+
+      // Each server is in its own group (different answers)
+      const detail = divergence.divergenceDetails[0];
+      expect(detail.groups).toHaveLength(2);
+      expect(detail.totalServers).toBe(2);
+
+      // Check that both servers are represented
+      const allServers = detail.groups.flatMap((g) => g.servers);
+      expect(allServers).toContain('ns1.example.com');
+      expect(allServers).toContain('ns2.example.com');
+    });
+
+    it('should group servers with matching answers', async () => {
+      const collector = new DelegationCollector('example.com');
+      const nsServers = ['ns1.example.com', 'ns2.example.com', 'ns3.example.com'];
+
+      // ns1 and ns2 agree, ns3 differs
+      mockQuery
+        .mockResolvedValueOnce({
+          query: { name: 'example.com', type: 'A' },
+          success: true,
+          answers: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
+        })
+        .mockResolvedValueOnce({
+          query: { name: 'example.com', type: 'A' },
+          success: true,
+          answers: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
+        })
+        .mockResolvedValueOnce({
+          query: { name: 'example.com', type: 'A' },
+          success: true,
+          answers: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.99' }],
+        });
+
+      const results = await collector.collectFromAuthoritativeServers(
+        { name: 'example.com', type: 'A' },
+        nsServers
+      );
+
+      const divergence = collector.detectDivergence(results);
+
+      expect(divergence.hasDivergence).toBe(true);
+      expect(divergence.divergenceDetails).toHaveLength(1);
+
+      const detail = divergence.divergenceDetails[0];
+      expect(detail.groups).toHaveLength(2);
+      expect(detail.totalServers).toBe(3);
+
+      // Majority group first (ns1 + ns2)
+      expect(detail.groups[0].servers).toHaveLength(2);
+      expect(detail.groups[0].servers).toContain('ns1.example.com');
+      expect(detail.groups[0].servers).toContain('ns2.example.com');
+
+      // Minority group (ns3)
+      expect(detail.groups[1].servers).toHaveLength(1);
+      expect(detail.groups[1].servers).toContain('ns3.example.com');
     });
   });
 

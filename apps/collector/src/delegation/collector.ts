@@ -31,11 +31,30 @@ export interface AuthoritativeResponse {
   responseTime: number;
 }
 
+/**
+ * A group of servers that returned the same answers for a query
+ */
+export interface AnswerGroup {
+  servers: string[];
+  answers: DNSAnswer[];
+  /** Sorted, comma-joined answer data for comparison */
+  signature: string;
+}
+
+/**
+ * Divergence detail for a specific query
+ *
+ * When servers disagree, groups contains 2+ entries showing which
+ * servers returned which answers. The first group is typically the
+ * majority/reference group.
+ */
 export interface DivergenceDetail {
   queryName: string;
   queryType: string;
-  serversWithDifferentAnswers: string[];
-  differentAnswers: DNSAnswer[][];
+  /** Groups of servers with matching answers - 2+ groups means divergence */
+  groups: AnswerGroup[];
+  /** Total number of servers that responded successfully */
+  totalServers: number;
 }
 
 export interface LameDelegation {
@@ -186,6 +205,9 @@ export class DelegationCollector {
 
   /**
    * Detect divergence in answers across authoritative servers
+   *
+   * Groups servers by their answer signatures and returns divergence details
+   * when multiple groups exist for the same query.
    */
   detectDivergence(responses: AuthoritativeResponse[]): {
     hasDivergence: boolean;
@@ -193,7 +215,7 @@ export class DelegationCollector {
   } {
     const details: DivergenceDetail[] = [];
 
-    // Group by query
+    // Group responses by query
     const byQuery = new Map<string, AuthoritativeResponse[]>();
     for (const resp of responses) {
       const key = `${resp.result.query.name}|${resp.result.query.type}`;
@@ -207,33 +229,43 @@ export class DelegationCollector {
     for (const [key, queryResponses] of byQuery) {
       const [name, type] = key.split('|');
 
-      // Get successful responses
+      // Get successful responses with answers
       const successful = queryResponses.filter(
         (r) => r.result.success && r.result.answers.length > 0
       );
 
       if (successful.length < 2) continue;
 
-      // Compare answers
-      const firstAnswers = successful[0].result.answers.map((a: DNSAnswer) => a.data).sort();
-      const divergentServers: string[] = [successful[0].server];
-      const differentAnswers: DNSAnswer[][] = [successful[0].result.answers];
+      // Group servers by their answer signature
+      const groupsBySignature = new Map<string, AnswerGroup>();
 
-      for (let i = 1; i < successful.length; i++) {
-        const currentAnswers = successful[i].result.answers.map((a: DNSAnswer) => a.data).sort();
+      for (const resp of successful) {
+        const signature = resp.result.answers
+          .map((a: DNSAnswer) => a.data)
+          .sort()
+          .join(',');
 
-        if (!this.arraysEqual(firstAnswers, currentAnswers)) {
-          divergentServers.push(successful[i].server);
-          differentAnswers.push(successful[i].result.answers);
+        if (!groupsBySignature.has(signature)) {
+          groupsBySignature.set(signature, {
+            servers: [],
+            answers: resp.result.answers,
+            signature,
+          });
         }
+        groupsBySignature.get(signature)!.servers.push(resp.server);
       }
 
-      if (divergentServers.length > 1) {
+      // If there's more than one group, we have divergence
+      const groups = Array.from(groupsBySignature.values());
+      if (groups.length > 1) {
+        // Sort groups by server count (majority first)
+        groups.sort((a, b) => b.servers.length - a.servers.length);
+
         details.push({
           queryName: name,
           queryType: type,
-          serversWithDifferentAnswers: divergentServers,
-          differentAnswers,
+          groups,
+          totalServers: successful.length,
         });
       }
     }
@@ -390,13 +422,6 @@ export class DelegationCollector {
     return 'error';
   }
 
-  /**
-   * Compare arrays for equality
-   */
-  private arraysEqual(a: string[], b: string[]): boolean {
-    if (a.length !== b.length) return false;
-    return a.every((val, i) => val === b[i]);
-  }
 }
 
 // Re-export types for convenience
