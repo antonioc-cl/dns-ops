@@ -4,15 +4,18 @@
   "compatibility_date": "2024-01-01",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "COLLECTOR_URL": "https://collector.example.com"
   },
-  "d1_databases": [
+  // Hyperdrive connection to PostgreSQL (authoritative data store)
+  // See docs/architecture/runtime-topology.md for topology documentation
+  "hyperdrive": [
     {
-      "binding": "DB",
-      "database_name": "dns-ops-db",
-      "database_id": "your-database-id-here"
+      "binding": "HYPERDRIVE",
+      "id": "your-hyperdrive-id-here"
     }
   ],
+  // KV for edge caching only (not for product data)
   "kv_namespaces": [
     {
       "binding": "CACHE",

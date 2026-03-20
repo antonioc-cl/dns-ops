@@ -2,7 +2,15 @@
  * DNS Ops Workbench - Database Client
  *
  * Provides a shared Drizzle ORM client for the monorepo.
- * Supports both Cloudflare D1 (for Workers) and PostgreSQL (for local/collector).
+ *
+ * TOPOLOGY (see docs/architecture/runtime-topology.md):
+ * - PostgreSQL is the single authoritative data store
+ * - Web app (Cloudflare Workers) connects via Hyperdrive
+ * - Collector (Node.js) connects directly to PostgreSQL
+ * - Local dev uses PostgreSQL for both runtimes
+ *
+ * D1 is NOT used for product data. Legacy D1 support is retained
+ * for potential edge caching but should not be used for authoritative data.
  */
 
 import { type DrizzleD1Database, drizzle as drizzleD1 } from 'drizzle-orm/d1';
@@ -16,16 +24,28 @@ export type { IDatabaseAdapter } from './database/simple-adapter.js';
 // Export schema for convenience
 export * from './schema/index.js';
 
-// Database type - can be PostgreSQL or D1
+// Database type - PostgreSQL is authoritative, D1 only for edge caching
 export type Database = NodePgDatabase<typeof schema> | DrizzleD1Database<typeof schema>;
 export type DbClient = Database;
 
 // Environment configuration
 export interface DBConfig {
-  // PostgreSQL connection (for collector/local dev)
+  /**
+   * PostgreSQL connection string
+   *
+   * Used by:
+   * - Collector (Node.js): Direct DATABASE_URL
+   * - Web (Cloudflare Workers): Hyperdrive connection string
+   * - Local dev: localhost PostgreSQL
+   */
   connectionString?: string;
 
-  // D1 binding (for Cloudflare Workers)
+  /**
+   * D1 binding (DEPRECATED for product data)
+   *
+   * D1 should only be used for edge caching, not authoritative data.
+   * See docs/architecture/runtime-topology.md
+   */
   d1Binding?: D1Database;
 }
 
