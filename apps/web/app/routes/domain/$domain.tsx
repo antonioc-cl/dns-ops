@@ -1,5 +1,5 @@
 import type { Observation, Snapshot } from '@dns-ops/db/schema';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DiscoveredSelectors } from '../../components/DiscoveredSelectors.js';
@@ -13,8 +13,22 @@ import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBa
 import { SnapshotDiffPanel } from '../../components/SnapshotDiffPanel.js';
 import { TagsPanel } from '../../components/TagsPanel.js';
 
+type DomainTabId = 'overview' | 'dns' | 'mail' | 'delegation' | 'history';
+
+interface DomainSearchParams {
+  tab?: DomainTabId;
+}
+
+const VALID_TABS: DomainTabId[] = ['overview', 'dns', 'mail', 'delegation', 'history'];
+
 export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
+  validateSearch: (search: Record<string, unknown>): DomainSearchParams => {
+    const tab = search.tab as string | undefined;
+    return {
+      tab: tab && VALID_TABS.includes(tab as DomainTabId) ? (tab as DomainTabId) : undefined,
+    };
+  },
   loader: async ({ params }) => {
     // On the server (SSR), relative URLs have no base — bail and let the
     // client hydrate. UI handles snapshot: null as "no data yet" state.
@@ -42,8 +56,6 @@ export const Route = createFileRoute('/domain/$domain')({
   },
 });
 
-type DomainTabId = 'overview' | 'dns' | 'mail' | 'delegation' | 'history';
-
 const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'dns', label: 'DNS' },
@@ -58,7 +70,30 @@ function Domain360Page() {
     snapshot: Snapshot | null;
     observations: Observation[];
   };
-  const [activeTab, setActiveTab] = useState<DomainTabId>('overview');
+  const { tab: urlTab } = Route.useSearch();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<DomainTabId>(urlTab || 'overview');
+
+  // Sync URL to tab state when it changes externally
+  useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
+
+  // Update URL when tab changes
+  const handleTabChange = useCallback(
+    (newTab: DomainTabId) => {
+      setActiveTab(newTab);
+      navigate({
+        to: '/domain/$domain',
+        params: { domain },
+        search: { tab: newTab === 'overview' ? undefined : newTab },
+        replace: true,
+      });
+    },
+    [domain, navigate]
+  );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const tabDomIdPrefix = useId();
 
@@ -75,7 +110,7 @@ function Domain360Page() {
     if (event.key === 'ArrowRight') {
       event.preventDefault();
       const nextTab = DOMAIN_TABS[(index + 1) % DOMAIN_TABS.length];
-      setActiveTab(nextTab.id);
+      handleTabChange(nextTab.id);
       focusTab(nextTab.id);
       return;
     }
@@ -84,7 +119,7 @@ function Domain360Page() {
       event.preventDefault();
       const prevIndex = (index - 1 + DOMAIN_TABS.length) % DOMAIN_TABS.length;
       const prevTab = DOMAIN_TABS[prevIndex];
-      setActiveTab(prevTab.id);
+      handleTabChange(prevTab.id);
       focusTab(prevTab.id);
       return;
     }
@@ -92,7 +127,7 @@ function Domain360Page() {
     if (event.key === 'Home') {
       event.preventDefault();
       const firstTab = DOMAIN_TABS[0];
-      setActiveTab(firstTab.id);
+      handleTabChange(firstTab.id);
       focusTab(firstTab.id);
       return;
     }
@@ -100,7 +135,7 @@ function Domain360Page() {
     if (event.key === 'End') {
       event.preventDefault();
       const lastTab = DOMAIN_TABS[DOMAIN_TABS.length - 1];
-      setActiveTab(lastTab.id);
+      handleTabChange(lastTab.id);
       focusTab(lastTab.id);
     }
   };
@@ -171,7 +206,7 @@ function Domain360Page() {
               aria-selected={activeTab === tab.id}
               aria-controls={getPanelId(tab.id)}
               tabIndex={activeTab === tab.id ? 0 : -1}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               onKeyDown={(event) => handleTabKeyDown(event, index)}
               className={`focus-ring min-h-10 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
