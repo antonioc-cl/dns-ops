@@ -362,6 +362,11 @@ export const findings = pgTable(
     ruleId: varchar('rule_id', { length: 100 }).notNull(),
     ruleVersion: varchar('rule_version', { length: 50 }).notNull(),
 
+    // Ruleset version that generated this finding (for idempotent re-evaluation)
+    rulesetVersionId: uuid('ruleset_version_id').references(() => rulesetVersions.id, {
+      onDelete: 'set null',
+    }),
+
     // Finding state
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
     acknowledgedBy: varchar('acknowledged_by', { length: 100 }),
