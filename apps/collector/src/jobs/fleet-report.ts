@@ -1,11 +1,17 @@
 /**
- * Fleet Report Routes - Bead 11
+ * Fleet Report Routes - Bead 11 / Bead 18
  *
  * Batch checking and reporting for domain inventories.
- * Produces internal reports for high-value security queries.
+ * Produces internal reports backed by persisted findings.
+ *
+ * ## Bead 18 Update
+ * Replaced low-truth parallel fleet logic with reports/export backed
+ * by stored findings. Now uses FindingRepository to query persisted
+ * findings rather than re-analyzing observations.
  */
 
-import { DomainRepository, ObservationRepository, SnapshotRepository } from '@dns-ops/db';
+import type { Finding } from '@dns-ops/db';
+import { DomainRepository, FindingRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
 
@@ -48,7 +54,7 @@ fleetReportRoutes.post('/run', async (c) => {
   try {
     const domainRepo = new DomainRepository(db);
     const snapshotRepo = new SnapshotRepository(db);
-    const observationRepo = new ObservationRepository(db);
+    const findingRepo = new FindingRepository(db);
 
     // Process each domain
     const results: FleetReportResult[] = [];
@@ -58,7 +64,7 @@ fleetReportRoutes.post('/run', async (c) => {
       const domainName = typeof item === 'string' ? item : item.domain;
 
       try {
-        // Find or create domain
+        // Find domain
         const domain = await domainRepo.findByName(domainName);
 
         if (!domain) {
@@ -81,17 +87,29 @@ fleetReportRoutes.post('/run', async (c) => {
           continue;
         }
 
-        // Get observations
-        const observations = await observationRepo.findBySnapshotId(snapshot.id);
+        // Check if findings were evaluated
+        const findingsEvaluated = snapshot.rulesetVersionId !== null;
 
-        // Run checks (with type assertion for compatibility)
-        // biome-ignore lint/suspicious/noExplicitAny: Intentional type assertion for observation compatibility
-        const checkResults = await runChecks(domainName, observations as any, checks);
+        if (!findingsEvaluated) {
+          errors.push({
+            domain: domainName,
+            error: 'Findings not evaluated. Re-collect to generate findings.',
+          });
+          continue;
+        }
+
+        // Get persisted findings for this snapshot
+        const findings = await findingRepo.findBySnapshotId(snapshot.id);
+
+        // Convert findings to check results based on requested check types
+        const checkResults = findingsToCheckResults(findings, checks);
 
         results.push({
           domain: domainName,
           snapshotId: snapshot.id,
           collectedAt: snapshot.createdAt,
+          rulesetVersion: snapshot.rulesetVersionId,
+          findingsCount: findings.length,
           checks: checkResults,
           issues: checkResults.filter((r) => r.severity !== 'ok'),
         });
@@ -110,6 +128,7 @@ fleetReportRoutes.post('/run', async (c) => {
       reportGeneratedAt: new Date().toISOString(),
       domainsChecked: results.length,
       domainsWithErrors: errors.length,
+      backedByPersistedFindings: true,
       summary,
       results: format === 'summary' ? undefined : results,
       highPriorityIssues: results
@@ -246,6 +265,8 @@ interface FleetReportResult {
   domain: string;
   snapshotId: string;
   collectedAt: Date;
+  rulesetVersion: string | null;
+  findingsCount: number;
   checks: CheckResult[];
   issues: CheckResult[];
 }
@@ -258,168 +279,91 @@ interface CheckResult {
   details?: Record<string, unknown>;
 }
 
-async function runChecks(
-  _domain: string,
-  observations: Array<{
-    queryType: string;
-    queryName: string;
-    status: string;
-    answerSection?: Array<{ data: string }>;
-  }>,
-  checkTypes: string[]
-): Promise<CheckResult[]> {
+/**
+ * Map persisted findings to fleet report check results
+ *
+ * This uses the rules engine's persisted findings instead of
+ * re-analyzing observations, ensuring consistency with the
+ * main findings API.
+ */
+function findingsToCheckResults(findings: Finding[], checkTypes: string[]): CheckResult[] {
   const results: CheckResult[] = [];
 
-  // SPF Check
-  if (checkTypes.includes('spf')) {
-    const spfRecords = observations.filter(
-      (o) =>
-        o.queryType === 'TXT' &&
-        o.status === 'success' &&
-        o.answerSection?.some((a) => a.data.includes('v=spf1'))
+  // Map finding types to check categories
+  const checkCategoryMap: Record<string, string[]> = {
+    spf: ['mail.no-spf-record', 'mail.spf-present', 'mail.spf-permissive-all'],
+    dmarc: ['mail.no-dmarc-record', 'mail.dmarc-present', 'mail.dmarc-policy-none'],
+    mx: ['mail.no-mx-record', 'mail.mx-present', 'mail.null-mx-configured'],
+    dkim: ['mail.no-dkim-queried', 'mail.dkim-keys-present', 'mail.dkim-no-valid-keys'],
+    infrastructure: ['dns.authoritative-timeout', 'dns.authoritative-refused', 'dns.auth-mismatch'],
+    delegation: ['dns.lame-delegation', 'dns.divergent-ns', 'dns.missing-glue'],
+  };
+
+  for (const checkType of checkTypes) {
+    const relevantTypes = checkCategoryMap[checkType] || [];
+    const relevantFindings = findings.filter((f) =>
+      relevantTypes.some((t) => f.type.startsWith(t.replace('.', '.')))
     );
 
-    if (spfRecords.length === 0) {
+    // Also match by prefix for flexibility
+    const prefixFindings = findings.filter((f) => {
+      if (checkType === 'spf') return f.type.includes('spf');
+      if (checkType === 'dmarc') return f.type.includes('dmarc');
+      if (checkType === 'mx') return f.type.includes('mx') && f.type.startsWith('mail.');
+      if (checkType === 'dkim') return f.type.includes('dkim');
+      if (checkType === 'infrastructure') return f.type.startsWith('dns.auth');
+      if (checkType === 'delegation') return f.type.includes('delegation') || f.type.includes('ns');
+      return false;
+    });
+
+    const allRelevant = [...new Set([...relevantFindings, ...prefixFindings])];
+
+    if (allRelevant.length === 0) {
+      // No findings for this check type - could mean pass or not evaluated
       results.push({
-        check: 'spf',
-        status: 'missing',
-        severity: 'high',
-        message: 'No SPF record found',
-        details: { recommendation: 'Add SPF record to prevent spoofing' },
-      });
-    } else {
-      const spfData =
-        spfRecords[0].answerSection?.find((a) => a.data.includes('v=spf1'))?.data || '';
-
-      if (spfData.includes('+all') || spfData.includes('?all')) {
-        results.push({
-          check: 'spf',
-          status: 'warning',
-          severity: 'medium',
-          message: 'SPF has permissive all mechanism',
-          details: { spfRecord: spfData },
-        });
-      } else {
-        results.push({
-          check: 'spf',
-          status: 'pass',
-          severity: 'ok',
-          message: 'SPF record present',
-        });
-      }
-    }
-  }
-
-  // DMARC Check
-  if (checkTypes.includes('dmarc')) {
-    const dmarcRecords = observations.filter(
-      (o) =>
-        o.queryType === 'TXT' &&
-        o.queryName.includes('_dmarc') &&
-        o.status === 'success' &&
-        o.answerSection?.some((a) => a.data.includes('v=DMARC1'))
-    );
-
-    if (dmarcRecords.length === 0) {
-      results.push({
-        check: 'dmarc',
-        status: 'missing',
-        severity: 'high',
-        message: 'No DMARC record found',
-        details: { recommendation: 'Add DMARC record for email authentication' },
-      });
-    } else {
-      const dmarcData =
-        dmarcRecords[0].answerSection?.find((a) => a.data.includes('v=DMARC1'))?.data || '';
-      const policyMatch = dmarcData.match(/p=(\w+)/);
-      const policy = policyMatch ? policyMatch[1].toLowerCase() : 'none';
-
-      if (policy === 'none') {
-        results.push({
-          check: 'dmarc',
-          status: 'warning',
-          severity: 'medium',
-          message: 'DMARC policy is p=none (monitoring only)',
-          details: { policy, recommendation: 'Consider upgrading to p=quarantine or p=reject' },
-        });
-      } else if (policy === 'quarantine' || policy === 'reject') {
-        results.push({
-          check: 'dmarc',
-          status: 'pass',
-          severity: 'ok',
-          message: `DMARC policy is p=${policy}`,
-        });
-      }
-    }
-  }
-
-  // MX Check
-  if (checkTypes.includes('mx')) {
-    const mxRecords = observations.filter(
-      (o) =>
-        o.queryType === 'MX' &&
-        o.status === 'success' &&
-        o.answerSection &&
-        o.answerSection.length > 0
-    );
-
-    if (mxRecords.length === 0) {
-      results.push({
-        check: 'mx',
-        status: 'missing',
-        severity: 'medium',
-        message: 'No MX records found',
-      });
-    } else {
-      const nullMx = mxRecords[0].answerSection?.find((a) => a.data.trim() === '0 .');
-
-      if (nullMx) {
-        results.push({
-          check: 'mx',
-          status: 'pass',
-          severity: 'ok',
-          message: 'Null MX configured (domain does not accept mail)',
-        });
-      } else {
-        results.push({
-          check: 'mx',
-          status: 'pass',
-          severity: 'ok',
-          message: 'MX records present',
-        });
-      }
-    }
-  }
-
-  // DKIM Check
-  if (checkTypes.includes('dkim')) {
-    const dkimRecords = observations.filter(
-      (o) =>
-        o.queryType === 'TXT' &&
-        o.queryName.includes('._domainkey.') &&
-        o.status === 'success' &&
-        o.answerSection?.some((a) => a.data.includes('v=DKIM1') || a.data.includes('k='))
-    );
-
-    if (dkimRecords.length === 0) {
-      results.push({
-        check: 'dkim',
-        status: 'missing',
-        severity: 'medium',
-        message: 'No DKIM records found',
-        details: { recommendation: 'Configure DKIM for email signing' },
-      });
-    } else {
-      results.push({
-        check: 'dkim',
+        check: checkType,
         status: 'pass',
         severity: 'ok',
-        message: `${dkimRecords.length} DKIM selector(s) found`,
+        message: `No ${checkType.toUpperCase()} issues detected`,
       });
+    } else {
+      // Map findings to check results
+      for (const finding of allRelevant) {
+        results.push({
+          check: checkType,
+          status: mapSeverityToStatus(finding.severity),
+          severity: finding.severity as CheckResult['severity'],
+          message: finding.title,
+          details: {
+            findingId: finding.id,
+            type: finding.type,
+            description: finding.description,
+            ruleId: finding.ruleId,
+          },
+        });
+      }
     }
   }
 
   return results;
+}
+
+/**
+ * Map finding severity to check status
+ */
+function mapSeverityToStatus(severity: string): CheckResult['status'] {
+  switch (severity) {
+    case 'critical':
+    case 'high':
+      return 'fail';
+    case 'medium':
+      return 'warning';
+    case 'low':
+    case 'info':
+      return 'pass';
+    default:
+      return 'pass';
+  }
 }
 
 function generateSummary(
