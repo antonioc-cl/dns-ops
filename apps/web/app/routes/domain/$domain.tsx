@@ -8,6 +8,7 @@ import { FindingsPanel } from '../../components/FindingsPanel.js';
 import { LegacyToolsPanel } from '../../components/LegacyToolsPanel.js';
 import { MailFindingsPanel } from '../../components/MailFindingsPanel.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
+import { NotesPanel } from '../../components/NotesPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -191,7 +192,7 @@ function Domain360Page() {
           hidden={activeTab !== 'overview'}
         >
           {activeTab === 'overview' && (
-            <OverviewTab snapshot={snapshot} observations={observations} />
+            <OverviewTab snapshot={snapshot} observations={observations} domain={domain} />
           )}
         </div>
 
@@ -238,14 +239,20 @@ function Domain360Page() {
 function OverviewTab({
   snapshot,
   observations,
+  domain,
 }: {
   snapshot: Snapshot | null;
   observations: Observation[];
+  domain: string;
 }) {
   if (!snapshot) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No snapshot available. Refresh to collect data.</p>
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <p className="text-gray-500">No snapshot available. Refresh to collect data.</p>
+        </div>
+        {/* Notes are available even without snapshot */}
+        <NotesPanel domainId={domain} isDomainName />
       </div>
     );
   }
@@ -311,6 +318,9 @@ function OverviewTab({
 
       {/* FROZEN: Findings Panel - pending Bead 06 (Persisted DNS findings) */}
       <FindingsPanel snapshotId={snapshot.id || null} />
+
+      {/* Domain Notes */}
+      <NotesPanel domainId={snapshot.domainId} />
     </div>
   );
 }
