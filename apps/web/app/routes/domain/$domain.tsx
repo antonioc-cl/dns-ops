@@ -10,6 +10,7 @@ import { MailFindingsPanel } from '../../components/MailFindingsPanel.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
+import { SnapshotDiffPanel } from '../../components/SnapshotDiffPanel.js';
 import { TagsPanel } from '../../components/TagsPanel.js';
 
 export const Route = createFileRoute('/domain/$domain')({
@@ -465,20 +466,88 @@ interface SnapshotHistoryResponse {
   snapshots?: SnapshotHistoryItem[];
 }
 
-interface SnapshotCompareLatestResponse {
-  diff?: {
-    summary?: {
-      totalChanges?: number;
-      additions?: number;
-      deletions?: number;
-      modifications?: number;
-      unchanged?: number;
-    };
-    comparison?: {
-      scopeChanges?: { message?: string } | null;
-      rulesetChange?: { message?: string } | null;
-    };
+interface RecordChange {
+  type: 'added' | 'removed' | 'modified' | 'unchanged';
+  name: string;
+  recordType: string;
+  valuesA?: string[];
+  valuesB?: string[];
+  diff?: { added: string[]; removed: string[] };
+}
+
+interface TTLChange {
+  name: string;
+  recordType: string;
+  ttlA: number;
+  ttlB: number;
+  change: number;
+}
+
+interface FindingChange {
+  type: 'added' | 'removed' | 'modified' | 'unchanged';
+  findingType: string;
+  title: string;
+  severityA?: string;
+  severityB?: string;
+  confidenceA?: string;
+  confidenceB?: string;
+  ruleId?: string;
+  description?: string;
+  changes?: {
+    severity?: { from: string; to: string };
+    confidence?: { from: string; to: string };
+    evidenceCount?: { from: number; to: number };
   };
+}
+
+interface ScopeChange {
+  type: 'scope-changed';
+  namesAdded: string[];
+  namesRemoved: string[];
+  typesAdded: string[];
+  typesRemoved: string[];
+  vantagesAdded: string[];
+  vantagesRemoved: string[];
+  message: string;
+}
+
+interface RulesetChange {
+  type: 'ruleset-changed';
+  versionA: string;
+  versionB: string;
+  message: string;
+}
+
+interface SnapshotDiffData {
+  snapshotA: { id: string; createdAt: string; rulesetVersion: string };
+  snapshotB: { id: string; createdAt: string; rulesetVersion: string };
+  comparison: {
+    recordChanges: RecordChange[];
+    ttlChanges: TTLChange[];
+    findingChanges: FindingChange[];
+    scopeChanges: ScopeChange | null;
+    rulesetChange: RulesetChange | null;
+  };
+  summary: {
+    totalChanges: number;
+    additions: number;
+    deletions: number;
+    modifications: number;
+    unchanged: number;
+  };
+  findingsSummary: {
+    totalChanges: number;
+    added: number;
+    removed: number;
+    modified: number;
+    unchanged: number;
+    severityChanges: number;
+  };
+}
+
+interface SnapshotCompareLatestResponse {
+  diff?: SnapshotDiffData;
+  warnings?: string[];
 }
 
 function HistoryTab({ domain }: { domain: string }) {
@@ -486,7 +555,9 @@ function HistoryTab({ domain }: { domain: string }) {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<SnapshotHistoryItem[]>([]);
   const [latestDiff, setLatestDiff] = useState<SnapshotCompareLatestResponse['diff'] | null>(null);
+  const [diffWarnings, setDiffWarnings] = useState<string[]>([]);
   const [copiedSnapshotId, setCopiedSnapshotId] = useState<string | null>(null);
+  const [showDetailedDiff, setShowDetailedDiff] = useState(false);
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -509,8 +580,10 @@ function HistoryTab({ domain }: { domain: string }) {
       if (diffResponse.ok) {
         const diffData = (await diffResponse.json()) as SnapshotCompareLatestResponse;
         setLatestDiff(diffData.diff || null);
+        setDiffWarnings(diffData.warnings || []);
       } else {
         setLatestDiff(null);
+        setDiffWarnings([]);
       }
     } catch (error) {
       setHistoryError(error instanceof Error ? error.message : 'Failed to load history');
@@ -584,50 +657,65 @@ function HistoryTab({ domain }: { domain: string }) {
       </div>
 
       {latestDiff?.summary && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Latest Diff Summary</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-            <div>
-              <div className="text-blue-700">Total</div>
-              <div className="font-semibold text-blue-900 tabular-nums">
-                {latestDiff.summary.totalChanges ?? 0}
+        <div className="space-y-3">
+          {/* Summary Card */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-blue-900">Latest Changes</h4>
+              <button
+                type="button"
+                onClick={() => setShowDetailedDiff(!showDetailedDiff)}
+                className="text-sm text-blue-700 hover:text-blue-800 font-medium"
+              >
+                {showDetailedDiff ? 'Hide Details' : 'Show Details'}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+              <div>
+                <div className="text-blue-700">Total</div>
+                <div className="font-semibold text-blue-900 tabular-nums">
+                  {latestDiff.summary.totalChanges ?? 0}
+                </div>
+              </div>
+              <div>
+                <div className="text-blue-700">Added</div>
+                <div className="font-semibold text-blue-900 tabular-nums">
+                  {latestDiff.summary.additions ?? 0}
+                </div>
+              </div>
+              <div>
+                <div className="text-blue-700">Removed</div>
+                <div className="font-semibold text-blue-900 tabular-nums">
+                  {latestDiff.summary.deletions ?? 0}
+                </div>
+              </div>
+              <div>
+                <div className="text-blue-700">Modified</div>
+                <div className="font-semibold text-blue-900 tabular-nums">
+                  {latestDiff.summary.modifications ?? 0}
+                </div>
+              </div>
+              <div>
+                <div className="text-blue-700">Unchanged</div>
+                <div className="font-semibold text-blue-900 tabular-nums">
+                  {latestDiff.summary.unchanged ?? 0}
+                </div>
               </div>
             </div>
-            <div>
-              <div className="text-blue-700">Added</div>
-              <div className="font-semibold text-blue-900 tabular-nums">
-                {latestDiff.summary.additions ?? 0}
-              </div>
-            </div>
-            <div>
-              <div className="text-blue-700">Removed</div>
-              <div className="font-semibold text-blue-900 tabular-nums">
-                {latestDiff.summary.deletions ?? 0}
-              </div>
-            </div>
-            <div>
-              <div className="text-blue-700">Modified</div>
-              <div className="font-semibold text-blue-900 tabular-nums">
-                {latestDiff.summary.modifications ?? 0}
-              </div>
-            </div>
-            <div>
-              <div className="text-blue-700">Unchanged</div>
-              <div className="font-semibold text-blue-900 tabular-nums">
-                {latestDiff.summary.unchanged ?? 0}
-              </div>
-            </div>
+            {!showDetailedDiff && latestDiff.comparison?.scopeChanges?.message && (
+              <p className="mt-3 text-xs text-blue-800">
+                {latestDiff.comparison.scopeChanges.message}
+              </p>
+            )}
+            {!showDetailedDiff && latestDiff.comparison?.rulesetChange?.message && (
+              <p className="mt-1 text-xs text-blue-800">
+                {latestDiff.comparison.rulesetChange.message}
+              </p>
+            )}
           </div>
-          {latestDiff.comparison?.scopeChanges?.message && (
-            <p className="mt-3 text-xs text-blue-800">
-              {latestDiff.comparison.scopeChanges.message}
-            </p>
-          )}
-          {latestDiff.comparison?.rulesetChange?.message && (
-            <p className="mt-1 text-xs text-blue-800">
-              {latestDiff.comparison.rulesetChange.message}
-            </p>
-          )}
+
+          {/* Detailed Diff Panel */}
+          {showDetailedDiff && <SnapshotDiffPanel diff={latestDiff} warnings={diffWarnings} />}
         </div>
       )}
 
