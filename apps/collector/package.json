@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check src",
     "test": "vitest run src",
-    "docker:build": "docker build -t dns-ops-collector .",
+    "docker:build": "docker build -f Dockerfile -t dns-ops-collector ../..",
     "docker:run": "docker run -p 3001:3001 --env-file .env dns-ops-collector"
   },
   "dependencies": {
