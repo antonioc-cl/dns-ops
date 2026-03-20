@@ -4,8 +4,9 @@
  * API endpoints for mail diagnostics and remediation requests.
  */
 
-import { createPostgresAdapter, type IDatabaseAdapter, RemediationRepository } from '@dns-ops/db';
+import { RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import type { Env } from '../types.js';
 
 interface CollectMailRequest {
   domain?: string;
@@ -68,24 +69,7 @@ function validateRemediation(data: RemediationRequest): string | null {
   return null;
 }
 
-let _mailAdapter: IDatabaseAdapter | null = null;
-
-function getMailAdapter(): IDatabaseAdapter | null {
-  const url = process.env.DATABASE_URL;
-  if (!url) return null;
-  if (!_mailAdapter) _mailAdapter = createPostgresAdapter(url);
-  return _mailAdapter;
-}
-
-function getRemediationRepo() {
-  const adapter = getMailAdapter();
-  if (!adapter) {
-    return { error: 'Database not configured' as const };
-  }
-  return { repo: new RemediationRepository(adapter) };
-}
-
-export const mailRoutes = new Hono()
+export const mailRoutes = new Hono<Env>()
   // Trigger mail check via collector
   .post('/collect/mail', async (c) => {
     let data: CollectMailRequest;
@@ -136,13 +120,14 @@ export const mailRoutes = new Hono()
       return c.json({ error: validationError }, 400);
     }
 
-    const db = getRemediationRepo();
-    if ('error' in db) {
-      return c.json({ error: db.error }, 500);
+    const dbAdapter = c.get('db');
+    if (!dbAdapter) {
+      return c.json({ error: 'Database not available' }, 503);
     }
 
     try {
-      const request = await db.repo.create({
+      const repo = new RemediationRepository(dbAdapter);
+      const request = await repo.create({
         snapshotId: data.snapshotId,
         domain: data.domain as string,
         contactEmail: data.contactEmail as string,
@@ -178,14 +163,15 @@ export const mailRoutes = new Hono()
   // Get remediation requests for a domain
   .get('/remediation/:domain', async (c) => {
     const domain = c.req.param('domain');
-    const db = getRemediationRepo();
+    const dbAdapter = c.get('db');
 
-    if ('error' in db) {
-      return c.json({ error: db.error }, 500);
+    if (!dbAdapter) {
+      return c.json({ error: 'Database not available' }, 503);
     }
 
     try {
-      const requests = await db.repo.findByDomain(domain);
+      const repo = new RemediationRepository(dbAdapter);
+      const requests = await repo.findByDomain(domain);
       return c.json(requests);
     } catch (error) {
       console.error('Remediation fetch error:', error);
@@ -214,13 +200,14 @@ export const mailRoutes = new Hono()
 
     const nextStatus = status as 'open' | 'in-progress' | 'resolved' | 'closed';
 
-    const db = getRemediationRepo();
-    if ('error' in db) {
-      return c.json({ error: db.error }, 500);
+    const dbAdapter = c.get('db');
+    if (!dbAdapter) {
+      return c.json({ error: 'Database not available' }, 503);
     }
 
     try {
-      const updated = await db.repo.updateStatus(id, nextStatus, assignedTo);
+      const repo = new RemediationRepository(dbAdapter);
+      const updated = await repo.updateStatus(id, nextStatus, assignedTo);
 
       if (!updated) {
         return c.json({ error: 'Remediation request not found' }, 404);
