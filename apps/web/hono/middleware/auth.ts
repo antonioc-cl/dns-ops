@@ -8,8 +8,11 @@
  * - Cloudflare Access JWT (if deployed behind Cloudflare Access)
  * - API key header (for service-to-service)
  * - Development bypass (for local development only)
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 
+import { getTenantUUID } from '@dns-ops/contracts';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types.js';
 
@@ -28,7 +31,9 @@ interface AuthContext {
  * In production with Cloudflare Access, the JWT is verified by Cloudflare
  * and passed as CF-Access-Authenticated-User-Email header.
  */
-function extractCloudflareAccess(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]): AuthContext | null {
+function extractCloudflareAccess(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
+): AuthContext | null {
   const email = c.req.header('CF-Access-Authenticated-User-Email');
   const subject = c.req.header('CF-Access-Authenticated-User-Id');
 
@@ -62,7 +67,9 @@ function extractCloudflareAccess(c: Parameters<Parameters<typeof createMiddlewar
  * For service-to-service authentication.
  * Format: X-API-Key: tenantId:actorId:secret
  */
-function extractApiKey(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]): AuthContext | null {
+function extractApiKey(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
+): AuthContext | null {
   const apiKey = c.req.header('X-API-Key');
 
   if (!apiKey) {
@@ -99,7 +106,9 @@ function extractApiKey(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]
  * Uses X-Dev-Tenant and X-Dev-Actor headers.
  * Requires NODE_ENV=development.
  */
-function extractDevBypass(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]): AuthContext | null {
+function extractDevBypass(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
+): AuthContext | null {
   if (process.env.NODE_ENV !== 'development') {
     return null;
   }
@@ -144,16 +153,17 @@ function isValidIdentifier(id: string): boolean {
  *
  * If no auth is found, the request continues but tenantId/actorId will be undefined.
  * Protected routes should check for these and reject if missing.
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 export const authMiddleware = createMiddleware<Env>(async (c, next) => {
   // Try each auth method in priority order
-  const authContext =
-    extractCloudflareAccess(c) ||
-    extractApiKey(c) ||
-    extractDevBypass(c);
+  const authContext = extractCloudflareAccess(c) || extractApiKey(c) || extractDevBypass(c);
 
   if (authContext) {
-    c.set('tenantId', authContext.tenantId);
+    // Normalize tenantId to UUID format for database compatibility
+    const tenantUUID = await getTenantUUID(authContext.tenantId);
+    c.set('tenantId', tenantUUID);
     c.set('actorId', authContext.actorId);
     if (authContext.actorEmail) {
       c.set('actorEmail', authContext.actorEmail);
@@ -165,13 +175,12 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
 
 /**
  * Require auth middleware - rejects requests without valid authentication
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
   // Try each auth method in priority order
-  const authContext =
-    extractCloudflareAccess(c) ||
-    extractApiKey(c) ||
-    extractDevBypass(c);
+  const authContext = extractCloudflareAccess(c) || extractApiKey(c) || extractDevBypass(c);
 
   if (!authContext) {
     return c.json(
@@ -183,7 +192,9 @@ export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
     );
   }
 
-  c.set('tenantId', authContext.tenantId);
+  // Normalize tenantId to UUID format for database compatibility
+  const tenantUUID = await getTenantUUID(authContext.tenantId);
+  c.set('tenantId', tenantUUID);
   c.set('actorId', authContext.actorId);
   if (authContext.actorEmail) {
     c.set('actorEmail', authContext.actorEmail);
@@ -195,6 +206,8 @@ export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
 /**
  * Internal only middleware - for routes that should only be accessible
  * from internal services or specific IP ranges
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
   // Check for internal service header
@@ -202,8 +215,9 @@ export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
   const expectedSecret = process.env.INTERNAL_SECRET;
 
   if (expectedSecret && internalSecret === expectedSecret) {
-    // Internal service auth - use system tenant
-    c.set('tenantId', 'system');
+    // Internal service auth - use system tenant (normalized to UUID)
+    const systemTenantUUID = await getTenantUUID('system');
+    c.set('tenantId', systemTenantUUID);
     c.set('actorId', 'internal-service');
     await next();
     return;
@@ -212,7 +226,9 @@ export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
   // Check for Cloudflare Access (internal users)
   const cfAuth = extractCloudflareAccess(c);
   if (cfAuth) {
-    c.set('tenantId', cfAuth.tenantId);
+    // Normalize tenantId to UUID format
+    const tenantUUID = await getTenantUUID(cfAuth.tenantId);
+    c.set('tenantId', tenantUUID);
     c.set('actorId', cfAuth.actorId);
     if (cfAuth.actorEmail) {
       c.set('actorEmail', cfAuth.actorEmail);

@@ -8,8 +8,11 @@
  * 1. Internal secret header (for web → collector calls)
  * 2. API key header (for external service access)
  * 3. Dev bypass (development only)
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 
+import { getTenantUUID } from '@dns-ops/contracts';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types.js';
 
@@ -28,7 +31,9 @@ interface AuthContext {
  * For secure web → collector communication.
  * Requires INTERNAL_SECRET env var to be set.
  */
-function extractInternalSecret(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]): AuthContext | null {
+function extractInternalSecret(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
+): AuthContext | null {
   const internalSecret = c.req.header('X-Internal-Secret');
   const expectedSecret = process.env.INTERNAL_SECRET;
 
@@ -57,7 +62,9 @@ function extractInternalSecret(c: Parameters<Parameters<typeof createMiddleware<
  *
  * Format: X-API-Key: tenantId:actorId:secret
  */
-function extractApiKey(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]): AuthContext | null {
+function extractApiKey(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
+): AuthContext | null {
   const apiKey = c.req.header('X-API-Key');
 
   if (!apiKey) {
@@ -93,7 +100,9 @@ function extractApiKey(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]
 /**
  * Development bypass - only for local development
  */
-function extractDevBypass(c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]): AuthContext | null {
+function extractDevBypass(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
+): AuthContext | null {
   if (process.env.NODE_ENV !== 'development') {
     return null;
   }
@@ -130,15 +139,16 @@ function isValidIdentifier(id: string): boolean {
  * 1. Internal secret (web → collector)
  * 2. API key (external services)
  * 3. Dev bypass (development only)
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 export const serviceAuthMiddleware = createMiddleware<Env>(async (c, next) => {
-  const authContext =
-    extractInternalSecret(c) ||
-    extractApiKey(c) ||
-    extractDevBypass(c);
+  const authContext = extractInternalSecret(c) || extractApiKey(c) || extractDevBypass(c);
 
   if (authContext) {
-    c.set('tenantId', authContext.tenantId);
+    // Normalize tenantId to UUID format for database compatibility
+    const tenantUUID = await getTenantUUID(authContext.tenantId);
+    c.set('tenantId', tenantUUID);
     c.set('actorId', authContext.actorId);
   }
 
@@ -147,25 +157,25 @@ export const serviceAuthMiddleware = createMiddleware<Env>(async (c, next) => {
 
 /**
  * Require service auth middleware - rejects requests without valid authentication
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 export const requireServiceAuthMiddleware = createMiddleware<Env>(async (c, next) => {
-  const authContext =
-    extractInternalSecret(c) ||
-    extractApiKey(c) ||
-    extractDevBypass(c);
+  const authContext = extractInternalSecret(c) || extractApiKey(c) || extractDevBypass(c);
 
   if (!authContext) {
     return c.json(
       {
         error: 'Unauthorized',
-        message:
-          'Authentication required. Provide X-Internal-Secret, X-API-Key, or dev headers.',
+        message: 'Authentication required. Provide X-Internal-Secret, X-API-Key, or dev headers.',
       },
       401
     );
   }
 
-  c.set('tenantId', authContext.tenantId);
+  // Normalize tenantId to UUID format for database compatibility
+  const tenantUUID = await getTenantUUID(authContext.tenantId);
+  c.set('tenantId', tenantUUID);
   c.set('actorId', authContext.actorId);
 
   return next();
@@ -174,12 +184,16 @@ export const requireServiceAuthMiddleware = createMiddleware<Env>(async (c, next
 /**
  * Internal only middleware - for routes that should only be accessible
  * from internal services (web app)
+ *
+ * Note: tenantId is normalized to UUID format for database compatibility.
  */
 export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
   // Check for internal secret first
   const internalAuth = extractInternalSecret(c);
   if (internalAuth?.isInternal) {
-    c.set('tenantId', internalAuth.tenantId);
+    // Normalize tenantId to UUID format
+    const tenantUUID = await getTenantUUID(internalAuth.tenantId);
+    c.set('tenantId', tenantUUID);
     c.set('actorId', internalAuth.actorId);
     return next();
   }
@@ -187,7 +201,9 @@ export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
   // Check for dev bypass in development
   const devAuth = extractDevBypass(c);
   if (devAuth?.isInternal) {
-    c.set('tenantId', devAuth.tenantId);
+    // Normalize tenantId to UUID format
+    const tenantUUID = await getTenantUUID(devAuth.tenantId);
+    c.set('tenantId', tenantUUID);
     c.set('actorId', devAuth.actorId);
     return next();
   }
