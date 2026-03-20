@@ -175,8 +175,116 @@ export const mailRoutes = new Hono<Env>()
     }
   })
 
+  // List all remediation requests with filtering
+  .get('/remediation', requireAuth, async (c) => {
+    const dbAdapter = c.get('db');
+
+    if (!dbAdapter) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    try {
+      const repo = new RemediationRepository(dbAdapter);
+
+      // Parse query params
+      const domains = c.req.query('domains')?.split(',').filter(Boolean);
+      const statuses = c.req.query('statuses')?.split(',').filter(Boolean) as
+        | ('open' | 'in-progress' | 'resolved' | 'closed')[]
+        | undefined;
+      const priorities = c.req.query('priorities')?.split(',').filter(Boolean) as
+        | ('low' | 'medium' | 'high' | 'critical')[]
+        | undefined;
+      const limit = c.req.query('limit') ? parseInt(c.req.query('limit')!, 10) : undefined;
+      const offset = c.req.query('offset') ? parseInt(c.req.query('offset')!, 10) : undefined;
+
+      const requests = await repo.list({ domains, statuses, priorities, limit, offset });
+
+      return c.json({
+        requests,
+        count: requests.length,
+        filters: { domains, statuses, priorities },
+      });
+    } catch (error) {
+      console.error('Remediation list error:', error);
+      return c.json(
+        {
+          error: 'Failed to list remediation requests',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
+    }
+  })
+
+  // Get remediation statistics/counts
+  .get('/remediation/stats', requireAuth, async (c) => {
+    const dbAdapter = c.get('db');
+
+    if (!dbAdapter) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    try {
+      const repo = new RemediationRepository(dbAdapter);
+      const countsByStatus = await repo.countByStatus();
+
+      return c.json({
+        total:
+          countsByStatus.open +
+          countsByStatus['in-progress'] +
+          countsByStatus.resolved +
+          countsByStatus.closed,
+        byStatus: countsByStatus,
+      });
+    } catch (error) {
+      console.error('Remediation stats error:', error);
+      return c.json(
+        {
+          error: 'Failed to get remediation stats',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
+    }
+  })
+
+  // Get single remediation request by ID
+  .get('/remediation/by-id/:id', requireAuth, async (c) => {
+    const id = c.req.param('id');
+
+    if (!UUID_RE.test(id)) {
+      return c.json({ error: 'Invalid remediation ID' }, 400);
+    }
+
+    const dbAdapter = c.get('db');
+
+    if (!dbAdapter) {
+      return c.json({ error: 'Database not available' }, 503);
+    }
+
+    try {
+      const repo = new RemediationRepository(dbAdapter);
+      const request = await repo.findById(id);
+
+      if (!request) {
+        return c.json({ error: 'Remediation request not found' }, 404);
+      }
+
+      return c.json(request);
+    } catch (error) {
+      console.error('Remediation fetch by id error:', error);
+      return c.json(
+        {
+          error: 'Failed to fetch remediation request',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      );
+    }
+  })
+
   // Get remediation requests for a domain
-  .get('/remediation/:domain', requireAuth, async (c) => {
+  .get('/remediation/domain/:domain', requireAuth, async (c) => {
     const domain = c.req.param('domain');
     const dbAdapter = c.get('db');
 
@@ -187,7 +295,7 @@ export const mailRoutes = new Hono<Env>()
     try {
       const repo = new RemediationRepository(dbAdapter);
       const requests = await repo.findByDomain(domain);
-      return c.json(requests);
+      return c.json({ requests, count: requests.length });
     } catch (error) {
       console.error('Remediation fetch error:', error);
       return c.json(
