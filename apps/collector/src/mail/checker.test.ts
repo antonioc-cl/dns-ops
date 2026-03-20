@@ -143,10 +143,10 @@ describe('Mail Checker', () => {
 
     it('should fall back to common selectors when provider heuristic fails', async () => {
       mockedResolveTXT
-        .mockRejectedValue(new Error('NXDOMAIN')) // First few selectors fail
-        .mockRejectedValue(new Error('NXDOMAIN'))
-        .mockRejectedValue(new Error('NXDOMAIN'))
-        .mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']); // 'email' selector works
+        .mockRejectedValueOnce(new Error('NXDOMAIN')) // 'default' fails
+        .mockRejectedValueOnce(new Error('NXDOMAIN')) // 'dkim' fails
+        .mockRejectedValueOnce(new Error('NXDOMAIN')) // 'mail' fails
+        .mockResolvedValueOnce(['v=DKIM1; k=rsa; p=xxx']); // 'email' selector works
 
       const result = await checkDKIM('example.com');
 

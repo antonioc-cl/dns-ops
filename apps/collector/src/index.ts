@@ -9,6 +9,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { dbMiddleware } from './middleware/index.js';
 import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
@@ -17,9 +18,13 @@ import { probeRoutes } from './jobs/probe-routes.js';
 
 const app = new Hono();
 
-// Middleware
+// Global middleware
 app.use('*', cors());
 app.use('*', logger());
+
+// Database middleware - attaches DB adapter to context for all routes
+// Requires DATABASE_URL environment variable
+app.use('*', dbMiddleware);
 
 // Health check endpoint
 app.get('/health', (c) =>

@@ -308,7 +308,7 @@ function OverviewTab({
         </dl>
       </div>
 
-      {/* Findings Panel (Bead 07) */}
+      {/* FROZEN: Findings Panel - pending Bead 06 (Persisted DNS findings) */}
       <FindingsPanel snapshotId={snapshot.id || null} />
     </div>
   );
@@ -392,12 +392,12 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | 
         </p>
       </div>
 
-      {/* Mail Diagnostics (Bead 16) */}
+      {/* FROZEN: Mail Diagnostics - pending Bead 11 (Mail findings preview) */}
       <div className="mb-8">
         <MailDiagnostics domain={domain} snapshotId={snapshotId || undefined} />
       </div>
 
-      {/* Discovered DKIM Selectors (Bead 08) */}
+      {/* FROZEN: Discovered DKIM Selectors - pending Bead 10 (DKIM selector provenance) */}
       {snapshotId && (
         <div className="mb-8 border-t pt-6">
           <h4 className="font-medium text-gray-900 mb-3">Discovered DKIM Selectors</h4>
@@ -405,13 +405,13 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | 
         </div>
       )}
 
-      {/* Legacy Tools Integration (Bead 06) */}
+      {/* FROZEN: Legacy Tools Integration - pending Bead 08 (Legacy mail bridge) */}
       <div className="mb-8 border-t pt-6">
         <h4 className="font-medium text-gray-900 mb-3">Legacy Mail Tools</h4>
         <LegacyToolsPanel domain={domain} />
       </div>
 
-      {/* Future: New workbench mail findings will appear here after Bead 09 */}
+      {/* FROZEN: Workbench mail findings - pending Bead 09 (Mail evidence core) */}
       <div className="border-t pt-6">
         <h4 className="font-medium text-gray-900 mb-2">Workbench Mail Analysis</h4>
         <p className="text-sm text-gray-500">
