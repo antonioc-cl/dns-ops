@@ -41,13 +41,17 @@ const BLOCKED_IPV6_PREFIXES = [
 
 /**
  * Check if an IPv4 address is in a blocked range
+ *
+ * Note: Uses >>> 0 to convert to unsigned 32-bit integer,
+ * avoiding signed integer overflow when the first octet is >= 128.
  */
 function ipv4ToInt(ip: string): number {
   const parts = ip.split('.').map(Number);
   if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) {
     return -1;
   }
-  return (parts[0] << 24) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
+  // Use >>> 0 to ensure unsigned 32-bit result (avoids negative numbers)
+  return ((parts[0] << 24) + (parts[1] << 16) + (parts[2] << 8) + parts[3]) >>> 0;
 }
 
 /**
