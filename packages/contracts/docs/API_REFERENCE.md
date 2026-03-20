@@ -151,6 +151,9 @@ Base URL: `http://localhost:4000/api`
 
 ### Probes (`/probe`)
 
+> **Note:** Probes are for programmatic use only (collector, monitoring jobs).
+> No operator UI is provided. Results are integrated into snapshot evidence.
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/probe/mta-sts` | Yes | Probe MTA-STS policy |
