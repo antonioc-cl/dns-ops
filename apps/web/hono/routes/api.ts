@@ -8,6 +8,7 @@ import { legacyToolsRoutes } from './legacy-tools.js';
 import { mailRoutes } from './mail.js';
 import { portfolioRoutes } from './portfolio.js';
 import { providerTemplateRoutes } from './provider-templates.js';
+import { rulesetVersionRoutes } from './ruleset-versions.js';
 import { selectorRoutes } from './selectors.js';
 import { shadowComparisonRoutes } from './shadow-comparison.js';
 import { snapshotRoutes } from './snapshots.js';
@@ -49,6 +50,9 @@ apiRoutes.route('/snapshots', snapshotRoutes);
 
 // Mount portfolio routes (Bead 14)
 apiRoutes.route('/portfolio', portfolioRoutes);
+
+// Mount ruleset version routes (Bead 1j4.8.4)
+apiRoutes.route('/ruleset-versions', rulesetVersionRoutes);
 
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
