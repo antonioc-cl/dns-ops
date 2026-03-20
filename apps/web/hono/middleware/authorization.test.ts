@@ -11,6 +11,10 @@
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../types.js';
+
+// Helper to type json response bodies
+type JsonBody = Record<string, unknown>;
+
 import {
   enforceTenantIsolation,
   requireAdminAccess,
@@ -42,7 +46,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/protected');
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Unauthorized');
       expect(body.message).toContain('Tenant context required');
     });
@@ -58,7 +62,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/protected');
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Unauthorized');
       expect(body.message).toContain('Actor context required');
     });
@@ -74,7 +78,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/protected');
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.ok).toBe(true);
     });
   });
@@ -90,7 +94,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/write', { method: 'POST' });
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Unauthorized');
     });
 
@@ -105,7 +109,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/write', { method: 'POST' });
 
       expect(res.status).toBe(403);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Forbidden');
       expect(body.message).toContain('Valid actor identity required');
     });
@@ -121,7 +125,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/write', { method: 'POST' });
 
       expect(res.status).toBe(403);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Forbidden');
     });
 
@@ -136,7 +140,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/write', { method: 'POST' });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.ok).toBe(true);
     });
 
@@ -151,7 +155,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/write', { method: 'POST' });
 
       expect(res.status).toBe(403);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Forbidden');
     });
   });
@@ -163,7 +167,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/admin');
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Unauthorized');
     });
 
@@ -261,7 +265,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/data');
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Unauthorized');
       expect(body.message).toContain('Tenant context required');
     });
@@ -278,7 +282,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/data');
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBe('original-tenant');
     });
   });
@@ -307,7 +311,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/tenant-check?tenant=tenant-B');
 
       expect(res.status).toBe(403);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toContain('other tenant');
     });
 
@@ -331,7 +335,7 @@ describe('Authorization Middleware', () => {
       const res = await app.request('/tenant-check?tenant=tenant-A');
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.ok).toBe(true);
       expect(body.tenantId).toBe('tenant-A');
     });

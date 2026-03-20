@@ -15,6 +15,9 @@ import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../types.js';
 
+// Helper to type json response bodies
+type JsonBody = Record<string, unknown>;
+
 // Mock the getTenantUUID function
 vi.mock('@dns-ops/contracts', () => ({
   getTenantUUID: vi.fn().mockImplementation(async (id: string) => {
@@ -60,7 +63,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBe('uuid-for-example.com'); // Domain extracted from email
       expect(body.actorId).toBe('cf-user-123');
       expect(body.actorEmail).toBe('user@example.com');
@@ -83,7 +86,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       // Should not extract auth due to invalid email format
       expect(body.tenantId).toBeUndefined();
     });
@@ -104,7 +107,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBe('uuid-for-my-tenant');
       expect(body.actorId).toBe('my-actor');
     });
@@ -125,7 +128,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBeUndefined();
       expect(body.actorId).toBeUndefined();
     });
@@ -149,7 +152,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBe('uuid-for-dev-tenant');
       expect(body.actorId).toBe('dev-actor');
     });
@@ -173,7 +176,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBeUndefined();
       expect(body.actorId).toBeUndefined();
     });
@@ -197,7 +200,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBe('uuid-for-priority.com');
       expect(body.actorId).toBe('cf-priority');
     });
@@ -214,7 +217,7 @@ describe('Auth Middleware', () => {
       const res = await app.request('/test');
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBeUndefined();
       expect(body.actorId).toBeUndefined();
     });
@@ -228,7 +231,7 @@ describe('Auth Middleware', () => {
       const res = await app.request('/protected');
 
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Unauthorized');
     });
 
@@ -283,7 +286,7 @@ describe('Auth Middleware', () => {
       const res = await app.request('/internal');
 
       expect(res.status).toBe(403);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.error).toBe('Forbidden');
       expect(body.message).toContain('internal services');
     });
@@ -354,7 +357,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBeDefined();
     });
 
@@ -369,7 +372,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBeDefined();
     });
 
@@ -384,7 +387,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       // Invalid format should result in no auth
       expect(body.tenantId).toBeUndefined();
     });
@@ -402,7 +405,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       // Should be normalized via getTenantUUID mock
       expect(body.tenantId).toBe('uuid-for-my-tenant');
     });
@@ -419,7 +422,7 @@ describe('Auth Middleware', () => {
       });
 
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as JsonBody;
       expect(body.tenantId).toBe('uuid-for-acme.com');
     });
   });
