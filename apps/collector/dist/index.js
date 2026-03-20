@@ -8,7 +8,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { dbMiddleware } from './middleware/index.js';
+import { dbMiddleware, requireServiceAuthMiddleware, } from './middleware/index.js';
 import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
@@ -21,6 +21,9 @@ app.use('*', logger());
 // Database middleware - attaches DB adapter to context for all routes
 // Requires DATABASE_URL environment variable
 app.use('*', dbMiddleware);
+// Service auth middleware - protects all routes by default
+// Requires INTERNAL_SECRET, API_KEY_SECRET, or dev headers
+app.use('*', requireServiceAuthMiddleware);
 // Health check endpoint
 app.get('/health', (c) => c.json({
     status: 'healthy',

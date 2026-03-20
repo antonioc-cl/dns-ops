@@ -181,8 +181,9 @@ export function groupRecordsByType(records: NormalizedRecord[]): Map<string, Nor
   const sortedGroups = new Map<string, NormalizedRecord[]>();
 
   for (const type of typeOrder) {
-    if (groups.has(type)) {
-      sortedGroups.set(type, groups.get(type)!);
+    const group = groups.get(type);
+    if (group) {
+      sortedGroups.set(type, group);
     }
   }
 

@@ -1,5 +1,6 @@
 export * from './enums.js';
 export * from './requests.js';
+export * from './tenant.js';
 export interface Domain {
     id: string;
     name: string;

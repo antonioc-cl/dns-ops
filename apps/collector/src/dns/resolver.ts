@@ -177,10 +177,7 @@ export class DNSResolver {
     };
   }
 
-  private async queryCNAME(
-    resolver: Resolver,
-    name: string
-  ): Promise<{ answers: DNSAnswer[] }> {
+  private async queryCNAME(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveCname(name);
     return {
       answers: records.map((cname: string) => ({

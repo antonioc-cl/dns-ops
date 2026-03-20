@@ -203,9 +203,7 @@ export interface ApiErrorResponse {
 /**
  * Validate a CollectDomainRequest
  */
-export function validateCollectDomainRequest(
-  req: unknown
-): req is CollectDomainRequest {
+export function validateCollectDomainRequest(req: unknown): req is CollectDomainRequest {
   if (!req || typeof req !== 'object') return false;
   const r = req as Record<string, unknown>;
   return typeof r.domain === 'string' && r.domain.length > 0;
@@ -214,9 +212,7 @@ export function validateCollectDomainRequest(
 /**
  * Validate a LookupDomainRequest
  */
-export function validateLookupDomainRequest(
-  req: unknown
-): req is LookupDomainRequest {
+export function validateLookupDomainRequest(req: unknown): req is LookupDomainRequest {
   if (!req || typeof req !== 'object') return false;
   const r = req as Record<string, unknown>;
   return typeof r.domain === 'string' && r.domain.length > 0;

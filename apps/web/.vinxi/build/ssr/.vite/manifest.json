@@ -1,6 +1,6 @@
 {
-  "_ssr-DxnyR9ts.js": {
-    "file": "assets/ssr-DxnyR9ts.js",
+  "_ssr-DMwAIeOf.js": {
+    "file": "assets/ssr-DMwAIeOf.js",
     "name": "ssr",
     "dynamicImports": [
       "app/routes/index.tsx?tsr-split=component",
@@ -8,12 +8,12 @@
     ]
   },
   "app/routes/domain/$domain.tsx?tsr-split=component": {
-    "file": "assets/_domain-BtZlc_Gr.js",
+    "file": "assets/_domain-BUGdP8R5.js",
     "name": "_domain",
     "src": "app/routes/domain/$domain.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_ssr-DxnyR9ts.js"
+      "_ssr-DMwAIeOf.js"
     ]
   },
   "app/routes/index.tsx?tsr-split=component": {
@@ -28,7 +28,7 @@
     "src": "virtual:$vinxi/handler/ssr",
     "isEntry": true,
     "imports": [
-      "_ssr-DxnyR9ts.js"
+      "_ssr-DMwAIeOf.js"
     ]
   }
 }

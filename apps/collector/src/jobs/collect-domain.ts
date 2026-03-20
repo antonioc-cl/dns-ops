@@ -6,9 +6,9 @@
  */
 
 import {
+  type ApiErrorResponse,
   type CollectDomainRequest,
   type CollectDomainResponse,
-  type ApiErrorResponse,
   validateCollectDomainRequest,
 } from '@dns-ops/contracts';
 import { createPostgresAdapter, SnapshotRepository } from '@dns-ops/db';

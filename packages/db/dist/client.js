@@ -42,7 +42,21 @@ export function createClient(config) {
 export function createPostgresClient(connectionString) {
     const pool = new Pool({
         connectionString,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        // In production, require proper TLS configuration
+        ssl: process.env.NODE_ENV === 'production'
+            ? {
+                // Production: require valid TLS certificates
+                // SECURITY TODO: Configure proper TLS certificates
+                // Options:
+                // 1. Use CA certificate: Set DB_TLS_CA_CERT env var with path to cert file
+                // 2. Use key file: Set DB_TLS_KEY env var with path to key file
+                // 3. Use system CA store: Set DB_TLS_REJECT_UNAUTHORIZED=true
+                rejectUnauthorized: process.env.DB_TLS_REJECT_UNAUTHORIZED !== 'false',
+            }
+            : {
+                // Development: allow self-signed certificates for local development
+                rejectUnauthorized: false,
+            },
     });
     return drizzlePg(pool, { schema });
 }
@@ -85,7 +99,21 @@ export function createAdapterFromConfig(config) {
 export function createPostgresAdapter(connectionString) {
     const pool = new Pool({
         connectionString,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        // In production, require proper TLS configuration
+        ssl: process.env.NODE_ENV === 'production'
+            ? {
+                // Production: require valid TLS certificates
+                // SECURITY TODO: Configure proper TLS certificates
+                // Options:
+                // 1. Use CA certificate: Set DB_TLS_CA_CERT env var with path to cert file
+                // 2. Use key file: Set DB_TLS_KEY env var with path to key file
+                // 3. Use system CA store: Set DB_TLS_REJECT_UNAUTHORIZED=true
+                rejectUnauthorized: process.env.DB_TLS_REJECT_UNAUTHORIZED !== 'false',
+            }
+            : {
+                // Development: allow self-signed certificates for local development
+                rejectUnauthorized: false,
+            },
     });
     const db = drizzlePg(pool, { schema });
     return createSimpleAdapter(db, 'postgres');

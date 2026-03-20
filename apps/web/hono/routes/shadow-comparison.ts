@@ -10,9 +10,13 @@ import { findings as findingsTable } from '@dns-ops/db/schema';
 import { type LegacyToolOutput, shadowComparator, shadowStore } from '@dns-ops/rules';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { requireAdminAccess, requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
 export const shadowComparisonRoutes = new Hono<Env>();
+
+// Apply authentication to all shadow comparison routes
+shadowComparisonRoutes.use('*', requireAuth);
 
 /**
  * POST /api/shadow-comparison/compare
@@ -150,7 +154,7 @@ shadowComparisonRoutes.get('/:id', async (c) => {
  * POST /api/shadow-comparison/:id/adjudicate
  * Adjudicate a shadow comparison mismatch
  */
-shadowComparisonRoutes.post('/:id/adjudicate', async (c) => {
+shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json().catch(() => ({}));
   const { adjudication, notes, operator } = body;

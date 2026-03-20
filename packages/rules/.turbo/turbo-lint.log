@@ -1,1 +1,15 @@
 $ biome check src
+Checked 8 files in 521ms. No fixes applied.
+src/mail/templates.ts:487:86 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    485 │       });
+Found 1 warning.
+    486 │     } else {
+  > 487 │       const spfMatch = template.expected.spf.patterns.some((pattern) => pattern.test(actual.spf!));
+        │                                                                                      ^^^^^^^^^^^
+    488 │       if (spfMatch) {
+    489 │         matches.push({
+  
+

@@ -14,9 +14,13 @@ import {
   templateStorage,
 } from '@dns-ops/rules';
 import { Hono } from 'hono';
+import { requireAdminAccess, requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
 export const providerTemplateRoutes = new Hono<Env>();
+
+// Apply authentication to all provider template routes
+providerTemplateRoutes.use('*', requireAuth);
 
 /**
  * GET /api/mail/providers
@@ -240,7 +244,7 @@ providerTemplateRoutes.post('/detect-provider', async (c) => {
  * POST /api/mail/providers/:provider/selectors
  * Add a custom selector to a provider template (data-backed update)
  */
-providerTemplateRoutes.post('/providers/:provider/selectors', async (c) => {
+providerTemplateRoutes.post('/providers/:provider/selectors', requireAdminAccess, async (c) => {
   const provider = c.req.param('provider') as KnownProvider;
   const body = await c.req.json().catch(() => ({}));
   const { selector } = body;

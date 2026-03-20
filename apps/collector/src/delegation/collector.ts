@@ -362,13 +362,15 @@ export class DelegationCollector {
       // Check for RRSIG in a typical query
       const sampleQuery = await this.collectWithDnssec(this.domain, 'A', recursiveResolver);
 
-      const hasRrsig =
-        sampleQuery.authority?.some((r: DNSAnswer) => r.type === 'RRSIG') ||
-        sampleQuery.answers?.some((r: DNSAnswer) => r.type === 'RRSIG');
+      // Safely check for RRSIG presence
+      const hasRrsig = Boolean(
+        (sampleQuery.authority?.some((r: DNSAnswer) => r.type === 'RRSIG') ?? false) ||
+        (sampleQuery.answers?.some((r: DNSAnswer) => r.type === 'RRSIG') ?? false)
+      );
 
       return {
         hasRrsig,
-        adFlagSet: sampleQuery.flags?.ad || false,
+        adFlagSet: sampleQuery.flags?.ad ?? false,
         dnskeyRecords: dnskeyResult.success ? dnskeyResult.answers : [],
         dsRecords: dsResult.success ? dsResult.answers : [],
         validatingSource: recursiveResolver,

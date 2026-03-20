@@ -4,9 +4,15 @@
  * Shared middleware for the web API.
  */
 
-export { dbMiddleware } from './db.js';
 export {
   authMiddleware,
-  requireAuthMiddleware,
   internalOnlyMiddleware,
+  requireAuthMiddleware,
 } from './auth.js';
+export {
+  enforceTenantIsolation,
+  requireAdminAccess,
+  requireAuth,
+  requireWritePermission,
+} from './authorization.js';
+export { dbMiddleware } from './db.js';

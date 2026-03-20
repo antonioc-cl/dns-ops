@@ -1,1 +1,51 @@
 $ biome check .
+app/components/DNSViews.tsx:224:46 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Checked 43 files in 523ms. No fixes applied.
+  ! Avoid using the index of an array as key property in an element.
+  
+    222 │               <tbody className="bg-white divide-y divide-gray-200">
+    223 │                 {records.map((record, idx) => (
+Found 2 warnings.
+  > 224 │                   <tr key={`${record.name}-${idx}`}>
+        │                                              ^^^
+    225 │                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
+    226 │                     <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">
+  
+  i This is the source of the key value.
+  
+    221 │               </thead>
+    222 │               <tbody className="bg-white divide-y divide-gray-200">
+  > 223 │                 {records.map((record, idx) => (
+        │                                       ^^^
+    224 │                   <tr key={`${record.name}-${idx}`}>
+    225 │                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
+  
+  i The order of the items may change, and this also affects performances and component state.
+  
+  i Check the React documentation. 
+  
+
+hono/middleware/authorization.ts:80:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━━━━━━━━
+
+  ! This variable actorEmail is unused.
+  
+    78 │   const tenantId = c.get('tenantId');
+    79 │   const actorId = c.get('actorId');
+  > 80 │   const actorEmail = c.get('actorEmail');
+       │         ^^^^^^^^^^
+    81 │ 
+    82 │   if (!tenantId || !actorId) {
+  
+  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+  
+  i Unsafe fix: If this is intentional, prepend actorEmail with an underscore.
+  
+     78  78 │     const tenantId = c.get('tenantId');
+     79  79 │     const actorId = c.get('actorId');
+     80     │ - ··const·actorEmail·=·c.get('actorEmail');
+         80 │ + ··const·_actorEmail·=·c.get('actorEmail');
+     81  81 │   
+     82  82 │     if (!tenantId || !actorId) {
+  
+

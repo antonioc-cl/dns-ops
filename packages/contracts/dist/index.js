@@ -7,4 +7,5 @@
 // are used across web and collector runtimes.
 export * from './enums.js';
 export * from './requests.js';
+export * from './tenant.js';
 //# sourceMappingURL=index.js.map

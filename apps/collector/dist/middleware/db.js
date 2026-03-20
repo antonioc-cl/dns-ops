@@ -5,13 +5,14 @@
  * Creates a PostgreSQL adapter and attaches it to the Hono context.
  */
 import { createPostgresAdapter } from '@dns-ops/db';
+import { createMiddleware } from 'hono/factory';
 /**
  * Database middleware - attaches DB adapter to context
  *
  * Requires DATABASE_URL environment variable to be set.
  * Returns 500 error if database is not configured or connection fails.
  */
-export const dbMiddleware = async (c, next) => {
+export const dbMiddleware = createMiddleware(async (c, next) => {
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
         console.error('DATABASE_URL environment variable is not set');
@@ -31,21 +32,21 @@ export const dbMiddleware = async (c, next) => {
             message: error instanceof Error ? error.message : 'Unknown error',
         }, 500);
     }
-    await next();
-};
+    return next();
+});
 /**
  * Database middleware with validation - fails on startup if misconfigured
  *
  * Use this for strict environments where DB must be available.
  * Throws error instead of returning JSON response.
  */
-export const dbMiddlewareStrict = async (c, next) => {
+export const dbMiddlewareStrict = createMiddleware(async (c, next) => {
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
         throw new Error('DATABASE_URL environment variable is required but not set');
     }
     const adapter = createPostgresAdapter(databaseUrl);
     c.set('db', adapter);
-    await next();
-};
+    return next();
+});
 //# sourceMappingURL=db.js.map

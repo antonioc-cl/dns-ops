@@ -155,9 +155,7 @@ describe('DNSResolver', () => {
 
     it('should join multi-chunk TXT records', async () => {
       // Long TXT records are returned as arrays of strings
-      mockResolveTxt.mockResolvedValue([
-        ['chunk1', 'chunk2', 'chunk3'],
-      ]);
+      mockResolveTxt.mockResolvedValue([['chunk1', 'chunk2', 'chunk3']]);
 
       const result = await resolver.query({ name: 'example.com', type: 'TXT' }, recursiveVantage);
 
@@ -184,7 +182,10 @@ describe('DNSResolver', () => {
     it('should query CNAME records successfully', async () => {
       mockResolveCname.mockResolvedValue(['www.example.com']);
 
-      const result = await resolver.query({ name: 'alias.example.com', type: 'CNAME' }, recursiveVantage);
+      const result = await resolver.query(
+        { name: 'alias.example.com', type: 'CNAME' },
+        recursiveVantage
+      );
 
       expect(result.success).toBe(true);
       expect(result.answers[0]).toMatchObject({

@@ -1,6 +1,6 @@
 {
-  "_client-BzuynxGe.js": {
-    "file": "assets/client-BzuynxGe.js",
+  "_client-Cl8ceCRd.js": {
+    "file": "assets/client-Cl8ceCRd.js",
     "name": "client",
     "dynamicImports": [
       "app/routes/index.tsx?tsr-split=component",
@@ -8,30 +8,30 @@
     ]
   },
   "app/routes/domain/$domain.tsx?tsr-split=component": {
-    "file": "assets/_domain-BXtHRuOe.js",
+    "file": "assets/_domain-DcoGH5Ne.js",
     "name": "_domain",
     "src": "app/routes/domain/$domain.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_client-BzuynxGe.js"
+      "_client-Cl8ceCRd.js"
     ]
   },
   "app/routes/index.tsx?tsr-split=component": {
-    "file": "assets/index-D39zbvz0.js",
+    "file": "assets/index-DeZwgPz0.js",
     "name": "index",
     "src": "app/routes/index.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_client-BzuynxGe.js"
+      "_client-Cl8ceCRd.js"
     ]
   },
   "virtual:$vinxi/handler/client": {
-    "file": "assets/client-KoVMFP8R.js",
+    "file": "assets/client-OqqNFrD7.js",
     "name": "client",
     "src": "virtual:$vinxi/handler/client",
     "isEntry": true,
     "imports": [
-      "_client-BzuynxGe.js"
+      "_client-Cl8ceCRd.js"
     ]
   }
 }

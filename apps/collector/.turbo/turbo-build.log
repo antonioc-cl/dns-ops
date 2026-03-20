@@ -1,2 +1,1 @@
 $ tsc
-src/middleware/db.ts(18,53): error TS7030: Not all code paths return a value.

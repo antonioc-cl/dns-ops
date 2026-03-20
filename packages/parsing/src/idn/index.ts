@@ -23,6 +23,7 @@ export function isPunycode(name: string): boolean {
  */
 export function toPunycode(unicode: string): string {
   // Check if already ASCII
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentional ASCII check
   if (/^[\x00-\x7F]+$/.test(unicode)) {
     return unicode.toLowerCase();
   }
@@ -68,6 +69,7 @@ export function normalizeDomain(name: string): {
   if (isPunycode(clean)) {
     punycode = clean;
     unicode = toUnicode(clean);
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentional ASCII check
   } else if (/^[\x00-\x7F]+$/.test(clean)) {
     // ASCII domain
     unicode = clean;

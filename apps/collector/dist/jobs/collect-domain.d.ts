@@ -5,5 +5,6 @@
  * Uses shared contracts from @dns-ops/contracts for request/response types.
  */
 import { Hono } from 'hono';
-export declare const collectDomainRoutes: Hono<import("hono").Env, {}, "/">;
+import type { Env } from '../types.js';
+export declare const collectDomainRoutes: Hono<Env, {}, "/">;
 //# sourceMappingURL=collect-domain.d.ts.map

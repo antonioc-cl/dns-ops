@@ -11,8 +11,8 @@
  * - Record type formatting
  */
 
-import { describe, expect, it } from 'vitest';
 import type { Observation } from '@dns-ops/db/schema';
+import { describe, expect, it } from 'vitest';
 import {
   formatRecordValue,
   getRecordTypeDescription,
@@ -52,9 +52,7 @@ describe('observationsToRecordSets', () => {
         createObservation({
           queryName: 'example.com',
           queryType: 'A',
-          answerSection: [
-            { name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' },
-          ],
+          answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
         }),
       ];
 
@@ -339,10 +337,42 @@ describe('observationsToRecordSets', () => {
 describe('groupRecordsByType', () => {
   it('should group records by type in preferred order', () => {
     const records = [
-      { name: 'example.com', type: 'TXT', ttl: 300, values: ['v=spf1...'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
-      { name: 'example.com', type: 'A', ttl: 300, values: ['192.0.2.1'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
-      { name: 'example.com', type: 'MX', ttl: 300, values: ['10 mail.example.com'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
-      { name: 'example.com', type: 'NS', ttl: 300, values: ['ns1.example.com'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
+      {
+        name: 'example.com',
+        type: 'TXT',
+        ttl: 300,
+        values: ['v=spf1...'],
+        sourceVantages: [],
+        sourceObservationIds: [],
+        isConsistent: true,
+      },
+      {
+        name: 'example.com',
+        type: 'A',
+        ttl: 300,
+        values: ['192.0.2.1'],
+        sourceVantages: [],
+        sourceObservationIds: [],
+        isConsistent: true,
+      },
+      {
+        name: 'example.com',
+        type: 'MX',
+        ttl: 300,
+        values: ['10 mail.example.com'],
+        sourceVantages: [],
+        sourceObservationIds: [],
+        isConsistent: true,
+      },
+      {
+        name: 'example.com',
+        type: 'NS',
+        ttl: 300,
+        values: ['ns1.example.com'],
+        sourceVantages: [],
+        sourceObservationIds: [],
+        isConsistent: true,
+      },
     ];
 
     const groups = groupRecordsByType(records);
@@ -362,7 +392,10 @@ describe('formatRecordValue', () => {
   });
 
   it('should format SOA records', () => {
-    const formatted = formatRecordValue('SOA', 'ns1.example.com admin.example.com 2024010101 3600 900 604800 86400');
+    const formatted = formatRecordValue(
+      'SOA',
+      'ns1.example.com admin.example.com 2024010101 3600 900 604800 86400'
+    );
     expect(formatted).toContain('Primary: ns1.example.com');
     expect(formatted).toContain('Contact: admin.example.com');
   });
