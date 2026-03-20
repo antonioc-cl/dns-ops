@@ -13,12 +13,13 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "dev": "turbo run dev",
-    "test": "turbo run test"
+    "test": "bun test --path-ignore-patterns='**/dist/**'"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
     "turbo": "^1.11.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.1.0"
   },
   "overrides": {
     "@tanstack/react-router": "1.120.20",

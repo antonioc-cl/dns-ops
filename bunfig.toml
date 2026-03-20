@@ -1,0 +1,4 @@
+[test]
+# Exclude build artifacts from test runs
+# Only run source TypeScript/JavaScript tests
+# Note: bun's exclude config doesn't work as expected, using path-ignore-patterns instead
