@@ -8,6 +8,12 @@
  * Users should treat legacy tool results as informational, not authoritative.
  */
 
+import {
+  LegacyAccessLogRepository,
+  ShadowComparisonRepository,
+} from '@dns-ops/db';
+import { findings as findingsTable, snapshots as snapshotsTable } from '@dns-ops/db/schema';
+import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
@@ -322,22 +328,128 @@ legacyToolsRoutes.post('/bulk-deeplinks', requireAuth, async (c) => {
 
 /**
  * GET /api/legacy-tools/shadow-stats
- * Get shadow comparison statistics (placeholder for Bead 09)
+ * Get shadow comparison statistics backed by stored access and comparison results
  */
-legacyToolsRoutes.get('/shadow-stats', async (c) => {
-  const { domain } = c.req.query();
+legacyToolsRoutes.get('/shadow-stats', requireAuth, async (c) => {
+  const db = c.get('db');
+  const domain = c.req.query('domain');
 
-  // Placeholder for shadow comparison statistics
-  // In Bead 09, this will return:
-  // - How many times legacy tools were accessed for this domain
-  // - Comparison between legacy outputs and new workbench findings
-  // - Discrepancy reports
+  try {
+    const legacyLogRepo = new LegacyAccessLogRepository(db);
+    const shadowRepo = new ShadowComparisonRepository(db);
 
-  return c.json({
-    domain: domain || 'all',
-    message: 'Shadow comparison stats will be available in Bead 09',
-    legacyAccessCount: 0,
-    newFindingsCount: 0,
-    discrepancies: [],
-  });
+    // Get legacy access statistics
+    const legacyStats = await legacyLogRepo.getStats();
+
+    // Get shadow comparison statistics
+    const shadowStats = await shadowRepo.getStats();
+
+    // If domain is specified, get domain-specific stats
+    let domainStats = null;
+    let newFindingsCount = 0;
+    let discrepancies: Array<{
+      id: string;
+      field: string;
+      legacyValue: unknown;
+      newValue: unknown;
+      comparedAt: Date;
+    }> = [];
+
+    if (domain) {
+      // Get legacy access logs for this domain
+      const domainLogs = await legacyLogRepo.findByDomain(domain);
+
+      // Get shadow comparisons for this domain
+      const domainComparisons = await shadowRepo.findByDomain(domain);
+
+      // Get latest snapshot for this domain to count findings
+      const domainSnapshots = await db.selectWhere(
+        snapshotsTable,
+        eq(snapshotsTable.domainName, domain)
+      );
+      // Sort by createdAt desc and get the latest
+      domainSnapshots.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      if (domainSnapshots.length > 0) {
+        const findings = await db.selectWhere(
+          findingsTable,
+          eq(findingsTable.snapshotId, domainSnapshots[0].id)
+        );
+        newFindingsCount = findings.length;
+      }
+
+      // Extract discrepancies from mismatched comparisons
+      const mismatches = domainComparisons.filter(
+        (c) => c.status === 'mismatch' || c.status === 'partial-match'
+      );
+
+      for (const mismatch of mismatches.slice(0, 10)) {
+        const comparisons = mismatch.comparisons as Array<{
+          field: string;
+          status: string;
+          legacyValue: unknown;
+          newValue: unknown;
+        }>;
+
+        for (const comp of comparisons) {
+          if (comp.status === 'mismatch') {
+            discrepancies.push({
+              id: mismatch.id,
+              field: comp.field,
+              legacyValue: comp.legacyValue,
+              newValue: comp.newValue,
+              comparedAt: mismatch.comparedAt,
+            });
+          }
+        }
+      }
+
+      domainStats = {
+        legacyAccessCount: domainLogs.length,
+        comparisonCount: domainComparisons.length,
+        matchCount: domainComparisons.filter((c) => c.status === 'match').length,
+        mismatchCount: domainComparisons.filter((c) => c.status === 'mismatch').length,
+        partialMatchCount: domainComparisons.filter((c) => c.status === 'partial-match').length,
+        pendingAdjudication: domainComparisons.filter(
+          (c) => !c.adjudication && c.status !== 'match'
+        ).length,
+      };
+    }
+
+    return c.json({
+      domain: domain || 'all',
+      legacyAccessCount: domain ? domainStats?.legacyAccessCount ?? 0 : legacyStats.total,
+      newFindingsCount,
+      discrepancies,
+      stats: {
+        legacy: {
+          total: legacyStats.total,
+          byToolType: legacyStats.byToolType,
+          successRate: legacyStats.successRate,
+          last24h: legacyStats.last24h,
+        },
+        shadow: {
+          total: shadowStats.total,
+          matches: shadowStats.matches,
+          mismatches: shadowStats.mismatches,
+          partialMatches: shadowStats.partialMatches,
+          acknowledged: shadowStats.acknowledged,
+          pending: shadowStats.pending,
+        },
+        domain: domainStats,
+      },
+      durable: true, // Indicates data is persisted to database
+    });
+  } catch (error) {
+    console.error('Shadow stats error:', error);
+    return c.json(
+      {
+        error: 'Failed to get shadow comparison statistics',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
 });
