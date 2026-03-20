@@ -254,12 +254,14 @@ export const spfRule: Rule = {
           riskPosture: 'critical',
           blastRadius: 'single-domain',
           reviewOnly: true,
-          evidence: [
-            {
-              observationId: spfObservation?.id,
-              description: `Raw SPF record: ${spfRecord}`,
-            },
-          ],
+          evidence: spfObservation
+            ? [
+                {
+                  observationId: spfObservation.id,
+                  description: `Raw SPF record: ${spfRecord}`,
+                },
+              ]
+            : [],
           ruleId: this.id,
           ruleVersion: this.version,
         },
@@ -319,12 +321,14 @@ export const spfRule: Rule = {
           severity === 'critical' ? 'critical' : severity === 'medium' ? 'medium' : 'safe',
         blastRadius: 'single-domain',
         reviewOnly: severity !== 'info',
-        evidence: [
-          {
-            observationId: spfObservation?.id,
-            description: `Parsed SPF: ${JSON.stringify(parsed)}`,
-          },
-        ],
+        evidence: spfObservation
+          ? [
+              {
+                observationId: spfObservation.id,
+                description: `Parsed SPF: ${JSON.stringify(parsed)}`,
+              },
+            ]
+          : [],
         ruleId: this.id,
         ruleVersion: this.version,
       },
@@ -424,12 +428,14 @@ export const dmarcRule: Rule = {
           riskPosture: 'critical',
           blastRadius: 'single-domain',
           reviewOnly: true,
-          evidence: [
-            {
-              observationId: dmarcObservation?.id,
-              description: `Raw DMARC: ${dmarcRecord}`,
-            },
-          ],
+          evidence: dmarcObservation
+            ? [
+                {
+                  observationId: dmarcObservation.id,
+                  description: `Raw DMARC: ${dmarcRecord}`,
+                },
+              ]
+            : [],
           ruleId: this.id,
           ruleVersion: this.version,
         },
@@ -479,12 +485,14 @@ export const dmarcRule: Rule = {
         riskPosture: severity === 'info' ? 'safe' : 'medium',
         blastRadius: 'single-domain',
         reviewOnly: severity !== 'info',
-        evidence: [
-          {
-            observationId: dmarcObservation?.id,
-            description: `Policy: ${policy}${subdomainPolicy ? `, Subdomain: ${subdomainPolicy}` : ''}, RUA: ${rua?.join(', ') || 'none'}, Pct: ${pct}%`,
-          },
-        ],
+        evidence: dmarcObservation
+          ? [
+              {
+                observationId: dmarcObservation.id,
+                description: `Policy: ${policy}${subdomainPolicy ? `, Subdomain: ${subdomainPolicy}` : ''}, RUA: ${rua?.join(', ') || 'none'}, Pct: ${pct}%`,
+              },
+            ]
+          : [],
         ruleId: this.id,
         ruleVersion: this.version,
       },
