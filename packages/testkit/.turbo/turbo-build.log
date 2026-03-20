@@ -1,4 +1,1 @@
-
-> @dns-ops/testkit@0.1.0 build /Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit
-> tsc
-
+$ tsc

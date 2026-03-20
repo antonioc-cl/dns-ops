@@ -6,7 +6,7 @@
  */
 import { validateCollectDomainRequest, } from '@dns-ops/contracts';
 import { createPostgresAdapter } from '@dns-ops/db';
-import { normalizeDomain } from '@dns-ops/parsing';
+import { normalizeDomain, isValidDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
 export const collectDomainRoutes = new Hono();
@@ -77,10 +77,12 @@ collectDomainRoutes.post('/domain', async (c) => {
     }
     catch (err) {
         console.error('Collection error:', err);
-        return c.json({
+        const errResponse = {
             error: 'Collection failed',
-            message: error instanceof Error ? error.message : 'Unknown error',
-        }, 500);
+            message: err instanceof Error ? err.message : 'Unknown error',
+            code: 'COLLECTION_ERROR',
+        };
+        return c.json(errResponse, 500);
     }
 });
 /**
@@ -94,23 +96,6 @@ collectDomainRoutes.get('/status/:snapshotId', async (c) => {
         status: 'completed',
     });
 });
-function isValidDomain(domain) {
-    // Simple domain validation
-    if (!domain || domain.length > 253)
-        return false;
-    // Check for valid characters - labels cannot start or end with hyphen
-    const labelRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
-    const labels = domain.split('.');
-    // Reject empty labels and labels that are just hyphens or start/end with hyphen
-    for (const label of labels) {
-        if (!label || label.length > 63)
-            return false;
-        if (!labelRegex.test(label))
-            return false;
-        // Explicit check: no leading or trailing hyphen
-        if (label.startsWith('-') || label.endsWith('-'))
-            return false;
-    }
-    return true;
-}
+// Domain validation is now handled by @dns-ops/parsing.isValidDomain
+// which ensures consistent validation between web and collector
 //# sourceMappingURL=collect-domain.js.map

@@ -1,23 +1,2 @@
 $ tsc
-src/dns/resolver.ts(32,46): error TS2345: Argument of type 'import("dns/promises").Resolver' is not assignable to parameter of type 'import("dns").Resolver'.
-  Types of property 'resolve' are incompatible.
-    Property '__promisify__' is missing in type '{ (hostname: string): Promise<string[]>; (hostname: string, rrtype: "A" | "AAAA" | "CNAME" | "NS" | "PTR"): Promise<string[]>; (hostname: string, rrtype: "ANY"): Promise<...>; (hostname: string, rrtype: "CAA"): Promise<...>; (hostname: string, rrtype: "MX"): Promise<...>; (hostname: string, rrtype: "NAPTR"): Promise...' but required in type 'typeof resolve'.
-src/dns/resolver.ts(122,38): error TS2554: Expected 2-3 arguments, but got 1.
-src/dns/resolver.ts(124,26): error TS2339: Property 'map' does not exist on type 'void'.
-src/dns/resolver.ts(134,38): error TS2554: Expected 2-3 arguments, but got 1.
-src/dns/resolver.ts(136,26): error TS2339: Property 'map' does not exist on type 'void'.
-src/dns/resolver.ts(146,36): error TS2554: Expected 2 arguments, but got 1.
-src/dns/resolver.ts(148,24): error TS2339: Property 'map' does not exist on type 'void'.
-src/dns/resolver.ts(158,36): error TS2554: Expected 2 arguments, but got 1.
-src/dns/resolver.ts(160,24): error TS2339: Property 'map' does not exist on type 'void'.
-src/dns/resolver.ts(170,36): error TS2554: Expected 2 arguments, but got 1.
-src/dns/resolver.ts(172,24): error TS2339: Property 'map' does not exist on type 'void'.
-src/dns/resolver.ts(185,36): error TS2554: Expected 2 arguments, but got 1.
-src/dns/resolver.ts(187,24): error TS2339: Property 'map' does not exist on type 'void'.
-src/dns/resolver.ts(197,17): error TS2352: Conversion of type 'void' to type '{ nsname: string; hostmaster: string; serial: number; refresh: number; retry: number; expire: number; minttl?: number | undefined; minimumTTL?: number | undefined; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-src/dns/resolver.ts(197,33): error TS2554: Expected 2 arguments, but got 1.
-src/dns/resolver.ts(223,38): error TS2554: Expected 2 arguments, but got 1.
-src/dns/resolver.ts(225,9): error TS2352: Conversion of type 'void' to type '{ type: string; critical?: number | undefined; issue?: string | undefined; value?: string | undefined; }[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-src/jobs/collect-domain.ts(15,27): error TS2440: Import declaration conflicts with local declaration of 'isValidDomain'.
-src/jobs/collect-domain.ts(101,18): error TS2552: Cannot find name 'error'. Did you mean 'err'?
-src/jobs/collect-domain.ts(101,43): error TS2552: Cannot find name 'error'. Did you mean 'err'?
+src/middleware/db.ts(18,53): error TS7030: Not all code paths return a value.

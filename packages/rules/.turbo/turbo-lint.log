@@ -1,6 +1,1 @@
-
-> @dns-ops/rules@0.1.0 lint /Users/antonio/Documents/PROYECTOS/dns-ops/packages/rules
-> biome check src
-
-sh: biome: command not found
- ELIFECYCLE  Command failed.
+$ biome check src
