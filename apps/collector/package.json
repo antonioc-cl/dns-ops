@@ -17,6 +17,7 @@
   "dependencies": {
     "@dns-ops/contracts": "workspace:*",
     "@dns-ops/db": "workspace:*",
+    "@dns-ops/logging": "workspace:*",
     "@dns-ops/parsing": "workspace:*",
     "@dns-ops/rules": "workspace:*",
     "@hono/node-server": "^1.8.0",
