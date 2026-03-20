@@ -1,824 +1,737 @@
-# DNS Ops Workbench — Implementation Beads
-**Commitment boundary:** Beads **01–09** are the committed build path. Beads **10–15** are conditional extensions and should only start if the earlier beads prove value and execution bandwidth exists.
-## Parallel lanes at a glance
-- After **Bead 02**, **Bead 02A** starts immediately and should finish before meaningful app code lands.
-- After **Bead 02A**, **Bead 03** and **Bead 04** can run in parallel.
-- After **Beads 03 + 04**, **Bead 05** and **Bead 06** can run in parallel.
-- After **Bead 05**, **Bead 07** can start while **Bead 06** finishes.
-- After **Beads 06 + 07**, **Bead 08** starts.
-- After **Bead 08**, **Bead 09** and **Bead 10** can run in parallel if non-DNS probes are approved.
-- After **Bead 09**, **Bead 11** and **Bead 12** can run in parallel.
-- After **Bead 12**, **Bead 13** can start.
-- After **Beads 11 + 13**, **Bead 14** can start.
-- After **Bead 14**, **Bead 15** can start.
+# DNS Ops Workbench — Revised Implementation Beads
 
-# Bead 01 — Pilot corpus, status vocabulary, and trust boundary
+**Revision date:** 2026-03-20
+**Status:** authoritative planning document
+**Important:** This document supersedes the earlier bead ordering. The split files in `beads/` still reflect the older v1 plan and must not be treated as authoritative until regenerated from this document.
+
+## Why this revision exists
+
+The earlier bead graph optimized for visible surfaces too early. The repo reality check showed four missing foundations:
+- build/test truth not enforced,
+- split-brain runtime/storage assumptions,
+- duplicated request/domain validation,
+- findings evaluated inline instead of persisted.
+
+This revised plan re-centers the system on one truthful path:
+1. collect evidence,
+2. persist it,
+3. evaluate it deterministically,
+4. show it clearly,
+5. only then expand into portfolio/automation/probes.
+
+## Unsupported / experimental surfaces already present in code
+
+The repo currently contains out-of-sequence code that must be treated as **frozen ahead-of-plan surfaces**, not evidence of completed beads, until their owning revised bead lands:
+- `apps/web/hono/routes/mail.ts`
+- `apps/web/hono/routes/portfolio.ts`
+- `apps/web/hono/routes/shadow-comparison.ts`
+- `apps/web/hono/routes/provider-templates.ts`
+- `apps/collector/src/jobs/fleet-report.ts`
+- `apps/collector/src/jobs/monitoring.ts`
+- `apps/collector/src/jobs/probe-routes.ts`
+- `apps/web/app/routes/domain/$domain.tsx`
+- `apps/web/app/components/mail/MailDiagnostics.tsx`
+- `apps/web/app/components/mail/RemediationForm.tsx`
+- `apps/web/app/components/DiscoveredSelectors.tsx`
+- `apps/web/app/components/DelegationPanel.tsx`
+- `apps/collector/src/index.ts`
+- `STATUS_REPORT.md`
+
+These surfaces may contain useful partial work, but they must not be used as proof that mail, remediation, delegation, portfolio, monitoring, probes, template editing, parity governance, or later-bead completion are already product-ready.
+
+## Guiding principles
+
+1. **Truthful before broad**
+   No placeholder surface before the backing evidence path is real.
+
+2. **One authoritative persistence model**
+   Web and collector must not pretend to share state while using divergent runtime assumptions.
+
+3. **Single-domain trust first**
+   The first complete user value is a trustworthy Domain 360. Portfolio and monitoring come later.
+
+4. **Stored evidence, stored evaluation**
+   Raw observations and evaluation runs are first-class persisted artifacts.
+
+5. **Auth before operator writes**
+   Notes, overrides, remediation, monitoring, and adjudication require real actor/tenant context.
+
+6. **Optional complexity stays optional**
+   Delegation depth and non-DNS probes are later multipliers, not MVP blockers.
+
+---
+
+# Bead 00 — Workspace validation baseline
 
 **Purpose**  
-Turn the memo into executable acceptance criteria and eliminate ambiguity before code starts.
+Make the repo truthful before more implementation lands.
 
 **Prerequisites**  
 None.
 
 **Concrete change**  
-Create the project’s baseline operational artifacts:
-- Benchmark corpus of representative domains and cases:
-  - known-good managed zones,
-  - known-good unmanaged zones,
-  - historical incident cases,
-  - intentionally misconfigured test zones,
-  - IDN/punycode case,
-  - wildcard case,
-  - NXDOMAIN case,
-  - NODATA case,
-  - stale-IP migration case.
-- Shared enums and vocabulary:
-  - result state: `complete | partial | failed`,
-  - severity,
-  - confidence,
-  - risk posture,
-  - blast radius,
-  - `review_only`.
-- Initial targeted-inspection scope for unmanaged zones:
-  - phase-1 names and types to query,
-  - how scope is displayed in the UI.
-- Initial trust-boundary policy for non-DNS probes:
-  - allowed probe types,
-  - blocked address space,
-  - egress restrictions,
-  - timeout/concurrency limits.
+Create a reliable validation contract for the monorepo:
+- all workspaces expose real `build`, `typecheck`, `lint`, and `test` scripts,
+- root `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm test` execute real work,
+- generated artifacts are excluded from source test execution,
+- CI skeleton actually runs the same commands developers use locally.
 
 **Invariants**
-- Unmanaged zones must default to **partial** visibility.
-- No artifact may imply full-zone enumeration for arbitrary third-party domains.
-- Risky changes must be marked **review-only**.
-- The rules engine will be authoritative, not AI summaries.
+- A green root test command must mean real source tests passed.
+- Build artifacts must not create false-green or duplicate test execution.
+- Status docs may not claim completeness against red validation.
 
 **Validation / tests**
-- Review benchmark corpus against manual `dig`/authoritative checks.
-- Confirm every benchmark case has a known expected outcome or explicit “ambiguous by design” label.
-- Verify the status vocabulary covers every benchmark case without special-case wording.
-
-**Rollout or migration notes**
-- Internal-only artifact.
-- This bead replaces informal expectations with a single source of truth for testing and acceptance.
-
-**Rollback plan**
-- Revert the artifacts in version control.
-- Keep prior benchmark items archived, not deleted, so test history remains explainable.
+- Run root validation commands successfully.
+- Confirm source tests run without `dist` duplicates.
+- Confirm CI config matches local validation sequence.
 
 **Definition of done**
-- Benchmark corpus exists in the repo.
-- Status/risk/blast-radius vocabulary is committed and referenced by later beads.
-- Initial query scope and probe policy are agreed and documented.
+- The repo can honestly say whether it is green or red.
 
 
-# Bead 02 — Minimal data model and persistence contract
+# Bead 01 — Pilot corpus, status vocabulary, query scope, and trust boundary
+
+**Purpose**
+Turn product intent into executable policy before more product code lands.
+
+**Prerequisites**
+Bead 00.
+
+**Concrete change**
+Maintain the planning artifacts that define what the product is allowed to claim:
+- benchmark corpus of representative domains and failure cases,
+- shared result/risk/confidence vocabulary,
+- explicit phase-1 DNS query scope,
+- trust-boundary policy for later non-DNS probes.
+
+**Invariants**
+- Unmanaged zones default to `partial` visibility.
+- No document may imply whole-zone visibility for arbitrary third-party domains.
+- Probe policy stays doc-backed and explicit before any network probing expands.
+
+**Validation / tests**
+- Corpus reviewed against manual evidence.
+- Scope and vocabulary referenced by code-facing contracts.
+- Trust-boundary doc remains aligned with actual probe behavior.
+
+**Definition of done**
+- Query scope and trust claims are explicit, versioned, and reusable by later beads.
+
+
+# Bead 02 — Authoritative runtime topology and scaffold
 
 **Purpose**  
-Create the stable backbone for observations, snapshots, findings, and later diff/search features.
+Resolve the storage/runtime topology before the repo grows further.
 
 **Prerequisites**  
-Bead 01.
+Beads 00–01.
 
 **Concrete change**  
-Implement the minimal persistence model and contracts:
-- Core entities:
+Finalize the implementation shape:
+- one authoritative production persistence topology,
+- one clear web runtime contract,
+- one clear collector runtime contract,
+- monorepo scaffold aligned to that choice,
+- env matrix for local/dev/prod.
+
+**Invariants**
+- Product state may not silently drift across incompatible backing stores.
+- Web and collector must agree on where authoritative state lives.
+- Runtime fallbacks must fail explicitly, not mask topology mistakes.
+
+**Validation / tests**
+- Web and collector build against the chosen topology.
+- Startup config validation catches missing or impossible env combinations.
+- Local and production-mode smoke paths use the same truth model.
+
+**Definition of done**
+- There is no architectural ambiguity about where product data lives.
+
+
+# Bead 03 — Shared contracts and core supported schema
+
+**Purpose**
+Establish one reusable contract layer for requests, domain normalization, and core persisted entities.
+
+**Prerequisites**
+Bead 02.
+
+**Concrete change**
+Define the smallest supported product schema and shared API contract layer:
+- shared request/response DTOs for collection and lookup flows,
+- DTO reservations for later remediation/governed write paths without activating them early,
+- one shared domain normalization/validation implementation,
+- remediation UI/API remain deferred until the post-auth governed-write beads.
+- core schema only for:
   - `Domain`,
   - `Snapshot`,
   - `Observation`,
-  - `VantagePoint`,
   - `RecordSet`,
-  - `Finding`,
-  - `Suggestion`,
-  - `RulesetVersion`.
-- Add `tenant_id` as nullable or reserved for later enforcement, without building the full permissions model yet.
-- Store explicit snapshot scope:
-  - queried names,
-  - queried record types,
-  - queried vantage points,
-  - timestamp,
-  - ruleset version.
-- Enforce append-only observations.
-- Define API/serialization contracts for snapshot read/write.
+  - `RulesetVersion`,
+- snapshot scope persisted explicitly.
+- remediation/write DTO reservations only; governed write flows remain deferred.
 
 **Invariants**
-- Raw observations are immutable.
-- Snapshot scope is explicit and query-bounded.
-- Findings are versioned by ruleset.
-- Parsed state must never overwrite raw evidence.
+- Domain normalization may not diverge between web and collector.
+- Core schema means “actively supported now,” not “maybe used later.”
+- Raw observations remain append-only.
 
 **Validation / tests**
-- Migration tests for schema creation and rollback safety.
-- Serialization round-trip tests for observations and findings.
-- Immutability tests that reject mutation of stored observations.
-- Scope tests that prove a snapshot cannot exist without queried-name/type metadata.
-
-**Rollout or migration notes**
-- New tables only.
-- No dependency on legacy DMARC/DKIM tools yet.
-- Keep this isolated from existing tooling to avoid accidental coupling.
-
-**Rollback plan**
-- Disable writes to the new schema.
-- Leave the schema in place but unused rather than performing destructive rollback.
-- Revert application code paths to no-op or raw in-memory responses.
+- Round-trip tests for shared contracts.
+- Domain normalization tests including IDN/punycode cases.
+- Migration test from empty DB.
+- Scope integrity test: a snapshot cannot exist without explicit scope metadata.
 
 **Definition of done**
-- A snapshot with observations and findings can be written and read end-to-end in dev/test.
-- Schema contracts are stable enough for worker and UI work to proceed in parallel.
+- Web, collector, and packages speak the same request and domain language.
 
 
-# Bead 02A — Stack, runtime split, and repo scaffold
+# Bead 04 — DNS collection and normalization pipeline
 
 **Purpose**  
-Make the implementation shape explicit so the team can scaffold once and avoid accidental architecture drift.
+Create one trustworthy evidence pipeline for single-domain DNS state.
 
 **Prerequisites**  
-Beads 01–02.
+Bead 03.
 
 **Concrete change**  
-Adopt the chosen implementation stack and scaffold the monorepo.
-
-### Chosen stack
-- **App shell:** TanStack Start + Hono + TanStack Query + Tailwind + shadcn/ui
-- **App runtime:** Cloudflare Workers
-- **Database:** Postgres + Drizzle ORM
-- **Collector / probe runtime:** separate Node.js worker service
-
-### Repo scaffold
-Create a monorepo with this high-level shape:
-- `apps/web` — TanStack Start app shell deployed to Workers
-- `apps/collector` — Node worker for DNS/mail/delegation collection and approved probes
-- `packages/db` — shared Drizzle schema/client
-- `packages/contracts` — shared types/enums/contracts
-- `packages/rules` — deterministic rules engine and rule packs
-- `packages/parsing` — DNS/mail parsing and dig formatting helpers
-- `packages/testkit` — benchmark corpus, fixtures, golden tests
-- `docs/` — memo, beads, rules notes, benchmark notes
-
-Create the initial root workspace files:
-- workspace config
-- shared tsconfig
-- formatting/linting config
-- CI skeleton
-- `wrangler` config for the web app
-- Dockerfile for collector
+Implement the DNS collection path end-to-end:
+- phase-1 DNS query planning,
+- recursive collection,
+- authoritative collection using a real authoritative strategy,
+- observation persistence,
+- `RecordSet` normalization,
+- explicit result-state handling for timeout/refusal/truncation/NXDOMAIN/NODATA/error.
 
 **Invariants**
-- The collector/probe runtime is a separate execution surface from the app shell.
-- Non-DNS probes must not be forced into the Workers runtime.
-- Contracts are shared from one package, not copied between apps.
-- Rules remain deterministic TypeScript code, not an AI interpretation layer.
+- Every visible DNS conclusion must trace back to stored observations.
+- Managed/unmanaged behavior must match the documented scope policy.
+- Failure states are first-class, not swallowed.
 
 **Validation / tests**
-- Workspace bootstraps successfully.
-- `apps/web` and `apps/collector` both build.
-- Shared packages type-check across both apps.
-- Basic CI runs install, lint, and type-check.
-
-**Rollout or migration notes**
-- This bead is foundational and should happen before meaningful app code lands.
-- It does not change legacy DMARC/DKIM tools.
-- Keep the collector boundary even if early job execution is still minimal.
-
-**Rollback plan**
-- Revert scaffold commits if the workspace shape proves unworkable.
-- Preserve shared contracts and DB schema work in separate commits where possible.
+- Integration tests against controllable zones.
+- Query-plan tests for managed vs unmanaged.
+- Parsing/normalization tests for TXT, CNAME chains, wildcard, IDN, NXDOMAIN, NODATA.
 
 **Definition of done**
-- The monorepo exists with the chosen app/runtime split.
-- Both apps build.
-- Shared packages are wired and importable.
-- A recommended repo structure is committed in documentation.
+- A domain refresh produces stored observations and normalized record sets that can be trusted.
 
 
-# Bead 03 — DNS collection worker MVP
+# Bead 05 — Single-domain evidence viewer
 
 **Purpose**  
-Collect raw DNS evidence for the first usable product slice.
-
-**Prerequisites**  
-Beads 01–02A.
-
-**Concrete change**  
-Implement the worker/service that performs targeted DNS collection:
-- Query supported phase-1 types:
-  - `A`, `AAAA`, `CNAME`, `MX`, `TXT`, `NS`, `SOA`, `CAA`.
-- Query the initial unmanaged-zone targeted names from Bead 01.
-- Collect from at least:
-  - one public recursive vantage,
-  - the authoritative nameserver set.
-- Store:
-  - query name/type,
-  - resolver or nameserver identity,
-  - source type,
-  - region/network identity where available,
-  - transport,
-  - response code,
-  - flags,
-  - TTLs,
-  - answer/authority/additional sections,
-  - timeout/refusal/truncation errors.
-- Create snapshots on demand from the UI or internal API.
-
-**Invariants**
-- Read-only behavior only.
-- No background scanning yet.
-- Partial, timeout, refusal, and error states are first-class outputs.
-- No claim of full-zone coverage for unmanaged zones.
-
-**Validation / tests**
-- Integration tests against controllable test zones.
-- Cases for:
-  - authoritative success,
-  - recursive success,
-  - timeout,
-  - refusal,
-  - truncation,
-  - divergent answers across vantages,
-  - empty answer vs NXDOMAIN.
-- Load tests for safe concurrency and timeout handling.
-
-**Rollout or migration notes**
-- Start as an internal-only endpoint or worker queue.
-- Do not connect it to any scheduled refresh yet.
-
-**Rollback plan**
-- Disable the worker route/queue.
-- Keep previously stored observations for debugging.
-- Fall back to no live collection rather than degraded collection.
-
-**Definition of done**
-- A requested domain produces stored observations for supported types from required DNS vantages.
-- Failure states are stored and visible, not swallowed.
-
-
-# Bead 04 — Domain 360 shell
-
-**Purpose**  
-Give operators a usable entry point fast, even before deeper rules and mail logic land.
-
-**Prerequisites**  
-Beads 01–02A.
-
-**Concrete change**  
-Build the first UI shell:
-- Domain lookup input and normalized domain handling.
-- Domain 360 page with:
-  - Overview tab,
-  - DNS tab,
-  - Mail tab placeholder,
-  - Delegation tab placeholder,
-  - History tab placeholder.
-- Status badges:
-  - `managed` / `unmanaged`,
-  - `complete` / `partial` / `failed`.
-- Snapshot refresh action.
-- Explicit scope label showing that unmanaged zones are targeted inspection only.
-
-**Invariants**
-- The UI must not imply completeness for unmanaged zones.
-- Raw evidence must remain discoverable with minimal friction.
-- Internal-only access.
-
-**Validation / tests**
-- UI tests for:
-  - domain normalization,
-  - IDN input,
-  - state badge rendering,
-  - empty/error states.
-- Smoke tests that the shell can load a snapshot or a “not yet collected” state cleanly.
-
-**Rollout or migration notes**
-- Feature-flagged for internal pilot users only.
-- No cutover impact on legacy tools.
-
-**Rollback plan**
-- Disable the route or feature flag.
-- Keep the backend untouched.
-
-**Definition of done**
-- An operator can enter a domain, trigger collection, and land on a stable page that clearly shows scope and state.
-
-
-# Bead 05 — Snapshot read path plus raw / parsed / dig views
-
-**Purpose**  
-Make collected evidence inspectable and trustworthy.
-
-**Prerequisites**  
-Beads 02–04.
-
-**Concrete change**  
-Implement the read path and presentation layers for phase-1 DNS data:
-- Normalize supported RR types into `RecordSet`s.
-- Add three views:
-  - raw response,
-  - parsed record view,
-  - dig-style text view.
-- Show:
-  - TTLs,
-  - source/vantage labels,
-  - errors/timeouts/refusals,
-  - snapshot metadata,
-  - queried names/types/vantages.
-
-**Invariants**
-- Raw data remains the source of truth.
-- Parsed view cannot suppress raw errors or uncertainty.
-- Snapshot scope must be visible.
-
-**Validation / tests**
-- Parser golden tests for:
-  - TXT string splitting,
-  - CNAME chains,
-  - NXDOMAIN vs NODATA,
-  - wildcard responses,
-  - punycode rendering,
-  - empty additional/authority sections.
-- UI tests for switching between raw/parsed/dig views.
-
-**Rollout or migration notes**
-- Ship this to pilot users before findings if needed.
-- Trust is built here; avoid over-polishing at the expense of accuracy.
-
-**Rollback plan**
-- Fall back to raw-only view if parsing misbehaves.
-- Keep stored observations unchanged.
-
-**Definition of done**
-- Pilot users can inspect any collected snapshot end-to-end without leaving the workbench.
-
-
-# Bead 06 — Legacy DMARC/DKIM adapters
-
-**Purpose**  
-Preserve current trust and unify workflow without blocking the MVP on reimplementation.
+Deliver the first complete user value: a truthful Domain 360 for DNS evidence.
 
 **Prerequisites**  
 Bead 04.
 
 **Concrete change**  
-Integrate the existing DMARC and DKIM tools into the new surface:
-- Mail tab contains:
-  - deep links or embedded panels to current tools,
-  - domain context pre-filled,
-  - return path back to Domain 360.
-- Log access and domain context for later shadow-comparison analysis.
+Merge the old shell/read-path intent into one backed viewer:
+- domain lookup and normalization,
+- a **DNS-only** Domain 360 for the initial shipped viewer,
+- raw / parsed / dig-style DNS views,
+- snapshot metadata and explicit query scope,
+- refresh flow with correct loading/error states,
+- visible managed/unmanaged and complete/partial/failed labeling,
+- mail, delegation, history, remediation, and selector surfaces hidden or feature-flagged until their owning beads land.
 
 **Invariants**
-- Legacy DMARC/DKIM outputs remain authoritative.
-- New UI must not reinterpret or override legacy results yet.
-- No changes to legacy tool internals are required in this bead.
+- The UI may not present placeholder product areas as implemented workflows.
+- Raw evidence remains discoverable with minimal friction.
+- Scope warnings are prominent for unmanaged zones.
 
 **Validation / tests**
-- Smoke tests for link/embed behavior.
-- Auth/session tests if the tools are protected.
-- Ensure domain context is preserved and accurate.
-
-**Rollout or migration notes**
-- Internal-only.
-- This is a bridge, not the target architecture.
-
-**Rollback plan**
-- Remove adapters from the workbench.
-- Keep legacy tools reachable directly as before.
+- UI tests for domain input, IDN, status badges, scope labeling, and empty/error states.
+- Smoke test: user enters domain, triggers refresh, lands on evidence viewer.
 
 **Definition of done**
-- An operator can move from Domain 360 to the existing DMARC/DKIM tool surfaces in one step and back again.
+- A user can trust what the Domain 360 page shows and what it does not claim.
 
 
-# Bead 07 — Rules engine core plus first DNS findings
+# Bead 06 — Ruleset registry and persisted DNS findings
 
 **Purpose**  
-Introduce deterministic, evidence-backed findings without waiting for the full mail stack.
+Make deterministic analysis durable instead of request-local.
 
 **Prerequisites**  
-Beads 01, 02, and 05.
+Bead 05.
 
 **Concrete change**  
-Implement the rules engine and first benchmark-backed rule pack:
-- Rules engine reads normalized observations and emits:
-  - `Finding`,
-  - `Suggestion`,
-  - severity,
-  - confidence,
-  - risk posture,
-  - blast radius,
-  - `review_only`.
-- Initial DNS rules:
-  - authoritative lookup failure/timeouts,
-  - mismatch across authoritative servers for the same queried name/type,
-  - recursive vs authoritative mismatch,
-  - CNAME coexistence conflict,
-  - explicit partial-coverage finding on unmanaged zones.
-- Findings panel on Overview.
+Introduce stored evaluation runs and DNS findings:
+- ruleset registry used at runtime,
+- persisted evaluation-run boundary per snapshot + ruleset version,
+- deterministic DNS findings and suggestions stored in DB,
+- overview findings panel reads stored results by default.
 
 **Invariants**
-- Findings must derive only from stored evidence.
-- Rules are versioned.
-- AI is not allowed to originate authoritative findings.
-- Review-only must be set for anything with real blast radius.
+- Findings derive only from stored evidence.
+- Re-evaluation creates versioned analysis context, not silent overwrite.
+- UI read paths do not depend on ephemeral inline analysis.
 
 **Validation / tests**
-- Golden tests from the benchmark corpus.
-- Evidence-link tests proving every finding can point back to concrete observations.
-- Versioning tests proving the same snapshot can be re-evaluated under different ruleset versions.
-
-**Rollout or migration notes**
-- Ship findings as internal pilot only.
-- Treat these as benchmark-backed, not exhaustive.
-
-**Rollback plan**
-- Disable rules evaluation and hide findings panel.
-- Keep raw/parsed views intact.
+- Golden tests against benchmark corpus.
+- Evidence-link tests for every finding.
+- Versioning tests proving a snapshot can be re-evaluated under a new ruleset.
+- Persistence tests for evaluation runs/findings/suggestions.
 
 **Definition of done**
-- Operators see deterministic DNS findings with evidence links and versioned suggestions.
+- DNS findings are deterministic, persisted, and version-aware.
 
 
-# Bead 08 — Mail collection core plus DKIM selector strategy
+# Bead 07 — Snapshot history and diff
 
 **Purpose**  
-Bring mail evidence into the same evidence model and resolve the selector-discovery ambiguity explicitly.
+Make before/after DNS change analysis trustworthy as soon as persisted findings exist.
 
 **Prerequisites**  
-Beads 03, 05, and 06.
+Bead 06.
 
 **Concrete change**  
-Extend collection and normalization for mail-related checks:
-- Collect and store observations for:
-  - `MX`,
-  - SPF-bearing TXT,
-  - `_dmarc`,
-  - candidate DKIM selectors,
-  - `_mta-sts`,
-  - `_smtp._tls`,
-  - Null MX detection.
-- Implement explicit selector-discovery precedence:
-  1. managed-zone configured selectors if available,
-  2. operator-supplied selectors if present,
-  3. provider-specific heuristics for the narrow supported set,
-  4. limited common-selector dictionary,
-  5. no selector found → `partial`, not automatic failure.
-- Record selector provenance and confidence.
+Add snapshot comparison workflows:
+- snapshot list per domain,
+- compare-latest,
+- manual snapshot-to-snapshot diff,
+- changed records, TTLs, findings, scope, and ruleset version visibility.
 
 **Invariants**
-- Heuristic selector discovery must be labeled as heuristic.
-- Absence of a discovered selector is not the same as absence of DKIM.
-- Legacy DMARC/DKIM tools remain authoritative until parity is proven.
+- Diff is bounded by stored scope.
+- Unknown vs unchanged must remain distinct.
+- Ruleset-change and scope-change warnings are explicit.
 
 **Validation / tests**
-- Cases for:
-  - Google/Microsoft/common provider selectors,
-  - multiple selectors,
-  - no selector discovered,
-  - Null MX,
-  - SPF TXT parsing.
-- Ensure selector provenance is rendered and stored.
-
-**Rollout or migration notes**
-- Start with a narrow set of providers actually seen in the client base.
-- Keep legacy tools visible during the transition.
-
-**Rollback plan**
-- Disable new mail collection paths.
-- Keep adapters and raw DNS views intact.
+- Diff tests for value, TTL, scope, ruleset, and findings changes.
+- UI tests for readability and ambiguity labeling.
 
 **Definition of done**
-- Mail-related observations are collected, stored, and rendered with explicit selector provenance.
+- A user can compare two snapshots and understand what changed and what stayed unknown.
 
 
-# Bead 09 — Mail rules, shadow comparison, and provider templates v1
+# Bead 08 — Legacy mail bridge
 
 **Purpose**  
-Make mail diagnosis operationally useful while keeping cutover risk near zero.
+Keep trusted legacy DMARC/DKIM workflows reachable without pretending parity exists.
 
 **Prerequisites**  
-Beads 06–08.
+Bead 05.
 
 **Concrete change**  
-Implement the first mail rules and shadow mode:
-- Mail rules for:
-  - MX present / absent,
-  - Null MX posture,
-  - SPF exists / malformed / absent,
-  - DMARC exists / policy posture,
-  - DKIM key presence for discovered selectors,
-  - MTA-STS TXT presence,
-  - TLS-RPT TXT presence,
-  - BIMI as info-only unless ruleset support is justified.
-- Shadow comparison of new DMARC/DKIM logic against legacy outputs.
-- Narrow provider-template pack for top 3–5 providers actually used in the client base.
-- Data-backed template storage so trusted internal operators can update expectations without app rewrites.
+Implement the bridge only:
+- Domain 360 mail tab links to trusted legacy mail tools,
+- domain context is pre-filled,
+- return path back to Domain 360 works,
+- access can be logged once durable logging exists.
 
 **Invariants**
-- Legacy DMARC/DKIM outputs remain authoritative until the parity gate passes.
+- Legacy outputs remain authoritative.
+- The bridge does not claim workbench parity.
+- Placeholder URLs must never be presented as real production integrations.
+
+**Validation / tests**
+- Smoke tests for deep links and return path.
+- Config tests for legacy tool URL presence.
+- Auth/session tests if legacy tools are protected.
+
+**Definition of done**
+- Users can move from Domain 360 to legacy mail tools without losing context.
+
+
+# Bead 09 — Mail evidence core
+
+**Purpose**  
+Bring mail evidence into the same persisted evidence model as DNS.
+
+**Prerequisites**  
+Beads 04 and 08.
+
+**Concrete change**  
+Extend collection and storage for mail-relevant evidence:
+- `MX`,
+- SPF-bearing TXT,
+- `_dmarc`,
+- `_mta-sts`,
+- `_smtp._tls`,
+- Null MX posture,
+- snapshot-backed mail observations through the same core persistence path.
+
+**Invariants**
+- Mail evidence is snapshot-backed, not a parallel ephemeral truth system.
+- Absence of observed mail evidence is not over-interpreted beyond collected scope.
+- Mail collection reuses shared domain/request contracts.
+
+**Validation / tests**
+- Integration tests for mail observation persistence.
+- Cases for Null MX, SPF-bearing TXT, DMARC presence/absence, and probe-adjacent TXT records.
+
+**Definition of done**
+- Mail evidence is stored and inspectable through the same evidence model as DNS.
+
+
+# Bead 10 — DKIM selector provenance and provider detection
+
+**Purpose**  
+Separate basic mail evidence from higher-ambiguity selector heuristics.
+
+**Prerequisites**  
+Bead 09.
+
+**Concrete change**  
+Implement DKIM selector discovery as a first-class, labeled subsystem:
+- selector precedence rules,
+- provider detection,
+- selector provenance,
+- selector confidence,
+- persisted selector metadata used by the API/UI.
+
+**Invariants**
+- Heuristic selector discovery must be visibly heuristic.
+- Not finding a selector is not the same as proving DKIM is absent.
+- The API may not reconstruct provenance by guesswork after the fact.
+
+**Validation / tests**
+- Tests for provider-specific selectors, multiple selectors, no selector, and confidence/provenance rendering.
+
+**Definition of done**
+- Users can see how selectors were discovered and how trustworthy that discovery is.
+
+
+# Bead 11 — Mail findings preview
+
+**Purpose**  
+Give users useful workbench mail analysis without prematurely declaring cutover.
+
+**Prerequisites**  
+Beads 09–10 and Bead 06 evaluation infrastructure.
+
+**Concrete change**  
+Implement persisted preview mail findings for:
+- MX posture,
+- Null MX posture,
+- SPF present / malformed / absent,
+- DMARC present / malformed / policy posture,
+- DKIM key presence for discovered selectors,
+- MTA-STS and TLS-RPT TXT presence,
+- BIMI as info-only.
+
+**Invariants**
+- Preview findings are evidence-backed and persisted.
+- Legacy tools remain authoritative until parity is explicitly achieved.
 - High-risk suggestions remain review-only.
-- Provider templates stay narrow and explicitly scoped.
 
 **Validation / tests**
-- Benchmark-based golden tests for mail rules.
-- Shadow mismatch dashboard or report.
-- Manual adjudication of every shadow mismatch before cutover.
-- Template tests proving expected-vs-actual comparisons are accurate for supported providers.
-
-**Rollout or migration notes**
-- Present new mail findings as **preview** until parity is acceptable.
-- Graduate checks one by one, not all at once.
-
-**Rollback plan**
-- Demote new mail findings back to preview-only or hide them entirely.
-- Continue using legacy DMARC/DKIM surfaces.
+- Golden tests for mail rules.
+- UI tests for mail findings rendering in the Mail tab.
+- Persistence tests using evaluation runs.
 
 **Definition of done**
-- Operators can inspect useful mail findings in one place.
-- Shadow comparison data exists and is stable enough to evaluate parity.
-- At least one provider template produces a correct expected-vs-actual result on pilot domains.
+- Users can inspect useful workbench mail findings alongside legacy access.
 
 
-# Bead 10 — Non-DNS probe sandbox
+# Bead 12 — Shadow comparison and parity evidence
 
 **Purpose**  
-Enable safe MTA-STS/SMTP/TLS checks only if the project decides they are worth the extra operational complexity.
+Create the durable parity evidence path between workbench mail analysis and legacy tools.
 
 **Prerequisites**  
-Beads 01, 02, and 08.
+Beads 08 and 11.
 
 **Concrete change**  
-Implement a separate probe execution path:
-- Separate worker pool and separate egress IP space from production mail systems.
-- Allowlist probe destinations derived from DNS results only.
-- Hard-block:
-  - private/internal address space,
-  - loopback,
-  - link-local,
-  - arbitrary user-specified endpoints.
-- Support initial explicit-action probes for:
-  - MTA-STS policy fetch,
-  - limited SMTP STARTTLS capability check.
-- Store probe outcomes as observations with distinct source type.
+Implement the read-mostly parity layer:
+- durable legacy access logging,
+- durable shadow comparison records,
+- read-only mismatch reporting,
+- narrow provider-template baseline pack,
+- expected-vs-actual comparisons that survive process restart.
 
 **Invariants**
-- Non-DNS probes must never run from production mail egress.
+- Shadow state must be durable, not process-local memory.
+- Provider baselines are readable parity reference data here, not tenant-scoped edit surfaces.
+- No cutover claim without persisted mismatch history.
+
+**Validation / tests**
+- Shadow persistence tests.
+- Mismatch reporting tests.
+- Expected-vs-actual accuracy tests for supported providers.
+
+**Definition of done**
+- The repo has durable parity evidence, not just preview language.
+
+**Note on cutover**
+Durable parity evidence here does **not** imply legacy mail cutover. Cutover requires persisted mismatch history plus an explicit adjudication threshold and human decision.
+
+
+# Bead 13 — Auth, actor, tenant, and write-path governance
+
+**Purpose**  
+Prevent fake auditability and fake multi-tenancy before more operator write surfaces land.
+
+**Prerequisites**  
+Beads 02–03.
+
+**Concrete change**  
+Add real request identity and route governance:
+- auth middleware,
+- actor/tenant context population,
+- protected write routes,
+- removal of silent `default` / `unknown` write ownership,
+- explicit internal-only behavior where public auth is not ready yet.
+
+**Invariants**
+- Persistent writes require real actor/tenant context.
+- Route protection must exist before portfolio writes, monitoring writes, or template editing expand.
+- Shared reports and operator state may not leak across tenants.
+
+**Validation / tests**
+- Route-level auth/authz tests.
+- Tenant-isolation tests.
+- Input validation tests on critical mutating routes.
+
+**Definition of done**
+- The system can truthfully claim who wrote what and for which tenant.
+
+
+# Bead 14 — Portfolio search and read models
+
+**Purpose**  
+Deliver cross-domain value safely, starting with read-only operator workflows.
+
+**Prerequisites**  
+Beads 07, 11–13.
+
+**Concrete change**  
+Build the read-only portfolio layer:
+- search/filter across domains and findings,
+- saved filter read path,
+- inventory-scoped results,
+- frontend route/navigation for portfolio search,
+- read models based on stored findings and snapshots, not ad hoc parallel heuristics.
+
+**Invariants**
+- Portfolio search is inventory-scoped.
+- Results come from stored evidence and stored findings.
+- Read-only portfolio value ships before broader write surfaces.
+
+**Validation / tests**
+- Search/filter correctness tests.
+- UI tests for portfolio search states.
+- Tenant-aware read tests.
+
+**Definition of done**
+- A trusted operator can find and inspect domains across the portfolio from one place.
+
+
+# Bead 15 — Portfolio writes, notes, tags, overrides, adjudication, and audit log
+
+**Purpose**
+Add operator memory and controlled write workflows after auth exists.
+
+**Prerequisites**
+Beads 12–14.
+
+**Concrete change**
+Implement write-enabled operator workflows:
+- notes,
+- tags,
+- saved filter writes,
+- tenant-scoped template override management,
+- shadow comparison adjudication,
+- audit log visibility.
+
+**Invariants**
+- Every write is actor-attributed and auditable.
+- Template changes affect only intended tenant/domain scope.
+- Adjudication is a governed operator write, not an anonymous parity side effect.
+- Write workflows do not precede auth governance.
+
+**Validation / tests**
+- CRUD tests for notes/tags/filters/overrides.
+- Adjudication tests.
+- Audit-log tests.
+- Permission tests for cross-tenant access.
+
+**Definition of done**
+- Operators can safely annotate, adjudicate, and tune portfolio behavior with durable auditability.
+
+
+# Bead 16 — Delegation evidence
+
+**Purpose**  
+Add deeper delegation and DNSSEC evidence only after the core single-domain product is trustworthy.
+
+**Prerequisites**  
+Beads 04–07.
+
+**Concrete change**  
+Extend collection and UI for delegation diagnostics:
+- parent-zone delegation evidence,
+- per-authoritative-server answers,
+- glue evidence,
+- DNSSEC validation-source metadata,
+- delegation-specific issue rendering.
+
+**Invariants**
+- DNSSEC conclusions may not exceed what the validating source proves.
+- Delegation evidence remains raw-evidence-backed and ambiguity-forward.
+- Delegation is a depth feature, not a substitute for core DNS truth.
+
+**Validation / tests**
+- Tests for mismatched NS sets, lame delegation, glue variation, DNSSEC present/absent, and authoritative divergence.
+- Integration tests for delegation routes/UI.
+
+**Definition of done**
+- Users can inspect delegation evidence without relying on placeholder behavior.
+
+
+# Bead 17 — Non-DNS probe sandbox (optional)
+
+**Purpose**
+Enable safe active probing only after core mail evidence and governance are mature.
+
+**Prerequisites**
+Beads 01, 09–13.
+
+**Concrete change**
+Implement the optional probe subsystem:
+- allowlist-derived targets only,
+- hard-blocked internal/private destinations,
+- separate execution surface and egress identity,
+- probe outcomes persisted as observations,
+- explicit operator-triggered execution first.
+
+**Invariants**
 - No arbitrary outbound probing.
-- Strict timeouts and concurrency limits.
-- Probes remain read-only.
+- No production mail egress reuse.
+- Probe outcomes stay read-only and explicitly scoped.
 
 **Validation / tests**
 - SSRF guard tests.
-- Network allow/deny tests.
-- Timeouts and concurrency tests.
-- Security review on worker isolation and egress policy.
-
-**Rollout or migration notes**
-- Disabled by default.
-- Start with operator-triggered probing only.
-- Do not schedule probes automatically at first.
-
-**Rollback plan**
-- Disable probe workers and hide probe-derived findings.
-- Keep DNS-only mail analysis available.
+- Allow/deny tests.
+- Rate-limit/concurrency/timeout tests.
+- Security review.
 
 **Definition of done**
-- Approved non-DNS probes can run safely and produce observations without violating the trust boundary.
+- If enabled, probes are safe, bounded, and evidence-backed.
 
 
-# Bead 11 — Limited fleet report
+# Bead 18 — Batch findings report
 
 **Purpose**  
-Capture early portfolio value without waiting for a full portfolio UI.
+Capture early fleet value without building a second analysis engine.
 
 **Prerequisites**  
-Beads 07–09 and a usable domain inventory source.
+Beads 11–13.
 
 **Concrete change**  
-Implement a narrow batch-check/report flow:
-- Accept a curated inventory from:
-  - hosting DB,
-  - internal table,
-  - CSV import.
-- Run targeted checks across that inventory.
-- Produce an internal report for a very small high-value query set:
-  - missing SPF,
-  - weak/non-enforcing DMARC,
-  - stale infrastructure IPs,
-  - missing expected mail records for supported providers.
+Implement a narrow batch report/export layer that consumes stored findings and snapshots:
+- curated inventory input,
+- internal report/export for a small set of high-value conditions,
+- report rows derived from stored evidence and stored findings.
 
 **Invariants**
-- Results are scoped to the supplied inventory, not “all domains.”
-- Checks remain targeted and read-only.
-- High-risk changes remain review-only.
+- Batch reporting may not fork the rules logic into a separate heuristic engine.
+- Results stay inventory-scoped and read-only.
+- Fleet value comes from the same truth model used for single-domain analysis.
 
 **Validation / tests**
-- Batch run against sample inventory.
-- Spot-check reported domains against manual evidence.
-- Confirm at least one report row is actionable and correct.
-
-**Rollout or migration notes**
-- Start with exports or static internal reports, not a full fleet dashboard.
-- Prefer manual or on-demand batch runs before scheduled runs.
-
-**Rollback plan**
-- Disable batch jobs/reports.
-- Keep single-domain analysis intact.
+- Batch run tests against sample inventory.
+- Spot-check report rows against stored findings and raw evidence.
 
 **Definition of done**
-- One fleet report has identified a real proactive remediation or prevented a migration/incident issue.
+- The team can generate an actionable internal fleet report without duplicating analysis logic.
 
 
-# Bead 12 — Delegation vantage collector
+# Bead 19 — Job orchestration and scheduled refresh
 
-**Purpose**  
-Add the evidence required for parent/authoritative/resolver delegation diagnosis.
+**Purpose**
+Add async execution truth before alerting and broader automation.
 
-**Prerequisites**  
-Beads 02, 03, 05, and 07.
+**Prerequisites**
+Beads 04, 06, 11, 13, and 18.
 
-**Concrete change**  
-Extend collection for delegation diagnostics:
-- Add parent-zone delegation view.
-- Store per-authoritative-server answers and inconsistencies.
-- Capture glue-related data where available.
-- Capture basic DNSSEC-related observation fields and validation source identity when present.
-- Record which authoritative server returned what.
+**Concrete change**
+Introduce explicit job orchestration:
+- queued collection/evaluation jobs,
+- idempotent scheduling,
+- retry/cancellation/error state tracking,
+- narrow scheduled refresh for monitored domains.
 
 **Invariants**
-- DNSSEC conclusions must not be overstated beyond the validating source.
-- Raw delegation evidence remains immutable.
-- Ambiguity must be surfaced, not smoothed over.
+- Background execution must be observable and idempotent.
+- Scheduled refresh starts narrow and opt-in.
+- Jobs may not hide failures behind silent retries.
 
 **Validation / tests**
-- Test zones for:
-  - mismatched NS sets,
-  - lame delegation,
-  - glue variation,
-  - DNSSEC present/absent,
-  - per-authoritative divergence.
-- Ensure findings point back to the correct parent/authoritative source.
-
-**Rollout or migration notes**
-- Feature-flag the data collection before exposing UI findings.
-- Keep this separate from phase-1 DNS rules until stable.
-
-**Rollback plan**
-- Disable delegation collection and hide related UI.
-- Preserve stored delegation observations for analysis.
+- Queue/idempotency tests.
+- Scheduler tests.
+- Retry and cancellation tests.
 
 **Definition of done**
-- Snapshots include parent, authoritative, and delegation evidence for benchmark domains.
+- The repo has a trustworthy async execution model instead of scattered inline loops.
 
 
-# Bead 13 — History and diff
-
-**Purpose**  
-Make propagation and before/after change analysis first-class.
-
-**Prerequisites**  
-Beads 05 and 12, plus enough stored snapshots to compare.
-
-**Concrete change**  
-Add snapshot history and diff support:
-- Snapshot list per domain.
-- Before/after diff.
-- Vantage-to-vantage diff.
-- Highlight:
-  - changed records,
-  - changed TTLs,
-  - changed findings,
-  - changed query scope,
-  - changed ruleset version.
-
-**Invariants**
-- Diffs are bounded by explicit scope.
-- “No change in queried scope” must not imply “no change in whole zone.”
-- Unknown vs unchanged must remain distinguishable.
-
-**Validation / tests**
-- Diff tests for:
-  - value changes,
-  - TTL-only changes,
-  - vantage mismatch,
-  - query-scope changes,
-  - ruleset-version changes.
-- UI tests for readability and ambiguity labeling.
-
-**Rollout or migration notes**
-- Start with manual/on-demand snapshots before any scheduled refresh.
-- Use this heavily in migrations before expanding elsewhere.
-
-**Rollback plan**
-- Hide diff UI.
-- Keep snapshot storage untouched.
-
-**Definition of done**
-- An operator can compare two snapshots and clearly see what changed, what did not, and what remained unknown.
-
-
-# Bead 14 — Portfolio search, notes, and template management
+# Bead 20 — Alerts and shared reports
 
 **Purpose**  
-Turn the workbench into a cross-domain operational multiplier.
+Add proactive operations only after signal quality, auth, and job execution are trusted.
 
 **Prerequisites**  
-Beads 11 and 13, plus a real inventory source.
+Beads 13, 18, and 19.
 
 **Concrete change**  
-Build the first portfolio layer:
-- Search/filter across domains and findings.
-- Saved filters.
-- Tags/notes per domain.
-- Template override/edit surface for trusted operators.
-- Tenant-aware permissions and audit logging.
+Implement the first proactive ops layer:
+- alert rules on stored findings/evaluations,
+- suppression and deduplication,
+- acknowledge/resolve workflow,
+- shared read-only reports with bounded/redacted evidence.
 
 **Invariants**
-- Search results are inventory-scoped.
-- Notes and template changes must be auditable.
-- Internal permissions must be enforced before broader exposure.
-- Template edits remain data-backed, not code-only.
+- Monitoring respects a defined noise budget.
+- Alerts do not bypass review-only safeguards.
+- Shared reports do not leak internal notes or imply unmanaged-zone completeness.
 
 **Validation / tests**
-- Search and filter correctness tests.
-- Permission tests for tenant/domain access.
-- Audit-log tests for note and template changes.
-- Template-override tests proving changes only affect intended scopes.
-
-**Rollout or migration notes**
-- Limit to trusted internal roles first.
-- Do not open template editing broadly until auditability is proven.
-
-**Rollback plan**
-- Disable portfolio views and editing.
-- Keep underlying data but stop exposing it.
-
-**Definition of done**
-- A trusted operator can find domains across the portfolio, annotate them, and adjust supported template expectations without code changes.
-
-
-# Bead 15 — Scheduled refresh, monitoring, alerts, and shared reports
-
-**Purpose**  
-Add proactive operations only after the single-domain and portfolio workflows are already trusted.
-
-**Prerequisites**  
-Beads 11, 13, and 14, plus stable runtime cost and acceptable false-positive performance.
-
-**Concrete change**  
-Implement the first proactive layer:
-- Scheduled refresh jobs for a narrow monitored set.
-- Alert rules with suppression/deduplication.
-- Shared read-only reports with bounded evidence views.
-- Optional enrichment such as registration/expiry data if justified.
-
-**Invariants**
-- Monitoring must respect a defined noise budget.
-- Alerts must never bypass review-only safeguards.
-- Shared reports must not expose internal notes or imply completeness for unmanaged zones.
-- Monitoring starts small and opt-in.
-
-**Validation / tests**
-- Scheduler and retry tests.
 - Alert dedup/suppression tests.
-- Report permission and redaction tests.
-- Trial run on a narrow monitored subset to measure noise rate.
-
-**Rollout or migration notes**
-- Start with one alert channel and a small domain subset.
-- Do not monitor the whole portfolio by default.
-
-**Rollback plan**
-- Disable schedules and alerts.
-- Keep manual on-demand analysis and stored snapshots available.
+- Report permission/redaction tests.
+- Narrow pilot run to measure noise and operator value.
 
 **Definition of done**
-- Monitoring has produced at least one validated proactive save without creating unsustainable alert noise.
+- The system can produce low-noise proactive value without overstating what it knows.
 
+---
 
-# Dependency order summary
+# Revised dependency order summary
 
-1. **Bead 01** — Pilot corpus, status vocabulary, trust boundary
-2. **Bead 02** — Minimal data model and persistence contract
-3. **Bead 02A** — Stack, runtime split, and repo scaffold
-4. **Bead 03** — DNS collection worker MVP
-5. **Bead 04** — Domain 360 shell
-6. **Bead 05** — Snapshot read path plus raw / parsed / dig views
-7. **Bead 06** — Legacy DMARC/DKIM adapters
-8. **Bead 07** — Rules engine core plus first DNS findings
-9. **Bead 08** — Mail collection core plus DKIM selector strategy
-10. **Bead 09** — Mail rules, shadow comparison, and provider templates v1
-11. **Bead 10** — Non-DNS probe sandbox
-12. **Bead 11** — Limited fleet report
-13. **Bead 12** — Delegation vantage collector
-14. **Bead 13** — History and diff
-15. **Bead 14** — Portfolio search, notes, and template management
-16. **Bead 15** — Scheduled refresh, monitoring, alerts, and shared reports
+1. **00** — Workspace validation baseline
+2. **01** — Pilot corpus, status vocabulary, query scope, and trust boundary
+3. **02** — Authoritative runtime topology and scaffold
+4. **03** — Shared contracts and core supported schema
+5. **04** — DNS collection and normalization pipeline
+6. **05** — Single-domain evidence viewer
+7. **06** — Ruleset registry and persisted DNS findings
+8. **07** — Snapshot history and diff
+9. **08** — Legacy mail bridge
+10. **09** — Mail evidence core
+11. **10** — DKIM selector provenance and provider detection
+12. **11** — Mail findings preview
+13. **12** — Shadow comparison and parity evidence
+14. **13** — Auth, actor, tenant, and write-path governance
+15. **18** — Batch findings report
+16. **14** — Portfolio search and read models
+17. **15** — Portfolio writes, notes, tags, overrides, adjudication, and audit log
+18. **16** — Delegation evidence
+19. **17** — Non-DNS probe sandbox (optional)
+20. **19** — Job orchestration and scheduled refresh
+21. **20** — Alerts and shared reports
+
+---
 
 # Recommended stopping points
 
-- **After Bead 05:** usable DNS evidence viewer.
-- **After Bead 07:** first trustworthy DNS findings.
-- **After Bead 09:** first real mail diagnosis MVP.
-- **After Bead 11:** first portfolio-level business value.
-- **After Bead 13:** strong migration/incident workflow.
-- **After Bead 15:** proactive ops platform.
+- **After Bead 05:** first trustworthy single-domain evidence product.
+- **After Bead 06:** persisted DNS findings with real analytical truth.
+- **After Bead 07:** strong migration / propagation workflow.
+- **After Bead 11:** first useful workbench mail preview.
+- **After Bead 12:** durable mail parity program.
+- **After Bead 14:** first safe portfolio read value.
+- **After Bead 18:** actionable batch fleet reporting from one truth model.
+- **After Bead 20:** proactive operations platform.
