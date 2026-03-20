@@ -13,6 +13,7 @@ export {
 
 // Domain repositories
 export { type DomainFilter, DomainRepository } from './domain.js';
+export { FindingRepository } from './finding.js';
 export { ObservationRepository } from './observation.js';
 // Portfolio repositories
 export {
@@ -26,5 +27,7 @@ export {
 } from './portfolio.js';
 export { RecordSetRepository } from './recordset.js';
 export { RemediationRepository } from './remediation.js';
+export { RulesetVersionRepository } from './ruleset-version.js';
 // Legacy repositories (using adapter pattern)
 export { SnapshotRepository } from './snapshot.js';
+export { SuggestionRepository } from './suggestion.js';
