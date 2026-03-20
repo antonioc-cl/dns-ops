@@ -22,11 +22,12 @@ import { probeRoutes } from './jobs/probe-routes.js';
 import { closeQueues, getQueueHealth } from './jobs/queue.js';
 import { startWorkers, stopWorkers, workersRunning } from './jobs/worker.js';
 import { dbMiddleware, requireServiceAuthMiddleware } from './middleware/index.js';
+import type { Env } from './types.js';
 
 // Validate environment at startup (fail fast with clear messages)
 assertEnvValid();
 
-const app = new Hono();
+const app = new Hono<Env>();
 
 // Global middleware
 app.use('*', cors());
@@ -40,19 +41,88 @@ app.use('*', dbMiddleware);
 // Requires INTERNAL_SECRET, API_KEY_SECRET, or dev headers
 app.use('*', requireServiceAuthMiddleware);
 
-// Health check endpoint
-app.get('/health', async (c) => {
-  const queueHealth = await getQueueHealth();
+// =============================================================================
+// Health & Readiness Endpoints
+// =============================================================================
 
+/**
+ * Liveness probe - checks if the process is alive and responding.
+ * Kubernetes uses this to determine if the container should be restarted.
+ * Should be fast and not check external dependencies.
+ */
+app.get('/healthz', (c) => {
   return c.json({
-    status: 'healthy',
+    status: 'ok',
     service: 'dns-ops-collector',
     timestamp: new Date().toISOString(),
-    workers: {
-      enabled: workersRunning(),
-      queues: queueHealth,
-    },
   });
+});
+
+// Alias for backward compatibility
+app.get('/health', (c) => {
+  return c.json({
+    status: 'ok',
+    service: 'dns-ops-collector',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * Readiness probe - checks if the service is ready to receive traffic.
+ * Kubernetes uses this to determine if traffic should be routed.
+ * Checks external dependencies (DB, queues, workers).
+ */
+app.get('/readyz', async (c) => {
+  const checks: Record<string, { status: 'ok' | 'error'; message?: string }> = {};
+  let allHealthy = true;
+
+  // Check database connection
+  try {
+    const db = c.get('db');
+    if (db) {
+      // Check if DATABASE_URL is configured (db adapter initialized)
+      checks['database'] = { status: 'ok' };
+    } else {
+      checks['database'] = { status: 'error', message: 'DB not initialized' };
+      allHealthy = false;
+    }
+  } catch (err) {
+    checks['database'] = {
+      status: 'error',
+      message: err instanceof Error ? err.message : 'Connection failed',
+    };
+    allHealthy = false;
+  }
+
+  // Check queue health if workers enabled
+  if (process.env.WORKER_ENABLED === 'true') {
+    const queueHealth = await getQueueHealth();
+
+    // queueHealth.available indicates Redis connection
+    checks['queues'] = queueHealth.available
+      ? { status: 'ok' }
+      : { status: 'error', message: 'Queue connection unavailable' };
+
+    if (!queueHealth.available) allHealthy = false;
+
+    checks['workers'] = workersRunning()
+      ? { status: 'ok' }
+      : { status: 'error', message: 'Workers not running' };
+
+    if (!workersRunning()) allHealthy = false;
+  }
+
+  const status = allHealthy ? 200 : 503;
+
+  return c.json(
+    {
+      status: allHealthy ? 'ready' : 'not_ready',
+      service: 'dns-ops-collector',
+      timestamp: new Date().toISOString(),
+      checks,
+    },
+    status
+  );
 });
 
 // Mount collection routes
@@ -93,7 +163,8 @@ const server = serve(
   },
   async (info) => {
     console.log(`🚀 DNS Ops Collector running on port ${info.port}`);
-    console.log(`📊 Health check: http://localhost:${info.port}/health`);
+    console.log(`📊 Liveness: http://localhost:${info.port}/healthz`);
+    console.log(`📊 Readiness: http://localhost:${info.port}/readyz`);
 
     // Start workers if enabled
     if (process.env.WORKER_ENABLED === 'true') {
