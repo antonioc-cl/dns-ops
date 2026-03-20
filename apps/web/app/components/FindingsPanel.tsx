@@ -6,6 +6,7 @@
 
 import type { Finding, Suggestion } from '@dns-ops/db/schema';
 import { useEffect, useState } from 'react';
+import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface FindingsPanelProps {
   snapshotId: string | null;
@@ -48,26 +49,21 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
 
   if (!snapshotId) {
     return (
-      <div className="text-sm text-gray-500 py-4">
-        No snapshot available. Collect data to generate findings.
-      </div>
+      <EmptyState
+        icon="shield"
+        title="No snapshot available"
+        description="Collect data to generate findings and recommendations."
+        size="sm"
+      />
     );
   }
 
   if (loading) {
-    return (
-      <output className="block py-4 text-gray-500" aria-live="polite" aria-busy="true">
-        <div className="motion-safe:animate-pulse">Analyzing DNS data...</div>
-      </output>
-    );
+    return <LoadingState message="Analyzing DNS data..." size="sm" />;
   }
 
   if (error) {
-    return (
-      <div className="py-4 text-red-600" role="alert">
-        Error loading findings: {error}
-      </div>
-    );
+    return <ErrorState message={error} size="sm" />;
   }
 
   if (!data) return null;

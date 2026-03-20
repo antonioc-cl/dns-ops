@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface DiscoveredSelector {
   selector: string;
@@ -51,19 +52,11 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
   }, [snapshotId]);
 
   if (loading) {
-    return (
-      <output className="block text-sm text-gray-500" aria-live="polite" aria-busy="true">
-        Discovering DKIM selectors...
-      </output>
-    );
+    return <LoadingState message="Discovering DKIM selectors..." size="sm" />;
   }
 
   if (error) {
-    return (
-      <div className="text-sm text-red-600" role="alert">
-        Error: {error}
-      </div>
-    );
+    return <ErrorState message={error} size="sm" />;
   }
 
   if (selectors.length === 0) {

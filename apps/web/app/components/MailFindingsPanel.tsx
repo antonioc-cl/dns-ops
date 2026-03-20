@@ -7,6 +7,7 @@
 
 import type { Finding, Suggestion } from '@dns-ops/db/schema';
 import { useEffect, useState } from 'react';
+import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface MailFindingsPanelProps {
   snapshotId: string | null;
@@ -62,26 +63,21 @@ export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
 
   if (!snapshotId) {
     return (
-      <div className="text-sm text-gray-500 py-4">
-        No snapshot available. Collect data to analyze mail configuration.
-      </div>
+      <EmptyState
+        icon="inbox"
+        title="No snapshot available"
+        description="Collect data to analyze mail configuration."
+        size="sm"
+      />
     );
   }
 
   if (loading) {
-    return (
-      <output className="block py-4 text-gray-500" aria-live="polite" aria-busy="true">
-        <div className="motion-safe:animate-pulse">Analyzing mail configuration...</div>
-      </output>
-    );
+    return <LoadingState message="Analyzing mail configuration..." size="sm" />;
   }
 
   if (error) {
-    return (
-      <div className="py-4 text-red-600" role="alert">
-        Error loading mail findings: {error}
-      </div>
-    );
+    return <ErrorState message={error} size="sm" />;
   }
 
   if (!data) return null;

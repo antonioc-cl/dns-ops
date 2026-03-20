@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface DelegationData {
   domain: string;
@@ -72,29 +73,20 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
   }, [snapshotId]);
 
   if (loading) {
-    return (
-      <output className="block py-8 text-center" aria-live="polite" aria-busy="true">
-        <div className="motion-safe:animate-pulse text-gray-500">Loading delegation data...</div>
-      </output>
-    );
+    return <LoadingState message="Loading delegation data..." />;
   }
 
   if (error) {
-    return (
-      <div className="py-4 text-red-600" role="alert">
-        Error: {error}
-      </div>
-    );
+    return <ErrorState message={error} />;
   }
 
   if (!delegation) {
     return (
-      <div className="py-8 text-center text-gray-500">
-        No delegation data available for this snapshot.
-        <p className="text-sm mt-2">
-          Delegation collection may not have been enabled for this snapshot.
-        </p>
-      </div>
+      <EmptyState
+        icon="globe"
+        title="No delegation data available"
+        description="Delegation collection may not have been enabled for this snapshot."
+      />
     );
   }
 
