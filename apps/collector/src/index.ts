@@ -9,12 +9,16 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { assertEnvValid, getEnvConfig } from './config/env.js';
 import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
 import { monitoringRoutes } from './jobs/monitoring.js';
 import { probeRoutes } from './jobs/probe-routes.js';
 import { dbMiddleware, requireServiceAuthMiddleware } from './middleware/index.js';
+
+// Validate environment at startup (fail fast with clear messages)
+assertEnvValid();
 
 const app = new Hono();
 
@@ -68,7 +72,7 @@ app.onError((err, c) => {
 });
 
 // Start server
-const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+const { port } = getEnvConfig();
 
 serve(
   {
