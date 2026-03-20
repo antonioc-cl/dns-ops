@@ -7,8 +7,10 @@
 
 import type { NewFinding, NewSuggestion } from '@dns-ops/db';
 import {
+  DkimSelectorRepository,
   DomainRepository,
   FindingRepository,
+  MailEvidenceRepository,
   ObservationRepository,
   RecordSetRepository,
   RulesetVersionRepository,
@@ -284,7 +286,7 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
 
 /**
  * GET /api/snapshot/:snapshotId/findings/mail
- * Get mail-specific findings only
+ * Get mail-specific findings with mail evidence and DKIM selectors
  */
 findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
   const snapshotId = c.req.param('snapshotId');
@@ -296,6 +298,8 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
     const domainRepo = new DomainRepository(db);
     const findingRepo = new FindingRepository(db);
     const suggestionRepo = new SuggestionRepository(db);
+    const mailEvidenceRepo = new MailEvidenceRepository(db);
+    const dkimSelectorRepo = new DkimSelectorRepository(db);
 
     // Fetch snapshot
     const snapshot = await snapshotRepo.findById(snapshotId);
@@ -308,6 +312,12 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
     if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
     }
+
+    // Fetch mail evidence and DKIM selectors in parallel
+    const [mailEvidence, dkimSelectors] = await Promise.all([
+      mailEvidenceRepo.findBySnapshotId(snapshotId),
+      dkimSelectorRepo.findBySnapshotId(snapshotId),
+    ]);
 
     // Check for existing persisted findings
     const allFindings = await findingRepo.findBySnapshotId(snapshotId);
@@ -325,8 +335,11 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
       };
       const evaluatedMailFindings = mainData.categorized?.mail || [];
 
-      // Calculate mail security score
+      // Calculate mail security score from findings (basic analysis)
       const mailConfig = analyzeMailConfiguration(evaluatedMailFindings);
+
+      // Enhance mail config with persisted evidence if available
+      const enhancedMailConfig = enhanceMailConfigWithEvidence(mailConfig, mailEvidence);
 
       return c.json({
         snapshotId,
@@ -334,8 +347,12 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
         rulesetVersion: CURRENT_RULESET_VERSION,
         summary: {
           totalFindings: evaluatedMailFindings.length,
+          dkimSelectorsFound: dkimSelectors.filter((s) => s.found).length,
+          dkimSelectorsTried: dkimSelectors.length,
         },
-        mailConfig,
+        mailConfig: enhancedMailConfig,
+        mailEvidence: mailEvidence || null,
+        dkimSelectors: formatDkimSelectors(dkimSelectors),
         findings: evaluatedMailFindings,
       });
     }
@@ -345,8 +362,11 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
     const suggestionsMap = await suggestionRepo.findByFindingIds(mailFindingIds);
     const allSuggestions = [...suggestionsMap.values()].flat();
 
-    // Calculate mail security score
+    // Calculate mail security score from findings (basic analysis)
     const mailConfig = analyzeMailConfiguration(mailFindings);
+
+    // Enhance mail config with persisted evidence if available
+    const enhancedMailConfig = enhanceMailConfigWithEvidence(mailConfig, mailEvidence);
 
     return c.json({
       snapshotId,
@@ -356,8 +376,12 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
       summary: {
         totalFindings: mailFindings.length,
         suggestions: allSuggestions.length,
+        dkimSelectorsFound: dkimSelectors.filter((s) => s.found).length,
+        dkimSelectorsTried: dkimSelectors.length,
       },
-      mailConfig,
+      mailConfig: enhancedMailConfig,
+      mailEvidence: mailEvidence || null,
+      dkimSelectors: formatDkimSelectors(dkimSelectors),
       findings: mailFindings,
       suggestions: allSuggestions,
     });
@@ -613,4 +637,155 @@ function analyzeMailConfiguration(
 
   config.securityScore = Math.min(100, score);
   return config;
+}
+
+/**
+ * Enhance mail configuration with persisted mail evidence data
+ */
+interface EnhancedMailConfiguration extends MailConfiguration {
+  dmarcPolicy?: string;
+  dmarcSubdomainPolicy?: string;
+  dmarcPercent?: string;
+  dmarcRua?: string[];
+  dmarcRuf?: string[];
+  spfRecord?: string;
+  dmarcRecord?: string;
+  detectedProvider?: string;
+  providerConfidence?: string;
+  hasBimi?: boolean;
+}
+
+function enhanceMailConfigWithEvidence(
+  config: MailConfiguration,
+  evidence:
+    | {
+        hasMx?: boolean;
+        hasSpf?: boolean;
+        hasDmarc?: boolean;
+        hasDkim?: boolean;
+        hasMtaSts?: boolean;
+        hasTlsRpt?: boolean;
+        hasBimi?: boolean;
+        dmarcPolicy?: string | null;
+        dmarcSubdomainPolicy?: string | null;
+        dmarcPercent?: string | null;
+        dmarcRua?: string[] | null;
+        dmarcRuf?: string[] | null;
+        spfRecord?: string | null;
+        dmarcRecord?: string | null;
+        detectedProvider?: string | null;
+        providerConfidence?: string | null;
+        securityScore?: string | null;
+        scoreBreakdown?: {
+          mx: number;
+          spf: number;
+          dmarc: number;
+          dkim: number;
+          mtaSts: number;
+          tlsRpt: number;
+          bimi: number;
+        } | null;
+      }
+    | null
+    | undefined
+): EnhancedMailConfiguration {
+  if (!evidence) {
+    return config;
+  }
+
+  const enhanced: EnhancedMailConfiguration = {
+    // Start with existing config
+    ...config,
+    // Override with persisted evidence where available
+    hasMx: evidence.hasMx ?? config.hasMx,
+    hasSpf: evidence.hasSpf ?? config.hasSpf,
+    hasDmarc: evidence.hasDmarc ?? config.hasDmarc,
+    hasDkim: evidence.hasDkim ?? config.hasDkim,
+    hasMtaSts: evidence.hasMtaSts ?? config.hasMtaSts,
+    hasTlsRpt: evidence.hasTlsRpt ?? config.hasTlsRpt,
+    hasBimi: evidence.hasBimi ?? false,
+    // Use persisted score if available
+    securityScore: evidence.securityScore
+      ? Number.parseInt(evidence.securityScore, 10)
+      : config.securityScore,
+  };
+
+  // Add DMARC details
+  if (evidence.dmarcPolicy) {
+    enhanced.dmarcPolicy = evidence.dmarcPolicy;
+  }
+  if (evidence.dmarcSubdomainPolicy) {
+    enhanced.dmarcSubdomainPolicy = evidence.dmarcSubdomainPolicy;
+  }
+  if (evidence.dmarcPercent) {
+    enhanced.dmarcPercent = evidence.dmarcPercent;
+  }
+  if (evidence.dmarcRua) {
+    enhanced.dmarcRua = evidence.dmarcRua;
+  }
+  if (evidence.dmarcRuf) {
+    enhanced.dmarcRuf = evidence.dmarcRuf;
+  }
+
+  // Add raw records
+  if (evidence.spfRecord) {
+    enhanced.spfRecord = evidence.spfRecord;
+  }
+  if (evidence.dmarcRecord) {
+    enhanced.dmarcRecord = evidence.dmarcRecord;
+  }
+
+  // Add provider detection
+  if (evidence.detectedProvider) {
+    enhanced.detectedProvider = evidence.detectedProvider;
+  }
+  if (evidence.providerConfidence) {
+    enhanced.providerConfidence = evidence.providerConfidence;
+  }
+
+  return enhanced;
+}
+
+/**
+ * Format DKIM selectors for API response
+ */
+interface FormattedDkimSelector {
+  selector: string;
+  domain: string;
+  provenance: string;
+  confidence: string;
+  provider?: string;
+  found: boolean;
+  keyType?: string;
+  keySize?: string;
+  isValid?: boolean;
+  validationError?: string;
+}
+
+function formatDkimSelectors(
+  selectors: Array<{
+    selector: string;
+    domain: string;
+    provenance: string;
+    confidence: string;
+    provider?: string | null;
+    found: boolean;
+    keyType?: string | null;
+    keySize?: string | null;
+    isValid?: boolean | null;
+    validationError?: string | null;
+  }>
+): FormattedDkimSelector[] {
+  return selectors.map((s) => ({
+    selector: s.selector,
+    domain: s.domain,
+    provenance: s.provenance,
+    confidence: s.confidence,
+    provider: s.provider || undefined,
+    found: s.found,
+    keyType: s.keyType || undefined,
+    keySize: s.keySize || undefined,
+    isValid: s.isValid ?? undefined,
+    validationError: s.validationError || undefined,
+  }));
 }

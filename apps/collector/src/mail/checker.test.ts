@@ -125,7 +125,8 @@ describe('Mail Checker', () => {
 
       expect(result.present).toBe(true);
       expect(result.selector).toBe('google');
-      expect(result.selectorProvenance).toBe('heuristic');
+      expect(result.selectorProvenance).toBe('provider');
+      expect(result.provider).toBe('google');
       expect(mockedResolveTXT).toHaveBeenCalledWith('google._domainkey.example.com');
     });
 
@@ -262,16 +263,17 @@ describe('BDD Scenarios', () => {
   });
 
   describe('Scenario: Provider-specific DKIM discovery', () => {
-    it('should discover Google Workspace DKIM using heuristic', async () => {
+    it('should discover Google Workspace DKIM using provider hint', async () => {
       // Given a domain using Google Workspace
       mockedResolveTXT.mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
 
       // When checking with Google provider hint
       const result = await checkDKIM('example.com', { preferredProvider: 'google' });
 
-      // Then it should find the record with heuristic provenance
+      // Then it should find the record with provider provenance
       expect(result.present).toBe(true);
-      expect(result.selectorProvenance).toBe('heuristic');
+      expect(result.selectorProvenance).toBe('provider');
+      expect(result.provider).toBe('google');
       expect(result.selector).toBe('google');
     });
   });

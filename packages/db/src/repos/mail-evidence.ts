@@ -7,7 +7,7 @@
  * - Provider detection results
  */
 
-import { and, desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '../database/index.js';
 import {
   type DkimSelector,
@@ -25,8 +25,7 @@ export class DkimSelectorRepository {
    * Create a new DKIM selector record
    */
   async create(data: NewDkimSelector): Promise<DkimSelector> {
-    const result = await this.db.getDrizzle().insert(dkimSelectors).values(data).returning();
-    return result[0];
+    return this.db.insert(dkimSelectors, data);
   }
 
   /**
@@ -34,78 +33,61 @@ export class DkimSelectorRepository {
    */
   async createMany(data: NewDkimSelector[]): Promise<DkimSelector[]> {
     if (data.length === 0) return [];
-    return await this.db.getDrizzle().insert(dkimSelectors).values(data).returning();
+    return this.db.insertMany(dkimSelectors, data);
   }
 
   /**
    * Find selectors by snapshot ID
    */
   async findBySnapshotId(snapshotId: string): Promise<DkimSelector[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(dkimSelectors)
-      .where(eq(dkimSelectors.snapshotId, snapshotId))
-      .orderBy(dkimSelectors.selector);
+    return this.db.selectWhere(dkimSelectors, eq(dkimSelectors.snapshotId, snapshotId));
   }
 
   /**
    * Find selectors by domain across all snapshots
    */
   async findByDomain(domain: string): Promise<DkimSelector[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(dkimSelectors)
-      .where(eq(dkimSelectors.domain, domain))
-      .orderBy(desc(dkimSelectors.createdAt));
+    return this.db.selectWhere(dkimSelectors, eq(dkimSelectors.domain, domain));
   }
 
   /**
    * Find selectors by provider
    */
-  async findByProvider(provider: string): Promise<DkimSelector[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(dkimSelectors)
-      .where(eq(dkimSelectors.provider, provider as DkimSelector['provider']))
-      .orderBy(desc(dkimSelectors.createdAt));
+  async findByProvider(provider: DkimSelector['provider']): Promise<DkimSelector[]> {
+    if (!provider) return [];
+    return this.db.selectWhere(dkimSelectors, eq(dkimSelectors.provider, provider));
   }
 
   /**
    * Find valid (found) selectors for a snapshot
    */
   async findValidBySnapshotId(snapshotId: string): Promise<DkimSelector[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(dkimSelectors)
-      .where(and(eq(dkimSelectors.snapshotId, snapshotId), eq(dkimSelectors.found, true)));
+    const results = await this.findBySnapshotId(snapshotId);
+    return results.filter((s) => s.found === true);
   }
 
   /**
    * Delete selectors by snapshot ID
    */
   async deleteBySnapshotId(snapshotId: string): Promise<number> {
-    const result = await this.db
-      .getDrizzle()
-      .delete(dkimSelectors)
-      .where(eq(dkimSelectors.snapshotId, snapshotId));
-    return result.rowCount ?? 0;
+    const deleted = await this.db.delete(dkimSelectors, eq(dkimSelectors.snapshotId, snapshotId));
+    return deleted.length;
   }
 
   /**
    * Get unique providers for a domain
    */
   async getProvidersForDomain(domain: string): Promise<string[]> {
-    const results = await this.db
-      .getDrizzle()
-      .selectDistinct({ provider: dkimSelectors.provider })
-      .from(dkimSelectors)
-      .where(and(eq(dkimSelectors.domain, domain), eq(dkimSelectors.found, true)));
+    const domainResults = await this.findByDomain(domain);
+    const foundResults = domainResults.filter((s) => s.found === true);
 
-    return results.map((r) => r.provider).filter((p): p is string => p !== null && p !== 'unknown');
+    const uniqueProviders = new Set<string>();
+    for (const r of foundResults) {
+      if (r.provider && r.provider !== 'unknown') {
+        uniqueProviders.add(r.provider);
+      }
+    }
+    return Array.from(uniqueProviders);
   }
 }
 
@@ -121,44 +103,33 @@ export class MailEvidenceRepository {
 
     if (existing) {
       // Update
-      const result = await this.db
-        .getDrizzle()
-        .update(mailEvidence)
-        .set(data)
-        .where(eq(mailEvidence.snapshotId, data.snapshotId))
-        .returning();
-      return result[0];
+      const results = await this.db.update(
+        mailEvidence,
+        data,
+        eq(mailEvidence.snapshotId, data.snapshotId)
+      );
+      return results[0];
     }
 
     // Insert
-    const result = await this.db.getDrizzle().insert(mailEvidence).values(data).returning();
-    return result[0];
+    return this.db.insert(mailEvidence, data);
   }
 
   /**
    * Find mail evidence by snapshot ID
    */
   async findBySnapshotId(snapshotId: string): Promise<MailEvidence | undefined> {
-    const results = await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.snapshotId, snapshotId))
-      .limit(1);
-    return results[0];
+    return this.db.selectOne(mailEvidence, eq(mailEvidence.snapshotId, snapshotId));
   }
 
   /**
    * Find mail evidence by domain (latest)
    */
   async findLatestByDomain(domain: string): Promise<MailEvidence | undefined> {
-    const results = await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.domain, domain))
-      .orderBy(desc(mailEvidence.createdAt))
-      .limit(1);
+    // Get all by domain and return first (most recent based on insert order)
+    const results = await this.db.selectWhere(mailEvidence, eq(mailEvidence.domain, domain));
+    // Sort by createdAt descending
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return results[0];
   }
 
@@ -166,84 +137,70 @@ export class MailEvidenceRepository {
    * Find all mail evidence for a domain
    */
   async findByDomain(domain: string): Promise<MailEvidence[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.domain, domain))
-      .orderBy(desc(mailEvidence.createdAt));
+    const results = await this.db.selectWhere(mailEvidence, eq(mailEvidence.domain, domain));
+    // Sort by createdAt descending
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return results;
   }
 
   /**
    * Find mail evidence by provider
    */
-  async findByProvider(provider: string): Promise<MailEvidence[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.detectedProvider, provider as MailEvidence['detectedProvider']))
-      .orderBy(desc(mailEvidence.createdAt));
+  async findByProvider(provider: MailEvidence['detectedProvider']): Promise<MailEvidence[]> {
+    if (!provider) return [];
+    const results = await this.db.selectWhere(
+      mailEvidence,
+      eq(mailEvidence.detectedProvider, provider)
+    );
+    // Sort by createdAt descending
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return results;
   }
 
   /**
    * Find domains without DMARC
    */
   async findWithoutDmarc(limit = 100): Promise<MailEvidence[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.hasDmarc, false))
-      .orderBy(desc(mailEvidence.createdAt))
-      .limit(limit);
+    const results = await this.db.selectWhere(mailEvidence, eq(mailEvidence.hasDmarc, false));
+    // Sort by createdAt descending
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return results.slice(0, limit);
   }
 
   /**
    * Find domains with weak DMARC policy
    */
   async findWithWeakDmarc(limit = 100): Promise<MailEvidence[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.dmarcPolicy, 'none'))
-      .orderBy(desc(mailEvidence.createdAt))
-      .limit(limit);
+    const results = await this.db.selectWhere(mailEvidence, eq(mailEvidence.dmarcPolicy, 'none'));
+    // Sort by createdAt descending
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return results.slice(0, limit);
   }
 
   /**
    * Get domains with MTA-STS enabled
    */
   async findWithMtaSts(): Promise<MailEvidence[]> {
-    return await this.db
-      .getDrizzle()
-      .select()
-      .from(mailEvidence)
-      .where(eq(mailEvidence.hasMtaSts, true))
-      .orderBy(desc(mailEvidence.createdAt));
+    const results = await this.db.selectWhere(mailEvidence, eq(mailEvidence.hasMtaSts, true));
+    // Sort by createdAt descending
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return results;
   }
 
   /**
    * Delete mail evidence by snapshot ID
    */
   async deleteBySnapshotId(snapshotId: string): Promise<number> {
-    const result = await this.db
-      .getDrizzle()
-      .delete(mailEvidence)
-      .where(eq(mailEvidence.snapshotId, snapshotId));
-    return result.rowCount ?? 0;
+    const deleted = await this.db.delete(mailEvidence, eq(mailEvidence.snapshotId, snapshotId));
+    return deleted.length;
   }
 
   /**
    * Get security score distribution
    */
   async getScoreDistribution(): Promise<{ score: string; count: number }[]> {
-    // Simplified version - returns raw scores
-    const results = await this.db
-      .getDrizzle()
-      .select({ securityScore: mailEvidence.securityScore })
-      .from(mailEvidence);
+    // Get all mail evidence
+    const results = await this.db.select(mailEvidence);
 
     // Group by score ranges
     const distribution: Record<string, number> = {
@@ -255,7 +212,7 @@ export class MailEvidenceRepository {
     };
 
     for (const r of results) {
-      const score = parseInt(r.securityScore || '0', 10);
+      const score = Number.parseInt(r.securityScore || '0', 10);
       if (score <= 20) distribution['0-20']++;
       else if (score <= 40) distribution['21-40']++;
       else if (score <= 60) distribution['41-60']++;

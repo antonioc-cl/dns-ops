@@ -27,9 +27,10 @@ export interface DKIMCheckResult extends RecordCheckResult {
   selector?: string;
   selectorProvenance: SelectorProvenance;
   triedSelectors: string[];
+  provider?: string; // Detected mail provider (e.g., 'google-workspace', 'microsoft-365')
 }
 
-export type SelectorProvenance = 'managed' | 'heuristic' | 'operator' | 'default';
+export type SelectorProvenance = 'managed' | 'heuristic' | 'operator' | 'provider' | 'default';
 
 export interface ProviderSelectorInfo {
   selector: string;
@@ -139,15 +140,16 @@ export async function checkDKIM(
 
   // Priority 2: Provider heuristic
   if (options?.preferredProvider) {
-    const provider = PROVIDER_SELECTORS[options.preferredProvider];
-    if (provider) {
-      triedSelectors.push(provider.selector);
-      const result = await tryDKIMSelector(domain, provider.selector);
+    const providerInfo = PROVIDER_SELECTORS[options.preferredProvider];
+    if (providerInfo) {
+      triedSelectors.push(providerInfo.selector);
+      const result = await tryDKIMSelector(domain, providerInfo.selector);
       if (result.present) {
         return {
           ...result,
-          selector: provider.selector,
-          selectorProvenance: 'heuristic',
+          selector: providerInfo.selector,
+          selectorProvenance: 'provider',
+          provider: options.preferredProvider,
           triedSelectors: [...triedSelectors],
         };
       }
