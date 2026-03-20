@@ -10,6 +10,7 @@ import { MailFindingsPanel } from '../../components/MailFindingsPanel.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
+import { TagsPanel } from '../../components/TagsPanel.js';
 
 export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
@@ -251,7 +252,8 @@ function OverviewTab({
         <div className="text-center py-12">
           <p className="text-gray-500">No snapshot available. Refresh to collect data.</p>
         </div>
-        {/* Notes are available even without snapshot */}
+        {/* Tags and Notes are available even without snapshot */}
+        <TagsPanel domainId={domain} isDomainName />
         <NotesPanel domainId={domain} isDomainName />
       </div>
     );
@@ -318,6 +320,9 @@ function OverviewTab({
 
       {/* FROZEN: Findings Panel - pending Bead 06 (Persisted DNS findings) */}
       <FindingsPanel snapshotId={snapshot.id || null} />
+
+      {/* Domain Tags */}
+      <TagsPanel domainId={snapshot.domainId} />
 
       {/* Domain Notes */}
       <NotesPanel domainId={snapshot.domainId} />

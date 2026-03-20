@@ -39,7 +39,7 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
       try {
         const response = await fetch(`/api/domain/${domainId}/latest`);
         if (response.ok) {
-          const data = await response.json();
+          const data = (await response.json()) as { domainId?: string };
           if (data.domainId) {
             setResolvedDomainId(data.domainId);
           }
@@ -70,7 +70,7 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
       if (!response.ok) {
         throw new Error('Failed to fetch notes');
       }
-      const data = await response.json();
+      const data = (await response.json()) as { notes?: Note[] };
       setNotes(data.notes || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load notes');
