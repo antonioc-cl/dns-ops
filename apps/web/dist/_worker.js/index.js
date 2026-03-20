@@ -1,0 +1,2 @@
+globalThis._importMeta_={url:"file:///_entry.js",env:{}};import"node:buffer";export{c as default}from"./chunks/nitro/nitro.mjs";import"node:process";import"cloudflare:workers";import"node:events";import"node:timers";import"node:async_hooks";import"node:url";import"node:util";import"node:crypto";import"node:dns";import"node:fs/promises";import"node:net";import"node:tls";import"node:path";import"node:stream";import"node:string_decoder";import"node:stream/web";
+//# sourceMappingURL=index.js.map

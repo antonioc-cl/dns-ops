@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/_build/.vite/manifest.json",
+    "/_build/assets/_domain-BXtHRuOe.js",
+    "/_build/assets/client-BzuynxGe.js",
+    "/_build/assets/client-KoVMFP8R.js",
+    "/_build/assets/index-D39zbvz0.js"
+  ]
+}

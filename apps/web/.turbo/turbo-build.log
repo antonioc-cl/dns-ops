@@ -1,0 +1,108 @@
+
+> @dns-ops/web@0.1.0 build /Users/antonio/Documents/PROYECTOS/dns-ops/apps/web
+> vinxi build
+
+vinxi v0.5.3
+
+
+⚙  Building your app...
+removing /Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/client
+removing /Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/ssr
+removing /Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/server
+removing /Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/api
+vinxi v0.5.3
+
+
+⚙ Building your router client...
+
+
+📦 Compiling client router...
+vinxi building router client in client mode
+
+♻️  Generating routes...
+✅ Processed routes in 60ms
+vite v6.4.1 building for production...
+transforming...
+[plugin vite:resolve] Module "node:fs" has been externalized for browser compatibility, imported by "/Users/antonio/Documents/PROYECTOS/dns-ops/node_modules/.bun/@tanstack+start-client-core@1.120.19/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js". See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+[plugin vite:resolve] Module "node:path" has been externalized for browser compatibility, imported by "/Users/antonio/Documents/PROYECTOS/dns-ops/node_modules/.bun/@tanstack+start-client-core@1.120.19/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js". See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+[plugin vite:resolve] Module "node:fs" has been externalized for browser compatibility, imported by "/Users/antonio/Documents/PROYECTOS/dns-ops/node_modules/.bun/@tanstack+start-client-core@1.120.19/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js". See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+[plugin vite:resolve] Module "node:path" has been externalized for browser compatibility, imported by "/Users/antonio/Documents/PROYECTOS/dns-ops/node_modules/.bun/@tanstack+start-client-core@1.120.19/node_modules/@tanstack/start-client-core/dist/esm/createServerFn.js". See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+✓ 148 modules transformed.
+rendering chunks...
+computing gzip size...
+.vinxi/build/client/_build/.vite/manifest.json           0.97 kB │ gzip:  0.29 kB
+.vinxi/build/client/_build/assets/client-KoVMFP8R.js     0.06 kB │ gzip:  0.08 kB
+.vinxi/build/client/_build/assets/index-D39zbvz0.js      3.18 kB │ gzip:  1.42 kB
+.vinxi/build/client/_build/assets/_domain-BXtHRuOe.js   58.23 kB │ gzip: 14.90 kB
+.vinxi/build/client/_build/assets/client-BzuynxGe.js   217.88 kB │ gzip: 71.95 kB
+✓ built in 814ms
+✔ build done
+⚙ Built your router client successfully
+vinxi v0.5.3
+
+
+⚙ Building your router ssr...
+
+
+📦 Compiling ssr router...
+vinxi building router ssr in http mode
+vite v6.4.1 building SSR bundle for production...
+transforming...
+"H3Error", "MIMES", "callNodeListener", "createApp", "createAppEventHandler", "createError", "createEvent", "createRouter", "defineEventHandler", "defineLazyEventHandler", "defineNodeListener", "defineNodeMiddleware", "defineRequestMiddleware", "defineResponseMiddleware", "defineWebSocket", "dynamicEventHandler", "fromNodeMiddleware", "fromPlainHandler", "fromWebHandler", "isCorsOriginAllowed", "isError", "isEventHandler", "isStream", "isWebResponse", "lazyEventHandler", "promisifyNodeListener", "sanitizeStatusCode", "sanitizeStatusMessage", "serveStatic", "splitCookiesString", "toEventHandler", "toNodeListener", "toPlainHandler", "toWebHandler" and "useBase" are imported from external module "h3" but never used in "../../node_modules/.bun/@tanstack+start-server-core@1.120.19/node_modules/@tanstack/start-server-core/dist/esm/h3.js" and "../../node_modules/.bun/@tanstack+start-server-core@1.120.19/node_modules/@tanstack/start-server-core/dist/esm/index.js".
+✓ 63 modules transformed.
+rendering chunks...
+.vinxi/build/ssr/.vite/manifest.json          0.88 kB
+.vinxi/build/ssr/ssr.js                       0.26 kB
+.vinxi/build/ssr/assets/index-Ch0qaOFN.js     3.14 kB
+.vinxi/build/ssr/assets/ssr-DxnyR9ts.js      17.44 kB
+.vinxi/build/ssr/assets/_domain-BtZlc_Gr.js  56.13 kB
+✓ built in 517ms
+✔ build done
+⚙ Built your router ssr successfully
+vinxi v0.5.3
+
+
+⚙ Building your router server...
+
+
+📦 Compiling server router...
+vinxi building router server in http mode
+vite v6.4.1 building SSR bundle for production...
+transforming...
+"H3Error", "MIMES", "callNodeListener", "createApp", "createAppEventHandler", "createError", "createEvent", "createRouter", "defineEventHandler", "defineLazyEventHandler", "defineNodeListener", "defineNodeMiddleware", "defineRequestMiddleware", "defineResponseMiddleware", "defineWebSocket", "dynamicEventHandler", "fromNodeMiddleware", "fromPlainHandler", "fromWebHandler", "isCorsOriginAllowed", "isError", "isEventHandler", "isStream", "isWebResponse", "lazyEventHandler", "promisifyNodeListener", "sanitizeStatusCode", "sanitizeStatusMessage", "serveStatic", "splitCookiesString", "toEventHandler", "toNodeListener", "toPlainHandler", "toWebHandler" and "useBase" are imported from external module "h3" but never used in "../../node_modules/.bun/@tanstack+start-server-core@1.120.19/node_modules/@tanstack/start-server-core/dist/esm/h3.js" and "../../node_modules/.bun/@tanstack+start-server-core@1.120.19/node_modules/@tanstack/start-server-core/dist/esm/index.js".
+✓ 28 modules transformed.
+rendering chunks...
+.vinxi/build/server/_server/.vite/manifest.json  0.16 kB
+.vinxi/build/server/_server/server.js            6.33 kB
+✓ built in 273ms
+✔ build done
+⚙ Built your router server successfully
+vinxi v0.5.3
+
+
+⚙ Building your router api...
+
+
+📦 Compiling api router...
+vinxi building router api in http mode
+vite v6.4.1 building SSR bundle for production...
+transforming...
+"H3Error", "MIMES", "callNodeListener", "createApp", "createAppEventHandler", "createError", "createEvent", "createRouter", "defineEventHandler", "defineLazyEventHandler", "defineNodeListener", "defineNodeMiddleware", "defineRequestMiddleware", "defineResponseMiddleware", "defineWebSocket", "dynamicEventHandler", "fromNodeMiddleware", "fromPlainHandler", "fromWebHandler", "isCorsOriginAllowed", "isError", "isEventHandler", "isStream", "isWebResponse", "lazyEventHandler", "promisifyNodeListener", "sanitizeStatusCode", "sanitizeStatusMessage", "serveStatic", "splitCookiesString", "toEventHandler", "toNodeListener", "toPlainHandler", "toWebHandler" and "useBase" are imported from external module "h3" but never used in "../../node_modules/.bun/@tanstack+start-server-core@1.120.19/node_modules/@tanstack/start-server-core/dist/esm/h3.js" and "../../node_modules/.bun/@tanstack+start-server-core@1.120.19/node_modules/@tanstack/start-server-core/dist/esm/index.js".
+✓ 146 modules transformed.
+rendering chunks...
+.vinxi/build/api/api/.vite/manifest.json    0.14 kB
+.vinxi/build/api/api/api.js               187.70 kB
+✓ built in 545ms
+✔ build done
+⚙ Built your router api successfully
+
+
+⚙  Preparing app for cloudflare-pages...
+[vinxi] ✔ Generated public dist
+[vinxi] ℹ Building Nitro Server (preset: cloudflare-pages, compatibility date: 2024-11-25)
+[vinxi] ✔ Nitro Server built
+ℹ Generated dist/_routes.json
+ℹ Generated dist/_headers
+ℹ Generated dist/_redirects
+[vinxi] ✔ You can preview this build using npx wrangler pages dev dist
+[vinxi] ✔ You can deploy this build using npx wrangler pages deploy dist

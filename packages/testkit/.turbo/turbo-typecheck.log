@@ -1,0 +1,4 @@
+
+> @dns-ops/testkit@0.1.0 typecheck /Users/antonio/Documents/PROYECTOS/dns-ops/packages/testkit
+> tsc --noEmit
+

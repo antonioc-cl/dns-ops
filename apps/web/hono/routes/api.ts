@@ -12,6 +12,15 @@ import { snapshotRoutes } from './snapshots.js';
 
 export const apiRoutes = new Hono<Env>();
 
+// Health check — must be before wildcard subroutes (e.g. /:id in shadow-comparison)
+apiRoutes.get('/health', (c) => {
+  return c.json({
+    status: 'healthy',
+    service: 'dns-ops-web',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Mount findings routes
 apiRoutes.route('/', findingsRoutes);
 
@@ -28,10 +37,10 @@ apiRoutes.route('/', delegationRoutes);
 apiRoutes.route('/', mailRoutes);
 
 // Mount shadow comparison routes (Bead 09)
-apiRoutes.route('/', shadowComparisonRoutes);
+apiRoutes.route('/shadow-comparison', shadowComparisonRoutes);
 
 // Mount provider template routes (Bead 09)
-apiRoutes.route('/', providerTemplateRoutes);
+apiRoutes.route('/mail', providerTemplateRoutes);
 
 // Mount snapshot routes (Bead 13)
 apiRoutes.route('/snapshots', snapshotRoutes);
@@ -42,7 +51,9 @@ apiRoutes.route('/portfolio', portfolioRoutes);
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
   const domain = c.req.param('domain');
-  const db = c.get('db').getDrizzle();
+  const dbAdapter = c.get('db');
+  if (!dbAdapter) return c.json({ error: 'Database not available' }, 503);
+  const db = dbAdapter.getDrizzle();
 
   try {
     const domainRecord = await db.query.domains.findFirst({
@@ -72,7 +83,9 @@ apiRoutes.get('/domain/:domain/latest', async (c) => {
 // Get observations for a snapshot
 apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
   const snapshotId = c.req.param('snapshotId');
-  const db = c.get('db').getDrizzle();
+  const dbAdapter = c.get('db');
+  if (!dbAdapter) return c.json({ error: 'Database not available' }, 503);
+  const db = dbAdapter.getDrizzle();
 
   try {
     const observations = await db.query.observations.findMany({
@@ -93,7 +106,9 @@ apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
 // Get record sets for a snapshot
 apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
   const snapshotId = c.req.param('snapshotId');
-  const db = c.get('db').getDrizzle();
+  const dbAdapter = c.get('db');
+  if (!dbAdapter) return c.json({ error: 'Database not available' }, 503);
+  const db = dbAdapter.getDrizzle();
 
   try {
     const recordSets = await db.query.recordSets.findMany({
@@ -148,11 +163,3 @@ apiRoutes.post('/collect/domain', async (c) => {
   }
 });
 
-// Health check
-apiRoutes.get('/health', (c) => {
-  return c.json({
-    status: 'healthy',
-    service: 'dns-ops-web',
-    timestamp: new Date().toISOString(),
-  });
-});

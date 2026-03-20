@@ -1,0 +1,4 @@
+
+> @dns-ops/parsing@0.1.0 typecheck /Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing
+> tsc --noEmit
+

@@ -12,22 +12,29 @@ import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBa
 export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
   loader: async ({ params }) => {
-    // Fetch latest snapshot
-    const snapshotResponse = await fetch(`/api/domain/${params.domain}/latest`);
-    const snapshot = snapshotResponse.ok
-      ? ((await snapshotResponse.json()) as { id: string } & Snapshot)
-      : null;
-
-    // Fetch observations if snapshot exists
-    let observations: Observation[] = [];
-    if (snapshot) {
-      const obsResponse = await fetch(`/api/snapshot/${snapshot.id}/observations`);
-      if (obsResponse.ok) {
-        observations = await obsResponse.json();
-      }
+    // On the server (SSR), relative URLs have no base — bail and let the
+    // client hydrate. UI handles snapshot: null as "no data yet" state.
+    if (typeof window === 'undefined') {
+      return { domain: params.domain, snapshot: null, observations: [] };
     }
+    try {
+      const snapshotResponse = await fetch(`/api/domain/${params.domain}/latest`);
+      const snapshot = snapshotResponse.ok
+        ? ((await snapshotResponse.json()) as { id: string } & Snapshot)
+        : null;
 
-    return { domain: params.domain, snapshot, observations };
+      let observations: Observation[] = [];
+      if (snapshot) {
+        const obsResponse = await fetch(`/api/snapshot/${snapshot.id}/observations`);
+        if (obsResponse.ok) {
+          observations = await obsResponse.json();
+        }
+      }
+
+      return { domain: params.domain, snapshot, observations };
+    } catch {
+      return { domain: params.domain, snapshot: null, observations: [] };
+    }
   },
 });
 
