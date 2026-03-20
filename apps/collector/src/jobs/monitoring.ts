@@ -19,6 +19,10 @@ export const monitoringRoutes = new Hono<Env>();
  */
 monitoringRoutes.post('/check', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const body = await c.req.json().catch(() => ({}));
   const { schedule = 'daily' } = body;
 
@@ -106,6 +110,10 @@ monitoringRoutes.post('/check', async (c) => {
  */
 monitoringRoutes.get('/alerts/pending', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const tenantId = c.get('tenantId');
 
   try {
@@ -123,6 +131,10 @@ monitoringRoutes.get('/alerts/pending', async (c) => {
  */
 monitoringRoutes.post('/alerts/:alertId/acknowledge', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const alertId = c.req.param('alertId');
   const actorId = c.get('actorId') || 'unknown';
 
@@ -141,6 +153,10 @@ monitoringRoutes.post('/alerts/:alertId/acknowledge', async (c) => {
  */
 monitoringRoutes.post('/alerts/:alertId/resolve', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const alertId = c.req.param('alertId');
   const body = await c.req.json().catch(() => ({}));
   const { resolutionNote } = body;
@@ -160,6 +176,10 @@ monitoringRoutes.post('/alerts/:alertId/resolve', async (c) => {
  */
 monitoringRoutes.get('/reports/shared', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const tenantId = c.get('tenantId');
 
   try {
@@ -204,6 +224,10 @@ monitoringRoutes.get('/reports/shared', async (c) => {
  */
 monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const domainId = c.req.param('domainId');
   const tenantId = c.get('tenantId') || 'default';
   const actorId = c.get('actorId') || 'unknown';
@@ -248,6 +272,10 @@ monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
  */
 monitoringRoutes.delete('/domains/:domainId/monitor', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const domainId = c.req.param('domainId');
 
   try {
