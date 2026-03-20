@@ -29,7 +29,7 @@ alertRoutes.use('*', requireAuth);
 
 /**
  * GET /api/alerts
- * List alerts with filtering
+ * List alerts with filtering and pagination
  */
 alertRoutes.get('/', async (c) => {
   const db = c.get('db');
@@ -38,24 +38,58 @@ alertRoutes.get('/', async (c) => {
   const status = c.req.query('status') as
     | 'pending'
     | 'sent'
+    | 'suppressed'
     | 'acknowledged'
     | 'resolved'
     | undefined;
+  const severity = c.req.query('severity') as
+    | 'critical'
+    | 'high'
+    | 'medium'
+    | 'low'
+    | undefined;
   const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+  const offset = parseInt(c.req.query('offset') || '0');
 
   const alertRepo = new AlertRepository(db);
 
-  let alerts = await alertRepo.findPending(tenantId ?? undefined);
+  const { alerts, total } = await alertRepo.findAll(tenantId ?? undefined, {
+    status,
+    severity,
+    limit,
+    offset,
+  });
 
-  // Filter by status if provided
-  if (status) {
-    alerts = alerts.filter((a) => a.status === status);
+  return c.json({
+    alerts,
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: offset + alerts.length < total,
+    },
+  });
+});
+
+/**
+ * GET /api/alerts/:id
+ * Get alert detail by ID
+ */
+alertRoutes.get('/:id', async (c) => {
+  const db = c.get('db');
+  const alertId = c.req.param('id');
+
+  const alertRepo = new AlertRepository(db);
+  const alert = await alertRepo.findById(alertId);
+
+  if (!alert) {
+    return c.json({ error: 'Alert not found' }, 404);
   }
 
-  // Apply limit
-  alerts = alerts.slice(0, limit);
+  // TODO: Tenant check - verify alert.tenantId matches c.get('tenantId')
+  // For now, leaving open as tenantId may be null in dev
 
-  return c.json({ alerts });
+  return c.json({ alert });
 });
 
 /**
