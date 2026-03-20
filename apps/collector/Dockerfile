@@ -54,8 +54,9 @@ RUN bun run build --filter=@dns-ops/collector...
 # =============================================================================
 FROM node:20-slim AS production
 
-# Install runtime dependencies
+# Install runtime dependencies (curl for healthcheck, dnsutils for debugging)
 RUN apt-get update && apt-get install -y \
+    curl \
     dnsutils \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -86,9 +87,9 @@ RUN groupadd -r collector && useradd -r -g collector collector
 RUN chown -R collector:collector /app
 USER collector
 
-# Health check endpoint
+# Health check endpoint (uses curl which is installed above)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD node -e "fetch('http://localhost:3001/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+    CMD curl -f http://localhost:3001/health || exit 1
 
 EXPOSE 3001
 
