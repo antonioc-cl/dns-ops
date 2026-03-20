@@ -183,7 +183,13 @@ END $$;
 
 3. **Apply Migration:** Run `npx drizzle-kit migrate` or apply the SQL directly to sync the database.
 
-4. **Prevention:** Add a CI check that runs `drizzle-kit check` to detect schema/migration drift.
+4. **Prevention:** Run the drift check script in CI:
+   ```bash
+   cd packages/db
+   bun run build
+   bun run check-drift
+   ```
+   See `scripts/check-drift.ts` for CI integration details.
 
 ---
 
