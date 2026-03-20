@@ -6,6 +6,7 @@ import { DiscoveredSelectors } from '../../components/DiscoveredSelectors.js';
 import { DNSViews } from '../../components/DNSViews.js';
 import { FindingsPanel } from '../../components/FindingsPanel.js';
 import { LegacyToolsPanel } from '../../components/LegacyToolsPanel.js';
+import { MailFindingsPanel } from '../../components/MailFindingsPanel.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
 
@@ -411,13 +412,10 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId: string | 
         <LegacyToolsPanel domain={domain} />
       </div>
 
-      {/* FROZEN: Workbench mail findings - pending Bead 09 (Mail evidence core) */}
+      {/* Workbench Mail Analysis - powered by rules engine */}
       <div className="border-t pt-6">
-        <h4 className="font-medium text-gray-900 mb-2">Workbench Mail Analysis</h4>
-        <p className="text-sm text-gray-500">
-          Mail findings from the workbench rules engine will appear here as analysis coverage
-          expands.
-        </p>
+        <h4 className="font-medium text-gray-900 mb-4">Workbench Mail Analysis</h4>
+        <MailFindingsPanel snapshotId={snapshotId} />
       </div>
     </div>
   );
