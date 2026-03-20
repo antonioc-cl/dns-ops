@@ -765,3 +765,30 @@ export {
   selectorConfidenceEnum,
   selectorProvenanceEnum,
 } from './mail.js';
+
+// =============================================================================
+// PARITY EVIDENCE EXPORTS
+// =============================================================================
+
+export {
+  adjudicationEnum,
+  baselineStatusEnum,
+  type FieldComparison,
+  fieldComparisonStatusEnum,
+  type LegacyAccessLog,
+  legacyAccessLogs,
+  legacyToolTypeEnum,
+  type LegacyToolOutput,
+  type MismatchReport,
+  mismatchReports,
+  type NewLegacyAccessLog,
+  type NewMismatchReport,
+  type NewProviderBaseline,
+  type NewShadowComparison,
+  type ProviderBaseline,
+  type ProviderBaselineData,
+  providerBaselines,
+  type ShadowComparison,
+  shadowComparisons,
+  shadowStatusEnum,
+} from './parity.js';

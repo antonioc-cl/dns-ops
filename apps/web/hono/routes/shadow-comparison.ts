@@ -1,13 +1,23 @@
 /**
- * Shadow Comparison API Routes - Bead 09
+ * Shadow Comparison API Routes - Bead 09/12
  *
  * Exposes shadow comparison engine for legacy tool parity validation.
  * Enables safe cutover by comparing new rules against legacy outputs.
+ *
+ * Bead 12: Updated to use durable database storage instead of in-memory store.
  */
 
-import { SnapshotRepository } from '@dns-ops/db';
+import {
+  LegacyAccessLogRepository,
+  MismatchReportRepository,
+  ProviderBaselineRepository,
+  ShadowComparisonRepository,
+  SnapshotRepository,
+} from '@dns-ops/db';
 import { findings as findingsTable } from '@dns-ops/db/schema';
-import { type LegacyToolOutput, shadowComparator, shadowStore } from '@dns-ops/rules';
+import type { FieldComparison } from '@dns-ops/db/schema';
+import type { LegacyToolOutput as DBLegacyToolOutput } from '@dns-ops/db/schema';
+import { type LegacyToolOutput, shadowComparator } from '@dns-ops/rules';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAdminAccess, requireAuth } from '../middleware/authorization.js';
@@ -20,7 +30,7 @@ shadowComparisonRoutes.use('*', requireAuth);
 
 /**
  * POST /api/shadow-comparison/compare
- * Compare new findings against legacy tool output
+ * Compare new findings against legacy tool output (persisted durably)
  */
 shadowComparisonRoutes.post('/compare', async (c) => {
   const db = c.get('db');
@@ -38,8 +48,10 @@ shadowComparisonRoutes.post('/compare', async (c) => {
   }
 
   try {
-    // Fetch findings for this snapshot
+    // Initialize repositories
     const snapshotRepo = new SnapshotRepository(db);
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const legacyLogRepo = new LegacyAccessLogRepository(db);
 
     const snapshot = await snapshotRepo.findById(snapshotId);
     if (!snapshot) {
@@ -60,22 +72,58 @@ shadowComparisonRoutes.post('/compare', async (c) => {
       );
     }
 
-    // Perform comparison
+    // Log the legacy access
+    await legacyLogRepo.log({
+      toolType: 'dmarc-check',
+      domain: snapshot.domainName,
+      requestSource: 'api',
+      responseStatus: 'success',
+      outputSummary: {
+        dmarcPresent: validatedLegacy.data.dmarc.present,
+        dmarcValid: validatedLegacy.data.dmarc.valid,
+        spfPresent: validatedLegacy.data.spf.present,
+        spfValid: validatedLegacy.data.spf.valid,
+        dkimPresent: validatedLegacy.data.dkim.present,
+        dkimValid: validatedLegacy.data.dkim.valid,
+      },
+      snapshotId,
+    });
+
+    // Perform comparison using the rules engine comparator
+    // Convert checkedAt to Date if string
+    const legacyForComparator = {
+      ...validatedLegacy.data,
+      checkedAt:
+        typeof validatedLegacy.data.checkedAt === 'string'
+          ? new Date(validatedLegacy.data.checkedAt)
+          : validatedLegacy.data.checkedAt,
+    };
     const result = shadowComparator.compare(
       snapshotId,
       snapshot.domainName,
       findings,
-      validatedLegacy.data
+      legacyForComparator
     );
 
-    // Store the comparison
-    const stored = shadowStore.store(result);
+    // Store the comparison durably in the database
+    // Convert legacyOutput to DB format (preserving checkedAt as-is)
+    const stored = await shadowRepo.create({
+      snapshotId,
+      domain: snapshot.domainName,
+      comparedAt: new Date(),
+      status: result.status as 'match' | 'mismatch' | 'partial-match' | 'error',
+      comparisons: result.comparisons as FieldComparison[],
+      metrics: result.metrics,
+      summary: result.summary,
+      legacyOutput: validatedLegacy.data as DBLegacyToolOutput,
+    });
 
     return c.json({
       comparison: stored,
       summary: result.summary,
       status: result.status,
       metrics: result.metrics,
+      persisted: true, // Indicates durable storage
     });
   } catch (error) {
     console.error('Shadow comparison error:', error);
@@ -91,26 +139,27 @@ shadowComparisonRoutes.post('/compare', async (c) => {
 
 /**
  * GET /api/shadow-comparison/stats
- * Get shadow comparison statistics
+ * Get shadow comparison statistics (from durable storage)
  */
 shadowComparisonRoutes.get('/stats', async (c) => {
+  const db = c.get('db');
+
   try {
-    const stats = shadowStore.getStats();
-    const mismatches = shadowStore.getMismatches();
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const stats = await shadowRepo.getStats();
+    const pending = await shadowRepo.findPendingAdjudications();
 
     return c.json({
       stats,
-      pendingAdjudication: mismatches.filter((m) => !m.adjudication).length,
-      recentMismatches: mismatches
-        .filter((m) => !m.adjudication)
-        .slice(0, 10)
-        .map((m) => ({
-          id: m.id,
-          domain: m.domain,
-          status: m.status,
-          summary: m.summary,
-          comparedAt: m.comparedAt,
-        })),
+      pendingAdjudication: pending.length,
+      recentMismatches: pending.slice(0, 10).map((m) => ({
+        id: m.id,
+        domain: m.domain,
+        status: m.status,
+        summary: m.summary,
+        comparedAt: m.comparedAt,
+      })),
+      durable: true, // Indicates data is persisted
     });
   } catch (error) {
     console.error('Shadow stats error:', error);
@@ -130,9 +179,12 @@ shadowComparisonRoutes.get('/stats', async (c) => {
  */
 shadowComparisonRoutes.get('/:id', async (c) => {
   const id = c.req.param('id');
+  const db = c.get('db');
 
   try {
-    const comparison = shadowStore.get(id);
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const comparison = await shadowRepo.findById(id);
+
     if (!comparison) {
       return c.json({ error: 'Comparison not found' }, 404);
     }
@@ -152,10 +204,11 @@ shadowComparisonRoutes.get('/:id', async (c) => {
 
 /**
  * POST /api/shadow-comparison/:id/adjudicate
- * Adjudicate a shadow comparison mismatch
+ * Adjudicate a shadow comparison mismatch (persisted)
  */
 shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => {
   const id = c.req.param('id');
+  const db = c.get('db');
   const body = await c.req.json().catch(() => ({}));
   const { adjudication, notes, operator } = body;
 
@@ -176,7 +229,8 @@ shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => 
   }
 
   try {
-    const updated = shadowStore.acknowledge(
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const updated = await shadowRepo.adjudicate(
       id,
       operator || 'unknown',
       adjudication as 'new-correct' | 'legacy-correct' | 'both-wrong' | 'acceptable-difference',
@@ -188,7 +242,7 @@ shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => 
     }
 
     return c.json({
-      message: 'Adjudication recorded',
+      message: 'Adjudication recorded and persisted',
       comparison: updated,
     });
   } catch (error) {
@@ -209,18 +263,21 @@ shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => 
  */
 shadowComparisonRoutes.get('/domain/:domain', async (c) => {
   const domain = c.req.param('domain');
+  const db = c.get('db');
 
   try {
-    const comparisons = shadowStore.getByDomain(domain);
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const comparisons = await shadowRepo.findByDomain(domain);
+
     return c.json({
       domain,
       count: comparisons.length,
-      comparisons: comparisons.map((c) => ({
-        id: c.id,
-        status: c.status,
-        summary: c.summary,
-        comparedAt: c.comparedAt,
-        adjudication: c.adjudication,
+      comparisons: comparisons.map((comp) => ({
+        id: comp.id,
+        status: comp.status,
+        summary: comp.summary,
+        comparedAt: comp.comparedAt,
+        adjudication: comp.adjudication,
       })),
     });
   } catch (error) {
@@ -228,6 +285,226 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
     return c.json(
       {
         error: 'Failed to get domain comparisons',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/shadow-comparison/legacy-logs
+ * Get legacy access logs
+ */
+shadowComparisonRoutes.get('/legacy-logs', async (c) => {
+  const db = c.get('db');
+  const limit = Number.parseInt(c.req.query('limit') || '50', 10);
+
+  try {
+    const legacyLogRepo = new LegacyAccessLogRepository(db);
+    const logs = await legacyLogRepo.getRecent(limit);
+    const stats = await legacyLogRepo.getStats();
+
+    return c.json({
+      logs: logs.map((l) => ({
+        id: l.id,
+        toolType: l.toolType,
+        domain: l.domain,
+        requestedAt: l.requestedAt,
+        responseStatus: l.responseStatus,
+        outputSummary: l.outputSummary,
+      })),
+      stats,
+    });
+  } catch (error) {
+    console.error('Legacy logs error:', error);
+    return c.json(
+      {
+        error: 'Failed to get legacy access logs',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/shadow-comparison/provider-baselines
+ * Get active provider baselines (read-only reference data)
+ */
+shadowComparisonRoutes.get('/provider-baselines', async (c) => {
+  const db = c.get('db');
+
+  try {
+    const baselineRepo = new ProviderBaselineRepository(db);
+    const baselines = await baselineRepo.findActive();
+
+    return c.json({
+      baselines: baselines.map((b) => ({
+        providerKey: b.providerKey,
+        providerName: b.providerName,
+        baseline: b.baseline,
+        dkimSelectors: b.dkimSelectors,
+        mxPatterns: b.mxPatterns,
+        spfIncludes: b.spfIncludes,
+        version: b.version,
+      })),
+    });
+  } catch (error) {
+    console.error('Provider baselines error:', error);
+    return c.json(
+      {
+        error: 'Failed to get provider baselines',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/shadow-comparison/provider-baselines/:providerKey
+ * Get a specific provider baseline
+ */
+shadowComparisonRoutes.get('/provider-baselines/:providerKey', async (c) => {
+  const providerKey = c.req.param('providerKey');
+  const db = c.get('db');
+
+  try {
+    const baselineRepo = new ProviderBaselineRepository(db);
+    const baseline = await baselineRepo.findByProviderKey(providerKey);
+
+    if (!baseline) {
+      return c.json({ error: 'Provider baseline not found' }, 404);
+    }
+
+    return c.json({ baseline });
+  } catch (error) {
+    console.error('Provider baseline error:', error);
+    return c.json(
+      {
+        error: 'Failed to get provider baseline',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * POST /api/shadow-comparison/mismatch-report
+ * Generate a mismatch report for cutover decision
+ */
+shadowComparisonRoutes.post('/mismatch-report', requireAdminAccess, async (c) => {
+  const db = c.get('db');
+  const body = await c.req.json().catch(() => ({}));
+  const { domain, periodStart, periodEnd, generatedBy } = body;
+
+  if (!domain) {
+    return c.json({ error: 'Domain is required' }, 400);
+  }
+
+  try {
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const reportRepo = new MismatchReportRepository(db);
+
+    const start = periodStart ? new Date(periodStart) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const end = periodEnd ? new Date(periodEnd) : new Date();
+
+    const report = await reportRepo.generateReport(
+      shadowRepo,
+      domain,
+      start,
+      end,
+      generatedBy || 'system'
+    );
+
+    return c.json({
+      report,
+      message: report.cutoverReady
+        ? 'Domain is ready for cutover'
+        : 'Domain does not meet cutover threshold',
+    });
+  } catch (error) {
+    console.error('Mismatch report error:', error);
+    return c.json(
+      {
+        error: 'Failed to generate mismatch report',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/shadow-comparison/mismatch-reports/:domain
+ * Get mismatch reports for a domain
+ */
+shadowComparisonRoutes.get('/mismatch-reports/:domain', async (c) => {
+  const domain = c.req.param('domain');
+  const db = c.get('db');
+
+  try {
+    const reportRepo = new MismatchReportRepository(db);
+    const reports = await reportRepo.findByDomain(domain);
+    const latest = reports[0];
+
+    return c.json({
+      domain,
+      reports: reports.map((r) => ({
+        id: r.id,
+        periodStart: r.periodStart,
+        periodEnd: r.periodEnd,
+        matchRate: r.matchRate,
+        cutoverReady: r.cutoverReady,
+        generatedAt: r.generatedAt,
+      })),
+      latestReport: latest
+        ? {
+            matchRate: latest.matchRate,
+            cutoverReady: latest.cutoverReady,
+            totalComparisons: latest.totalComparisons,
+            mismatchBreakdown: latest.mismatchBreakdown,
+            cutoverNotes: latest.cutoverNotes,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error('Mismatch reports error:', error);
+    return c.json(
+      {
+        error: 'Failed to get mismatch reports',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * POST /api/shadow-comparison/seed-baselines
+ * Seed default provider baselines (admin only)
+ */
+shadowComparisonRoutes.post('/seed-baselines', requireAdminAccess, async (c) => {
+  const db = c.get('db');
+
+  try {
+    const baselineRepo = new ProviderBaselineRepository(db);
+    await baselineRepo.seedDefaults();
+
+    const baselines = await baselineRepo.findAll();
+
+    return c.json({
+      message: 'Provider baselines seeded',
+      count: baselines.length,
+      providers: baselines.map((b) => b.providerKey),
+    });
+  } catch (error) {
+    console.error('Seed baselines error:', error);
+    return c.json(
+      {
+        error: 'Failed to seed provider baselines',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
       500

@@ -27,6 +27,13 @@ export {
   SavedFilterRepository,
   TemplateOverrideRepository,
 } from './portfolio.js';
+// Parity evidence repositories
+export {
+  LegacyAccessLogRepository,
+  MismatchReportRepository,
+  ProviderBaselineRepository,
+  ShadowComparisonRepository,
+} from './parity.js';
 export { RecordSetRepository } from './recordset.js';
 export { RemediationRepository } from './remediation.js';
 export { RulesetVersionRepository } from './ruleset-version.js';
