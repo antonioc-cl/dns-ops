@@ -1,51 +1,245 @@
 $ biome check .
-app/components/DNSViews.tsx:224:46 lint/suspicious/noArrayIndexKey ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+hono/routes/portfolio.ts:148:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Checked 43 files in 523ms. No fixes applied.
-  ! Avoid using the index of an array as key property in an element.
+  ! Forbidden non-null assertion.
   
-    222 │               <tbody className="bg-white divide-y divide-gray-200">
-    223 │                 {records.map((record, idx) => (
-Found 2 warnings.
-  > 224 │                   <tr key={`${record.name}-${idx}`}>
-        │                                              ^^^
-    225 │                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
-    226 │                     <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">
-  
-  i This is the source of the key value.
-  
-    221 │               </thead>
-    222 │               <tbody className="bg-white divide-y divide-gray-200">
-  > 223 │                 {records.map((record, idx) => (
-        │                                       ^^^
-    224 │                   <tr key={`${record.name}-${idx}`}>
-    225 │                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
-  
-  i The order of the items may change, and this also affects performances and component state.
-  
-  i Check the React documentation. 
+    146 │ portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (c) => {
+    147 │   const db = c.get('db');
+  > 148 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    149 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    150 │   const domainId = c.req.param('domainId');
   
 
-hono/middleware/authorization.ts:80:9 lint/correctness/noUnusedVariables  FIXABLE  ━━━━━━━━━━━━━━━━━
+hono/routes/portfolio.ts:188:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  ! This variable actorEmail is unused.
+  ! Forbidden non-null assertion.
   
-    78 │   const tenantId = c.get('tenantId');
-    79 │   const actorId = c.get('actorId');
-  > 80 │   const actorEmail = c.get('actorEmail');
-       │         ^^^^^^^^^^
-    81 │ 
-    82 │   if (!tenantId || !actorId) {
+    186 │ portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
+    187 │   const db = c.get('db');
+  > 188 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    189 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    190 │   const noteId = c.req.param('noteId');
   
-  i Unused variables are often the result of typos, incomplete refactors, or other sources of bugs.
+
+hono/routes/portfolio.ts:226:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
   
-  i Unsafe fix: If this is intentional, prepend actorEmail with an underscore.
+    224 │ portfolioRoutes.delete('/notes/:noteId', requireWritePermission, async (c) => {
+    225 │   const db = c.get('db');
+  > 226 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    227 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    228 │   const noteId = c.req.param('noteId');
   
-     78  78 │     const tenantId = c.get('tenantId');
-     79  79 │     const actorId = c.get('actorId');
-     80     │ - ··const·actorEmail·=·c.get('actorEmail');
-         80 │ + ··const·_actorEmail·=·c.get('actorEmail');
-     81  81 │   
-     82  82 │     if (!tenantId || !actorId) {
+
+hono/routes/portfolio.ts:275:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    273 │ portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c) => {
+    274 │   const db = c.get('db');
+  > 275 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    276 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    277 │   const domainId = c.req.param('domainId');
+  
+
+hono/routes/portfolio.ts:315:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    313 │ portfolioRoutes.delete('/domains/:domainId/tags/:tag', requireWritePermission, async (c) => {
+    314 │   const db = c.get('db');
+  > 315 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    316 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    317 │   const domainId = c.req.param('domainId');
+  
+
+hono/routes/portfolio.ts:347:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    345 │ portfolioRoutes.get('/filters', async (c) => {
+    346 │   const db = c.get('db');
+  > 347 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    348 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    349 │ 
+  
+
+hono/routes/portfolio.ts:361:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    359 │ portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
+    360 │   const db = c.get('db');
+  > 361 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    362 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    363 │   const body = await c.req.json().catch(() => ({}));
+  
+
+hono/routes/portfolio.ts:400:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    398 │ portfolioRoutes.put('/filters/:filterId', requireWritePermission, async (c) => {
+    399 │   const db = c.get('db');
+  > 400 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    401 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    402 │   const filterId = c.req.param('filterId');
+  
+
+hono/routes/portfolio.ts:441:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    439 │ portfolioRoutes.delete('/filters/:filterId', requireWritePermission, async (c) => {
+    440 │   const db = c.get('db');
+  > 441 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    442 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    443 │   const filterId = c.req.param('filterId');
+  
+
+hono/routes/portfolio.ts:477:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    475 │ portfolioRoutes.get('/templates/overrides', async (c) => {
+    476 │   const db = c.get('db');
+  > 477 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    478 │   const providerKey = c.req.query('provider');
+    479 │ 
+  
+
+hono/routes/portfolio.ts:491:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    489 │ portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) => {
+    490 │   const db = c.get('db');
+  > 491 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    492 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    493 │   const body = await c.req.json().catch(() => ({}));
+  
+
+hono/routes/portfolio.ts:530:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    528 │ portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
+    529 │   const db = c.get('db');
+  > 530 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    531 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    532 │   const overrideId = c.req.param('overrideId');
+  
+
+hono/routes/portfolio.ts:567:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    565 │ portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
+    566 │   const db = c.get('db');
+  > 567 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    568 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+    569 │   const overrideId = c.req.param('overrideId');
+  
+
+hono/routes/portfolio.ts:603:20 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    601 │ portfolioRoutes.get('/audit', async (c) => {
+    602 │   const db = c.get('db');
+  > 603 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                    ^^^^^^^^^^^^^^^^^^
+    604 │   const limit = parseInt(c.req.query('limit') || '50', 10);
+    605 │ 
+  
+
+hono/routes/portfolio.ts:149:38 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+    147 │   const db = c.get('db');
+    148 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  > 149 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    150 │   const domainId = c.req.param('domainId');
+    151 │   const body = await c.req.json().catch(() => ({}));
+  
+
+hono/routes/portfolio.ts:189:38 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+    187 │   const db = c.get('db');
+    188 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  > 189 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    190 │   const noteId = c.req.param('noteId');
+    191 │   const body = await c.req.json().catch(() => ({}));
+  
+
+hono/routes/portfolio.ts:227:38 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+    225 │   const db = c.get('db');
+    226 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  > 227 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    228 │   const noteId = c.req.param('noteId');
+    229 │ 
+  
+
+hono/routes/portfolio.ts:276:38 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+    274 │   const db = c.get('db');
+    275 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  > 276 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    277 │   const domainId = c.req.param('domainId');
+    278 │   const body = await c.req.json().catch(() => ({}));
+  
+
+hono/routes/portfolio.ts:316:38 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+    314 │   const db = c.get('db');
+    315 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  > 316 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    317 │   const domainId = c.req.param('domainId');
+    318 │   const tag = decodeURIComponent(c.req.param('tag'));
+  
+
+hono/routes/portfolio.ts:348:38 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Suppression comment has no effect. Remove the suppression or make sure you are suppressing the correct rule.
+  
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+    346 │   const db = c.get('db');
+Diagnostics not shown: 8.
+    347 │   const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+Checked 44 files in 294ms. No fixes applied.
+Found 28 warnings.
+  > 348 │   const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+        │                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    349 │ 
+    350 │   try {
   
 

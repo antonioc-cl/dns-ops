@@ -85,6 +85,7 @@ fleetReportRoutes.post('/run', async (c) => {
         const observations = await observationRepo.findBySnapshotId(snapshot.id);
 
         // Run checks (with type assertion for compatibility)
+        // biome-ignore lint/suspicious/noExplicitAny: Intentional type assertion for observation compatibility
         const checkResults = await runChecks(domainName, observations as any, checks);
 
         results.push({

@@ -1,2 +1,26 @@
 $ biome check src
-Checked 6 files in 420ms. No fixes applied.
+src/env.ts:137:11 lint/suspicious/noGlobalIsNan  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! isNaN is unsafe. It attempts a type coercion. Use Number.isNaN instead.
+  
+    135 │ function isValidPort(value: string): boolean {
+    136 │   const port = parseInt(value, 10);
+  > 137 │   return !isNaN(port) && port > 0 && port < 65536;
+        │           ^^^^^
+    138 │ }
+    139 │ 
+  
+  i See the MDN documentation for more details.
+  
+  i Unsafe fix: Use Number.isNaN instead.
+  
+Checked 7 files in 47ms. No fixes applied.
+    135 135 │   function isValidPort(value: string): boolean {
+Found 1 warning.
+    136 136 │     const port = parseInt(value, 10);
+    137     │ - ··return·!isNaN(port)·&&·port·>·0·&&·port·<·65536;
+        137 │ + ··return·!Number.isNaN(port)·&&·port·>·0·&&·port·<·65536;
+    138 138 │   }
+    139 139 │   
+  
+

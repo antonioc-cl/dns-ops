@@ -145,8 +145,8 @@ portfolioRoutes.get('/domains/:domainId/notes', async (c) => {
 
 portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const domainId = c.req.param('domainId');
   const body = await c.req.json().catch(() => ({}));
   const { content } = body;
@@ -185,8 +185,8 @@ portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (
 
 portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const noteId = c.req.param('noteId');
   const body = await c.req.json().catch(() => ({}));
   const { content } = body;
@@ -223,8 +223,8 @@ portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
 
 portfolioRoutes.delete('/notes/:noteId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const noteId = c.req.param('noteId');
 
   try {
@@ -272,8 +272,8 @@ portfolioRoutes.get('/domains/:domainId/tags', async (c) => {
 
 portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const domainId = c.req.param('domainId');
   const body = await c.req.json().catch(() => ({}));
   const { tag } = body;
@@ -312,8 +312,8 @@ portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c
 
 portfolioRoutes.delete('/domains/:domainId/tags/:tag', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const domainId = c.req.param('domainId');
   const tag = decodeURIComponent(c.req.param('tag'));
 
@@ -344,8 +344,8 @@ portfolioRoutes.delete('/domains/:domainId/tags/:tag', requireWritePermission, a
 
 portfolioRoutes.get('/filters', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
 
   try {
     const filterRepo = new SavedFilterRepository(db);
@@ -358,8 +358,8 @@ portfolioRoutes.get('/filters', async (c) => {
 
 portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const body = await c.req.json().catch(() => ({}));
   const { name, description, criteria, isShared } = body;
 
@@ -397,8 +397,8 @@ portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
 
 portfolioRoutes.put('/filters/:filterId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const filterId = c.req.param('filterId');
   const body = await c.req.json().catch(() => ({}));
 
@@ -438,8 +438,8 @@ portfolioRoutes.put('/filters/:filterId', requireWritePermission, async (c) => {
 
 portfolioRoutes.delete('/filters/:filterId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const filterId = c.req.param('filterId');
 
   try {
@@ -474,7 +474,7 @@ portfolioRoutes.delete('/filters/:filterId', requireWritePermission, async (c) =
 
 portfolioRoutes.get('/templates/overrides', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const providerKey = c.req.query('provider');
 
   try {
@@ -488,8 +488,8 @@ portfolioRoutes.get('/templates/overrides', async (c) => {
 
 portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const body = await c.req.json().catch(() => ({}));
   const { providerKey, templateKey, overrideData, appliesToDomains } = body;
 
@@ -527,8 +527,8 @@ portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) =
 
 portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const overrideId = c.req.param('overrideId');
   const body = await c.req.json().catch(() => ({}));
 
@@ -564,8 +564,8 @@ portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, 
 
 portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
-  const actorId = c.get('actorId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const overrideId = c.req.param('overrideId');
 
   try {
@@ -600,7 +600,7 @@ portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermissio
 
 portfolioRoutes.get('/audit', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!;
+  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
   const limit = parseInt(c.req.query('limit') || '50', 10);
 
   try {

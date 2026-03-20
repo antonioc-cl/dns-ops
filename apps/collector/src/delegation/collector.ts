@@ -365,7 +365,7 @@ export class DelegationCollector {
       // Safely check for RRSIG presence
       const hasRrsig = Boolean(
         (sampleQuery.authority?.some((r: DNSAnswer) => r.type === 'RRSIG') ?? false) ||
-        (sampleQuery.answers?.some((r: DNSAnswer) => r.type === 'RRSIG') ?? false)
+          (sampleQuery.answers?.some((r: DNSAnswer) => r.type === 'RRSIG') ?? false)
       );
 
       return {

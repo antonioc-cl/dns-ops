@@ -220,8 +220,8 @@ function ParsedView({ observations }: { observations: Observation[] }) {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {records.map((record, idx) => (
-                  <tr key={`${record.name}-${idx}`}>
+                {records.map((record) => (
+                  <tr key={`${record.name}-${record.type}-${record.values.join(',')}`}>
                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
                     <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">
                       {record.ttl != null ? `${record.ttl}s` : '—'}

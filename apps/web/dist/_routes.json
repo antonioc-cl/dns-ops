@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "include": [
+    "/*"
+  ],
+  "exclude": [
+    "/_headers",
+    "/_redirects",
+    "/_routes.json",
+    "/_build/.vite/manifest.json",
+    "/_build/assets/_domain-DcoGH5Ne.js",
+    "/_build/assets/client-Cl8ceCRd.js",
+    "/_build/assets/client-OqqNFrD7.js",
+    "/_build/assets/index-DeZwgPz0.js"
+  ]
+}

@@ -240,7 +240,17 @@ export const spfRule = {
             };
         }
         // Validate SPF mechanisms - check for unknown/invalid mechanisms
-        const validMechanisms = ['all', 'include', 'a', 'mx', 'ptr', 'ip4', 'ip6', 'exists', 'redirect'];
+        const validMechanisms = [
+            'all',
+            'include',
+            'a',
+            'mx',
+            'ptr',
+            'ip4',
+            'ip6',
+            'exists',
+            'redirect',
+        ];
         const invalidMechanisms = parsed.mechanisms.filter((m) => !validMechanisms.includes(m.type));
         if (invalidMechanisms.length > 0) {
             return {

@@ -1,3 +1,1 @@
 $ tsc --noEmit
-src/tenant.ts(60,25): error TS2304: Cannot find name 'TextEncoder'.
-src/tenant.ts(68,28): error TS2304: Cannot find name 'crypto'.

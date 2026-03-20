@@ -41,9 +41,7 @@ describe('observationsToRecordSets', () => {
                 createObservation({
                     queryName: 'example.com',
                     queryType: 'A',
-                    answerSection: [
-                        { name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' },
-                    ],
+                    answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
                 }),
             ];
             const result = observationsToRecordSets(observations);
@@ -289,10 +287,42 @@ describe('observationsToRecordSets', () => {
 describe('groupRecordsByType', () => {
     it('should group records by type in preferred order', () => {
         const records = [
-            { name: 'example.com', type: 'TXT', ttl: 300, values: ['v=spf1...'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
-            { name: 'example.com', type: 'A', ttl: 300, values: ['192.0.2.1'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
-            { name: 'example.com', type: 'MX', ttl: 300, values: ['10 mail.example.com'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
-            { name: 'example.com', type: 'NS', ttl: 300, values: ['ns1.example.com'], sourceVantages: [], sourceObservationIds: [], isConsistent: true },
+            {
+                name: 'example.com',
+                type: 'TXT',
+                ttl: 300,
+                values: ['v=spf1...'],
+                sourceVantages: [],
+                sourceObservationIds: [],
+                isConsistent: true,
+            },
+            {
+                name: 'example.com',
+                type: 'A',
+                ttl: 300,
+                values: ['192.0.2.1'],
+                sourceVantages: [],
+                sourceObservationIds: [],
+                isConsistent: true,
+            },
+            {
+                name: 'example.com',
+                type: 'MX',
+                ttl: 300,
+                values: ['10 mail.example.com'],
+                sourceVantages: [],
+                sourceObservationIds: [],
+                isConsistent: true,
+            },
+            {
+                name: 'example.com',
+                type: 'NS',
+                ttl: 300,
+                values: ['ns1.example.com'],
+                sourceVantages: [],
+                sourceObservationIds: [],
+                isConsistent: true,
+            },
         ];
         const groups = groupRecordsByType(records);
         const keys = [...groups.keys()];

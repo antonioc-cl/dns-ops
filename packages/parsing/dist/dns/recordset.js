@@ -133,8 +133,9 @@ export function groupRecordsByType(records) {
     const typeOrder = ['SOA', 'NS', 'A', 'AAAA', 'CNAME', 'MX', 'TXT', 'CAA'];
     const sortedGroups = new Map();
     for (const type of typeOrder) {
-        if (groups.has(type)) {
-            sortedGroups.set(type, groups.get(type));
+        const group = groups.get(type);
+        if (group) {
+            sortedGroups.set(type, group);
         }
     }
     // Add any remaining types
