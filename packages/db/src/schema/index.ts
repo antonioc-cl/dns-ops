@@ -149,8 +149,11 @@ export const snapshots = pgTable(
     collectionDurationMs: integer('collection_duration_ms'),
     errorMessage: text('error_message'),
 
-    // Delegation and extended metadata (Bead 12)
+    // Collection and delegation metadata (Bead 12, Bead dns-ops-1j4.5.5)
     metadata: jsonb('metadata').$type<{
+      // Vantage identifiers (IPs/hostnames) for detailed tracking
+      vantageIdentifiers?: string[];
+      // Delegation data
       hasDelegationData?: boolean;
       parentZone?: string;
       nsServers?: string[];
@@ -776,9 +779,9 @@ export {
   type FieldComparison,
   fieldComparisonStatusEnum,
   type LegacyAccessLog,
+  type LegacyToolOutput,
   legacyAccessLogs,
   legacyToolTypeEnum,
-  type LegacyToolOutput,
   type MismatchReport,
   mismatchReports,
   type NewLegacyAccessLog,

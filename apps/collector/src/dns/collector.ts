@@ -384,20 +384,25 @@ export class DNSCollector {
       resultState,
       queriedNames: [...new Set(results.map((r) => r.query.name))],
       queriedTypes: [...new Set(results.map((r) => r.query.type))],
-      vantages: [...new Set(results.map((r) => r.vantage.identifier))],
+      vantages: [...new Set(results.map((r) => r.vantage.type))],
       zoneManagement,
       triggeredBy: triggeredBy || 'system',
-      // Store delegation data summary if available (Bead 12)
-      metadata: delegationData
-        ? {
-            hasDelegationData: true,
-            parentZone: delegationData.parentZone,
-            nsServers: delegationData.parentNs.map((ns: DNSAnswer) => ns.data),
-            hasDivergence: delegationData.hasDivergence,
-            lameDelegations: delegationData.lameDelegations.length,
-            hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
-          }
-        : undefined,
+      // Store collection metadata including vantage identifiers and delegation data
+      metadata: {
+        // Vantage identifiers (IPs/hostnames) for detailed tracking
+        vantageIdentifiers: [...new Set(results.map((r) => r.vantage.identifier))],
+        // Delegation data summary if available (Bead 12)
+        ...(delegationData
+          ? {
+              hasDelegationData: true,
+              parentZone: delegationData.parentZone,
+              nsServers: delegationData.parentNs.map((ns: DNSAnswer) => ns.data),
+              hasDivergence: delegationData.hasDivergence,
+              lameDelegations: delegationData.lameDelegations.length,
+              hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
+            }
+          : {}),
+      },
     } as NewSnapshot);
 
     // Create observations for each result
