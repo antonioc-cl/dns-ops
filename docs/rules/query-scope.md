@@ -10,10 +10,11 @@ This document defines the targeted inspection scope for DNS queries in phase 1 o
 ## Scope Philosophy
 
 ### For Managed Zones
-- **Full zone visibility** (not enumeration)
-- Query all standard record types for zone apex
-- Full DNSSEC validation
-- Per-authoritative-server queries for consistency checks
+- **Enhanced apex inspection with authoritative consistency checks**
+- Query all standard record types for zone apex and mail-related names
+- Per-authoritative-server queries for cross-NS consistency validation
+- Results marked as `complete` when all queries succeed
+- Note: This is NOT zone enumeration—we query known names only
 
 ### For Unmanaged Zones
 - **Targeted inspection only**
@@ -28,14 +29,18 @@ The following record types are supported in phase 1:
 
 | Type | Purpose | Managed | Unmanaged |
 |------|---------|---------|-----------|
-| A | IPv4 address resolution | ✓ Full | ✓ Targeted |
-| AAAA | IPv6 address resolution | ✓ Full | ✓ Targeted |
-| CNAME | Canonical name | ✓ Full | ✓ Targeted |
-| MX | Mail exchanger | ✓ Full | ✓ Targeted |
-| TXT | Text records (SPF, DKIM, DMARC) | ✓ Full | ✓ Targeted |
-| NS | Name server delegation | ✓ Full | ✓ Targeted |
-| SOA | Start of authority | ✓ Full | ✓ Targeted |
-| CAA | Certificate Authority Authorization | ✓ Full | ✓ Targeted |
+| A | IPv4 address resolution | ✓ Apex + Mail | ✓ Targeted |
+| AAAA | IPv6 address resolution | ✓ Apex + Mail | ✓ Targeted |
+| CNAME | Canonical name | ✓ Apex + Mail | ✓ Targeted |
+| MX | Mail exchanger | ✓ Apex + Mail | ✓ Targeted |
+| TXT | Text records (SPF, DKIM, DMARC) | ✓ Apex + Mail | ✓ Targeted |
+| NS | Name server delegation | ✓ Apex + Mail | ✓ Targeted |
+| SOA | Start of authority | ✓ Apex + Mail | ✓ Targeted |
+| CAA | Certificate Authority Authorization | ✓ Apex + Mail | ✓ Targeted |
+
+**Legend:**
+- **Apex + Mail**: Queries zone apex plus mail-related names (_dmarc, _mta-sts, DKIM selectors), with per-authoritative consistency checks
+- **Targeted**: Queries specific mail-relevant names only, via public recursive resolver
 
 ## Targeted Names for Unmanaged Zones
 
@@ -112,11 +117,10 @@ The following are **never performed** for any zone type:
 
 ### For All Zones
 - Public recursive resolver (e.g., 8.8.8.8)
-- Authoritative nameserver queries
 
 ### For Managed Zones Only
-- Parent zone delegation queries
 - Per-authoritative-server queries for consistency checks
+- Delegation data collection (NS records, glue)
 
 ## UI Scope Indicators
 
@@ -124,9 +128,11 @@ The following are **never performed** for any zone type:
 
 | Badge | Meaning | Visibility |
 |-------|---------|------------|
-| 🟢 Complete | Full zone visibility | Managed zones |
-| 🟡 Partial | Targeted inspection only | Unmanaged zones |
+| 🟢 Complete | All planned queries succeeded | Managed zones with authoritative checks |
+| 🟡 Partial | Targeted inspection only | Unmanaged zones (mail-focused) |
 | 🔴 Failed | Could not collect data | Any zone with errors |
+
+**Important:** "Complete" does not mean full zone enumeration. It means all queries in the planned scope succeeded, including authoritative consistency checks for managed zones.
 
 ### Scope Warnings
 
