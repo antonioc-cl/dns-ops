@@ -721,26 +721,45 @@ function HistoryTab({ domain }: { domain: string }) {
 
   if (historyLoading) {
     return (
-      <output className="block py-8 text-center" aria-live="polite" aria-busy="true">
-        <div className="motion-safe:animate-pulse text-gray-500">Loading snapshot history...</div>
-      </output>
+      <div className="flex flex-col items-center justify-center py-12" aria-live="polite" aria-busy="true">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+        <p className="text-gray-600 font-medium">Loading snapshot history...</p>
+        <p className="text-sm text-gray-400 mt-1">Fetching snapshots and comparing changes</p>
+      </div>
     );
   }
 
   if (historyError) {
     return (
-      <div className="space-y-3">
-        <div className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-700" role="alert">
-          Failed to load snapshot history: {historyError}
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
         </div>
+        <h4 className="text-lg font-medium text-gray-900 mb-1">Failed to Load History</h4>
+        <p className="text-sm text-gray-500 mb-4 text-center max-w-md">{historyError}</p>
         <button
           type="button"
           onClick={() => {
             void loadHistory();
           }}
-          className="focus-ring min-h-10 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="focus-ring px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
-          Retry
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+          Try Again
         </button>
       </div>
     );
@@ -928,8 +947,24 @@ function HistoryTab({ domain }: { domain: string }) {
       )}
 
       {snapshots.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 border rounded-lg">
-          No snapshot history found yet.
+        <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-gray-50">
+          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 mb-1">No Snapshots Yet</h4>
+          <p className="text-sm text-gray-500 text-center max-w-md mb-4">
+            No snapshot history is available for this domain. Run a collection to capture the current DNS state.
+          </p>
+          <p className="text-xs text-gray-400">
+            Snapshots track DNS record changes over time
+          </p>
         </div>
       ) : (
         <div className="overflow-x-auto border rounded-lg">
