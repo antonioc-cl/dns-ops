@@ -105,4 +105,75 @@ export class SnapshotRepository {
   async updateRulesetVersion(id: string, rulesetVersionId: string): Promise<Snapshot | undefined> {
     return this.db.updateOne(snapshots, { rulesetVersionId }, eq(snapshots.id, id));
   }
+
+  /**
+   * Find snapshots that need findings backfill.
+   *
+   * Returns snapshots that either:
+   * - Have no rulesetVersionId set (never evaluated)
+   * - Have a different rulesetVersionId than the target (need re-evaluation)
+   *
+   * Used by the backfill endpoint to generate findings for existing snapshots.
+   */
+  async findNeedingBackfill(
+    targetRulesetVersionId: string,
+    options: {
+      domainId?: string;
+      limit?: number;
+      completedOnly?: boolean;
+    } = {}
+  ): Promise<Snapshot[]> {
+    const { domainId, limit = 100, completedOnly = true } = options;
+
+    let results = await this.db.select(snapshots);
+
+    // Filter by domain if specified
+    if (domainId) {
+      results = results.filter((s) => s.domainId === domainId);
+    }
+
+    // Filter by result state if completedOnly
+    if (completedOnly) {
+      results = results.filter((s) => s.resultState === 'complete');
+    }
+
+    // Filter to snapshots needing backfill (no ruleset or different ruleset)
+    results = results.filter(
+      (s) => !s.rulesetVersionId || s.rulesetVersionId !== targetRulesetVersionId
+    );
+
+    // Sort by createdAt desc (most recent first)
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return results.slice(0, limit);
+  }
+
+  /**
+   * Count snapshots needing backfill
+   */
+  async countNeedingBackfill(
+    targetRulesetVersionId: string,
+    options: { domainId?: string; completedOnly?: boolean } = {}
+  ): Promise<{ total: number; needsBackfill: number }> {
+    const { domainId, completedOnly = true } = options;
+
+    let results = await this.db.select(snapshots);
+
+    // Filter by domain if specified
+    if (domainId) {
+      results = results.filter((s) => s.domainId === domainId);
+    }
+
+    // Filter by result state if completedOnly
+    if (completedOnly) {
+      results = results.filter((s) => s.resultState === 'complete');
+    }
+
+    const total = results.length;
+    const needsBackfill = results.filter(
+      (s) => !s.rulesetVersionId || s.rulesetVersionId !== targetRulesetVersionId
+    ).length;
+
+    return { total, needsBackfill };
+  }
 }

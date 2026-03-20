@@ -573,6 +573,269 @@ findingsRoutes.patch(
   }
 );
 
+/**
+ * POST /api/findings/backfill
+ * Backfill findings for existing snapshots that haven't been evaluated
+ * or need re-evaluation with the current ruleset version.
+ *
+ * This is an administrative endpoint used to:
+ * - Generate findings for snapshots collected before rules were implemented
+ * - Re-evaluate snapshots when the ruleset version changes
+ * - Support portfolio/history views with consistent findings data
+ *
+ * Body:
+ *   - domainId?: string - Filter to a specific domain
+ *   - limit?: number - Max snapshots to process (default: 50, max: 200)
+ *   - dryRun?: boolean - If true, only return stats without processing
+ */
+findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
+  const db = c.get('db');
+  const body = await c.req.json().catch(() => ({}));
+  const { domainId, limit = 50, dryRun = false } = body as {
+    domainId?: string;
+    limit?: number;
+    dryRun?: boolean;
+  };
+
+  const effectiveLimit = Math.min(limit || 50, 200);
+
+  try {
+    const snapshotRepo = new SnapshotRepository(db);
+    const findingRepo = new FindingRepository(db);
+    const rulesetVersionRepo = new RulesetVersionRepository(db);
+    const domainRepo = new DomainRepository(db);
+    const observationRepo = new ObservationRepository(db);
+    const recordSetRepo = new RecordSetRepository(db);
+    const suggestionRepo = new SuggestionRepository(db);
+
+    // Get current ruleset and ensure version exists
+    const ruleset = createCombinedRuleset();
+    const actorId = c.req.header('X-Actor-Id') || 'system';
+    const rulesetVersionId = await ensureRulesetVersion(rulesetVersionRepo, ruleset, actorId);
+
+    // Get backfill statistics
+    const stats = await snapshotRepo.countNeedingBackfill(rulesetVersionId, {
+      domainId,
+      completedOnly: true,
+    });
+
+    if (dryRun) {
+      return c.json({
+        dryRun: true,
+        rulesetVersion: ruleset.version,
+        rulesetVersionId,
+        stats,
+        message: `${stats.needsBackfill} of ${stats.total} snapshots need backfill`,
+      });
+    }
+
+    // Find snapshots needing backfill
+    const snapshotsToProcess = await snapshotRepo.findNeedingBackfill(rulesetVersionId, {
+      domainId,
+      limit: effectiveLimit,
+      completedOnly: true,
+    });
+
+    if (snapshotsToProcess.length === 0) {
+      return c.json({
+        processed: 0,
+        rulesetVersion: ruleset.version,
+        rulesetVersionId,
+        stats,
+        message: 'No snapshots require backfill',
+      });
+    }
+
+    // Process each snapshot
+    const results: Array<{
+      snapshotId: string;
+      domainName: string;
+      findingsCount: number;
+      suggestionsCount: number;
+      status: 'success' | 'error';
+      error?: string;
+    }> = [];
+
+    for (const snapshot of snapshotsToProcess) {
+      try {
+        // Fetch domain
+        const domain = await domainRepo.findById(snapshot.domainId);
+        if (!domain) {
+          results.push({
+            snapshotId: snapshot.id,
+            domainName: snapshot.domainName,
+            findingsCount: 0,
+            suggestionsCount: 0,
+            status: 'error',
+            error: 'Domain not found',
+          });
+          continue;
+        }
+
+        // Fetch observations and record sets
+        const observations = await observationRepo.findBySnapshotId(snapshot.id);
+        const recordSets = await recordSetRepo.findBySnapshotId(snapshot.id);
+
+        // Create rule context
+        const context: RuleContext = {
+          snapshotId: snapshot.id,
+          domainId: domain.id,
+          domainName: domain.name,
+          zoneManagement: snapshot.zoneManagement,
+          observations,
+          recordSets,
+          rulesetVersion: ruleset.version,
+        };
+
+        // Evaluate rules
+        const engine = new RulesEngine(ruleset);
+        const { findings, suggestions } = engine.evaluate(context);
+
+        // Delete any existing findings for this ruleset version (idempotent)
+        await findingRepo.deleteBySnapshotIdAndRulesetVersionId(snapshot.id, rulesetVersionId);
+
+        // Persist findings
+        const findingsToInsert: NewFinding[] = findings.map((f) => ({
+          snapshotId: snapshot.id,
+          type: f.type,
+          title: f.title,
+          description: f.description,
+          severity: f.severity,
+          confidence: f.confidence,
+          riskPosture: f.riskPosture,
+          blastRadius: f.blastRadius,
+          reviewOnly: f.reviewOnly,
+          evidence: f.evidence,
+          ruleId: f.ruleId,
+          ruleVersion: f.ruleVersion,
+          rulesetVersionId,
+        }));
+
+        const persistedFindings = await findingRepo.createMany(findingsToInsert);
+
+        // Build finding ID map for suggestion linking
+        const findingIdMap = new Map<string, string>();
+        for (let i = 0; i < findings.length; i++) {
+          const originalId = findings[i].id;
+          const persistedId = persistedFindings[i]?.id;
+          if (originalId && persistedId) {
+            findingIdMap.set(originalId, persistedId);
+          }
+        }
+
+        // Persist suggestions
+        const suggestionsToInsert: NewSuggestion[] = [];
+        for (const s of suggestions) {
+          const persistedFindingId = findingIdMap.get(s.findingId);
+          if (persistedFindingId) {
+            suggestionsToInsert.push({
+              findingId: persistedFindingId,
+              title: s.title,
+              description: s.description,
+              action: s.action,
+              riskPosture: s.riskPosture,
+              blastRadius: s.blastRadius,
+              reviewOnly: s.reviewOnly ?? false,
+            });
+          }
+        }
+
+        const persistedSuggestions = await suggestionRepo.createMany(suggestionsToInsert);
+
+        // Update snapshot's ruleset version
+        await snapshotRepo.updateRulesetVersion(snapshot.id, rulesetVersionId);
+
+        results.push({
+          snapshotId: snapshot.id,
+          domainName: snapshot.domainName,
+          findingsCount: persistedFindings.length,
+          suggestionsCount: persistedSuggestions.length,
+          status: 'success',
+        });
+      } catch (error) {
+        results.push({
+          snapshotId: snapshot.id,
+          domainName: snapshot.domainName,
+          findingsCount: 0,
+          suggestionsCount: 0,
+          status: 'error',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    const successCount = results.filter((r) => r.status === 'success').length;
+    const errorCount = results.filter((r) => r.status === 'error').length;
+    const totalFindings = results.reduce((sum, r) => sum + r.findingsCount, 0);
+    const totalSuggestions = results.reduce((sum, r) => sum + r.suggestionsCount, 0);
+
+    return c.json({
+      processed: results.length,
+      success: successCount,
+      errors: errorCount,
+      totalFindings,
+      totalSuggestions,
+      rulesetVersion: ruleset.version,
+      rulesetVersionId,
+      remainingToBackfill: stats.needsBackfill - successCount,
+      results,
+    });
+  } catch (error) {
+    console.error('Error in findings backfill:', error);
+    return c.json(
+      {
+        error: 'Failed to backfill findings',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/findings/backfill/status
+ * Get backfill status - how many snapshots need evaluation
+ */
+findingsRoutes.get('/findings/backfill/status', requireAuth, async (c) => {
+  const db = c.get('db');
+  const domainId = c.req.query('domainId');
+
+  try {
+    const snapshotRepo = new SnapshotRepository(db);
+    const rulesetVersionRepo = new RulesetVersionRepository(db);
+
+    // Get current ruleset and ensure version exists
+    const ruleset = createCombinedRuleset();
+    const actorId = c.req.header('X-Actor-Id') || 'system';
+    const rulesetVersionId = await ensureRulesetVersion(rulesetVersionRepo, ruleset, actorId);
+
+    // Get backfill statistics
+    const stats = await snapshotRepo.countNeedingBackfill(rulesetVersionId, {
+      domainId,
+      completedOnly: true,
+    });
+
+    return c.json({
+      rulesetVersion: ruleset.version,
+      rulesetVersionId,
+      total: stats.total,
+      needsBackfill: stats.needsBackfill,
+      evaluated: stats.total - stats.needsBackfill,
+      completionPercent:
+        stats.total > 0 ? Math.round(((stats.total - stats.needsBackfill) / stats.total) * 100) : 100,
+    });
+  } catch (error) {
+    console.error('Error getting backfill status:', error);
+    return c.json(
+      {
+        error: 'Failed to get backfill status',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
 // =============================================================================
 // Helper Functions
 // =============================================================================
