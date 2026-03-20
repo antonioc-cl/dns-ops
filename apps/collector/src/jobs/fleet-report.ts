@@ -23,6 +23,10 @@ export const fleetReportRoutes = new Hono<Env>();
  */
 fleetReportRoutes.post('/run', async (c) => {
   const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
   const body = await c.req.json().catch(() => ({}));
   const {
     inventory = [],

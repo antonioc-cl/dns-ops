@@ -36,6 +36,22 @@ describe('Fleet Report Routes', () => {
   });
 
   describe('POST /api/fleet-report/run', () => {
+    it('should return 503 if database is not available', async () => {
+      // Create app WITHOUT db middleware to simulate missing db context
+      const appWithoutDb = new Hono<Env>();
+      appWithoutDb.route('/api/fleet-report', fleetReportRoutes);
+
+      const res = await appWithoutDb.request('/api/fleet-report/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inventory: ['example.com'] }),
+      });
+
+      expect(res.status).toBe(503);
+      const json = await res.json();
+      expect(json.error).toBe('Database not available');
+    });
+
     it('should return 400 if inventory is empty', async () => {
       const res = await app.request('/api/fleet-report/run', {
         method: 'POST',
