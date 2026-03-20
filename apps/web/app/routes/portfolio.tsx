@@ -13,6 +13,7 @@
 
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
+import { type CurrentFilters, SavedFiltersPanel } from '../components/SavedFiltersPanel.js';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 type ZoneManagement = 'managed' | 'unmanaged' | 'unknown';
@@ -169,6 +170,11 @@ function PortfolioComponent() {
         ? prev.zoneManagement.filter((z) => z !== zone)
         : [...prev.zoneManagement, zone],
     }));
+  };
+
+  const handleLoadSavedFilter = (loadedFilters: CurrentFilters) => {
+    setFilters(loadedFilters);
+    setShowFilters(true); // Show filters panel so user can see what was loaded
   };
 
   return (
@@ -379,6 +385,12 @@ function PortfolioComponent() {
           Showing {domains.length} domain{domains.length !== 1 ? 's' : ''}
         </div>
       )}
+
+      {/* Saved Filters */}
+      <SavedFiltersPanel
+        currentFilters={filters}
+        onLoadFilter={handleLoadSavedFilter}
+      />
     </div>
   );
 }
