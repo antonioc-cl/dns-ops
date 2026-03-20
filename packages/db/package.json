@@ -20,7 +20,8 @@
     "lint": "biome check src",
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "verify-migrations": "npx tsx scripts/verify-migrations.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.29.0",
@@ -29,6 +30,7 @@
   "devDependencies": {
     "@types/pg": "^8.10.0",
     "drizzle-kit": "^0.20.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.0"
   }
 }
