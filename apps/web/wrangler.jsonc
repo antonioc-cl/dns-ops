@@ -1,31 +1,41 @@
 {
+  "$schema": "https://json.schemastore.org/wrangler.json",
   "name": "dns-ops-web",
-  "main": "./dist/index.js",
+  "pages_build_output_dir": "./dist",
   "compatibility_date": "2024-01-01",
   "compatibility_flags": ["nodejs_compat"],
-  "vars": {
-    "ENVIRONMENT": "production",
-    "COLLECTOR_URL": "https://collector.example.com"
-  },
-  // Hyperdrive connection to PostgreSQL (authoritative data store)
-  // See docs/architecture/runtime-topology.md for topology documentation
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "your-hyperdrive-id-here"
-    }
-  ],
-  // KV for edge caching only (not for product data)
-  "kv_namespaces": [
-    {
-      "binding": "CACHE",
-      "id": "your-kv-namespace-id-here"
-    }
-  ],
-  "routes": [
-    {
-      "pattern": "dns-ops.example.com/*",
-      "custom_domain": true
-    }
-  ]
+
+  // ==========================================================================
+  // Production Bindings Configuration
+  // ==========================================================================
+  // These bindings must be configured via the Cloudflare Dashboard or CLI:
+  //   wrangler pages project create dns-ops-web
+  //   wrangler pages project edit dns-ops-web
+  //
+  // Required bindings:
+  //
+  // 1. HYPERDRIVE - PostgreSQL connection pooling
+  //    Create: wrangler hyperdrive create dns-ops-db --connection-string="..."
+  //    Bind to Pages project in dashboard under Settings > Functions > Bindings
+  //
+  // 2. CACHE (KV) - Edge caching for read-heavy data
+  //    Create: wrangler kv namespace create CACHE
+  //    Bind to Pages project in dashboard
+  //
+  // 3. Environment Variables (set in dashboard or .dev.vars locally):
+  //    - ENVIRONMENT: "production" | "staging" | "development"
+  //    - COLLECTOR_URL: URL to the collector service (e.g., https://collector.dns-ops.example.com)
+  //    - INTERNAL_SECRET: Shared secret for web -> collector auth
+  //
+  // ==========================================================================
+  // Local Development
+  // ==========================================================================
+  // For local development, create apps/web/.dev.vars:
+  //
+  //   ENVIRONMENT=development
+  //   COLLECTOR_URL=http://localhost:3001
+  //   DATABASE_URL=postgres://user:pass@localhost:5432/dns_ops
+  //
+  // Then run: bun run preview
+  // ==========================================================================
 }
