@@ -5,3 +5,8 @@
  */
 
 export { dbMiddleware, dbMiddlewareStrict } from './db.js';
+export {
+  serviceAuthMiddleware,
+  requireServiceAuthMiddleware,
+  internalOnlyMiddleware,
+} from './auth.js';

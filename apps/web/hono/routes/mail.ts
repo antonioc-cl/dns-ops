@@ -85,11 +85,25 @@ export const mailRoutes = new Hono<Env>()
     }
 
     const collectorUrl = process.env.COLLECTOR_URL || 'http://localhost:3001';
+    const internalSecret = process.env.INTERNAL_SECRET;
+    const tenantId = c.get('tenantId') || 'default';
+    const actorId = c.get('actorId') || 'web-ui';
 
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add internal auth headers if secret is configured
+      if (internalSecret) {
+        headers['X-Internal-Secret'] = internalSecret;
+        headers['X-Tenant-Id'] = tenantId;
+        headers['X-Actor-Id'] = actorId;
+      }
+
       const response = await fetch(`${collectorUrl}/api/collect/mail`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(data),
       });
 
