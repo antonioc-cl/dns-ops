@@ -1,17 +1,24 @@
 /**
  * Mail Checker
  *
- * Performs DMARC, DKIM, and SPF checks for email security validation.
+ * Performs comprehensive mail security checks:
+ * - DMARC, DKIM, SPF (core authentication)
+ * - MX records with null MX detection
+ * - MTA-STS (Mail Transfer Agent Strict Transport Security)
+ * - TLS-RPT (SMTP TLS Reporting)
  */
 
 import { type DMARCRecord, parseDMARC, parseSPF, type SPFRecord } from '@dns-ops/parsing';
-import { resolveTXT } from './dns.js';
+import { type MxRecord, resolveMX, resolveTXT } from './dns.js';
 
 export interface MailCheckResult {
   domain: string;
+  mx: MxCheckResult;
   dmarc: RecordCheckResult;
   dkim: DKIMCheckResult;
   spf: RecordCheckResult;
+  mtaSts: MtaStsCheckResult;
+  tlsRpt: TlsRptCheckResult;
   checkedAt: Date;
 }
 
@@ -20,6 +27,31 @@ export interface RecordCheckResult {
   valid: boolean;
   record?: string;
   parsed?: DMARCRecord | SPFRecord;
+  errors?: string[];
+}
+
+export interface MxCheckResult {
+  present: boolean;
+  isNullMx: boolean;
+  records: MxRecord[];
+  errors?: string[];
+}
+
+export interface MtaStsCheckResult {
+  present: boolean;
+  valid: boolean;
+  record?: string;
+  version?: string;
+  id?: string;
+  errors?: string[];
+}
+
+export interface TlsRptCheckResult {
+  present: boolean;
+  valid: boolean;
+  record?: string;
+  version?: string;
+  rua?: string[];
   errors?: string[];
 }
 
@@ -52,7 +84,7 @@ export const PROVIDER_SELECTORS: Record<string, ProviderSelectorInfo> = {
 export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'email'];
 
 /**
- * Perform complete mail check (DMARC, DKIM, SPF)
+ * Perform complete mail check (MX, DMARC, DKIM, SPF, MTA-STS, TLS-RPT)
  */
 export async function performMailCheck(
   domain: string,
@@ -61,17 +93,23 @@ export async function performMailCheck(
     explicitSelectors?: string[];
   }
 ): Promise<MailCheckResult> {
-  const [dmarc, dkim, spf] = await Promise.all([
+  const [mx, dmarc, dkim, spf, mtaSts, tlsRpt] = await Promise.all([
+    checkMX(domain),
     checkDMARC(domain),
     checkDKIM(domain, options),
     checkSPF(domain),
+    checkMtaSts(domain),
+    checkTlsRpt(domain),
   ]);
 
   return {
     domain,
+    mx,
     dmarc,
     dkim,
     spf,
+    mtaSts,
+    tlsRpt,
     checkedAt: new Date(),
   };
 }
@@ -228,6 +266,140 @@ export async function checkSPF(domain: string): Promise<RecordCheckResult> {
       record: spfRecord,
       parsed: parsed || undefined,
       errors: parsed ? undefined : ['Failed to parse SPF record'],
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      present: false,
+      valid: false,
+      errors: [`DNS error: ${message}`],
+    };
+  }
+}
+
+/**
+ * Check MX records
+ * Detects null MX (RFC 7505) - priority 0 with empty exchange
+ */
+export async function checkMX(domain: string): Promise<MxCheckResult> {
+  try {
+    const records = await resolveMX(domain);
+
+    if (records.length === 0) {
+      return {
+        present: false,
+        isNullMx: false,
+        records: [],
+        errors: ['No MX records found'],
+      };
+    }
+
+    // Detect null MX: single record with priority 0 and empty/root exchange
+    const isNullMx =
+      records.length === 1 &&
+      records[0].priority === 0 &&
+      (records[0].exchange === '' || records[0].exchange === '.');
+
+    return {
+      present: true,
+      isNullMx,
+      records,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      present: false,
+      isNullMx: false,
+      records: [],
+      errors: [`DNS error: ${message}`],
+    };
+  }
+}
+
+/**
+ * Check MTA-STS record
+ * Format: v=STSv1; id=...
+ */
+export async function checkMtaSts(domain: string): Promise<MtaStsCheckResult> {
+  try {
+    const records = await resolveTXT(`_mta-sts.${domain}`);
+    const mtaStsRecord = records.find((r) => r.includes('v=STSv1'));
+
+    if (!mtaStsRecord) {
+      return {
+        present: false,
+        valid: false,
+        errors: ['No MTA-STS record found'],
+      };
+    }
+
+    // Parse v= and id= from record
+    const versionMatch = mtaStsRecord.match(/v=(\S+)/);
+    const idMatch = mtaStsRecord.match(/id=(\S+)/);
+
+    const version = versionMatch ? versionMatch[1].replace(/;$/, '') : undefined;
+    const id = idMatch ? idMatch[1].replace(/;$/, '') : undefined;
+
+    // Valid if has version and id
+    const valid = version === 'STSv1' && id !== undefined;
+
+    return {
+      present: true,
+      valid,
+      record: mtaStsRecord,
+      version,
+      id,
+      errors: valid ? undefined : ['Invalid MTA-STS record format'],
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      present: false,
+      valid: false,
+      errors: [`DNS error: ${message}`],
+    };
+  }
+}
+
+/**
+ * Check TLS-RPT record
+ * Format: v=TLSRPTv1; rua=mailto:...
+ */
+export async function checkTlsRpt(domain: string): Promise<TlsRptCheckResult> {
+  try {
+    const records = await resolveTXT(`_smtp._tls.${domain}`);
+    const tlsRptRecord = records.find((r) => r.includes('v=TLSRPTv1'));
+
+    if (!tlsRptRecord) {
+      return {
+        present: false,
+        valid: false,
+        errors: ['No TLS-RPT record found'],
+      };
+    }
+
+    // Parse v= and rua= from record
+    const versionMatch = tlsRptRecord.match(/v=(\S+)/);
+    const ruaMatch = tlsRptRecord.match(/rua=([^;]+)/);
+
+    const version = versionMatch ? versionMatch[1].replace(/;$/, '') : undefined;
+    const rua = ruaMatch
+      ? ruaMatch[1]
+          .split(',')
+          .map((u) => u.trim())
+          .filter(Boolean)
+      : undefined;
+
+    // Valid if has version and at least one rua
+    const valid = version === 'TLSRPTv1' && rua !== undefined && rua.length > 0;
+
+    return {
+      present: true,
+      valid,
+      record: tlsRptRecord,
+      version,
+      rua,
+      errors: valid ? undefined : ['Invalid TLS-RPT record format'],
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

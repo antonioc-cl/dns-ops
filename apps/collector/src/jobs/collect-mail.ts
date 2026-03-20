@@ -1,7 +1,11 @@
 /**
  * Mail Collection Job
  *
- * Collects mail-related DNS records (DMARC, DKIM, SPF) for a domain.
+ * Collects mail-related DNS records for a domain:
+ * - MX (with null MX detection)
+ * - DMARC, DKIM, SPF
+ * - MTA-STS, TLS-RPT
+ *
  * Persists DKIM selector provenance and mail evidence summary.
  */
 
@@ -209,6 +213,81 @@ async function storeMailObservations(
     errorMessage: result.spf.errors?.join(', ') || undefined,
   });
 
+  // MX observation
+  observations.push({
+    snapshotId,
+    queryName: domain,
+    queryType: 'MX',
+    vantageType: 'public-recursive',
+    status: result.mx.present
+      ? 'success'
+      : result.mx.errors?.[0]?.includes('NXDOMAIN')
+        ? 'nxdomain'
+        : 'error',
+    queriedAt: now,
+    responseTimeMs: 0,
+    answerSection: result.mx.records.map((r) => ({
+      name: domain,
+      type: 'MX',
+      ttl: 3600,
+      data: `${r.priority} ${r.exchange}`,
+      priority: r.priority,
+    })),
+    errorMessage: result.mx.errors?.join(', ') || undefined,
+  });
+
+  // MTA-STS observation
+  observations.push({
+    snapshotId,
+    queryName: `_mta-sts.${domain}`,
+    queryType: 'TXT',
+    vantageType: 'public-recursive',
+    status: result.mtaSts.present
+      ? 'success'
+      : result.mtaSts.errors?.[0]?.includes('NXDOMAIN')
+        ? 'nxdomain'
+        : 'error',
+    queriedAt: now,
+    responseTimeMs: 0,
+    answerSection: result.mtaSts.record
+      ? [
+          {
+            name: `_mta-sts.${domain}`,
+            type: 'TXT',
+            ttl: 3600,
+            data: result.mtaSts.record,
+          },
+        ]
+      : undefined,
+    errorMessage: result.mtaSts.errors?.join(', ') || undefined,
+  });
+
+  // TLS-RPT observation
+  observations.push({
+    snapshotId,
+    queryName: `_smtp._tls.${domain}`,
+    queryType: 'TXT',
+    vantageType: 'public-recursive',
+    status: result.tlsRpt.present
+      ? 'success'
+      : result.tlsRpt.errors?.[0]?.includes('NXDOMAIN')
+        ? 'nxdomain'
+        : 'error',
+    queriedAt: now,
+    responseTimeMs: 0,
+    answerSection: result.tlsRpt.record
+      ? [
+          {
+            name: `_smtp._tls.${domain}`,
+            type: 'TXT',
+            ttl: 3600,
+            data: result.tlsRpt.record,
+          },
+        ]
+      : undefined,
+    errorMessage: result.tlsRpt.errors?.join(', ') || undefined,
+  });
+
   // Insert observations
   await repo.createMany(observations);
 
@@ -385,9 +464,8 @@ async function storeMailEvidence(
     bimi: 0,
   };
 
-  // MX: 15 points
-  if (result.spf.present || result.dmarc.present || result.dkim.present) {
-    // Assume MX exists if we have mail records
+  // MX: 15 points (0 for null MX)
+  if (result.mx.present && !result.mx.isNullMx) {
     scoreBreakdown.mx = 15;
     score += 15;
   }
@@ -424,16 +502,29 @@ async function storeMailEvidence(
     score += 10;
   }
 
-  // MTA-STS, TLS-RPT, BIMI: Future enhancements
-  // For now, these remain 0
+  // MTA-STS: 10 points
+  if (result.mtaSts.present && result.mtaSts.valid) {
+    scoreBreakdown.mtaSts = 10;
+    score += 10;
+  }
+
+  // TLS-RPT: 10 points
+  if (result.tlsRpt.present && result.tlsRpt.valid) {
+    scoreBreakdown.tlsRpt = 10;
+    score += 10;
+  }
+
+  // BIMI: Future enhancement
+  // For now, this remains 0
 
   const evidence: NewMailEvidence = {
     snapshotId,
     domain,
     detectedProvider: result.dkim.provider as NewMailEvidence['detectedProvider'],
     providerConfidence: result.dkim.selectorProvenance === 'provider' ? 'medium' : 'heuristic',
-    hasMx: true, // Assume true if we're checking mail
-    isNullMx: false,
+    hasMx: result.mx.present,
+    isNullMx: result.mx.isNullMx,
+    mxHosts: result.mx.records.map((r) => r.exchange),
     hasSpf: result.spf.present,
     spfRecord: result.spf.record || undefined,
     hasDmarc: result.dmarc.present,
@@ -446,8 +537,11 @@ async function storeMailEvidence(
     hasDkim: result.dkim.present,
     dkimSelectorsFound: result.dkim.selector ? [result.dkim.selector] : undefined,
     dkimSelectorCount: result.dkim.selector ? '1' : '0',
-    hasMtaSts: false,
-    hasTlsRpt: false,
+    hasMtaSts: result.mtaSts.present,
+    mtaStsMode: result.mtaSts.valid ? 'enforce' : undefined, // We'd need to fetch the policy for the actual mode
+    mtaStsVersion: result.mtaSts.version,
+    hasTlsRpt: result.tlsRpt.present,
+    tlsRptRua: result.tlsRpt.rua,
     hasBimi: false,
     securityScore: String(score),
     scoreBreakdown,
