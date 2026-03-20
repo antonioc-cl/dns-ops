@@ -6,7 +6,7 @@
  * - Null MX detection
  * - DKIM selector discovery with provenance tracking
  */
-import { discoverSelectors, buildDkimQueryNames, parseSpfRecord, isDmarcRecord, isMtaStsRecord, isNullMx as checkIsNullMx, } from './selector-discovery.js';
+import { buildDkimQueryNames, isNullMx as checkIsNullMx, discoverSelectors, isDmarcRecord, isMtaStsRecord, parseSpfRecord, } from './selector-discovery.js';
 /**
  * Generate mail-related DNS queries
  *
@@ -74,7 +74,8 @@ export async function analyzeMailResults(results) {
             }
         }
         // SPF record (on base domain)
-        if (result.query.type === 'TXT' && result.query.name === result.query.name.split('.').slice(-2).join('.')) {
+        if (result.query.type === 'TXT' &&
+            result.query.name === result.query.name.split('.').slice(-2).join('.')) {
             const spfData = parseSpfRecord(result);
             if (spfData) {
                 spf = spfData;

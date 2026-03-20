@@ -3,7 +3,7 @@
  *
  * Exports DNS collection functionality.
  */
-export * from './types.js';
-export * from './resolver.js';
 export * from './collector.js';
+export * from './resolver.js';
+export * from './types.js';
 //# sourceMappingURL=index.d.ts.map

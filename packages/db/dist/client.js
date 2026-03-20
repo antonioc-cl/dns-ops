@@ -2,10 +2,18 @@
  * DNS Ops Workbench - Database Client
  *
  * Provides a shared Drizzle ORM client for the monorepo.
- * Supports both Cloudflare D1 (for Workers) and PostgreSQL (for local/collector).
+ *
+ * TOPOLOGY (see docs/architecture/runtime-topology.md):
+ * - PostgreSQL is the single authoritative data store
+ * - Web app (Cloudflare Workers) connects via Hyperdrive
+ * - Collector (Node.js) connects directly to PostgreSQL
+ * - Local dev uses PostgreSQL for both runtimes
+ *
+ * D1 is NOT used for product data. Legacy D1 support is retained
+ * for potential edge caching but should not be used for authoritative data.
  */
-import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzleD1 } from 'drizzle-orm/d1';
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema/index.js';
 // Export schema for convenience

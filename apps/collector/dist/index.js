@@ -10,9 +10,9 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
-import { probeRoutes } from './jobs/probe-routes.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
 import { monitoringRoutes } from './jobs/monitoring.js';
+import { probeRoutes } from './jobs/probe-routes.js';
 const app = new Hono();
 // Middleware
 app.use('*', cors());

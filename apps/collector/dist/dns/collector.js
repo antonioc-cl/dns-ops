@@ -3,10 +3,10 @@
  *
  * Coordinates DNS queries across multiple vantages and stores results.
  */
-import { DNSResolver } from './resolver.js';
-import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db';
+import { DomainRepository, ObservationRepository, RecordSetRepository, SnapshotRepository, } from '@dns-ops/db';
 import { observationsToRecordSets } from '@dns-ops/parsing';
 import { DelegationCollector } from '../delegation/collector.js';
+import { DNSResolver } from './resolver.js';
 export class DNSCollector {
     resolver;
     config;
@@ -37,7 +37,7 @@ export class DNSCollector {
             region: 'us-central',
         }, errors);
         // Collect from authoritative vantages (for managed zones or if NS discovered)
-        let authoritativeResults = [];
+        const authoritativeResults = [];
         if (this.config.zoneManagement === 'managed') {
             // For managed zones, query authoritative directly
             const nsRecords = await this.discoverAuthoritativeServers();
@@ -53,7 +53,8 @@ export class DNSCollector {
         const allResults = [...recursiveResults, ...authoritativeResults];
         // Collect delegation data if enabled (Bead 12)
         let delegationData = null;
-        if (this.config.includeDelegationData !== false) { // Default to true
+        if (this.config.includeDelegationData !== false) {
+            // Default to true
             try {
                 const delegationCollector = new DelegationCollector(this.config.domain);
                 delegationData = await delegationCollector.collectDelegationSummary('8.8.8.8');
@@ -81,7 +82,7 @@ export class DNSCollector {
      */
     async generateQueries() {
         const queries = [];
-        const { domain, zoneManagement, recordTypes, queryNames, includeMailRecords, dkimSelectors, managedDkimSelectors } = this.config;
+        const { domain, zoneManagement, recordTypes, queryNames, includeMailRecords, dkimSelectors, managedDkimSelectors, } = this.config;
         if (queryNames) {
             // Use explicit query names (targeted inspection)
             for (const name of queryNames) {
@@ -104,7 +105,8 @@ export class DNSCollector {
                 }
             }
             // Include mail records with DKIM selector discovery (Bead 08)
-            if (includeMailRecords !== false) { // Default to true
+            if (includeMailRecords !== false) {
+                // Default to true
                 const mailQueries = await this.generateMailQueries(domain, dkimSelectors, managedDkimSelectors);
                 queries.push(...mailQueries);
             }
@@ -223,23 +225,25 @@ export class DNSCollector {
             domainId: domainRecord.id,
             domainName: domain,
             resultState,
-            queriedNames: [...new Set(results.map(r => r.query.name))],
-            queriedTypes: [...new Set(results.map(r => r.query.type))],
-            vantages: [...new Set(results.map(r => r.vantage.identifier))],
+            queriedNames: [...new Set(results.map((r) => r.query.name))],
+            queriedTypes: [...new Set(results.map((r) => r.query.type))],
+            vantages: [...new Set(results.map((r) => r.vantage.identifier))],
             zoneManagement,
             triggeredBy: triggeredBy || 'system',
             // Store delegation data summary if available (Bead 12)
-            metadata: delegationData ? {
-                hasDelegationData: true,
-                parentZone: delegationData.parentZone,
-                nsServers: delegationData.parentNs.map((ns) => ns.data),
-                hasDivergence: delegationData.hasDivergence,
-                lameDelegations: delegationData.lameDelegations.length,
-                hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
-            } : undefined,
+            metadata: delegationData
+                ? {
+                    hasDelegationData: true,
+                    parentZone: delegationData.parentZone,
+                    nsServers: delegationData.parentNs.map((ns) => ns.data),
+                    hasDivergence: delegationData.hasDivergence,
+                    lameDelegations: delegationData.lameDelegations.length,
+                    hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
+                }
+                : undefined,
         });
         // Create observations for each result
-        const observationData = results.map(result => ({
+        const observationData = results.map((result) => ({
             snapshotId: snapshot.id,
             queryName: result.query.name,
             queryType: result.query.type,
@@ -249,14 +253,16 @@ export class DNSCollector {
             queriedAt: new Date(),
             responseTimeMs: result.responseTime,
             responseCode: result.responseCode ?? null,
-            flags: result.flags ? {
-                authoritative: result.flags.aa,
-                truncated: result.flags.tc,
-                recursionDesired: result.flags.rd,
-                recursionAvailable: result.flags.ra,
-                authenticated: result.flags.ad,
-                checkingDisabled: result.flags.cd,
-            } : null,
+            flags: result.flags
+                ? {
+                    authoritative: result.flags.aa,
+                    truncated: result.flags.tc,
+                    recursionDesired: result.flags.rd,
+                    recursionAvailable: result.flags.ra,
+                    authenticated: result.flags.ad,
+                    checkingDisabled: result.flags.cd,
+                }
+                : null,
             answerSection: result.answers.map((a) => ({
                 name: a.name,
                 type: a.type,
@@ -301,7 +307,7 @@ export class DNSCollector {
      */
     async createRecordSetsFromObservations(snapshotId, observations) {
         const normalizedRecords = observationsToRecordSets(observations);
-        const recordSetData = normalizedRecords.map(record => ({
+        const recordSetData = normalizedRecords.map((record) => ({
             snapshotId,
             name: record.name,
             type: record.type,

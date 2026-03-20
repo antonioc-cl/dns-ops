@@ -8,7 +8,7 @@
  * - Query scope
  * - Ruleset version
  */
-import type { RecordSet, Finding } from '@dns-ops/db/schema';
+import type { Finding, RecordSet } from '@dns-ops/db/schema';
 export interface SnapshotDiffResult {
     snapshotA: {
         id: string;

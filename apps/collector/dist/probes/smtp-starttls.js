@@ -4,10 +4,10 @@
  * Checks SMTP server for STARTTLS capability.
  * Performs limited SMTP handshake to detect TLS support.
  */
-import * as net from 'net';
-import * as tls from 'tls';
-import { checkSSRF } from './ssrf-guard.js';
+import * as net from 'node:net';
+import * as tls from 'node:tls';
 import { probeAllowlist } from './allowlist.js';
+import { checkSSRF } from './ssrf-guard.js';
 /**
  * Read SMTP response from socket
  */
@@ -21,7 +21,7 @@ function readResponse(socket, timeoutMs) {
             buffer += data.toString();
             // Check for complete response (ends with \r\n)
             if (buffer.includes('\r\n')) {
-                const lines = buffer.split('\r\n').filter(l => l);
+                const lines = buffer.split('\r\n').filter((l) => l);
                 const lastLine = lines[lines.length - 1];
                 // Parse response code
                 const match = lastLine.match(/^(\d{3})/);
@@ -46,7 +46,7 @@ function readResponse(socket, timeoutMs) {
  * Send SMTP command
  */
 function sendCommand(socket, command) {
-    socket.write(command + '\r\n');
+    socket.write(`${command}\r\n`);
 }
 /**
  * Probe SMTP server for STARTTLS capability
@@ -169,13 +169,15 @@ export async function probeSMTPStarttls(hostname, options) {
             supportsStarttls: true,
             tlsVersion: tlsInfo.version,
             tlsCipher: tlsInfo.name,
-            certificate: cert.subject ? {
-                subject: String(cert.subject.CN || cert.subject.O || 'Unknown'),
-                issuer: String(cert.issuer.CN || cert.issuer.O || 'Unknown'),
-                validFrom: cert.valid_from,
-                validTo: cert.valid_to,
-                fingerprint: cert.fingerprint,
-            } : undefined,
+            certificate: cert.subject
+                ? {
+                    subject: String(cert.subject.CN || cert.subject.O || 'Unknown'),
+                    issuer: String(cert.issuer.CN || cert.issuer.O || 'Unknown'),
+                    validFrom: cert.valid_from,
+                    validTo: cert.valid_to,
+                    fingerprint: cert.fingerprint,
+                }
+                : undefined,
             smtpBanner,
             responseTimeMs: Date.now() - startTime,
         };
@@ -190,9 +192,7 @@ export async function probeSMTPStarttls(hostname, options) {
             hostname,
             port,
             supportsStarttls: false,
-            error: isTimeout
-                ? `Timeout after ${timeoutMs}ms`
-                : errorMessage,
+            error: isTimeout ? `Timeout after ${timeoutMs}ms` : errorMessage,
             responseTimeMs: Date.now() - startTime,
         };
     }
@@ -206,7 +206,7 @@ export async function probeMXHosts(hosts, options) {
     // Process in batches to limit concurrency
     for (let i = 0; i < hosts.length; i += concurrency) {
         const batch = hosts.slice(i, i + concurrency);
-        const batchPromises = batch.map(host => probeSMTPStarttls(host.hostname, { timeoutMs }));
+        const batchPromises = batch.map((host) => probeSMTPStarttls(host.hostname, { timeoutMs }));
         const batchResults = await Promise.all(batchPromises);
         results.push(...batchResults);
     }

@@ -106,7 +106,9 @@ export function isReviewOnly(severity, blastRadius, confidence) {
         return true;
     }
     // Anything affecting multiple domains requires review
-    if (blastRadius === 'related-domains' || blastRadius === 'infrastructure' || blastRadius === 'organization-wide') {
+    if (blastRadius === 'related-domains' ||
+        blastRadius === 'infrastructure' ||
+        blastRadius === 'organization-wide') {
         return true;
     }
     // Low confidence findings require review

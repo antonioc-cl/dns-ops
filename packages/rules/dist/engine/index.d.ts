@@ -4,8 +4,8 @@
  * Deterministic rules engine that evaluates observations and produces findings.
  * All findings are evidence-backed and versioned by ruleset.
  */
-import type { Observation, RecordSet, NewFinding, NewSuggestion } from '@dns-ops/db';
-import type { Severity, Confidence, BlastRadius } from '@dns-ops/contracts';
+import type { BlastRadius, Confidence, Severity } from '@dns-ops/contracts';
+import type { NewFinding, NewSuggestion, Observation, RecordSet } from '@dns-ops/db';
 export interface RuleContext {
     snapshotId: string;
     domainId: string;

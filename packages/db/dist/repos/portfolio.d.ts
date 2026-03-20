@@ -5,7 +5,7 @@
  * and template overrides.
  */
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { type NewDomainNote, type NewDomainTag, type NewSavedFilter, type NewAuditEvent, type NewTemplateOverride, type NewMonitoredDomain, type NewAlert, type DomainNote, type DomainTag, type SavedFilter, type AuditEvent, type TemplateOverride, type MonitoredDomain, type Alert } from '../schema/index.js';
+import { type Alert, type AuditEvent, type DomainNote, type DomainTag, type MonitoredDomain, type NewAlert, type NewAuditEvent, type NewDomainNote, type NewDomainTag, type NewMonitoredDomain, type NewSavedFilter, type NewTemplateOverride, type SavedFilter, type TemplateOverride } from '../schema/index.js';
 export declare class DomainNoteRepository {
     private db;
     constructor(db: IDatabaseAdapter);

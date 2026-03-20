@@ -334,7 +334,7 @@ function groupByQuery(observations) {
         if (!groups.has(key)) {
             groups.set(key, []);
         }
-        groups.get(key).push(obs);
+        groups.get(key)?.push(obs);
     }
     return groups;
 }

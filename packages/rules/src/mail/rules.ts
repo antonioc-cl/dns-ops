@@ -278,6 +278,45 @@ export const spfRule: Rule = {
       };
     }
 
+    // Validate SPF mechanisms - check for unknown/invalid mechanisms
+    const validMechanisms = ['all', 'include', 'a', 'mx', 'ptr', 'ip4', 'ip6', 'exists', 'redirect'];
+    const invalidMechanisms = parsed.mechanisms.filter((m) => !validMechanisms.includes(m.type));
+
+    if (invalidMechanisms.length > 0) {
+      return {
+        finding: {
+          type: 'mail.spf-malformed',
+          title: `Malformed SPF record for ${context.domainName}`,
+          description: `${context.domainName} has an SPF record with invalid mechanisms: ${invalidMechanisms.map((m) => m.type).join(', ')}. Raw: "${spfRecord}". Valid mechanisms are: ${validMechanisms.join(', ')}.`,
+          severity: 'critical',
+          confidence: 'certain',
+          riskPosture: 'critical',
+          blastRadius: 'single-domain',
+          reviewOnly: true,
+          evidence: spfObservation
+            ? [
+                {
+                  observationId: spfObservation.id,
+                  description: `Invalid SPF mechanisms found`,
+                },
+              ]
+            : [],
+          ruleId: this.id,
+          ruleVersion: this.version,
+        },
+        suggestions: [
+          {
+            title: 'Fix SPF mechanism syntax',
+            description: `The SPF record contains unknown mechanisms that may cause mail delivery issues.`,
+            action: `Remove or correct invalid mechanisms: ${invalidMechanisms.map((m) => m.type).join(', ')}`,
+            riskPosture: 'high',
+            blastRadius: 'single-domain',
+            reviewOnly: true,
+          },
+        ],
+      };
+    }
+
     // Valid SPF - analyze configuration
     const issues: string[] = [];
 

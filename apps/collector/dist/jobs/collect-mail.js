@@ -3,9 +3,9 @@
  *
  * Collects mail-related DNS records (DMARC, DKIM, SPF) for a domain.
  */
+import { createPostgresAdapter, ObservationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import { performMailCheck } from '../mail/checker.js';
-import { createPostgresAdapter, ObservationRepository, } from '@dns-ops/db';
 export const collectMailRoutes = new Hono();
 /**
  * POST /api/collect/mail
@@ -14,7 +14,7 @@ export const collectMailRoutes = new Hono();
 collectMailRoutes.post('/mail', async (c) => {
     try {
         const body = await c.req.json();
-        const { domain, snapshotId, preferredProvider, explicitSelectors, } = body;
+        const { domain, snapshotId, preferredProvider, explicitSelectors } = body;
         if (!domain || typeof domain !== 'string') {
             return c.json({ error: 'Domain is required' }, 400);
         }
@@ -90,16 +90,22 @@ async function storeMailObservations(repo, snapshotId, domain, result) {
         queryName: `_dmarc.${domain}`,
         queryType: 'TXT',
         vantageType: 'public-recursive',
-        status: result.dmarc.present ? 'success' : (result.dmarc.errors?.[0]?.includes('NXDOMAIN') ? 'nxdomain' : 'error'),
+        status: result.dmarc.present
+            ? 'success'
+            : result.dmarc.errors?.[0]?.includes('NXDOMAIN')
+                ? 'nxdomain'
+                : 'error',
         queriedAt: now,
         responseTimeMs: 0, // Would need actual timing
         answerSection: result.dmarc.record
-            ? [{
+            ? [
+                {
                     name: `_dmarc.${domain}`,
                     type: 'TXT',
                     ttl: 3600,
                     data: result.dmarc.record,
-                }]
+                },
+            ]
             : undefined,
         errorMessage: result.dmarc.errors?.join(', ') || undefined,
     });
@@ -112,16 +118,22 @@ async function storeMailObservations(repo, snapshotId, domain, result) {
         queryName: dkimName,
         queryType: 'TXT',
         vantageType: 'public-recursive',
-        status: result.dkim.present ? 'success' : (result.dkim.errors?.[0]?.includes('NXDOMAIN') ? 'nxdomain' : 'error'),
+        status: result.dkim.present
+            ? 'success'
+            : result.dkim.errors?.[0]?.includes('NXDOMAIN')
+                ? 'nxdomain'
+                : 'error',
         queriedAt: now,
         responseTimeMs: 0,
         answerSection: result.dkim.record
-            ? [{
+            ? [
+                {
                     name: dkimName,
                     type: 'TXT',
                     ttl: 3600,
                     data: result.dkim.record,
-                }]
+                },
+            ]
             : undefined,
         errorMessage: result.dkim.errors?.join(', ') || undefined,
     });
@@ -135,12 +147,14 @@ async function storeMailObservations(repo, snapshotId, domain, result) {
         queriedAt: now,
         responseTimeMs: 0,
         answerSection: result.spf.record
-            ? [{
+            ? [
+                {
                     name: domain,
                     type: 'TXT',
                     ttl: 3600,
                     data: result.spf.record,
-                }]
+                },
+            ]
             : undefined,
         errorMessage: result.spf.errors?.join(', ') || undefined,
     });

@@ -8,7 +8,7 @@
  * - DNSSEC observation fields
  * - Lame delegation detection
  */
-import type { DNSQuery, DNSQueryResult, DNSAnswer } from '../dns/types.js';
+import type { DNSAnswer, DNSQuery, DNSQueryResult } from '../dns/types.js';
 export interface DelegationSummary {
     domain: string;
     parentZone: string;
@@ -111,5 +111,5 @@ export declare class DelegationCollector {
      */
     private arraysEqual;
 }
-export type { DNSQueryResult, DNSAnswer, VantageInfo, } from '../dns/types.js';
+export type { DNSAnswer, DNSQueryResult, VantageInfo, } from '../dns/types.js';
 //# sourceMappingURL=collector.d.ts.map

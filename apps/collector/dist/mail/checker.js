@@ -3,17 +3,17 @@
  *
  * Performs DMARC, DKIM, and SPF checks for email security validation.
  */
-import { resolveTXT } from './dns.js';
 import { parseDMARC, parseSPF } from '@dns-ops/parsing';
+import { resolveTXT } from './dns.js';
 // Provider selector mapping with confidence scores
 export const PROVIDER_SELECTORS = {
     google: { selector: 'google', confidence: 0.95 },
     'google-workspace': { selector: 'google', confidence: 0.95 },
-    microsoft: { selector: 'selector1', confidence: 0.90 },
-    'microsoft-365': { selector: 'selector1', confidence: 0.90 },
-    outlook: { selector: 'selector1', confidence: 0.90 },
+    microsoft: { selector: 'selector1', confidence: 0.9 },
+    'microsoft-365': { selector: 'selector1', confidence: 0.9 },
+    outlook: { selector: 'selector1', confidence: 0.9 },
     zoho: { selector: 'zoho', confidence: 0.95 },
-    default: { selector: 'default', confidence: 0.30 },
+    default: { selector: 'default', confidence: 0.3 },
 };
 // Common DKIM selectors to try as fallback
 export const COMMON_SELECTORS = ['default', 'dkim', 'mail', 'email'];
@@ -40,7 +40,7 @@ export async function performMailCheck(domain, options) {
 export async function checkDMARC(domain) {
     try {
         const records = await resolveTXT(`_dmarc.${domain}`);
-        const dmarcRecord = records.find(r => r.includes('v=DMARC1'));
+        const dmarcRecord = records.find((r) => r.includes('v=DMARC1'));
         if (!dmarcRecord) {
             return {
                 present: false,
@@ -137,7 +137,7 @@ async function tryDKIMSelector(domain, selector) {
             record: dkimRecord,
         };
     }
-    catch (error) {
+    catch (_error) {
         return {
             present: false,
             valid: false,
@@ -150,7 +150,7 @@ async function tryDKIMSelector(domain, selector) {
 export async function checkSPF(domain) {
     try {
         const records = await resolveTXT(domain);
-        const spfRecord = records.find(r => r.startsWith('v=spf1'));
+        const spfRecord = records.find((r) => r.startsWith('v=spf1'));
         if (!spfRecord) {
             return {
                 present: false,

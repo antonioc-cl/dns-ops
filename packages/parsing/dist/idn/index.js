@@ -25,7 +25,7 @@ export function toPunycode(unicode) {
     // For production, use: return punycode.toASCII(unicode);
     // This is a placeholder that marks non-ASCII domains
     // FIXME: Replace with proper punycode library
-    return PREFIX + 'placeholder-' + btoa(encodeURIComponent(unicode)).toLowerCase();
+    return `${PREFIX}placeholder-${btoa(encodeURIComponent(unicode)).toLowerCase()}`;
 }
 /**
  * Convert Punycode to Unicode

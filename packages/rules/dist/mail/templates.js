@@ -49,7 +49,11 @@ export const PROVIDER_TEMPLATES = {
         version: '1.0.0',
         expected: {
             mx: [
-                { priority: 0, pattern: /\.mail\.protection\.outlook\.com$/i, description: 'Microsoft 365 MX' },
+                {
+                    priority: 0,
+                    pattern: /\.mail\.protection\.outlook\.com$/i,
+                    description: 'Microsoft 365 MX',
+                },
             ],
             spf: {
                 required: true,
@@ -103,7 +107,7 @@ export const PROVIDER_TEMPLATES = {
             spfPatterns: [/amazonses\.com/i],
         },
     },
-    'sendgrid': {
+    sendgrid: {
         id: 'template.sendgrid.v1',
         provider: 'sendgrid',
         name: 'SendGrid',
@@ -133,16 +137,14 @@ export const PROVIDER_TEMPLATES = {
             spfPatterns: [/sendgrid\.net/i],
         },
     },
-    'mailgun': {
+    mailgun: {
         id: 'template.mailgun.v1',
         provider: 'mailgun',
         name: 'Mailgun',
         description: 'Expected configuration for Mailgun email delivery',
         version: '1.0.0',
         expected: {
-            mx: [
-                { priority: 10, pattern: /\.mailgun\.(org|net)$/i, description: 'Mailgun MX' },
-            ],
+            mx: [{ priority: 10, pattern: /\.mailgun\.(org|net)$/i, description: 'Mailgun MX' }],
             spf: {
                 required: true,
                 include: 'mailgun.org',
@@ -165,7 +167,7 @@ export const PROVIDER_TEMPLATES = {
             spfPatterns: [/mailgun\.(org|net)/i],
         },
     },
-    'other': {
+    other: {
         id: 'template.other.v1',
         provider: 'other',
         name: 'Other Provider',
@@ -194,7 +196,7 @@ export const PROVIDER_TEMPLATES = {
             spfPatterns: [],
         },
     },
-    'unknown': {
+    unknown: {
         id: 'template.unknown.v1',
         provider: 'unknown',
         name: 'Unknown Provider',
@@ -229,19 +231,19 @@ export function detectProviderFromDns(mxRecords, spfRecord) {
         'google-workspace': 0,
         'microsoft-365': 0,
         'amazon-ses': 0,
-        'sendgrid': 0,
-        'mailgun': 0,
-        'other': 0,
-        'unknown': 0,
+        sendgrid: 0,
+        mailgun: 0,
+        other: 0,
+        unknown: 0,
     };
     const evidence = {
         'google-workspace': [],
         'microsoft-365': [],
         'amazon-ses': [],
-        'sendgrid': [],
-        'mailgun': [],
-        'other': [],
-        'unknown': [],
+        sendgrid: [],
+        mailgun: [],
+        other: [],
+        unknown: [],
     };
     // Score based on MX records
     for (const mx of mxRecords) {
@@ -305,7 +307,7 @@ export function compareToTemplate(provider, actual) {
             });
         }
         else {
-            const mxMatch = template.expected.mx.some((expected) => actual.mx.some((mx) => expected.pattern.test(mx)));
+            const mxMatch = template.expected.mx.some((expected) => actual.mx?.some((mx) => expected.pattern.test(mx)));
             if (mxMatch) {
                 matches.push({
                     aspect: 'MX',

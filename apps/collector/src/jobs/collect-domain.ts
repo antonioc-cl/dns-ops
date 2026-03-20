@@ -2,9 +2,17 @@
  * Domain Collection Job
  *
  * API routes for triggering DNS collection jobs.
+ * Uses shared contracts from @dns-ops/contracts for request/response types.
  */
 
+import {
+  type CollectDomainRequest,
+  type CollectDomainResponse,
+  type ApiErrorResponse,
+  validateCollectDomainRequest,
+} from '@dns-ops/contracts';
 import { createPostgresAdapter } from '@dns-ops/db';
+import { normalizeDomain, isValidDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
@@ -14,26 +22,45 @@ export const collectDomainRoutes = new Hono();
 /**
  * POST /api/collect/domain
  * Trigger a DNS collection for a domain
+ *
+ * Request: CollectDomainRequest
+ * Response: CollectDomainResponse | ApiErrorResponse
  */
 collectDomainRoutes.post('/domain', async (c) => {
   try {
     const body = await c.req.json();
-    const { domain, zoneManagement = 'unknown', triggeredBy = 'api' } = body;
 
-    if (!domain || typeof domain !== 'string') {
-      return c.json({ error: 'Domain is required' }, 400);
+    // Validate request shape
+    if (!validateCollectDomainRequest(body)) {
+      const error: ApiErrorResponse = {
+        error: 'Invalid request',
+        message: 'Domain is required and must be a non-empty string',
+        code: 'INVALID_REQUEST',
+      };
+      return c.json(error, 400);
     }
 
-    // Normalize domain
-    const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
+    const req = body as CollectDomainRequest;
 
-    // Validate domain format
-    if (!isValidDomain(normalizedDomain)) {
-      return c.json({ error: 'Invalid domain format' }, 400);
+    // Use shared domain normalization (same as web app)
+    const domainInfo = normalizeDomain(req.domain);
+
+    // Validate domain format using shared validation
+    if (!isValidDomain(domainInfo.normalized)) {
+      const error: ApiErrorResponse = {
+        error: 'Invalid domain format',
+        message: `"${req.domain}" is not a valid domain name`,
+        code: 'INVALID_DOMAIN',
+      };
+      return c.json(error, 400);
     }
+
+    const normalizedDomain = domainInfo.normalized;
+    const zoneManagement = req.zoneManagement ?? 'unknown';
+    const triggeredBy = req.triggeredBy ?? 'api';
 
     // Extract mail collection options (Bead 08)
-    const { dkimSelectors, managedDkimSelectors, includeMailRecords } = body;
+    const { dkimSelectors, managedDkimSelectors, includeMailRecords } = req;
 
     // Configuration for collection
     const config: CollectionConfig = {
@@ -57,26 +84,23 @@ collectDomainRoutes.post('/domain', async (c) => {
     const collector = new DNSCollector(config, db);
     const result = await collector.collect();
 
-    return c.json(
-      {
-        success: true,
-        domain: normalizedDomain,
-        snapshotId: result.snapshotId,
-        observationCount: result.observationCount,
-        resultState: result.resultState,
-        duration: result.duration,
-      },
-      201
-    );
-  } catch (error) {
-    console.error('Collection error:', error);
-    return c.json(
-      {
-        error: 'Collection failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      500
-    );
+    const response: CollectDomainResponse = {
+      success: true,
+      domain: normalizedDomain,
+      snapshotId: result.snapshotId,
+      observationCount: result.observationCount,
+      resultState: result.resultState,
+      duration: result.duration,
+    };
+    return c.json(response, 201);
+  } catch (err) {
+    console.error('Collection error:', err);
+    const errResponse: ApiErrorResponse = {
+      error: 'Collection failed',
+      message: err instanceof Error ? err.message : 'Unknown error',
+      code: 'COLLECTION_ERROR',
+    };
+    return c.json(errResponse, 500);
   }
 });
 
@@ -92,21 +116,5 @@ collectDomainRoutes.get('/status/:snapshotId', async (c) => {
   });
 });
 
-function isValidDomain(domain: string): boolean {
-  // Simple domain validation
-  if (!domain || domain.length > 253) return false;
-
-  // Check for valid characters - labels cannot start or end with hyphen
-  const labelRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
-  const labels = domain.split('.');
-
-  // Reject empty labels and labels that are just hyphens or start/end with hyphen
-  for (const label of labels) {
-    if (!label || label.length > 63) return false;
-    if (!labelRegex.test(label)) return false;
-    // Explicit check: no leading or trailing hyphen
-    if (label.startsWith('-') || label.endsWith('-')) return false;
-  }
-
-  return true;
-}
+// Domain validation is now handled by @dns-ops/parsing.isValidDomain
+// which ensures consistent validation between web and collector

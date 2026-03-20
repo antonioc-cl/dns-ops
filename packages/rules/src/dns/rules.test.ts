@@ -194,8 +194,15 @@ describe('Recursive vs Authoritative Mismatch Rule', () => {
       answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.99' }],
     });
 
+    const rs = createMockRecordSet({
+      name: 'example.com',
+      type: 'A',
+      values: ['192.0.2.1', '192.0.2.99'],
+    });
+
     const context = createMockContext({
       observations: [recursiveObs, authObs],
+      recordSets: [rs],
     });
 
     const result = recursiveAuthoritativeMismatchRule.evaluate(context);
@@ -217,8 +224,15 @@ describe('Recursive vs Authoritative Mismatch Rule', () => {
       answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
     });
 
+    const rs = createMockRecordSet({
+      name: 'example.com',
+      type: 'A',
+      values: ['192.0.2.1'],
+    });
+
     const context = createMockContext({
       observations: [recursiveObs, authObs],
+      recordSets: [rs],
     });
 
     const result = recursiveAuthoritativeMismatchRule.evaluate(context);

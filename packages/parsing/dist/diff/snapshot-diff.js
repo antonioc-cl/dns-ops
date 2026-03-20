@@ -19,11 +19,11 @@ export function compareSnapshots(snapshotA, snapshotB, recordsA, recordsB, findi
     const rulesetChange = compareRuleset(snapshotA.rulesetVersion, snapshotB.rulesetVersion);
     const allChanges = [...recordChanges, ...findingChanges];
     const summary = {
-        totalChanges: allChanges.filter(c => c.type !== 'unchanged').length,
-        additions: allChanges.filter(c => c.type === 'added').length,
-        deletions: allChanges.filter(c => c.type === 'removed').length,
-        modifications: allChanges.filter(c => c.type === 'modified').length,
-        unchanged: allChanges.filter(c => c.type === 'unchanged').length,
+        totalChanges: allChanges.filter((c) => c.type !== 'unchanged').length,
+        additions: allChanges.filter((c) => c.type === 'added').length,
+        deletions: allChanges.filter((c) => c.type === 'removed').length,
+        modifications: allChanges.filter((c) => c.type === 'modified').length,
+        unchanged: allChanges.filter((c) => c.type === 'unchanged').length,
     };
     return {
         snapshotA: {
@@ -49,8 +49,8 @@ export function compareSnapshots(snapshotA, snapshotB, recordsA, recordsB, findi
 function compareRecords(recordsA, recordsB) {
     const changes = [];
     const key = (r) => `${r.name}|${r.type}`;
-    const mapA = new Map(recordsA.map(r => [key(r), r]));
-    const mapB = new Map(recordsB.map(r => [key(r), r]));
+    const mapA = new Map(recordsA.map((r) => [key(r), r]));
+    const mapB = new Map(recordsB.map((r) => [key(r), r]));
     for (const [k, recordA] of mapA) {
         const recordB = mapB.get(k);
         if (!recordB) {
@@ -64,8 +64,8 @@ function compareRecords(recordsA, recordsB) {
         else {
             const valuesA = new Set(recordA.values);
             const valuesB = new Set(recordB.values);
-            const added = [...valuesB].filter(v => !valuesA.has(v));
-            const removed = [...valuesA].filter(v => !valuesB.has(v));
+            const added = [...valuesB].filter((v) => !valuesA.has(v));
+            const removed = [...valuesA].filter((v) => !valuesB.has(v));
             if (added.length === 0 && removed.length === 0) {
                 changes.push({
                     type: 'unchanged',
@@ -102,8 +102,8 @@ function compareRecords(recordsA, recordsB) {
 function compareTTLs(recordsA, recordsB) {
     const changes = [];
     const key = (r) => `${r.name}|${r.type}`;
-    const mapA = new Map(recordsA.map(r => [key(r), r]));
-    const mapB = new Map(recordsB.map(r => [key(r), r]));
+    const mapA = new Map(recordsA.map((r) => [key(r), r]));
+    const mapB = new Map(recordsB.map((r) => [key(r), r]));
     for (const [k, recordA] of mapA) {
         const recordB = mapB.get(k);
         if (recordB && recordA.ttl !== recordB.ttl) {
@@ -123,8 +123,8 @@ function compareTTLs(recordsA, recordsB) {
 function compareFindings(findingsA, findingsB) {
     const changes = [];
     const key = (f) => `${f.type}|${f.title}`;
-    const mapA = new Map(findingsA.map(f => [key(f), f]));
-    const mapB = new Map(findingsB.map(f => [key(f), f]));
+    const mapA = new Map(findingsA.map((f) => [key(f), f]));
+    const mapB = new Map(findingsB.map((f) => [key(f), f]));
     for (const [k, findingA] of mapA) {
         const findingB = mapB.get(k);
         if (!findingB) {
@@ -167,15 +167,18 @@ function compareFindings(findingsA, findingsB) {
     return changes;
 }
 function compareScope(snapshotA, snapshotB) {
-    const namesAdded = snapshotB.queriedNames.filter(n => !snapshotA.queriedNames.includes(n));
-    const namesRemoved = snapshotA.queriedNames.filter(n => !snapshotB.queriedNames.includes(n));
-    const typesAdded = snapshotB.queriedTypes.filter(t => !snapshotA.queriedTypes.includes(t));
-    const typesRemoved = snapshotA.queriedTypes.filter(t => !snapshotB.queriedTypes.includes(t));
-    const vantagesAdded = snapshotB.vantages.filter(v => !snapshotA.vantages.includes(v));
-    const vantagesRemoved = snapshotA.vantages.filter(v => !snapshotB.vantages.includes(v));
-    if (namesAdded.length === 0 && namesRemoved.length === 0 &&
-        typesAdded.length === 0 && typesRemoved.length === 0 &&
-        vantagesAdded.length === 0 && vantagesRemoved.length === 0) {
+    const namesAdded = snapshotB.queriedNames.filter((n) => !snapshotA.queriedNames.includes(n));
+    const namesRemoved = snapshotA.queriedNames.filter((n) => !snapshotB.queriedNames.includes(n));
+    const typesAdded = snapshotB.queriedTypes.filter((t) => !snapshotA.queriedTypes.includes(t));
+    const typesRemoved = snapshotA.queriedTypes.filter((t) => !snapshotB.queriedTypes.includes(t));
+    const vantagesAdded = snapshotB.vantages.filter((v) => !snapshotA.vantages.includes(v));
+    const vantagesRemoved = snapshotA.vantages.filter((v) => !snapshotB.vantages.includes(v));
+    if (namesAdded.length === 0 &&
+        namesRemoved.length === 0 &&
+        typesAdded.length === 0 &&
+        typesRemoved.length === 0 &&
+        vantagesAdded.length === 0 &&
+        vantagesRemoved.length === 0) {
         return null;
     }
     return {

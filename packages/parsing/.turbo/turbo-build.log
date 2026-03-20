@@ -1,4 +1,1 @@
-
-> @dns-ops/parsing@0.1.0 build /Users/antonio/Documents/PROYECTOS/dns-ops/packages/parsing
-> tsc
-
+$ tsc

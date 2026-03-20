@@ -1,2 +1,2 @@
-export { compareSnapshots, type SnapshotDiffResult, type RecordChange, type TTLChange, type FindingChange, type ScopeChange, type RulesetChange, } from './snapshot-diff.js';
+export { compareSnapshots, type FindingChange, type RecordChange, type RulesetChange, type ScopeChange, type SnapshotDiffResult, type TTLChange, } from './snapshot-diff.js';
 //# sourceMappingURL=index.d.ts.map

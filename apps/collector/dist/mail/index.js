@@ -1,6 +1,6 @@
 /**
  * Mail checking module exports
  */
-export { performMailCheck, checkDMARC, checkDKIM, checkSPF, PROVIDER_SELECTORS, COMMON_SELECTORS, } from './checker.js';
+export { COMMON_SELECTORS, checkDKIM, checkDMARC, checkSPF, PROVIDER_SELECTORS, performMailCheck, } from './checker.js';
 export { resolveTXT } from './dns.js';
 //# sourceMappingURL=index.js.map

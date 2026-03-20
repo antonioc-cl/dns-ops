@@ -3,8 +3,8 @@
  *
  * Coordinates DNS queries across multiple vantages and stores results.
  */
-import type { CollectionConfig, CollectionResult } from './types.js';
 import type { IDatabaseAdapter } from '@dns-ops/db';
+import type { CollectionConfig, CollectionResult } from './types.js';
 export declare class DNSCollector {
     private resolver;
     private config;

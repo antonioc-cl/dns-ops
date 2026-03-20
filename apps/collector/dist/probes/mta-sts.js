@@ -4,13 +4,16 @@
  * Fetches MTA-STS policy from https://mta-sts.{domain}/.well-known/mta-sts.txt
  * Validates policy format and extracts mode/max_age/mx directives.
  */
-import { validateUrl } from './ssrf-guard.js';
 import { probeAllowlist } from './allowlist.js';
+import { validateUrl } from './ssrf-guard.js';
 /**
  * Parse MTA-STS policy text
  */
 function parsePolicy(raw) {
-    const lines = raw.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+    const lines = raw
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#'));
     const policy = {
         mx: [],
         raw,
@@ -29,13 +32,13 @@ function parsePolicy(raw) {
                 break;
             case 'max_age': {
                 const parsedMaxAge = parseInt(value, 10);
-                if (!isNaN(parsedMaxAge) && parsedMaxAge >= 0) {
+                if (!Number.isNaN(parsedMaxAge) && parsedMaxAge >= 0) {
                     policy.maxAge = parsedMaxAge;
                 }
                 break;
             }
             case 'mx':
-                policy.mx.push(value);
+                policy.mx?.push(value);
                 break;
         }
     }
@@ -143,7 +146,7 @@ export async function fetchMTASTSPolicy(domain, options) {
  */
 export async function validateMTASTSTxtRecord(_domain, txtRecords) {
     // Look for _mta-sts TXT record
-    const mtaStsRecord = txtRecords.find(r => r.includes('v=STSv1'));
+    const mtaStsRecord = txtRecords.find((r) => r.includes('v=STSv1'));
     if (!mtaStsRecord) {
         return { valid: false, error: 'No MTA-STS TXT record found' };
     }

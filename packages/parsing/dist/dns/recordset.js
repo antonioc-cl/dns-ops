@@ -14,7 +14,7 @@ function groupByNameType(observations) {
         if (!groups.has(key)) {
             groups.set(key, []);
         }
-        groups.get(key).push(obs);
+        groups.get(key)?.push(obs);
     }
     return groups;
 }
@@ -55,8 +55,8 @@ export function observationsToRecordSets(observations) {
     for (const [key, group] of groups) {
         const [name, type] = key.split('|');
         // Separate successful and failed observations
-        const successfulObs = group.filter(obs => obs.status === 'success');
-        const failedObs = group.filter(obs => obs.status !== 'success');
+        const successfulObs = group.filter((obs) => obs.status === 'success');
+        const failedObs = group.filter((obs) => obs.status !== 'success');
         // Extract all values from successful observations
         const allValues = [];
         const vantages = [];
@@ -96,17 +96,15 @@ export function observationsToRecordSets(observations) {
         }
         // Note any failures
         if (failedObs.length > 0) {
-            const failureTypes = [...new Set(failedObs.map(o => o.status))];
+            const failureTypes = [...new Set(failedObs.map((o) => o.status))];
             notes.push(`Failures from ${failedObs.length} vantage(s): ${failureTypes.join(', ')}`);
             isConsistent = false;
         }
         // Calculate average TTL
         const ttls = successfulObs
-            .flatMap(obs => (obs.answerSection || []).map(r => r.ttl))
+            .flatMap((obs) => (obs.answerSection || []).map((r) => r.ttl))
             .filter((ttl) => ttl !== undefined);
-        const avgTtl = ttls.length > 0
-            ? Math.round(ttls.reduce((a, b) => a + b, 0) / ttls.length)
-            : 0;
+        const avgTtl = ttls.length > 0 ? Math.round(ttls.reduce((a, b) => a + b, 0) / ttls.length) : 0;
         records.push({
             name,
             type,
@@ -129,7 +127,7 @@ export function groupRecordsByType(records) {
         if (!groups.has(record.type)) {
             groups.set(record.type, []);
         }
-        groups.get(record.type).push(record);
+        groups.get(record.type)?.push(record);
     }
     // Sort types in preferred order
     const typeOrder = ['SOA', 'NS', 'A', 'AAAA', 'CNAME', 'MX', 'TXT', 'CAA'];

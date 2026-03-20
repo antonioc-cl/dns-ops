@@ -5,7 +5,7 @@
  * Supports both recursive and authoritative resolution.
  */
 
-import { promises as dns } from 'node:dns';
+import { Resolver } from 'node:dns/promises';
 import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from './types.js';
 
 export class DNSResolver {
@@ -17,7 +17,7 @@ export class DNSResolver {
 
     try {
       // Create resolver with specific server if provided
-      const resolver = new dns.Resolver();
+      const resolver = new Resolver();
 
       if (vantage.type === 'public-recursive') {
         resolver.setServers([vantage.identifier]);
@@ -90,7 +90,7 @@ export class DNSResolver {
    * Perform the actual DNS query based on record type
    */
   private async performQuery(
-    resolver: dns.Resolver,
+    resolver: Resolver,
     query: DNSQuery
   ): Promise<{ answers: DNSAnswer[]; authority?: DNSAnswer[]; additional?: DNSAnswer[] }> {
     const { name, type } = query;
@@ -117,7 +117,7 @@ export class DNSResolver {
     }
   }
 
-  private async queryA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryA(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const addresses = await resolver.resolve4(name);
     return {
       answers: addresses.map((addr: string) => ({
@@ -129,7 +129,7 @@ export class DNSResolver {
     };
   }
 
-  private async queryAAAA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryAAAA(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const addresses = await resolver.resolve6(name);
     return {
       answers: addresses.map((addr: string) => ({
@@ -141,7 +141,7 @@ export class DNSResolver {
     };
   }
 
-  private async queryMX(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryMX(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveMx(name);
     return {
       answers: records.map((mx: { priority: number; exchange: string }) => ({
@@ -153,7 +153,7 @@ export class DNSResolver {
     };
   }
 
-  private async queryTXT(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryTXT(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveTxt(name);
     return {
       answers: records.map((txt: string[]) => ({
@@ -165,7 +165,7 @@ export class DNSResolver {
     };
   }
 
-  private async queryNS(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryNS(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveNs(name);
     return {
       answers: records.map((ns: string) => ({
@@ -178,7 +178,7 @@ export class DNSResolver {
   }
 
   private async queryCNAME(
-    resolver: dns.Resolver,
+    resolver: Resolver,
     name: string
   ): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveCname(name);
@@ -192,7 +192,7 @@ export class DNSResolver {
     };
   }
 
-  private async querySOA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async querySOA(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     const soa = (await resolver.resolveSoa(name)) as {
       nsname: string;
       hostmaster: string;
@@ -216,7 +216,7 @@ export class DNSResolver {
     };
   }
 
-  private async queryCAA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryCAA(resolver: Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
     // Node.js doesn't have native CAA support, use resolveAny and filter
     try {
       const records = await resolver.resolveAny(name);

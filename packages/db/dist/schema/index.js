@@ -11,20 +11,10 @@
  * - Suggestion: Recommended actions
  * - RulesetVersion: Version tracking for rules
  */
-import { pgTable, uuid, varchar, timestamp, jsonb, text, integer, boolean, index, uniqueIndex, pgEnum, } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar, } from 'drizzle-orm/pg-core';
 // Enums matching the contracts package
-export const resultStateEnum = pgEnum('result_state', [
-    'complete',
-    'partial',
-    'failed',
-]);
-export const severityEnum = pgEnum('severity', [
-    'critical',
-    'high',
-    'medium',
-    'low',
-    'info',
-]);
+export const resultStateEnum = pgEnum('result_state', ['complete', 'partial', 'failed']);
+export const severityEnum = pgEnum('severity', ['critical', 'high', 'medium', 'low', 'info']);
 export const confidenceEnum = pgEnum('confidence', [
     'certain',
     'high',
@@ -47,11 +37,7 @@ export const blastRadiusEnum = pgEnum('blast_radius', [
     'infrastructure',
     'organization-wide',
 ]);
-export const zoneManagementEnum = pgEnum('zone_management', [
-    'managed',
-    'unmanaged',
-    'unknown',
-]);
+export const zoneManagementEnum = pgEnum('zone_management', ['managed', 'unmanaged', 'unknown']);
 export const vantageTypeEnum = pgEnum('vantage_type', [
     'public-recursive',
     'authoritative',
@@ -117,8 +103,7 @@ export const snapshots = pgTable('snapshots', {
     vantages: jsonb('vantages').notNull().$type(),
     zoneManagement: zoneManagementEnum('zone_management').notNull(),
     // Ruleset version used for findings
-    rulesetVersionId: uuid('ruleset_version_id')
-        .references(() => rulesetVersions.id),
+    rulesetVersionId: uuid('ruleset_version_id').references(() => rulesetVersions.id),
     // Metadata
     triggeredBy: varchar('triggered_by', { length: 100 }).notNull(), // user ID or 'system'
     collectionDurationMs: integer('collection_duration_ms'),
@@ -166,8 +151,7 @@ export const observations = pgTable('observations', {
     queryName: varchar('query_name', { length: 253 }).notNull(),
     queryType: varchar('query_type', { length: 10 }).notNull(),
     // Vantage point used
-    vantageId: uuid('vantage_id')
-        .references(() => vantagePoints.id),
+    vantageId: uuid('vantage_id').references(() => vantagePoints.id),
     vantageType: vantageTypeEnum('vantage_type').notNull(),
     vantageIdentifier: varchar('vantage_identifier', { length: 100 }), // Specific NS IP or resolver
     // Collection status
@@ -406,11 +390,7 @@ export const templateOverrides = pgTable('template_overrides', {
 // =============================================================================
 // MONITORED DOMAINS (Bead 15)
 // =============================================================================
-export const monitoringScheduleEnum = pgEnum('monitoring_schedule', [
-    'hourly',
-    'daily',
-    'weekly',
-]);
+export const monitoringScheduleEnum = pgEnum('monitoring_schedule', ['hourly', 'daily', 'weekly']);
 export const monitoredDomains = pgTable('monitored_domains', {
     id: uuid('id').primaryKey().defaultRandom(),
     domainId: uuid('domain_id')
@@ -458,8 +438,7 @@ export const alerts = pgTable('alerts', {
     description: text('description').notNull(),
     severity: severityEnum('severity').notNull(),
     // Trigger
-    triggeredByFindingId: uuid('triggered_by_finding_id')
-        .references(() => findings.id),
+    triggeredByFindingId: uuid('triggered_by_finding_id').references(() => findings.id),
     // Status
     status: alertStatusEnum('status').notNull().default('pending'),
     // Deduplication
@@ -483,5 +462,5 @@ export const alerts = pgTable('alerts', {
 // =============================================================================
 // REMEDIATION EXPORTS
 // =============================================================================
-export { remediationRequests, remediationStatusEnum, remediationPriorityEnum, } from './remediation.js';
+export { remediationPriorityEnum, remediationRequests, remediationStatusEnum, } from './remediation.js';
 //# sourceMappingURL=index.js.map

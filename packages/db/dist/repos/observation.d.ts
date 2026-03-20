@@ -1,5 +1,5 @@
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { type Observation, type NewObservation } from '../schema/index.js';
+import { type NewObservation, type Observation } from '../schema/index.js';
 export declare class ObservationRepository {
     private db;
     constructor(db: IDatabaseAdapter);

@@ -1,1 +1,1 @@
-{"version":3,"file":"fleet-report.d.ts","sourceRoot":"","sources":["../../src/jobs/fleet-report.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,OAAO,EAAE,IAAI,EAAE,MAAM,MAAM,CAAC;AAC5B,OAAO,KAAK,EAAE,GAAG,EAAE,MAAM,aAAa,CAAC;AAGvC,eAAO,MAAM,iBAAiB,oBAAkB,CAAC"}
+{"version":3,"file":"fleet-report.d.ts","sourceRoot":"","sources":["../../src/jobs/fleet-report.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAGH,OAAO,EAAE,IAAI,EAAE,MAAM,MAAM,CAAC;AAC5B,OAAO,KAAK,EAAE,GAAG,EAAE,MAAM,aAAa,CAAC;AAEvC,eAAO,MAAM,iBAAiB,oBAAkB,CAAC"}

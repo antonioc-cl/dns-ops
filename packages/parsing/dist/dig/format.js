@@ -49,7 +49,7 @@ function formatFlags(flags) {
  * Format a DNS record as dig-style output
  */
 function formatRecordLine(record) {
-    const name = record.name.endsWith('.') ? record.name : record.name + '.';
+    const name = record.name.endsWith('.') ? record.name : `${record.name}.`;
     if (record.type === 'MX' && record.priority !== undefined) {
         return `${name}\t${record.ttl}\tIN\t${record.type}\t${record.priority}\t${record.data}`;
     }
@@ -86,7 +86,7 @@ export function toDigFormat(observation, options = {}) {
         lines.push(';; QUESTION SECTION:');
         const qname = observation.queryName.endsWith('.')
             ? observation.queryName
-            : observation.queryName + '.';
+            : `${observation.queryName}.`;
         lines.push(`;${qname}\t\tIN\t${observation.queryType}`);
     }
     // Answer section
@@ -126,7 +126,7 @@ export function toDigFormat(observation, options = {}) {
  */
 export function observationsToDigFormat(observations, options) {
     return observations
-        .map(obs => toDigFormat(obs, options))
+        .map((obs) => toDigFormat(obs, options))
         .join('\n\n; ========================================\n\n');
 }
 /**

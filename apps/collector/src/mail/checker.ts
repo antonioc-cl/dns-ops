@@ -129,6 +129,7 @@ export async function checkDKIM(
       if (result.present) {
         return {
           ...result,
+          selector,
           selectorProvenance: 'operator',
           triedSelectors: [...triedSelectors],
         };
@@ -145,6 +146,7 @@ export async function checkDKIM(
       if (result.present) {
         return {
           ...result,
+          selector: provider.selector,
           selectorProvenance: 'heuristic',
           triedSelectors: [...triedSelectors],
         };
@@ -160,6 +162,7 @@ export async function checkDKIM(
       if (result.present) {
         return {
           ...result,
+          selector,
           selectorProvenance: 'default',
           triedSelectors: [...triedSelectors],
         };

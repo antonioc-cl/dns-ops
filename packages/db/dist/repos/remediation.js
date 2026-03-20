@@ -80,13 +80,13 @@ export class RemediationRepository {
     async list(options) {
         let results = await this.db.select(remediationRequests);
         if (options?.domains?.length) {
-            results = results.filter(r => options.domains.includes(r.domain));
+            results = results.filter((r) => options.domains?.includes(r.domain));
         }
         if (options?.statuses?.length) {
-            results = results.filter(r => options.statuses.includes(r.status));
+            results = results.filter((r) => options.statuses?.includes(r.status));
         }
         if (options?.priorities?.length) {
-            results = results.filter(r => options.priorities.includes(r.priority));
+            results = results.filter((r) => options.priorities?.includes(r.priority));
         }
         // Sort by createdAt desc
         results = results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

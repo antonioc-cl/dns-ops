@@ -21,9 +21,7 @@ export class ObservationRepository {
     }
     async findByQuery(snapshotId, name, type) {
         const results = await this.db.select(observations);
-        return results.filter(o => o.snapshotId === snapshotId &&
-            o.queryName === name &&
-            o.queryType === type);
+        return results.filter((o) => o.snapshotId === snapshotId && o.queryName === name && o.queryType === type);
     }
     async create(data) {
         return this.db.insert(observations, data);

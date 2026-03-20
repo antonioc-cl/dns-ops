@@ -14,9 +14,9 @@ export class ShadowComparator {
     compare(snapshotId, domain, newFindings, legacyOutput) {
         const comparisons = [];
         // Extract new finding data
-        const newDmarcFinding = newFindings.find(f => f.type.startsWith('mail.dmarc'));
-        const newSpfFinding = newFindings.find(f => f.type.startsWith('mail.spf'));
-        const newDkimFinding = newFindings.find(f => f.type.startsWith('mail.dkim'));
+        const newDmarcFinding = newFindings.find((f) => f.type.startsWith('mail.dmarc'));
+        const newSpfFinding = newFindings.find((f) => f.type.startsWith('mail.spf'));
+        const newDkimFinding = newFindings.find((f) => f.type.startsWith('mail.dkim'));
         // Compare DMARC presence
         comparisons.push(this.compareDmarcPresence(newDmarcFinding, legacyOutput.dmarc));
         // Compare DMARC validity
@@ -222,19 +222,19 @@ export class ShadowComparator {
     calculateMetrics(comparisons) {
         return {
             totalFields: comparisons.length,
-            matchingFields: comparisons.filter(c => c.status === 'match').length,
-            mismatchingFields: comparisons.filter(c => c.status === 'mismatch').length,
-            missingInNew: comparisons.filter(c => c.status === 'missing-in-new').length,
-            missingInLegacy: comparisons.filter(c => c.status === 'missing-in-legacy').length,
+            matchingFields: comparisons.filter((c) => c.status === 'match').length,
+            mismatchingFields: comparisons.filter((c) => c.status === 'mismatch').length,
+            missingInNew: comparisons.filter((c) => c.status === 'missing-in-new').length,
+            missingInLegacy: comparisons.filter((c) => c.status === 'missing-in-legacy').length,
         };
     }
     determineOverallStatus(comparisons) {
-        const criticalMismatches = comparisons.filter(c => c.status === 'mismatch' && c.severity === 'critical').length;
+        const criticalMismatches = comparisons.filter((c) => c.status === 'mismatch' && c.severity === 'critical').length;
         if (criticalMismatches > 0) {
             return 'mismatch';
         }
-        const allMismatches = comparisons.filter(c => c.status === 'mismatch').length;
-        const totalComparable = comparisons.filter(c => c.status !== 'not-comparable').length;
+        const allMismatches = comparisons.filter((c) => c.status === 'mismatch').length;
+        const totalComparable = comparisons.filter((c) => c.status !== 'not-comparable').length;
         if (allMismatches === 0) {
             return 'match';
         }
@@ -249,9 +249,9 @@ export class ShadowComparator {
         parts.push(`${metrics.matchingFields}/${metrics.totalFields} fields match`);
         if (metrics.mismatchingFields > 0) {
             parts.push(`${metrics.mismatchingFields} mismatches detected`);
-            const criticalMismatches = comparisons.filter(c => c.status === 'mismatch' && c.severity === 'critical');
+            const criticalMismatches = comparisons.filter((c) => c.status === 'mismatch' && c.severity === 'critical');
             if (criticalMismatches.length > 0) {
-                parts.push(`CRITICAL: ${criticalMismatches.map(c => c.field).join(', ')}`);
+                parts.push(`CRITICAL: ${criticalMismatches.map((c) => c.field).join(', ')}`);
             }
         }
         return parts.join('. ');
@@ -271,16 +271,13 @@ export class ShadowComparisonStore {
         return this.comparisons.get(id);
     }
     getBySnapshot(snapshotId) {
-        return Array.from(this.comparisons.values())
-            .filter(c => c.snapshotId === snapshotId);
+        return Array.from(this.comparisons.values()).filter((c) => c.snapshotId === snapshotId);
     }
     getByDomain(domain) {
-        return Array.from(this.comparisons.values())
-            .filter(c => c.domain === domain);
+        return Array.from(this.comparisons.values()).filter((c) => c.domain === domain);
     }
     getMismatches() {
-        return Array.from(this.comparisons.values())
-            .filter(c => c.status === 'mismatch' || c.status === 'partial-match');
+        return Array.from(this.comparisons.values()).filter((c) => c.status === 'mismatch' || c.status === 'partial-match');
     }
     acknowledge(id, by, adjudication, notes) {
         const comparison = this.comparisons.get(id);
@@ -297,11 +294,11 @@ export class ShadowComparisonStore {
         const all = Array.from(this.comparisons.values());
         return {
             total: all.length,
-            matches: all.filter(c => c.status === 'match').length,
-            mismatches: all.filter(c => c.status === 'mismatch').length,
-            partialMatches: all.filter(c => c.status === 'partial-match').length,
-            acknowledged: all.filter(c => c.acknowledgedAt).length,
-            pending: all.filter(c => !c.acknowledgedAt).length,
+            matches: all.filter((c) => c.status === 'match').length,
+            mismatches: all.filter((c) => c.status === 'mismatch').length,
+            partialMatches: all.filter((c) => c.status === 'partial-match').length,
+            acknowledged: all.filter((c) => c.acknowledgedAt).length,
+            pending: all.filter((c) => !c.acknowledgedAt).length,
         };
     }
 }

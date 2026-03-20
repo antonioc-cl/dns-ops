@@ -4,7 +4,7 @@
  * Database operations for remediation requests.
  */
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { type RemediationRequest, type NewRemediationRequest } from '../schema/remediation.js';
+import { type NewRemediationRequest, type RemediationRequest } from '../schema/remediation.js';
 export declare class RemediationRepository {
     private db;
     constructor(db: IDatabaseAdapter);

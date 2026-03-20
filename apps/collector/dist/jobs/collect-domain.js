@@ -2,30 +2,50 @@
  * Domain Collection Job
  *
  * API routes for triggering DNS collection jobs.
+ * Uses shared contracts from @dns-ops/contracts for request/response types.
  */
+import { validateCollectDomainRequest, } from '@dns-ops/contracts';
+import { createPostgresAdapter } from '@dns-ops/db';
+import { normalizeDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
-import { createPostgresAdapter } from '@dns-ops/db';
 export const collectDomainRoutes = new Hono();
 /**
  * POST /api/collect/domain
  * Trigger a DNS collection for a domain
+ *
+ * Request: CollectDomainRequest
+ * Response: CollectDomainResponse | ApiErrorResponse
  */
 collectDomainRoutes.post('/domain', async (c) => {
     try {
         const body = await c.req.json();
-        const { domain, zoneManagement = 'unknown', triggeredBy = 'api' } = body;
-        if (!domain || typeof domain !== 'string') {
-            return c.json({ error: 'Domain is required' }, 400);
+        // Validate request shape
+        if (!validateCollectDomainRequest(body)) {
+            const error = {
+                error: 'Invalid request',
+                message: 'Domain is required and must be a non-empty string',
+                code: 'INVALID_REQUEST',
+            };
+            return c.json(error, 400);
         }
-        // Normalize domain
-        const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
-        // Validate domain format
-        if (!isValidDomain(normalizedDomain)) {
-            return c.json({ error: 'Invalid domain format' }, 400);
+        const req = body;
+        // Use shared domain normalization (same as web app)
+        const domainInfo = normalizeDomain(req.domain);
+        // Validate domain format using shared validation
+        if (!isValidDomain(domainInfo.normalized)) {
+            const error = {
+                error: 'Invalid domain format',
+                message: `"${req.domain}" is not a valid domain name`,
+                code: 'INVALID_DOMAIN',
+            };
+            return c.json(error, 400);
         }
+        const normalizedDomain = domainInfo.normalized;
+        const zoneManagement = req.zoneManagement ?? 'unknown';
+        const triggeredBy = req.triggeredBy ?? 'api';
         // Extract mail collection options (Bead 08)
-        const { dkimSelectors, managedDkimSelectors, includeMailRecords } = body;
+        const { dkimSelectors, managedDkimSelectors, includeMailRecords } = req;
         // Configuration for collection
         const config = {
             domain: normalizedDomain,
@@ -45,17 +65,18 @@ collectDomainRoutes.post('/domain', async (c) => {
         // Run collection
         const collector = new DNSCollector(config, db);
         const result = await collector.collect();
-        return c.json({
+        const response = {
             success: true,
             domain: normalizedDomain,
             snapshotId: result.snapshotId,
             observationCount: result.observationCount,
             resultState: result.resultState,
             duration: result.duration,
-        }, 201);
+        };
+        return c.json(response, 201);
     }
-    catch (error) {
-        console.error('Collection error:', error);
+    catch (err) {
+        console.error('Collection error:', err);
         return c.json({
             error: 'Collection failed',
             message: error instanceof Error ? error.message : 'Unknown error',

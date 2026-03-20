@@ -5,7 +5,7 @@
  * Snapshots represent point-in-time collections of DNS data.
  */
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { type Snapshot, type NewSnapshot } from '../schema/index.js';
+import { type NewSnapshot, type Snapshot } from '../schema/index.js';
 export declare class SnapshotRepository {
     private db;
     constructor(db: IDatabaseAdapter);

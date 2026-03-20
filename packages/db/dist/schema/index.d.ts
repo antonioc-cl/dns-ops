@@ -2262,5 +2262,5 @@ export declare const alerts: import("drizzle-orm/pg-core").PgTableWithColumns<{
 }>;
 export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
-export { remediationRequests, remediationStatusEnum, remediationPriorityEnum, type RemediationRequest, type NewRemediationRequest, } from './remediation.js';
+export { type NewRemediationRequest, type RemediationRequest, remediationPriorityEnum, remediationRequests, remediationStatusEnum, } from './remediation.js';
 //# sourceMappingURL=index.d.ts.map

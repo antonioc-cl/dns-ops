@@ -4,7 +4,7 @@
  * Performs actual DNS queries using Node.js dns module.
  * Supports both recursive and authoritative resolution.
  */
-import { promises as dns } from 'dns';
+import { Resolver } from 'node:dns/promises';
 export class DNSResolver {
     /**
      * Perform a DNS query
@@ -13,7 +13,7 @@ export class DNSResolver {
         const startTime = Date.now();
         try {
             // Create resolver with specific server if provided
-            const resolver = new dns.Resolver();
+            const resolver = new Resolver();
             if (vantage.type === 'public-recursive') {
                 resolver.setServers([vantage.identifier]);
             }
@@ -172,23 +172,24 @@ export class DNSResolver {
         };
     }
     async querySOA(resolver, name) {
-        const soa = await resolver.resolveSoa(name);
+        const soa = (await resolver.resolveSoa(name));
         const minTTL = soa.minttl ?? soa.minimumTTL ?? 300;
         return {
-            answers: [{
+            answers: [
+                {
                     name,
                     type: 'SOA',
                     ttl: minTTL,
                     data: `${soa.nsname} ${soa.hostmaster} ${soa.serial} ${soa.refresh} ${soa.retry} ${soa.expire} ${minTTL}`,
-                }],
+                },
+            ],
         };
     }
     async queryCAA(resolver, name) {
         // Node.js doesn't have native CAA support, use resolveAny and filter
         try {
             const records = await resolver.resolveAny(name);
-            const caaRecords = records
-                .filter((r) => r.type === 'CAA');
+            const caaRecords = records.filter((r) => r.type === 'CAA');
             return {
                 answers: caaRecords.map((caa) => ({
                     name,

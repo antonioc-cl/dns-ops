@@ -26,37 +26,20 @@ const PROVIDER_SELECTORS = {
     'google-workspace': ['google', '20210112', '20230601', '2024'],
     'microsoft-365': ['selector1', 'selector2', 'microsoft'],
     'amazon-ses': ['amazonses', 'aws'],
-    'sendgrid': ['smtpapi', 'sendgrid'],
-    'mailgun': ['mailgun', 'krs'],
+    sendgrid: ['smtpapi', 'sendgrid'],
+    mailgun: ['mailgun', 'krs'],
 };
 // Provider detection patterns from MX records
 const PROVIDER_MX_PATTERNS = {
-    'google-workspace': [
-        /google\.com$/,
-        /googlemail\.com$/,
-    ],
-    'microsoft-365': [
-        /outlook\.com$/,
-        /hotmail\.com$/,
-        /microsoft$/,
-    ],
-    'amazon-ses': [
-        /amazonses\.com$/,
-    ],
+    'google-workspace': [/google\.com$/, /googlemail\.com$/],
+    'microsoft-365': [/outlook\.com$/, /hotmail\.com$/, /microsoft$/],
+    'amazon-ses': [/amazonses\.com$/],
 };
 // Provider detection patterns from SPF records
 const PROVIDER_SPF_PATTERNS = {
-    'google-workspace': [
-        /_spf\.google\.com/,
-        /google\.com/,
-    ],
-    'microsoft-365': [
-        /spf\.protection\.outlook\.com/,
-        /outlook\.com/,
-    ],
-    'amazon-ses': [
-        /amazonses\.com/,
-    ],
+    'google-workspace': [/_spf\.google\.com/, /google\.com/],
+    'microsoft-365': [/spf\.protection\.outlook\.com/, /outlook\.com/],
+    'amazon-ses': [/amazonses\.com/],
 };
 /**
  * Detect mail provider from DNS query results

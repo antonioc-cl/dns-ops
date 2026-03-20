@@ -21,9 +21,7 @@ export class RecordSetRepository {
     }
     async findByNameAndType(snapshotId, name, type) {
         const results = await this.db.select(recordSets);
-        const match = results.find(r => r.snapshotId === snapshotId &&
-            r.name === name &&
-            r.type === type);
+        const match = results.find((r) => r.snapshotId === snapshotId && r.name === name && r.type === type);
         return match || null;
     }
     async create(data) {

@@ -4,7 +4,7 @@
  * Tracks remediation requests for mail configuration issues.
  * Allows operators to request fixes for DMARC/DKIM/SPF problems.
  */
-import { pgTable, uuid, varchar, timestamp, jsonb, text, pgEnum, index, } from 'drizzle-orm/pg-core';
+import { index, jsonb, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 // Note: snapshotId references snapshots.id but FK constraint removed to avoid circular dependency
 export const remediationStatusEnum = pgEnum('remediation_status', [
     'open',

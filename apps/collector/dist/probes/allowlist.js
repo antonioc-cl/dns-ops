@@ -8,6 +8,7 @@ export class ProbeAllowlist {
     entries = new Map();
     defaultTtlMs;
     constructor(defaultTtlMs = 5 * 60 * 1000) {
+        // 5 minute default TTL
         this.defaultTtlMs = defaultTtlMs;
     }
     /**
@@ -56,7 +57,7 @@ export class ProbeAllowlist {
                         domain,
                         queryType: result.query.type,
                         queryName: result.query.name,
-                        answerData: result.answers.map((a) => a.data).join(', ')
+                        answerData: result.answers.map((a) => a.data).join(', '),
                     },
                     expiresAt,
                 };

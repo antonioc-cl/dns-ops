@@ -33,8 +33,7 @@ export class SnapshotRepository {
     async findLatestByDomain(domainId) {
         const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
         // Sort by createdAt desc and return first
-        return results
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        return results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
     }
     /**
      * Get snapshots by result state

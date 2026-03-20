@@ -1,4 +1,1 @@
-
-> @dns-ops/db@0.1.0 build /Users/antonio/Documents/PROYECTOS/dns-ops/packages/db
-> tsc
-
+$ tsc

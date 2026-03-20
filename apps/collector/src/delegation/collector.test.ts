@@ -13,12 +13,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DNSAnswer } from '../dns/types';
 import { DelegationCollector } from './collector';
 
-// Mock DNSResolver
-const mockQuery = vi.fn();
-vi.mock('../dns/resolver', () => ({
-  DNSResolver: vi.fn().mockImplementation(() => ({
-    query: mockQuery,
-  })),
+// Mock DNSResolver - vi.hoisted ensures mockQuery is available during vi.mock hoisting
+const mockQuery = vi.hoisted(() => vi.fn());
+
+vi.mock('../dns/resolver.js', () => ({
+  DNSResolver: class {
+    query = mockQuery;
+  },
 }));
 
 describe('DelegationCollector', () => {
@@ -66,11 +67,13 @@ describe('DelegationCollector', () => {
       mockQuery
         .mockResolvedValueOnce({
           query: { name: 'example.com', type: 'A' },
+          vantage: { type: 'authoritative', identifier: 'ns1.example.com' },
           success: true,
           answers: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
         })
         .mockResolvedValueOnce({
           query: { name: 'example.com', type: 'A' },
+          vantage: { type: 'authoritative', identifier: 'ns2.example.com' },
           success: true,
           answers: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.2' }],
         });
@@ -81,8 +84,8 @@ describe('DelegationCollector', () => {
       );
 
       expect(results).toHaveLength(2);
-      expect(results[0].vantage.identifier).toBe('ns1.example.com');
-      expect(results[1].vantage.identifier).toBe('ns2.example.com');
+      expect(results[0].result.vantage.identifier).toBe('ns1.example.com');
+      expect(results[1].result.vantage.identifier).toBe('ns2.example.com');
     });
 
     it('should detect divergent answers across authoritative servers', async () => {
@@ -110,7 +113,8 @@ describe('DelegationCollector', () => {
       const divergence = collector.detectDivergence(results);
 
       expect(divergence.hasDivergence).toBe(true);
-      expect(divergence.serversWithDifferentAnswers).toHaveLength(2);
+      expect(divergence.divergenceDetails).toHaveLength(1);
+      expect(divergence.divergenceDetails[0].serversWithDifferentAnswers).toHaveLength(2);
     });
   });
 

@@ -34,7 +34,7 @@ export class DomainRepository {
     async searchByName(pattern, limit = 20) {
         const allDomains = await this.db.select(domains);
         return allDomains
-            .filter(d => d.normalizedName.includes(pattern.toLowerCase()))
+            .filter((d) => d.normalizedName.includes(pattern.toLowerCase()))
             .slice(0, limit);
     }
     /**
@@ -43,15 +43,14 @@ export class DomainRepository {
     async findAll(filter = {}, options = {}) {
         let results = await this.db.select(domains);
         if (filter.tenantId) {
-            results = results.filter(d => d.tenantId === filter.tenantId);
+            results = results.filter((d) => d.tenantId === filter.tenantId);
         }
         if (filter.zoneManagement) {
-            results = results.filter(d => d.zoneManagement === filter.zoneManagement);
+            results = results.filter((d) => d.zoneManagement === filter.zoneManagement);
         }
         if (filter.search) {
             const searchLower = filter.search.toLowerCase();
-            results = results.filter(d => d.normalizedName.includes(searchLower) ||
-                d.name.toLowerCase().includes(searchLower));
+            results = results.filter((d) => d.normalizedName.includes(searchLower) || d.name.toLowerCase().includes(searchLower));
         }
         // Apply pagination
         const offset = options.offset || 0;
@@ -113,10 +112,10 @@ export class DomainRepository {
     async count(filter = {}) {
         let results = await this.db.select(domains);
         if (filter.tenantId) {
-            results = results.filter(d => d.tenantId === filter.tenantId);
+            results = results.filter((d) => d.tenantId === filter.tenantId);
         }
         if (filter.zoneManagement) {
-            results = results.filter(d => d.zoneManagement === filter.zoneManagement);
+            results = results.filter((d) => d.zoneManagement === filter.zoneManagement);
         }
         return results.length;
     }

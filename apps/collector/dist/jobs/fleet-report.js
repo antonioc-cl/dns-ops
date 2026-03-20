@@ -4,8 +4,8 @@
  * Batch checking and reporting for domain inventories.
  * Produces internal reports for high-value security queries.
  */
+import { DomainRepository, ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { SnapshotRepository, DomainRepository, ObservationRepository } from '@dns-ops/db';
 export const fleetReportRoutes = new Hono();
 /**
  * POST /api/fleet-report/run
@@ -14,11 +14,11 @@ export const fleetReportRoutes = new Hono();
 fleetReportRoutes.post('/run', async (c) => {
     const db = c.get('db');
     const body = await c.req.json().catch(() => ({}));
-    const { inventory = [], checks = ['spf', 'dmarc', 'mx', 'infrastructure'], format = 'detailed' } = body;
+    const { inventory = [], checks = ['spf', 'dmarc', 'mx', 'infrastructure'], format = 'detailed', } = body;
     if (!Array.isArray(inventory) || inventory.length === 0) {
         return c.json({
             error: 'Inventory required: array of domain names or domain objects',
-            example: { inventory: ['example.com', 'example.org'] }
+            example: { inventory: ['example.com', 'example.org'] },
         }, 400);
     }
     // Limit inventory size for safety
@@ -39,11 +39,11 @@ fleetReportRoutes.post('/run', async (c) => {
             const domainName = typeof item === 'string' ? item : item.domain;
             try {
                 // Find or create domain
-                let domain = await domainRepo.findByName(domainName);
+                const domain = await domainRepo.findByName(domainName);
                 if (!domain) {
                     errors.push({
                         domain: domainName,
-                        error: 'Domain not in database. Run collection first.'
+                        error: 'Domain not in database. Run collection first.',
                     });
                     continue;
                 }
@@ -53,7 +53,7 @@ fleetReportRoutes.post('/run', async (c) => {
                 if (!snapshot) {
                     errors.push({
                         domain: domainName,
-                        error: 'No snapshots available. Run collection first.'
+                        error: 'No snapshots available. Run collection first.',
                     });
                     continue;
                 }
@@ -66,13 +66,13 @@ fleetReportRoutes.post('/run', async (c) => {
                     snapshotId: snapshot.id,
                     collectedAt: snapshot.createdAt,
                     checks: checkResults,
-                    issues: checkResults.filter(r => r.severity !== 'ok'),
+                    issues: checkResults.filter((r) => r.severity !== 'ok'),
                 });
             }
             catch (err) {
                 errors.push({
                     domain: domainName,
-                    error: err instanceof Error ? err.message : String(err)
+                    error: err instanceof Error ? err.message : String(err),
                 });
             }
         }
@@ -85,8 +85,8 @@ fleetReportRoutes.post('/run', async (c) => {
             summary,
             results: format === 'summary' ? undefined : results,
             highPriorityIssues: results
-                .flatMap(r => r.issues)
-                .filter(i => i.severity === 'critical' || i.severity === 'high')
+                .flatMap((r) => r.issues)
+                .filter((i) => i.severity === 'critical' || i.severity === 'high')
                 .slice(0, 50),
             errors: errors.length > 0 ? errors : undefined,
         });
@@ -121,7 +121,10 @@ fleetReportRoutes.post('/import-csv', async (c) => {
         if (lines.length > maxRows) {
             return c.json({ error: `Too many rows. Max: ${maxRows}` }, 400);
         }
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
+        const headers = lines[0].split(',').map((h) => h
+            .trim()
+            .toLowerCase()
+            .replace(/^["']|["']$/g, ''));
         const domainIndex = headers.indexOf('domain');
         if (domainIndex === -1) {
             return c.json({
@@ -136,7 +139,7 @@ fleetReportRoutes.post('/import-csv', async (c) => {
             if (!line)
                 continue; // Skip empty lines
             // Basic parsing - split by comma, handle simple quoted values
-            const columns = line.split(',').map(col => col.trim().replace(/^["']|["']$/g, ''));
+            const columns = line.split(',').map((col) => col.trim().replace(/^["']|["']$/g, ''));
             const domain = columns[domainIndex]?.toLowerCase();
             // Validate and deduplicate
             if (domain && isValidDomain(domain) && !seenDomains.has(domain)) {
@@ -189,9 +192,9 @@ async function runChecks(_domain, observations, checkTypes) {
     const results = [];
     // SPF Check
     if (checkTypes.includes('spf')) {
-        const spfRecords = observations.filter(o => o.queryType === 'TXT' &&
+        const spfRecords = observations.filter((o) => o.queryType === 'TXT' &&
             o.status === 'success' &&
-            o.answerSection?.some(a => a.data.includes('v=spf1')));
+            o.answerSection?.some((a) => a.data.includes('v=spf1')));
         if (spfRecords.length === 0) {
             results.push({
                 check: 'spf',
@@ -202,7 +205,7 @@ async function runChecks(_domain, observations, checkTypes) {
             });
         }
         else {
-            const spfData = spfRecords[0].answerSection?.find(a => a.data.includes('v=spf1'))?.data || '';
+            const spfData = spfRecords[0].answerSection?.find((a) => a.data.includes('v=spf1'))?.data || '';
             if (spfData.includes('+all') || spfData.includes('?all')) {
                 results.push({
                     check: 'spf',
@@ -224,10 +227,10 @@ async function runChecks(_domain, observations, checkTypes) {
     }
     // DMARC Check
     if (checkTypes.includes('dmarc')) {
-        const dmarcRecords = observations.filter(o => o.queryType === 'TXT' &&
+        const dmarcRecords = observations.filter((o) => o.queryType === 'TXT' &&
             o.queryName.includes('_dmarc') &&
             o.status === 'success' &&
-            o.answerSection?.some(a => a.data.includes('v=DMARC1')));
+            o.answerSection?.some((a) => a.data.includes('v=DMARC1')));
         if (dmarcRecords.length === 0) {
             results.push({
                 check: 'dmarc',
@@ -238,7 +241,7 @@ async function runChecks(_domain, observations, checkTypes) {
             });
         }
         else {
-            const dmarcData = dmarcRecords[0].answerSection?.find(a => a.data.includes('v=DMARC1'))?.data || '';
+            const dmarcData = dmarcRecords[0].answerSection?.find((a) => a.data.includes('v=DMARC1'))?.data || '';
             const policyMatch = dmarcData.match(/p=(\w+)/);
             const policy = policyMatch ? policyMatch[1].toLowerCase() : 'none';
             if (policy === 'none') {
@@ -262,7 +265,7 @@ async function runChecks(_domain, observations, checkTypes) {
     }
     // MX Check
     if (checkTypes.includes('mx')) {
-        const mxRecords = observations.filter(o => o.queryType === 'MX' &&
+        const mxRecords = observations.filter((o) => o.queryType === 'MX' &&
             o.status === 'success' &&
             o.answerSection &&
             o.answerSection.length > 0);
@@ -275,7 +278,7 @@ async function runChecks(_domain, observations, checkTypes) {
             });
         }
         else {
-            const nullMx = mxRecords[0].answerSection?.find(a => a.data.trim() === '0 .');
+            const nullMx = mxRecords[0].answerSection?.find((a) => a.data.trim() === '0 .');
             if (nullMx) {
                 results.push({
                     check: 'mx',
@@ -296,10 +299,10 @@ async function runChecks(_domain, observations, checkTypes) {
     }
     // DKIM Check
     if (checkTypes.includes('dkim')) {
-        const dkimRecords = observations.filter(o => o.queryType === 'TXT' &&
+        const dkimRecords = observations.filter((o) => o.queryType === 'TXT' &&
             o.queryName.includes('._domainkey.') &&
             o.status === 'success' &&
-            o.answerSection?.some(a => a.data.includes('v=DKIM1') || a.data.includes('k=')));
+            o.answerSection?.some((a) => a.data.includes('v=DKIM1') || a.data.includes('k=')));
         if (dkimRecords.length === 0) {
             results.push({
                 check: 'dkim',
@@ -323,25 +326,25 @@ async function runChecks(_domain, observations, checkTypes) {
 function generateSummary(results, checkTypes) {
     const summary = {
         totalDomains: results.length,
-        domainsWithIssues: results.filter(r => r.issues.length > 0).length,
+        domainsWithIssues: results.filter((r) => r.issues.length > 0).length,
     };
     // Per-check breakdown
     for (const checkType of checkTypes) {
-        const checkResults = results.flatMap(r => r.checks.filter(c => c.check === checkType));
+        const checkResults = results.flatMap((r) => r.checks.filter((c) => c.check === checkType));
         summary[`${checkType}Stats`] = {
-            pass: checkResults.filter(r => r.status === 'pass').length,
-            fail: checkResults.filter(r => r.status === 'fail').length,
-            warning: checkResults.filter(r => r.status === 'warning').length,
-            missing: checkResults.filter(r => r.status === 'missing').length,
+            pass: checkResults.filter((r) => r.status === 'pass').length,
+            fail: checkResults.filter((r) => r.status === 'fail').length,
+            warning: checkResults.filter((r) => r.status === 'warning').length,
+            missing: checkResults.filter((r) => r.status === 'missing').length,
         };
     }
     // Issue severity breakdown
-    const allIssues = results.flatMap(r => r.issues);
+    const allIssues = results.flatMap((r) => r.issues);
     summary.issueSeverity = {
-        critical: allIssues.filter(i => i.severity === 'critical').length,
-        high: allIssues.filter(i => i.severity === 'high').length,
-        medium: allIssues.filter(i => i.severity === 'medium').length,
-        low: allIssues.filter(i => i.severity === 'low').length,
+        critical: allIssues.filter((i) => i.severity === 'critical').length,
+        high: allIssues.filter((i) => i.severity === 'high').length,
+        medium: allIssues.filter((i) => i.severity === 'medium').length,
+        low: allIssues.filter((i) => i.severity === 'low').length,
     };
     return summary;
 }
@@ -356,6 +359,6 @@ function isValidDomain(domain) {
     if (labels.length < 2)
         return false;
     // Each label must be valid
-    return labels.every(label => labelRegex.test(label));
+    return labels.every((label) => labelRegex.test(label));
 }
 //# sourceMappingURL=fleet-report.js.map

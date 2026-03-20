@@ -25,6 +25,7 @@ const mockedResolveTXT = vi.mocked(resolveTXT);
 describe('Mail Checker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedResolveTXT.mockReset();
   });
 
   describe('performMailCheck', () => {

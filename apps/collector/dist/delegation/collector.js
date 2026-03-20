@@ -108,7 +108,8 @@ export class DelegationCollector {
                 continue;
             const target = answer.data.toLowerCase();
             // If NS target is in the same zone, it should have glue
-            if (target.endsWith(`.${this.domain.toLowerCase()}`) || target === this.domain.toLowerCase()) {
+            if (target.endsWith(`.${this.domain.toLowerCase()}`) ||
+                target === this.domain.toLowerCase()) {
                 if (!glueTargets.has(target)) {
                     missing.push(target);
                 }
@@ -128,7 +129,7 @@ export class DelegationCollector {
             if (!byQuery.has(key)) {
                 byQuery.set(key, []);
             }
-            byQuery.get(key).push(resp);
+            byQuery.get(key)?.push(resp);
         }
         // Check each query for divergence
         for (const [key, queryResponses] of byQuery) {

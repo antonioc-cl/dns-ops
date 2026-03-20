@@ -4,9 +4,9 @@
  * Type-safe adapter using type assertions to work around
  * Drizzle's strict typing while maintaining clean interfaces.
  */
-import { type SQL } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { SQL } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import type * as schema from '../schema/index.js';
 type Schema = typeof schema;

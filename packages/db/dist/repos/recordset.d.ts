@@ -1,5 +1,5 @@
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { type RecordSet, type NewRecordSet } from '../schema/index.js';
+import { type NewRecordSet, type RecordSet } from '../schema/index.js';
 export declare class RecordSetRepository {
     private db;
     constructor(db: IDatabaseAdapter);
