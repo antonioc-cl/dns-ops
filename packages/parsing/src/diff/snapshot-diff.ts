@@ -36,6 +36,14 @@ export interface SnapshotDiffResult {
     modifications: number;
     unchanged: number;
   };
+  findingsSummary: {
+    totalChanges: number;
+    added: number;
+    removed: number;
+    modified: number;
+    unchanged: number;
+    severityChanges: number;
+  };
 }
 
 export interface RecordChange {
@@ -64,7 +72,20 @@ export interface FindingChange {
   title: string;
   severityA?: string;
   severityB?: string;
+  confidenceA?: string;
+  confidenceB?: string;
+  ruleId?: string;
+  ruleVersionA?: string;
+  ruleVersionB?: string;
+  evidenceCountA?: number;
+  evidenceCountB?: number;
   description?: string;
+  changes?: {
+    severity?: { from: string; to: string };
+    confidence?: { from: string; to: string };
+    ruleVersion?: { from: string; to: string };
+    evidenceCount?: { from: number; to: number };
+  };
 }
 
 export interface ScopeChange {
@@ -125,6 +146,16 @@ export function compareSnapshots(
     unchanged: allChanges.filter((c) => c.type === 'unchanged').length,
   };
 
+  // Calculate findings-specific summary
+  const findingsSummary = {
+    totalChanges: findingChanges.filter((c) => c.type !== 'unchanged').length,
+    added: findingChanges.filter((c) => c.type === 'added').length,
+    removed: findingChanges.filter((c) => c.type === 'removed').length,
+    modified: findingChanges.filter((c) => c.type === 'modified').length,
+    unchanged: findingChanges.filter((c) => c.type === 'unchanged').length,
+    severityChanges: findingChanges.filter((c) => c.changes?.severity).length,
+  };
+
   return {
     snapshotA: {
       id: snapshotA.id,
@@ -144,6 +175,7 @@ export function compareSnapshots(
       rulesetChange,
     },
     summary,
+    findingsSummary,
   };
 }
 
@@ -234,7 +266,7 @@ function compareTTLs(recordsA: RecordSet[], recordsB: RecordSet[]): TTLChange[] 
 
 function compareFindings(findingsA: Finding[], findingsB: Finding[]): FindingChange[] {
   const changes: FindingChange[] = [];
-  const key = (f: Finding) => `${f.type}|${f.title}`;
+  const key = (f: Finding) => `${f.type}|${f.ruleId}`;
 
   const mapA = new Map(findingsA.map((f) => [key(f), f]));
   const mapB = new Map(findingsB.map((f) => [key(f), f]));
@@ -243,38 +275,97 @@ function compareFindings(findingsA: Finding[], findingsB: Finding[]): FindingCha
     const findingB = mapB.get(k);
 
     if (!findingB) {
+      // Finding was removed
       changes.push({
         type: 'removed',
         findingType: findingA.type,
         title: findingA.title,
         severityA: findingA.severity,
-      });
-    } else if (findingA.severity !== findingB.severity) {
-      changes.push({
-        type: 'modified',
-        findingType: findingA.type,
-        title: findingA.title,
-        severityA: findingA.severity,
-        severityB: findingB.severity,
-        description: `Severity changed from ${findingA.severity} to ${findingB.severity}`,
+        confidenceA: findingA.confidence,
+        ruleId: findingA.ruleId,
+        ruleVersionA: findingA.ruleVersion,
+        evidenceCountA: findingA.evidence?.length ?? 0,
       });
     } else {
-      changes.push({
-        type: 'unchanged',
-        findingType: findingA.type,
-        title: findingA.title,
-        severityA: findingA.severity,
-      });
+      // Check for modifications
+      const changesDetected: FindingChange['changes'] = {};
+
+      if (findingA.severity !== findingB.severity) {
+        changesDetected.severity = { from: findingA.severity, to: findingB.severity };
+      }
+      if (findingA.confidence !== findingB.confidence) {
+        changesDetected.confidence = { from: findingA.confidence, to: findingB.confidence };
+      }
+      if (findingA.ruleVersion !== findingB.ruleVersion) {
+        changesDetected.ruleVersion = { from: findingA.ruleVersion, to: findingB.ruleVersion };
+      }
+      const evidenceA = findingA.evidence?.length ?? 0;
+      const evidenceB = findingB.evidence?.length ?? 0;
+      if (evidenceA !== evidenceB) {
+        changesDetected.evidenceCount = { from: evidenceA, to: evidenceB };
+      }
+
+      const hasChanges = Object.keys(changesDetected).length > 0;
+
+      if (hasChanges) {
+        // Build description from changes
+        const descriptions: string[] = [];
+        if (changesDetected.severity) {
+          descriptions.push(`severity: ${changesDetected.severity.from} → ${changesDetected.severity.to}`);
+        }
+        if (changesDetected.confidence) {
+          descriptions.push(`confidence: ${changesDetected.confidence.from} → ${changesDetected.confidence.to}`);
+        }
+        if (changesDetected.ruleVersion) {
+          descriptions.push(`rule version: ${changesDetected.ruleVersion.from} → ${changesDetected.ruleVersion.to}`);
+        }
+        if (changesDetected.evidenceCount) {
+          descriptions.push(`evidence: ${changesDetected.evidenceCount.from} → ${changesDetected.evidenceCount.to}`);
+        }
+
+        changes.push({
+          type: 'modified',
+          findingType: findingA.type,
+          title: findingB.title, // Use newer title
+          severityA: findingA.severity,
+          severityB: findingB.severity,
+          confidenceA: findingA.confidence,
+          confidenceB: findingB.confidence,
+          ruleId: findingA.ruleId,
+          ruleVersionA: findingA.ruleVersion,
+          ruleVersionB: findingB.ruleVersion,
+          evidenceCountA: evidenceA,
+          evidenceCountB: evidenceB,
+          description: descriptions.join('; '),
+          changes: changesDetected,
+        });
+      } else {
+        changes.push({
+          type: 'unchanged',
+          findingType: findingA.type,
+          title: findingA.title,
+          severityA: findingA.severity,
+          confidenceA: findingA.confidence,
+          ruleId: findingA.ruleId,
+          ruleVersionA: findingA.ruleVersion,
+          evidenceCountA: evidenceA,
+        });
+      }
     }
   }
 
   for (const [k, findingB] of mapB) {
     if (!mapA.has(k)) {
+      // Finding was added
       changes.push({
         type: 'added',
         findingType: findingB.type,
         title: findingB.title,
         severityB: findingB.severity,
+        confidenceB: findingB.confidence,
+        ruleId: findingB.ruleId,
+        ruleVersionB: findingB.ruleVersion,
+        evidenceCountB: findingB.evidence?.length ?? 0,
       });
     }
   }
