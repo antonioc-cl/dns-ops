@@ -3,8 +3,12 @@
  *
  * Performs actual DNS queries using Node.js dns module.
  * Supports both recursive and authoritative resolution.
+ *
+ * Error mapping uses standardized DNS_RCODE constants from @dns-ops/contracts
+ * for consistent status classification across the codebase.
  */
 
+import { DNS_RCODE } from '@dns-ops/contracts';
 import { Resolver } from 'node:dns/promises';
 import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from './types.js';
 
@@ -35,7 +39,7 @@ export class DNSResolver {
         query,
         vantage,
         success: true,
-        responseCode: 0, // NOERROR
+        responseCode: DNS_RCODE.NOERROR,
         flags: {
           aa: false,
           tc: false,
@@ -53,15 +57,19 @@ export class DNSResolver {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      // Determine error type
-      let responseCode = 2; // SERVFAIL default
+      // Determine error type using standardized RCODE constants
+      let responseCode: number = DNS_RCODE.SERVFAIL;
 
       if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('NXDOMAIN')) {
-        responseCode = 3; // NXDOMAIN
-      } else if (errorMessage.includes('ECONNREFUSED')) {
-        responseCode = 5; // REFUSED
-      } else if (errorMessage.includes('timeout')) {
-        responseCode = 2; // SERVFAIL (timeout)
+        responseCode = DNS_RCODE.NXDOMAIN;
+      } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('REFUSED')) {
+        responseCode = DNS_RCODE.REFUSED;
+      } else if (
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('ETIMEDOUT') ||
+        errorMessage.includes('timed out')
+      ) {
+        responseCode = DNS_RCODE.SERVFAIL; // No specific timeout RCODE; use SERVFAIL
       }
 
       return {

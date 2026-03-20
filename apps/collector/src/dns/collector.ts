@@ -5,6 +5,7 @@
  * Evaluates rules and persists findings immediately after collection.
  */
 
+import { determineStatus } from '@dns-ops/contracts';
 import type {
   IDatabaseAdapter,
   NewFinding,
@@ -407,7 +408,15 @@ export class DNSCollector {
       vantageType:
         result.vantage.type === 'public-recursive' ? 'public-recursive' : 'authoritative',
       vantageIdentifier: result.vantage.identifier,
-      status: result.success ? 'success' : this.mapErrorToStatus(result.error),
+      // Use determineStatus for comprehensive status classification
+      // including NODATA (success with no answers) and truncation (TC flag)
+      status: determineStatus({
+        success: result.success,
+        rcode: result.responseCode,
+        error: result.error,
+        answerCount: result.answers.length,
+        truncated: result.flags?.tc,
+      }),
       queriedAt: new Date(),
       responseTimeMs: result.responseTime,
       responseCode: result.responseCode ?? null,
@@ -469,19 +478,6 @@ export class DNSCollector {
     }
 
     return snapshot.id;
-  }
-
-  /**
-   * Map error message to collection status
-   */
-  private mapErrorToStatus(
-    error: string | undefined
-  ): 'timeout' | 'refused' | 'nxdomain' | 'error' {
-    if (!error) return 'error';
-    if (error.includes('timeout')) return 'timeout';
-    if (error.includes('ECONNREFUSED') || error.includes('REFUSED')) return 'refused';
-    if (error.includes('ENOTFOUND') || error.includes('NXDOMAIN')) return 'nxdomain';
-    return 'error';
   }
 
   /**

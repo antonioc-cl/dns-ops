@@ -10,6 +10,7 @@ export * from './enums.js';
 export * from './env.js';
 export * from './requests.js';
 export * from './tenant.js';
+export * from './dns.js';
 
 // Core entity types (will be expanded in Bead 02)
 
