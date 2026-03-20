@@ -13,9 +13,18 @@ function RootComponent() {
             <Link to="/" className="focus-ring text-xl font-bold text-gray-900 rounded">
               DNS Ops Workbench
             </Link>
-            <nav className="flex gap-4">
-              <Link to="/" className="focus-ring rounded text-gray-600 hover:text-gray-900">
+            <nav className="flex gap-6">
+              <Link
+                to="/"
+                className="focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium"
+              >
                 Home
+              </Link>
+              <Link
+                to="/portfolio"
+                className="focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium"
+              >
+                Portfolio
               </Link>
             </nav>
           </div>
