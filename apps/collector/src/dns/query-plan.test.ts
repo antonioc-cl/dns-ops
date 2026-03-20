@@ -9,10 +9,10 @@
  * - Deduplication
  */
 
+import { createPostgresAdapter } from '@dns-ops/db';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DNSCollector } from './collector.js';
 import type { CollectionConfig } from './types.js';
-import { createPostgresAdapter } from '@dns-ops/db';
 
 // Mock database adapter
 const mockDb = {

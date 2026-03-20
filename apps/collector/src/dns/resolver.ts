@@ -8,8 +8,8 @@
  * for consistent status classification across the codebase.
  */
 
-import { DNS_RCODE } from '@dns-ops/contracts';
 import { Resolver } from 'node:dns/promises';
+import { DNS_RCODE } from '@dns-ops/contracts';
 import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from './types.js';
 
 export class DNSResolver {

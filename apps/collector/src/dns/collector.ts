@@ -35,10 +35,10 @@ import {
   dmarcRule,
   mtaStsRule,
   mxPresenceRule,
-  recursiveAuthoritativeMismatchRule,
   type RuleContext,
   RulesEngine,
   type Ruleset,
+  recursiveAuthoritativeMismatchRule,
   spfRule,
   tlsRptRule,
   unmanagedZonePartialCoverageRule,
@@ -391,15 +391,39 @@ export class DNSCollector {
       metadata: {
         // Vantage identifiers (IPs/hostnames) for detailed tracking
         vantageIdentifiers: [...new Set(results.map((r) => r.vantage.identifier))],
-        // Delegation data summary if available (Bead 12)
+        // Delegation data if available (Bead 12, dns-ops-1j4.6.4)
         ...(delegationData
           ? {
               hasDelegationData: true,
               parentZone: delegationData.parentZone,
               nsServers: delegationData.parentNs.map((ns: DNSAnswer) => ns.data),
+              // Divergence details
               hasDivergence: delegationData.hasDivergence,
-              lameDelegations: delegationData.lameDelegations.length,
+              divergenceDetails: delegationData.divergenceDetails.map((d) => ({
+                queryName: d.queryName,
+                queryType: d.queryType,
+                groups: d.groups.map((g) => ({
+                  servers: g.servers,
+                  signature: g.signature,
+                })),
+                totalServers: d.totalServers,
+              })),
+              // Lame delegation details
+              lameDelegations: delegationData.lameDelegations.map((l) => ({
+                server: l.server,
+                reason: l.reason,
+              })),
+              // Missing glue
+              missingGlue: delegationData.missingGlue,
+              // DNSSEC info
               hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
+              dnssec: delegationData.dnssecInfo
+                ? {
+                    adFlagSet: delegationData.dnssecInfo.adFlagSet,
+                    hasDnskey: delegationData.dnssecInfo.dnskeyRecords.length > 0,
+                    hasDs: delegationData.dnssecInfo.dsRecords.length > 0,
+                  }
+                : undefined,
             }
           : {}),
       },
@@ -542,12 +566,14 @@ export class DNSCollector {
           version: ruleset.version,
           name: ruleset.name,
           description: ruleset.description || '',
-          rules: ruleset.rules.map((r: { id: string; name: string; version: string; enabled: boolean }) => ({
-            id: r.id,
-            name: r.name,
-            version: r.version,
-            enabled: r.enabled !== false,
-          })),
+          rules: ruleset.rules.map(
+            (r: { id: string; name: string; version: string; enabled: boolean }) => ({
+              id: r.id,
+              name: r.name,
+              version: r.version,
+              enabled: r.enabled !== false,
+            })
+          ),
           active: true,
           createdBy: this.config.triggeredBy || 'collector',
         });

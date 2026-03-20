@@ -1,2 +1,276 @@
 $ biome check src
-Checked 30 files in 229ms. No fixes applied.
+src/dns/query-plan.test.ts:55:56 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    53 │   beforeEach(() => {
+    54 │     vi.clearAllMocks();
+  > 55 │     collector = new DNSCollector(baseConfig, mockDb as any);
+       │                                                        ^^^
+    56 │   });
+    57 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:62:19 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    60 │       const managedCollector = new DNSCollector(
+    61 │         { ...baseConfig, zoneManagement: 'managed' },
+  > 62 │         mockDb as any
+       │                   ^^^
+    63 │       );
+    64 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:65:50 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    63 │       );
+    64 │ 
+  > 65 │       const queries = await (managedCollector as any).generateQueries();
+       │                                                  ^^^
+    66 │ 
+    67 │       // Should have queries for apex
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:68:31 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    67 │       // Should have queries for apex
+  > 68 │       expect(queries.some((q: any) => q.name === 'example.com')).toBe(true);
+       │                               ^^^
+    69 │ 
+    70 │       // For managed zones, should primarily focus on apex
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:72:46 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    70 │       // For managed zones, should primarily focus on apex
+    71 │       // (may have some subdomain queries for DKIM, etc.)
+  > 72 │       const apexQueries = queries.filter((q: any) => q.name === 'example.com');
+       │                                              ^^^
+    73 │       expect(apexQueries.length).toBeGreaterThan(0);
+    74 │     });
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:79:19 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    77 │       const managedCollector = new DNSCollector(
+    78 │         { ...baseConfig, zoneManagement: 'managed', includeMailRecords: true },
+  > 79 │         mockDb as any
+       │                   ^^^
+    80 │       );
+    81 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:82:50 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    80 │       );
+    81 │ 
+  > 82 │       const queries = await (managedCollector as any).generateQueries();
+       │                                                  ^^^
+    83 │ 
+    84 │       // Should include mail-related queries
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:85:31 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    84 │       // Should include mail-related queries
+  > 85 │       expect(queries.some((q: any) => q.name.includes('_dmarc'))).toBe(true);
+       │                               ^^^
+    86 │     });
+    87 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:91:19 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    89 │       const managedCollector = new DNSCollector(
+    90 │         { ...baseConfig, zoneManagement: 'managed', includeMailRecords: false },
+  > 91 │         mockDb as any
+       │                   ^^^
+    92 │       );
+    93 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:94:50 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    92 │       );
+    93 │ 
+  > 94 │       const queries = await (managedCollector as any).generateQueries();
+       │                                                  ^^^
+    95 │ 
+    96 │       // Should not include mail-related queries
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:97:32 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    96 │       // Should not include mail-related queries
+  > 97 │       expect(queries.every((q: any) => !q.name.includes('_dmarc'))).toBe(true);
+       │                                ^^^
+    98 │     });
+    99 │   });
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:103:43 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    101 │   describe('Unmanaged Zones', () => {
+    102 │     it('should generate targeted queries for key records', async () => {
+  > 103 │       const queries = await (collector as any).generateQueries();
+        │                                           ^^^
+    104 │ 
+    105 │       // Should query apex
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:106:31 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    105 │       // Should query apex
+  > 106 │       expect(queries.some((q: any) => q.name === 'example.com')).toBe(true);
+        │                               ^^^
+    107 │ 
+    108 │       // Should query DMARC
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:109:31 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    108 │       // Should query DMARC
+  > 109 │       expect(queries.some((q: any) => q.name === '_dmarc.example.com')).toBe(true);
+        │                               ^^^
+    110 │ 
+    111 │       // Should query MTA-STS
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:112:31 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    111 │       // Should query MTA-STS
+  > 112 │       expect(queries.some((q: any) => q.name === '_mta-sts.example.com')).toBe(true);
+        │                               ^^^
+    113 │ 
+    114 │       // Should query TLS-RPT
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:115:31 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    114 │       // Should query TLS-RPT
+  > 115 │       expect(queries.some((q: any) => q.name === '_smtp._tls.example.com')).toBe(true);
+        │                               ^^^
+    116 │     });
+    117 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:119:43 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    118 │     it('should include DKIM selector queries', async () => {
+  > 119 │       const queries = await (collector as any).generateQueries();
+        │                                           ^^^
+    120 │ 
+    121 │       // Should have some DKIM selector queries
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:122:46 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    121 │       // Should have some DKIM selector queries
+  > 122 │       const dkimQueries = queries.filter((q: any) => q.name.includes('_domainkey'));
+        │                                              ^^^
+    123 │       expect(dkimQueries.length).toBeGreaterThan(0);
+    124 │     });
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+src/dns/query-plan.test.ts:132:19 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Unexpected any. Specify a different type.
+  
+    130 │           queryNames: ['test.example.com', 'api.example.com'],
+    131 │         },
+  > 132 │         mockDb as any
+        │                   ^^^
+    133 │       );
+    134 │ 
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 34.
+src/dns/query-plan.test.ts:135:51 lint/suspicious/noExplicitAny ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Checked 40 files in 259ms. No fixes applied.
+Found 54 warnings.
+
+  ! Unexpected any. Specify a different type.
+  
+    133 │       );
+    134 │ 
+  > 135 │       const queries = await (explicitCollector as any).generateQueries();
+        │                                                   ^^^
+    136 │ 
+    137 │       // Should only query the explicit names
+  
+  i any disables many type checking rules. Its use should be avoided.
+  
+

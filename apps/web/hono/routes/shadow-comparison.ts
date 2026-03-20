@@ -14,9 +14,8 @@ import {
   ShadowComparisonRepository,
   SnapshotRepository,
 } from '@dns-ops/db';
+import type { LegacyToolOutput as DBLegacyToolOutput, FieldComparison } from '@dns-ops/db/schema';
 import { findings as findingsTable } from '@dns-ops/db/schema';
-import type { FieldComparison } from '@dns-ops/db/schema';
-import type { LegacyToolOutput as DBLegacyToolOutput } from '@dns-ops/db/schema';
 import { type LegacyToolOutput, shadowComparator } from '@dns-ops/rules';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -408,7 +407,9 @@ shadowComparisonRoutes.post('/mismatch-report', requireAdminAccess, async (c) =>
     const shadowRepo = new ShadowComparisonRepository(db);
     const reportRepo = new MismatchReportRepository(db);
 
-    const start = periodStart ? new Date(periodStart) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const start = periodStart
+      ? new Date(periodStart)
+      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const end = periodEnd ? new Date(periodEnd) : new Date();
 
     const report = await reportRepo.generateReport(

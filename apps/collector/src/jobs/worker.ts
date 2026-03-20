@@ -9,16 +9,21 @@
  * Start with WORKER_ENABLED=true environment variable.
  */
 
-import { Worker, type Job, type ConnectionOptions } from 'bullmq';
-import { createPostgresAdapter, DomainRepository, FindingRepository, SnapshotRepository } from '@dns-ops/db';
+import {
+  createPostgresAdapter,
+  DomainRepository,
+  FindingRepository,
+  SnapshotRepository,
+} from '@dns-ops/db';
+import { type ConnectionOptions, type Job, Worker } from 'bullmq';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
 import {
-  QUEUE_NAMES,
-  getRedisConnection,
   type CollectDomainJobData,
-  type MonitoringRefreshJobData,
   type FleetReportJobData,
+  getRedisConnection,
+  type MonitoringRefreshJobData,
+  QUEUE_NAMES,
 } from './queue.js';
 
 // =============================================================================

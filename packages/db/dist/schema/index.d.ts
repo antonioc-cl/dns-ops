@@ -76,7 +76,7 @@ export declare const domains: import("drizzle-orm/pg-core").PgTableWithColumns<{
             tableName: "domains";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "managed" | "unmanaged" | "unknown";
+            data: "unknown" | "managed" | "unmanaged";
             driverParam: string;
             notNull: true;
             hasDefault: true;
@@ -330,7 +330,7 @@ export declare const snapshots: import("drizzle-orm/pg-core").PgTableWithColumns
             tableName: "snapshots";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "managed" | "unmanaged" | "unknown";
+            data: "unknown" | "managed" | "unmanaged";
             driverParam: string;
             notNull: true;
             hasDefault: false;
@@ -391,6 +391,7 @@ export declare const snapshots: import("drizzle-orm/pg-core").PgTableWithColumns
             dataType: "json";
             columnType: "PgJsonb";
             data: {
+                vantageIdentifiers?: string[];
                 hasDelegationData?: boolean;
                 parentZone?: string;
                 nsServers?: string[];
@@ -651,7 +652,7 @@ export declare const observations: import("drizzle-orm/pg-core").PgTableWithColu
             tableName: "observations";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "success" | "timeout" | "refused" | "truncated" | "nxdomain" | "nodata" | "error";
+            data: "error" | "success" | "timeout" | "refused" | "truncated" | "nxdomain" | "nodata";
             driverParam: string;
             notNull: true;
             hasDefault: false;
@@ -2263,4 +2264,6 @@ export declare const alerts: import("drizzle-orm/pg-core").PgTableWithColumns<{
 export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
 export { type NewRemediationRequest, type RemediationRequest, remediationPriorityEnum, remediationRequests, remediationStatusEnum, } from './remediation.js';
+export { type DkimSelector, dkimSelectors, type MailEvidence, mailEvidence, mailProviderEnum, type NewDkimSelector, type NewMailEvidence, selectorConfidenceEnum, selectorProvenanceEnum, } from './mail.js';
+export { adjudicationEnum, baselineStatusEnum, type FieldComparison, fieldComparisonStatusEnum, type LegacyAccessLog, type LegacyToolOutput, legacyAccessLogs, legacyToolTypeEnum, type MismatchReport, mismatchReports, type NewLegacyAccessLog, type NewMismatchReport, type NewProviderBaseline, type NewShadowComparison, type ProviderBaseline, type ProviderBaselineData, providerBaselines, type ShadowComparison, shadowComparisons, shadowStatusEnum, } from './parity.js';
 //# sourceMappingURL=index.d.ts.map

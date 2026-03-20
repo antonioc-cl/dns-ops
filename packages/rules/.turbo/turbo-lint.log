@@ -1,7 +1,7 @@
 $ biome check src
-Checked 8 files in 644ms. No fixes applied.
-src/mail/templates.ts:487:86 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Checked 8 files in 117ms. No fixes applied.
 Found 1 warning.
+src/mail/templates.ts:487:86 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ! Forbidden non-null assertion.
   

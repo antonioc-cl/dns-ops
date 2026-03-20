@@ -95,10 +95,7 @@ interface ValidationResult {
 /**
  * Check if a variable is required in the current environment
  */
-function isRequired(
-  def: EnvVarDef,
-  env: 'development' | 'production' | 'test'
-): boolean {
+function isRequired(def: EnvVarDef, env: 'development' | 'production' | 'test'): boolean {
   if (def.required === true) return true;
   if (def.required === false) return false;
   return def.required === env;
@@ -139,9 +136,7 @@ export function validateEnv(
       if (def.default) {
         // Has default, no warning needed
       } else if (def.required === 'production' && environment === 'development') {
-        warnings.push(
-          `${def.name} not set (required in production): ${def.description}`
-        );
+        warnings.push(`${def.name} not set (required in production): ${def.description}`);
       }
       continue;
     }
@@ -215,9 +210,7 @@ export function formatValidationErrors(result: ValidationResult): string {
  *
  * @throws Error with formatted message if validation fails
  */
-export function assertEnvValid(
-  processEnv: Record<string, string | undefined> = process.env
-): void {
+export function assertEnvValid(processEnv: Record<string, string | undefined> = process.env): void {
   const result = validateEnv(processEnv);
 
   // Log warnings even if valid
@@ -241,9 +234,7 @@ export function assertEnvValid(
  * Returns the current environment values with proper typing.
  * Uses defaults where appropriate.
  */
-export function getEnvConfig(
-  processEnv: Record<string, string | undefined> = process.env
-): {
+export function getEnvConfig(processEnv: Record<string, string | undefined> = process.env): {
   nodeEnv: 'development' | 'production' | 'test';
   databaseUrl: string | undefined;
   collectorUrl: string;
@@ -251,10 +242,7 @@ export function getEnvConfig(
   isDevelopment: boolean;
   isProduction: boolean;
 } {
-  const nodeEnv = (processEnv.NODE_ENV || 'production') as
-    | 'development'
-    | 'production'
-    | 'test';
+  const nodeEnv = (processEnv.NODE_ENV || 'production') as 'development' | 'production' | 'test';
 
   return {
     nodeEnv,
@@ -283,11 +271,7 @@ export function getEnvDocs(): Array<{
   return ENV_VARS.map((v) => ({
     name: v.name,
     required:
-      v.required === true
-        ? 'always'
-        : v.required === false
-          ? 'optional'
-          : `in ${v.required}`,
+      v.required === true ? 'always' : v.required === false ? 'optional' : `in ${v.required}`,
     description: v.description,
     default: v.default,
   }));

@@ -31,10 +31,7 @@ export class FindingRepository {
   /**
    * Find findings for a snapshot filtered by severity
    */
-  async findBySnapshotIdAndSeverity(
-    snapshotId: string,
-    severities: string[]
-  ): Promise<Finding[]> {
+  async findBySnapshotIdAndSeverity(snapshotId: string, severities: string[]): Promise<Finding[]> {
     const allFindings = await this.findBySnapshotId(snapshotId);
     return allFindings.filter((f) => severities.includes(f.severity));
   }

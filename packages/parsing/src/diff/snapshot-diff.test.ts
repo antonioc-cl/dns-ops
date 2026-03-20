@@ -12,14 +12,16 @@ import { compareSnapshots } from './snapshot-diff.js';
 // Test Helpers
 // =============================================================================
 
-function createSnapshot(overrides: Partial<{
-  id: string;
-  createdAt: Date;
-  rulesetVersion: string;
-  queriedNames: string[];
-  queriedTypes: string[];
-  vantages: string[];
-}> = {}) {
+function createSnapshot(
+  overrides: Partial<{
+    id: string;
+    createdAt: Date;
+    rulesetVersion: string;
+    queriedNames: string[];
+    queriedTypes: string[];
+    vantages: string[];
+  }> = {}
+) {
   return {
     id: overrides.id ?? 'snap-test-1',
     createdAt: overrides.createdAt ?? new Date('2024-01-01'),
@@ -226,12 +228,8 @@ describe('TTL Changes', () => {
     const snapA = createSnapshot({ id: 'snap-a' });
     const snapB = createSnapshot({ id: 'snap-b' });
 
-    const recordsA: RecordSet[] = [
-      createRecordSet({ name: 'example.com', type: 'A', ttl: 300 }),
-    ];
-    const recordsB: RecordSet[] = [
-      createRecordSet({ name: 'example.com', type: 'A', ttl: 300 }),
-    ];
+    const recordsA: RecordSet[] = [createRecordSet({ name: 'example.com', type: 'A', ttl: 300 })];
+    const recordsB: RecordSet[] = [createRecordSet({ name: 'example.com', type: 'A', ttl: 300 })];
 
     const result = compareSnapshots(snapA, snapB, recordsA, recordsB, [], []);
 
@@ -242,9 +240,7 @@ describe('TTL Changes', () => {
     const snapA = createSnapshot({ id: 'snap-a' });
     const snapB = createSnapshot({ id: 'snap-b' });
 
-    const recordsA: RecordSet[] = [
-      createRecordSet({ name: 'example.com', type: 'A', ttl: 300 }),
-    ];
+    const recordsA: RecordSet[] = [createRecordSet({ name: 'example.com', type: 'A', ttl: 300 })];
     const recordsB: RecordSet[] = []; // Record removed
 
     const result = compareSnapshots(snapA, snapB, recordsA, recordsB, [], []);
@@ -529,9 +525,7 @@ describe('Summary', () => {
     const snapA = createSnapshot({ id: 'snap-a' });
     const snapB = createSnapshot({ id: 'snap-b' });
 
-    const findingsA: Finding[] = [
-      createFinding({ type: 'dns.issue', title: 'Issue 1' }),
-    ];
+    const findingsA: Finding[] = [createFinding({ type: 'dns.issue', title: 'Issue 1' })];
     const findingsB: Finding[] = [
       createFinding({ type: 'dns.issue', title: 'Issue 1' }),
       createFinding({ type: 'dns.issue2', title: 'Issue 2' }),
@@ -560,9 +554,7 @@ describe('Unknown vs Unchanged Distinction', () => {
       queriedNames: ['example.com', 'www.example.com'],
     });
 
-    const recordsA: RecordSet[] = [
-      createRecordSet({ name: 'example.com', type: 'A' }),
-    ];
+    const recordsA: RecordSet[] = [createRecordSet({ name: 'example.com', type: 'A' })];
     const recordsB: RecordSet[] = [
       createRecordSet({ name: 'example.com', type: 'A' }),
       createRecordSet({ name: 'www.example.com', type: 'A' }), // Added to scope, not necessarily new
@@ -588,9 +580,7 @@ describe('Unknown vs Unchanged Distinction', () => {
       queriedNames: ['example.com', 'www.example.com'],
     });
 
-    const recordsA: RecordSet[] = [
-      createRecordSet({ name: 'example.com', type: 'A' }),
-    ];
+    const recordsA: RecordSet[] = [createRecordSet({ name: 'example.com', type: 'A' })];
     const recordsB: RecordSet[] = [
       createRecordSet({ name: 'example.com', type: 'A' }),
       createRecordSet({ name: 'www.example.com', type: 'A' }),
@@ -600,8 +590,10 @@ describe('Unknown vs Unchanged Distinction', () => {
 
     // No scope change - so the added record is truly new
     expect(result.comparison.scopeChanges).toBeNull();
-    expect(result.comparison.recordChanges.find(
-      r => r.name === 'www.example.com' && r.type === 'added'
-    )).toBeDefined();
+    expect(
+      result.comparison.recordChanges.find(
+        (r) => r.name === 'www.example.com' && r.type === 'added'
+      )
+    ).toBeDefined();
   });
 });

@@ -241,7 +241,10 @@ export async function getQueueHealth(): Promise<{
     return { available: false, queues: {} };
   }
 
-  const queues: Record<string, { waiting: number; active: number; completed: number; failed: number }> = {};
+  const queues: Record<
+    string,
+    { waiting: number; active: number; completed: number; failed: number }
+  > = {};
 
   for (const [name, queueName] of Object.entries(QUEUE_NAMES)) {
     const queue = createQueue(queueName);

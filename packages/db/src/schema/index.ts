@@ -149,7 +149,7 @@ export const snapshots = pgTable(
     collectionDurationMs: integer('collection_duration_ms'),
     errorMessage: text('error_message'),
 
-    // Collection and delegation metadata (Bead 12, Bead dns-ops-1j4.5.5)
+    // Collection and delegation metadata (Bead 12, dns-ops-1j4.5.5, dns-ops-1j4.6.4)
     metadata: jsonb('metadata').$type<{
       // Vantage identifiers (IPs/hostnames) for detailed tracking
       vantageIdentifiers?: string[];
@@ -157,9 +157,31 @@ export const snapshots = pgTable(
       hasDelegationData?: boolean;
       parentZone?: string;
       nsServers?: string[];
+      // Delegation divergence
       hasDivergence?: boolean;
-      lameDelegations?: number;
+      divergenceDetails?: Array<{
+        queryName: string;
+        queryType: string;
+        groups: Array<{
+          servers: string[];
+          signature: string;
+        }>;
+        totalServers: number;
+      }>;
+      // Lame delegation details
+      lameDelegations?: Array<{
+        server: string;
+        reason: 'not-authoritative' | 'timeout' | 'refused' | 'error';
+      }>;
+      // Missing glue records
+      missingGlue?: string[];
+      // DNSSEC info
       hasDnssec?: boolean;
+      dnssec?: {
+        adFlagSet?: boolean;
+        hasDnskey?: boolean;
+        hasDs?: boolean;
+      };
     }>(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -7,10 +7,7 @@
  * - Tracks schedule state for observability
  */
 
-import {
-  getMonitoringQueue,
-  scheduleMonitoringJob,
-} from './queue.js';
+import { getMonitoringQueue, scheduleMonitoringJob } from './queue.js';
 
 // =============================================================================
 // TYPES

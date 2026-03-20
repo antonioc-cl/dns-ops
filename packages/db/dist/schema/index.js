@@ -108,7 +108,7 @@ export const snapshots = pgTable('snapshots', {
     triggeredBy: varchar('triggered_by', { length: 100 }).notNull(), // user ID or 'system'
     collectionDurationMs: integer('collection_duration_ms'),
     errorMessage: text('error_message'),
-    // Delegation and extended metadata (Bead 12)
+    // Collection and delegation metadata (Bead 12, Bead dns-ops-1j4.5.5)
     metadata: jsonb('metadata').$type(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
@@ -463,4 +463,12 @@ export const alerts = pgTable('alerts', {
 // REMEDIATION EXPORTS
 // =============================================================================
 export { remediationPriorityEnum, remediationRequests, remediationStatusEnum, } from './remediation.js';
+// =============================================================================
+// MAIL EVIDENCE EXPORTS
+// =============================================================================
+export { dkimSelectors, mailEvidence, mailProviderEnum, selectorConfidenceEnum, selectorProvenanceEnum, } from './mail.js';
+// =============================================================================
+// PARITY EVIDENCE EXPORTS
+// =============================================================================
+export { adjudicationEnum, baselineStatusEnum, fieldComparisonStatusEnum, legacyAccessLogs, legacyToolTypeEnum, mismatchReports, providerBaselines, shadowComparisons, shadowStatusEnum, } from './parity.js';
 //# sourceMappingURL=index.js.map

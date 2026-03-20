@@ -75,7 +75,9 @@ portfolioRoutes.post('/search', async (c) => {
     }
 
     if (zoneManagement && zoneManagement.length > 0) {
-      conditions.push(inArray(domains.zoneManagement, zoneManagement as ('managed' | 'unmanaged' | 'unknown')[]));
+      conditions.push(
+        inArray(domains.zoneManagement, zoneManagement as ('managed' | 'unmanaged' | 'unknown')[])
+      );
     }
 
     // Get domains
@@ -126,7 +128,12 @@ portfolioRoutes.post('/search', async (c) => {
         const domainFindings = await db.getDrizzle().query.findings.findMany({
           where: and(
             eq(findings.snapshotId, latestSnapshot.id),
-            hasSeverityFilter ? inArray(findings.severity, severities as ('critical' | 'high' | 'medium' | 'low' | 'info')[]) : undefined
+            hasSeverityFilter
+              ? inArray(
+                  findings.severity,
+                  severities as ('critical' | 'high' | 'medium' | 'low' | 'info')[]
+                )
+              : undefined
           ),
         });
 
@@ -421,7 +428,8 @@ portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
   const validation = await validateBody(c, {
     name: requiredString('name', { minLength: 1, maxLength: 100 }),
     description: optionalString('description', { maxLength: 500 }),
-    criteria: (value: unknown) => (value && typeof value === 'object' ? value : {}) as Record<string, unknown>,
+    criteria: (value: unknown) =>
+      (value && typeof value === 'object' ? value : {}) as Record<string, unknown>,
     isShared: boolean('isShared', false),
   });
 

@@ -177,7 +177,12 @@ function getTableName(table: unknown): string {
   const t = table as Record<symbol | string, unknown>;
   if (t[drizzleNameSymbol]) return t[drizzleNameSymbol] as string;
   // Fallback checks
-  if (t._ && typeof t._ === 'object' && 'name' in t._ && typeof (t._ as Record<string, string>).name === 'string') {
+  if (
+    t._ &&
+    typeof t._ === 'object' &&
+    'name' in t._ &&
+    typeof (t._ as Record<string, string>).name === 'string'
+  ) {
     return (t._ as Record<string, string>).name;
   }
   return '';
@@ -214,11 +219,11 @@ function createMockDb(data: MockData) {
 
   // Map Drizzle table names to our mock data keys
   const tableNameMap: Record<string, keyof MockData> = {
-    'domain_notes': 'domainNotes',
-    'domain_tags': 'domainTags',
-    'saved_filters': 'savedFilters',
-    'template_overrides': 'templateOverrides',
-    'audit_events': 'auditEvents',
+    domain_notes: 'domainNotes',
+    domain_tags: 'domainTags',
+    saved_filters: 'savedFilters',
+    template_overrides: 'templateOverrides',
+    audit_events: 'auditEvents',
   };
 
   const getTable = (table: unknown): keyof MockData | '' => {

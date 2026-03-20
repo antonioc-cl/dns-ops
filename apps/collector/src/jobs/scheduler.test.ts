@@ -7,12 +7,8 @@
  * - Cron pattern validation
  */
 
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import {
-  SCHEDULE_PATTERNS,
-  SCHEDULE_DESCRIPTIONS,
-  getScheduleKey,
-} from './scheduler.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getScheduleKey, SCHEDULE_DESCRIPTIONS, SCHEDULE_PATTERNS } from './scheduler.js';
 
 // =============================================================================
 // UNIT TESTS (no mocking needed)

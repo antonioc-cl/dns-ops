@@ -431,10 +431,7 @@ export class MismatchReportRepository {
    * Find reports by domain
    */
   async findByDomain(domain: string): Promise<MismatchReport[]> {
-    const results = await this.db.selectWhere(
-      mismatchReports,
-      eq(mismatchReports.domain, domain)
-    );
+    const results = await this.db.selectWhere(mismatchReports, eq(mismatchReports.domain, domain));
     results.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
     return results;
   }

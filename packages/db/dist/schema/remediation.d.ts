@@ -3,6 +3,38 @@
  *
  * Tracks remediation requests for mail configuration issues.
  * Allows operators to request fixes for DMARC/DKIM/SPF problems.
+ *
+ * ## Data Model Decision: snapshot_id as Soft Reference
+ *
+ * The `snapshot_id` column is a SOFT REFERENCE (no FK constraint) by design:
+ *
+ * ### Rationale
+ * 1. **Lifecycle Independence**: Remediation requests have a longer lifecycle than
+ *    snapshots. A remediation may span multiple snapshots as the domain is re-scanned.
+ *
+ * 2. **Snapshot Retention**: Snapshots may be archived or pruned for storage management.
+ *    Hard FK would prevent cleanup or require cascading which loses audit trail.
+ *
+ * 3. **Request Origin Flexibility**: Remediations can be created:
+ *    - From a specific snapshot (snapshot_id set)
+ *    - From external systems (snapshot_id null)
+ *    - From manual entry (snapshot_id null)
+ *
+ * 4. **Circular Dependency Avoidance**: The remediation module is intentionally
+ *    decoupled from the core snapshot module to enable independent deployment.
+ *
+ * ### Application-Level Integrity
+ * - The application layer validates snapshot_id when provided
+ * - UI displays "snapshot unavailable" if referenced snapshot is deleted
+ * - Reports join on snapshot_id with LEFT JOIN to handle missing references
+ *
+ * ### Alternative Considered
+ * Adding FK with ON DELETE SET NULL was considered but rejected because:
+ * - Implicit nullification loses the audit trail of original snapshot association
+ * - Application should decide how to handle orphaned references
+ *
+ * Decision Date: 2026-03-20
+ * Decision Owner: dns-ops-1j4.4.3
  */
 export declare const remediationStatusEnum: import("drizzle-orm/pg-core").PgEnum<["open", "in-progress", "resolved", "closed"]>;
 export declare const remediationPriorityEnum: import("drizzle-orm/pg-core").PgEnum<["low", "medium", "high", "critical"]>;

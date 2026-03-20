@@ -88,13 +88,10 @@ describe('requiredArray', () => {
   });
 
   it('validates items', () => {
-    const validator = requiredArray<number>(
-      'items',
-      (item) => {
-        if (typeof item !== 'number') throw new Error('not a number');
-        return item;
-      }
-    );
+    const validator = requiredArray<number>('items', (item) => {
+      if (typeof item !== 'number') throw new Error('not a number');
+      return item;
+    });
     expect(validator([1, 2, 3])).toEqual([1, 2, 3]);
   });
 });

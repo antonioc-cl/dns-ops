@@ -48,5 +48,14 @@ export declare class SnapshotRepository {
      * Count snapshots by domain
      */
     countByDomain(domainId: string): Promise<number>;
+    /**
+     * Update snapshot's ruleset version ID
+     *
+     * Called after findings evaluation to mark the snapshot as having been
+     * analyzed with a specific ruleset version. This allows downstream consumers
+     * to distinguish between "no findings" (empty but evaluated) and
+     * "findings not yet evaluated" (rulesetVersionId is null).
+     */
+    updateRulesetVersion(id: string, rulesetVersionId: string): Promise<Snapshot | undefined>;
 }
 //# sourceMappingURL=snapshot.d.ts.map

@@ -39,12 +39,15 @@ export type Schema<T> = {
 /**
  * Create a validator for required string fields
  */
-export function requiredString(fieldName: string, options?: {
-  minLength?: number;
-  maxLength?: number;
-  pattern?: RegExp;
-  patternMessage?: string;
-}): FieldValidator<string> {
+export function requiredString(
+  fieldName: string,
+  options?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: RegExp;
+    patternMessage?: string;
+  }
+): FieldValidator<string> {
   return (value: unknown): string => {
     if (value === undefined || value === null) {
       throw new FieldValidationError(fieldName, 'MISSING_FIELD', `${fieldName} is required`);
@@ -80,12 +83,15 @@ export function requiredString(fieldName: string, options?: {
 /**
  * Create a validator for optional string fields
  */
-export function optionalString(fieldName: string, options?: {
-  minLength?: number;
-  maxLength?: number;
-  pattern?: RegExp;
-  patternMessage?: string;
-}): FieldValidator<string | undefined> {
+export function optionalString(
+  fieldName: string,
+  options?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: RegExp;
+    patternMessage?: string;
+  }
+): FieldValidator<string | undefined> {
   return (value: unknown): string | undefined => {
     if (value === undefined || value === null || value === '') {
       return undefined;
@@ -239,7 +245,8 @@ export function domainName(fieldName: string, required = true): FieldValidator<s
       );
     }
     // Basic domain validation - allow ASCII and IDN
-    const DOMAIN_RE = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
+    const DOMAIN_RE =
+      /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
     const IDN_RE = /^(xn--[a-zA-Z0-9]+\.?)+$/i;
     if (!DOMAIN_RE.test(value) && !IDN_RE.test(value)) {
       throw new FieldValidationError(
@@ -264,11 +271,7 @@ export function boolean(fieldName: string, required = true): FieldValidator<bool
       return undefined;
     }
     if (typeof value !== 'boolean') {
-      throw new FieldValidationError(
-        fieldName,
-        'INVALID_FORMAT',
-        `${fieldName} must be a boolean`
-      );
+      throw new FieldValidationError(fieldName, 'INVALID_FORMAT', `${fieldName} must be a boolean`);
     }
     return value;
   };

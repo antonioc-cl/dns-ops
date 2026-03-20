@@ -4,7 +4,7 @@
  * Round-trip tests for punycode encoding/decoding
  */
 import { describe, expect, it } from 'vitest';
-import { fromPunycode, isPunycode, isValidDomain, normalizeDomain, toPunycode, } from './index.js';
+import { fromPunycode, isPunycode, isValidDomain, normalizeDomain, toPunycode } from './index.js';
 describe('IDN Utilities', () => {
     describe('isPunycode', () => {
         it('should identify punycode domains', () => {
@@ -43,13 +43,7 @@ describe('IDN Utilities', () => {
     });
     describe('round-trip conversion', () => {
         it('should preserve unicode through encode/decode', () => {
-            const testCases = [
-                'münchen',
-                'bücher',
-                '日本語',
-                'россия',
-                'مثال',
-            ];
+            const testCases = ['münchen', 'bücher', '日本語', 'россия', 'مثال'];
             for (const unicode of testCases) {
                 const punycode = toPunycode(unicode);
                 const decoded = fromPunycode(punycode);
@@ -57,11 +51,7 @@ describe('IDN Utilities', () => {
             }
         });
         it('should preserve punycode through decode/encode', () => {
-            const testCases = [
-                'xn--mnchen-3ya',
-                'xn--bcher-kva',
-                'xn--wgv71a',
-            ];
+            const testCases = ['xn--mnchen-3ya', 'xn--bcher-kva', 'xn--wgv71a'];
             for (const punycode of testCases) {
                 const unicode = fromPunycode(punycode);
                 const encoded = toPunycode(unicode);

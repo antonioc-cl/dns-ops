@@ -77,6 +77,7 @@ export function LegacyToolsPanel({ domain, detectedSelectors = [] }: LegacyTools
         onView={handleDmarcClick}
         externalUrl={buildDmarcLink(config.dmarc, domain)}
         requiresAuth={config.dmarc.authRequired}
+        available={config.dmarc.available}
       />
 
       <ToolCard
@@ -86,29 +87,35 @@ export function LegacyToolsPanel({ domain, detectedSelectors = [] }: LegacyTools
         onView={() => handleDkimClick()}
         externalUrl={buildDkimLink(config.dkim, domain)}
         requiresAuth={config.dkim.authRequired}
+        available={config.dkim.available}
       />
 
-      {detectedSelectors.length > 0 && (
+      {detectedSelectors.length > 0 && config.dkim.available && (
         <div className="border rounded-lg p-4">
           <h4 className="font-medium text-gray-900 mb-3">Detected DKIM Selectors</h4>
           <div className="space-y-2">
-            {detectedSelectors.map((selector) => (
-              <div
-                key={selector}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded"
-              >
-                <code className="text-sm font-mono">{selector}</code>
-                <a
-                  href={buildDkimLink(config.dkim, domain, selector)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => handleDkimClick(selector)}
-                  className="focus-ring text-sm text-blue-600 hover:text-blue-800"
+            {detectedSelectors.map((selector) => {
+              const selectorLink = buildDkimLink(config.dkim, domain, selector);
+              return (
+                <div
+                  key={selector}
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
                 >
-                  Validate in legacy tool →
-                </a>
-              </div>
-            ))}
+                  <code className="text-sm font-mono">{selector}</code>
+                  {selectorLink && (
+                    <a
+                      href={selectorLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handleDkimClick(selector)}
+                      className="focus-ring text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Validate in legacy tool →
+                    </a>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -130,11 +137,68 @@ interface ToolCardProps {
   description: string;
   icon: 'dmarc' | 'dkim';
   onView: () => void;
-  externalUrl: string;
+  externalUrl: string | null;
   requiresAuth: boolean;
+  available: boolean;
 }
 
-function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth }: ToolCardProps) {
+function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth, available }: ToolCardProps) {
+  if (!available) {
+    return (
+      <div className="border rounded-lg p-4 opacity-60">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            {icon === 'dmarc' ? (
+              <svg
+                className="w-6 h-6 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-6 h-6 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                />
+              </svg>
+            )}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-500">{title}</h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                Not Configured
+              </span>
+            </div>
+            <p className="text-sm text-gray-400 mt-1">{description}</p>
+            <p className="text-xs text-gray-400 mt-2">
+              This tool is not available in the current environment.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-150 motion-reduce:transition-none">
       <div className="flex items-start gap-4">
@@ -191,14 +255,16 @@ function ToolCard({ title, description, icon, onView, externalUrl, requiresAuth 
             >
               Open Tool
             </button>
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="focus-ring text-sm text-gray-500 hover:text-gray-700"
-            >
-              Open in new tab →
-            </a>
+            {externalUrl && (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="focus-ring text-sm text-gray-500 hover:text-gray-700"
+              >
+                Open in new tab →
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -267,6 +333,11 @@ function DeepLinkModal({ tool, domain, config, onClose }: DeepLinkModalProps) {
 
   const destinationUrl =
     tool === 'dmarc' ? buildDmarcLink(config, domain) : buildDkimLink(config, domain);
+
+  // Don't render modal if tool is not available
+  if (!config.available || !destinationUrl) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 p-4 flex items-center justify-center">

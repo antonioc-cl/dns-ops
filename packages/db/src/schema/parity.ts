@@ -72,11 +72,7 @@ export const legacyToolTypeEnum = pgEnum('legacy_tool_type', [
 /**
  * Provider baseline status
  */
-export const baselineStatusEnum = pgEnum('baseline_status', [
-  'active',
-  'deprecated',
-  'draft',
-]);
+export const baselineStatusEnum = pgEnum('baseline_status', ['active', 'deprecated', 'draft']);
 
 // =============================================================================
 // SHADOW COMPARISONS TABLE

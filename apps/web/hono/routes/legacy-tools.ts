@@ -8,10 +8,7 @@
  * Users should treat legacy tool results as informational, not authoritative.
  */
 
-import {
-  LegacyAccessLogRepository,
-  ShadowComparisonRepository,
-} from '@dns-ops/db';
+import { LegacyAccessLogRepository, ShadowComparisonRepository } from '@dns-ops/db';
 import { findings as findingsTable, snapshots as snapshotsTable } from '@dns-ops/db/schema';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -347,7 +344,7 @@ legacyToolsRoutes.get('/shadow-stats', requireAuth, async (c) => {
     // If domain is specified, get domain-specific stats
     let domainStats = null;
     let newFindingsCount = 0;
-    let discrepancies: Array<{
+    const discrepancies: Array<{
       id: string;
       field: string;
       legacyValue: unknown;
@@ -420,7 +417,7 @@ legacyToolsRoutes.get('/shadow-stats', requireAuth, async (c) => {
 
     return c.json({
       domain: domain || 'all',
-      legacyAccessCount: domain ? domainStats?.legacyAccessCount ?? 0 : legacyStats.total,
+      legacyAccessCount: domain ? (domainStats?.legacyAccessCount ?? 0) : legacyStats.total,
       newFindingsCount,
       discrepancies,
       stats: {

@@ -185,21 +185,15 @@ describe('TTL Changes', () => {
     it('should not report TTL changes for identical TTLs', () => {
         const snapA = createSnapshot({ id: 'snap-a' });
         const snapB = createSnapshot({ id: 'snap-b' });
-        const recordsA = [
-            createRecordSet({ name: 'example.com', type: 'A', ttl: 300 }),
-        ];
-        const recordsB = [
-            createRecordSet({ name: 'example.com', type: 'A', ttl: 300 }),
-        ];
+        const recordsA = [createRecordSet({ name: 'example.com', type: 'A', ttl: 300 })];
+        const recordsB = [createRecordSet({ name: 'example.com', type: 'A', ttl: 300 })];
         const result = compareSnapshots(snapA, snapB, recordsA, recordsB, [], []);
         expect(result.comparison.ttlChanges).toHaveLength(0);
     });
     it('should not report TTL changes for records that exist only in one snapshot', () => {
         const snapA = createSnapshot({ id: 'snap-a' });
         const snapB = createSnapshot({ id: 'snap-b' });
-        const recordsA = [
-            createRecordSet({ name: 'example.com', type: 'A', ttl: 300 }),
-        ];
+        const recordsA = [createRecordSet({ name: 'example.com', type: 'A', ttl: 300 })];
         const recordsB = []; // Record removed
         const result = compareSnapshots(snapA, snapB, recordsA, recordsB, [], []);
         expect(result.comparison.ttlChanges).toHaveLength(0);
@@ -435,9 +429,7 @@ describe('Summary', () => {
     it('should include finding changes in summary', () => {
         const snapA = createSnapshot({ id: 'snap-a' });
         const snapB = createSnapshot({ id: 'snap-b' });
-        const findingsA = [
-            createFinding({ type: 'dns.issue', title: 'Issue 1' }),
-        ];
+        const findingsA = [createFinding({ type: 'dns.issue', title: 'Issue 1' })];
         const findingsB = [
             createFinding({ type: 'dns.issue', title: 'Issue 1' }),
             createFinding({ type: 'dns.issue2', title: 'Issue 2' }),
@@ -461,9 +453,7 @@ describe('Unknown vs Unchanged Distinction', () => {
             id: 'snap-b',
             queriedNames: ['example.com', 'www.example.com'],
         });
-        const recordsA = [
-            createRecordSet({ name: 'example.com', type: 'A' }),
-        ];
+        const recordsA = [createRecordSet({ name: 'example.com', type: 'A' })];
         const recordsB = [
             createRecordSet({ name: 'example.com', type: 'A' }),
             createRecordSet({ name: 'www.example.com', type: 'A' }), // Added to scope, not necessarily new
@@ -484,9 +474,7 @@ describe('Unknown vs Unchanged Distinction', () => {
             id: 'snap-b',
             queriedNames: ['example.com', 'www.example.com'],
         });
-        const recordsA = [
-            createRecordSet({ name: 'example.com', type: 'A' }),
-        ];
+        const recordsA = [createRecordSet({ name: 'example.com', type: 'A' })];
         const recordsB = [
             createRecordSet({ name: 'example.com', type: 'A' }),
             createRecordSet({ name: 'www.example.com', type: 'A' }),
@@ -494,7 +482,7 @@ describe('Unknown vs Unchanged Distinction', () => {
         const result = compareSnapshots(snapA, snapB, recordsA, recordsB, [], []);
         // No scope change - so the added record is truly new
         expect(result.comparison.scopeChanges).toBeNull();
-        expect(result.comparison.recordChanges.find(r => r.name === 'www.example.com' && r.type === 'added')).toBeDefined();
+        expect(result.comparison.recordChanges.find((r) => r.name === 'www.example.com' && r.type === 'added')).toBeDefined();
     });
 });
 //# sourceMappingURL=snapshot-diff.test.js.map

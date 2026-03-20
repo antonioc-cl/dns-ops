@@ -13,9 +13,9 @@
  * Run with: bun test --grep "Integration"
  */
 
-import { describe, expect, it, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { DNSResolver } from './resolver.js';
-import type { VantageInfo, DNSQueryResult } from './types.js';
+import type { DNSQueryResult, VantageInfo } from './types.js';
 
 // Well-known test domains with predictable behavior
 const TEST_DOMAINS = {
@@ -194,10 +194,7 @@ describe('DNS Integration Tests', () => {
 
     it('should return NXDOMAIN for random subdomain of valid domain', async () => {
       const randomSubdomain = `nonexistent-${Date.now()}.google.com`;
-      const result = await resolver.query(
-        { name: randomSubdomain, type: 'A' },
-        PUBLIC_RECURSIVE
-      );
+      const result = await resolver.query({ name: randomSubdomain, type: 'A' }, PUBLIC_RECURSIVE);
 
       expect(result.success).toBe(false);
       expect(result.responseCode).toBe(3); // NXDOMAIN
@@ -216,10 +213,7 @@ describe('DNS Integration Tests', () => {
       if (nsResult.success && nsResult.answers.length > 0) {
         // Query AAAA for a nameserver (may or may not have it)
         const nsHostname = nsResult.answers[0].data.replace(/\.$/, '');
-        const result = await resolver.query(
-          { name: nsHostname, type: 'MX' },
-          PUBLIC_RECURSIVE
-        );
+        const result = await resolver.query({ name: nsHostname, type: 'MX' }, PUBLIC_RECURSIVE);
 
         // NS servers typically don't have MX records
         // This should be success with no answers (NODATA)
@@ -259,10 +253,7 @@ describe('DNS Integration Tests', () => {
 
     it('should have reasonable response times for cached queries', async () => {
       // First query may be slower (cold cache)
-      await resolver.query(
-        { name: TEST_DOMAINS.CLOUDFLARE, type: 'A' },
-        PUBLIC_RECURSIVE
-      );
+      await resolver.query({ name: TEST_DOMAINS.CLOUDFLARE, type: 'A' }, PUBLIC_RECURSIVE);
 
       // Second query should be faster (warm cache)
       const result = await resolver.query(
@@ -291,10 +282,7 @@ describe('DNS Integration Tests', () => {
     it('should convert unicode domain to punycode for query', async () => {
       // Note: The resolver may or may not auto-convert unicode to punycode
       // This test documents current behavior
-      const result = await resolver.query(
-        { name: 'münchen.de', type: 'A' },
-        PUBLIC_RECURSIVE
-      );
+      const result = await resolver.query({ name: 'münchen.de', type: 'A' }, PUBLIC_RECURSIVE);
 
       // Query was attempted (may fail due to encoding)
       expect(result).toBeDefined();
@@ -305,10 +293,7 @@ describe('DNS Integration Tests', () => {
     it('should resolve wildcard records when present', async () => {
       // Many CDNs use wildcards - this tests that arbitrary subdomains resolve
       const randomSubdomain = `random-${Date.now()}.cloudflare.com`;
-      const result = await resolver.query(
-        { name: randomSubdomain, type: 'A' },
-        PUBLIC_RECURSIVE
-      );
+      const result = await resolver.query({ name: randomSubdomain, type: 'A' }, PUBLIC_RECURSIVE);
 
       // Cloudflare may or may not have wildcards for their main domain
       // The test validates we handle the response correctly
@@ -376,9 +361,7 @@ describe('DNS Integration Tests', () => {
       expect(result).toBeDefined();
       if (result.success && result.answers.length > 0) {
         // Find SPF record if TXT query succeeded
-        const spfRecord = result.answers.find(
-          (a) => a.data.startsWith('v=spf1')
-        );
+        const spfRecord = result.answers.find((a) => a.data.startsWith('v=spf1'));
         // Google should have SPF
         expect(spfRecord).toBeDefined();
       }
@@ -387,10 +370,7 @@ describe('DNS Integration Tests', () => {
 
   describe('Error Resilience', () => {
     it('should handle invalid domain names gracefully', async () => {
-      const result = await resolver.query(
-        { name: 'invalid..domain', type: 'A' },
-        PUBLIC_RECURSIVE
-      );
+      const result = await resolver.query({ name: 'invalid..domain', type: 'A' }, PUBLIC_RECURSIVE);
 
       // Should not throw, should return error
       expect(result).toBeDefined();
@@ -402,10 +382,7 @@ describe('DNS Integration Tests', () => {
       const longLabel = 'a'.repeat(63);
       const longDomain = `${longLabel}.example.com`;
 
-      const result = await resolver.query(
-        { name: longDomain, type: 'A' },
-        PUBLIC_RECURSIVE
-      );
+      const result = await resolver.query({ name: longDomain, type: 'A' }, PUBLIC_RECURSIVE);
 
       expect(result).toBeDefined();
       // Should fail (domain doesn't exist) but not crash

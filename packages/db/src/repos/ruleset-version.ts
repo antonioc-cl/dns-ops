@@ -8,11 +8,7 @@
 
 import { eq } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import {
-  type NewRulesetVersion,
-  type RulesetVersion,
-  rulesetVersions,
-} from '../schema/index.js';
+import { type NewRulesetVersion, type RulesetVersion, rulesetVersions } from '../schema/index.js';
 
 export class RulesetVersionRepository {
   constructor(private db: IDatabaseAdapter) {}
@@ -29,10 +25,7 @@ export class RulesetVersionRepository {
    * Find a ruleset version by version string
    */
   async findByVersion(version: string): Promise<RulesetVersion | null> {
-    const result = await this.db.selectOne(
-      rulesetVersions,
-      eq(rulesetVersions.version, version)
-    );
+    const result = await this.db.selectOne(rulesetVersions, eq(rulesetVersions.version, version));
     return result || null;
   }
 
@@ -88,11 +81,7 @@ export class RulesetVersionRepository {
   private async deactivateAll(): Promise<void> {
     const active = await this.findActive();
     if (active) {
-      await this.db.update(
-        rulesetVersions,
-        { active: false },
-        eq(rulesetVersions.id, active.id)
-      );
+      await this.db.update(rulesetVersions, { active: false }, eq(rulesetVersions.id, active.id));
     }
   }
 
