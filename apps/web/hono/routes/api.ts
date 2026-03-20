@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getEnvConfig } from '../config/env.js';
 import { requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { delegationRoutes } from './delegation.js';
@@ -138,8 +139,7 @@ apiRoutes.post('/collect/domain', requireAuth, async (c) => {
     return c.json({ error: 'Domain is required' }, 400);
   }
 
-  const collectorUrl = process.env.COLLECTOR_URL || 'http://localhost:3001';
-  const internalSecret = process.env.INTERNAL_SECRET;
+  const { collectorUrl, internalSecret } = getEnvConfig();
   const tenantId = c.get('tenantId') || 'default';
   const actorId = c.get('actorId') || 'web-ui';
 

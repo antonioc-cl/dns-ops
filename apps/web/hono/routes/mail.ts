@@ -6,6 +6,7 @@
 
 import { RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { getEnvConfig } from '../config/env.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
@@ -85,8 +86,7 @@ export const mailRoutes = new Hono<Env>()
       return c.json({ error: validationError }, 400);
     }
 
-    const collectorUrl = process.env.COLLECTOR_URL || 'http://localhost:3001';
-    const internalSecret = process.env.INTERNAL_SECRET;
+    const { collectorUrl, internalSecret } = getEnvConfig();
     const tenantId = c.get('tenantId') || 'default';
     const actorId = c.get('actorId') || 'web-ui';
 
