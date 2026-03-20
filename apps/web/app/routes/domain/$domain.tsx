@@ -1,5 +1,5 @@
 import type { Observation, Snapshot } from '@dns-ops/db/schema';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DiscoveredSelectors } from '../../components/DiscoveredSelectors.js';
@@ -72,6 +72,7 @@ function Domain360Page() {
   };
   const { tab: urlTab } = Route.useSearch();
   const navigate = useNavigate();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<DomainTabId>(urlTab || 'overview');
 
   // Sync URL to tab state when it changes externally
@@ -149,7 +150,8 @@ function Domain360Page() {
         body: JSON.stringify({ domain, zoneManagement: 'unmanaged' }),
       });
       if (response.ok) {
-        window.location.reload();
+        // Invalidate router cache to refetch loader data
+        await router.invalidate();
       }
     } finally {
       setIsRefreshing(false);
