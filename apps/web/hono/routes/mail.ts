@@ -6,6 +6,7 @@
 
 import { RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
 interface CollectMailRequest {
@@ -71,7 +72,7 @@ function validateRemediation(data: RemediationRequest): string | null {
 
 export const mailRoutes = new Hono<Env>()
   // Trigger mail check via collector
-  .post('/collect/mail', async (c) => {
+  .post('/collect/mail', requireAuth, async (c) => {
     let data: CollectMailRequest;
     try {
       data = (await c.req.json()) as CollectMailRequest;
@@ -121,7 +122,7 @@ export const mailRoutes = new Hono<Env>()
   })
 
   // Create remediation request
-  .post('/remediation', async (c) => {
+  .post('/remediation', requireAuth, requireWritePermission, async (c) => {
     let data: RemediationRequest;
     try {
       data = (await c.req.json()) as RemediationRequest;
@@ -175,7 +176,7 @@ export const mailRoutes = new Hono<Env>()
   })
 
   // Get remediation requests for a domain
-  .get('/remediation/:domain', async (c) => {
+  .get('/remediation/:domain', requireAuth, async (c) => {
     const domain = c.req.param('domain');
     const dbAdapter = c.get('db');
 
@@ -200,7 +201,7 @@ export const mailRoutes = new Hono<Env>()
   })
 
   // Update remediation status
-  .patch('/remediation/:id', async (c) => {
+  .patch('/remediation/:id', requireAuth, requireWritePermission, async (c) => {
     const id = c.req.param('id');
     const body = (await c.req.json().catch(() => ({}))) as {
       status?: string;

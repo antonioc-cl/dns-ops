@@ -5,6 +5,7 @@
  */
 
 import { Hono } from 'hono';
+import { requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
 export const legacyToolsRoutes = new Hono<Env>();
@@ -13,7 +14,7 @@ export const legacyToolsRoutes = new Hono<Env>();
  * POST /api/legacy-tools/log
  * Log access to legacy tools for shadow comparison analysis
  */
-legacyToolsRoutes.post('/log', async (c) => {
+legacyToolsRoutes.post('/log', requireAuth, async (c) => {
   try {
     const body = await c.req.json();
     const { tool, domain, action, timestamp, metadata } = body;

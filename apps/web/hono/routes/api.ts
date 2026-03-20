@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { delegationRoutes } from './delegation.js';
 import { findingsRoutes } from './findings.js';
@@ -124,7 +125,7 @@ apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
 });
 
 // Trigger collection (proxies to collector service)
-apiRoutes.post('/collect/domain', async (c) => {
+apiRoutes.post('/collect/domain', requireAuth, async (c) => {
   let body: { domain?: string; zoneManagement?: string };
   try {
     body = await c.req.json();
