@@ -10,9 +10,10 @@ This document defines the targeted inspection scope for DNS queries in phase 1 o
 ## Scope Philosophy
 
 ### For Managed Zones
-- Full zone enumeration is permitted
-- Complete visibility into all records
+- **Full zone visibility** (not enumeration)
+- Query all standard record types for zone apex
 - Full DNSSEC validation
+- Per-authoritative-server queries for consistency checks
 
 ### For Unmanaged Zones
 - **Targeted inspection only**
