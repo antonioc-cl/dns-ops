@@ -4,7 +4,7 @@
  * API endpoints for mail diagnostics and remediation requests.
  */
 
-import { createPostgresClient, createSimpleAdapter, RemediationRepository } from '@dns-ops/db';
+import { createPostgresAdapter, type IDatabaseAdapter, RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 
 interface CollectMailRequest {
@@ -68,13 +68,20 @@ function validateRemediation(data: RemediationRequest): string | null {
   return null;
 }
 
+let _mailAdapter: IDatabaseAdapter | null = null;
+
+function getMailAdapter(): IDatabaseAdapter | null {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  if (!_mailAdapter) _mailAdapter = createPostgresAdapter(url);
+  return _mailAdapter;
+}
+
 function getRemediationRepo() {
-  const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl) {
+  const adapter = getMailAdapter();
+  if (!adapter) {
     return { error: 'Database not configured' as const };
   }
-  const db = createPostgresClient(dbUrl);
-  const adapter = createSimpleAdapter(db, 'postgres');
   return { repo: new RemediationRepository(adapter) };
 }
 

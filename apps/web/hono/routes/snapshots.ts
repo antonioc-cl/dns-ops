@@ -23,8 +23,8 @@ export const snapshotRoutes = new Hono<Env>();
 snapshotRoutes.get('/:domain', async (c) => {
   const db = c.get('db');
   const domainName = c.req.param('domain');
-  const limit = parseInt(c.req.query('limit') || '20', 10);
-  const offset = parseInt(c.req.query('offset') || '0', 10);
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20', 10) || 20));
+  const offset = Math.max(0, parseInt(c.req.query('offset') || '0', 10) || 0);
 
   try {
     const domainRepo = new DomainRepository(db);
@@ -41,7 +41,7 @@ snapshotRoutes.get('/:domain', async (c) => {
 
     return c.json({
       domain: domainName,
-      total: snapshots.length,
+      count: snapshots.length,
       snapshots: snapshots.map((s) => ({
         id: s.id,
         createdAt: s.createdAt,
@@ -58,6 +58,55 @@ snapshotRoutes.get('/:domain', async (c) => {
     return c.json(
       {
         error: 'Failed to fetch snapshots',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/snapshots/:domain/latest
+ * Get the most recent snapshot for a domain
+ * Must be registered before /:domain/:id to avoid "latest" being captured as :id
+ */
+snapshotRoutes.get('/:domain/latest', async (c) => {
+  const db = c.get('db');
+  const domainName = c.req.param('domain');
+
+  try {
+    const domainRepo = new DomainRepository(db);
+    const snapshotRepo = new SnapshotRepository(db);
+
+    const domain = await domainRepo.findByName(domainName);
+    if (!domain) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
+    const snapshots = await snapshotRepo.findByDomain(domain.id, 1);
+
+    if (snapshots.length === 0) {
+      return c.json({ error: 'No snapshots found for domain' }, 404);
+    }
+
+    const snapshot = snapshots[0];
+
+    return c.json({
+      id: snapshot.id,
+      domain: domainName,
+      createdAt: snapshot.createdAt,
+      rulesetVersion: snapshot.rulesetVersionId,
+      queryScope: {
+        names: snapshot.queriedNames,
+        types: snapshot.queriedTypes,
+        vantages: snapshot.vantages,
+      },
+    });
+  } catch (error) {
+    console.error('Latest snapshot error:', error);
+    return c.json(
+      {
+        error: 'Failed to fetch latest snapshot',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
       500
@@ -209,56 +258,9 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
 });
 
 /**
- * GET /api/snapshots/:domain/latest
- * Get the most recent snapshot for a domain
- */
-snapshotRoutes.get('/:domain/latest', async (c) => {
-  const db = c.get('db');
-  const domainName = c.req.param('domain');
-
-  try {
-    const domainRepo = new DomainRepository(db);
-    const snapshotRepo = new SnapshotRepository(db);
-
-    const domain = await domainRepo.findByName(domainName);
-    if (!domain) {
-      return c.json({ error: 'Domain not found' }, 404);
-    }
-
-    const snapshots = await snapshotRepo.findByDomain(domain.id, 1);
-
-    if (snapshots.length === 0) {
-      return c.json({ error: 'No snapshots found for domain' }, 404);
-    }
-
-    const snapshot = snapshots[0];
-
-    return c.json({
-      id: snapshot.id,
-      domain: domainName,
-      createdAt: snapshot.createdAt,
-      rulesetVersion: snapshot.rulesetVersionId,
-      queryScope: {
-        names: snapshot.queriedNames,
-        types: snapshot.queriedTypes,
-        vantages: snapshot.vantages,
-      },
-    });
-  } catch (error) {
-    console.error('Latest snapshot error:', error);
-    return c.json(
-      {
-        error: 'Failed to fetch latest snapshot',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      500
-    );
-  }
-});
-
-/**
  * POST /api/snapshots/:domain/compare-latest
- * Compare the two most recent snapshots
+ * Diff the two most recent snapshots and return the result inline.
+ * Returns 400 if fewer than 2 snapshots exist.
  */
 snapshotRoutes.post('/:domain/compare-latest', async (c) => {
   const db = c.get('db');
@@ -285,24 +287,45 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       );
     }
 
-    return c.json({
-      message: 'Use these snapshot IDs to compare',
-      snapshots: snapshots.map((s) => ({
-        id: s.id,
-        createdAt: s.createdAt,
-        rulesetVersion: s.rulesetVersionId,
-      })),
-      diffEndpoint: `/api/snapshots/${domainName}/diff`,
-      requestBody: {
-        snapshotA: snapshots[1].id,
-        snapshotB: snapshots[0].id,
+    // snapshots[0] is newest, snapshots[1] is older
+    const [snapB, snapA] = snapshots;
+
+    const [recordsA, recordsB, findingsA, findingsB] = await Promise.all([
+      db.selectWhere(recordSets, eq(recordSets.snapshotId, snapA.id)),
+      db.selectWhere(recordSets, eq(recordSets.snapshotId, snapB.id)),
+      db.selectWhere(findings, eq(findings.snapshotId, snapA.id)),
+      db.selectWhere(findings, eq(findings.snapshotId, snapB.id)),
+    ]);
+
+    const diff = compareSnapshots(
+      {
+        id: snapA.id,
+        createdAt: snapA.createdAt,
+        rulesetVersion: String(snapA.rulesetVersionId || 'unknown'),
+        queriedNames: snapA.queriedNames,
+        queriedTypes: snapA.queriedTypes,
+        vantages: snapA.vantages,
       },
-    });
+      {
+        id: snapB.id,
+        createdAt: snapB.createdAt,
+        rulesetVersion: String(snapB.rulesetVersionId || 'unknown'),
+        queriedNames: snapB.queriedNames,
+        queriedTypes: snapB.queriedTypes,
+        vantages: snapB.vantages,
+      },
+      recordsA,
+      recordsB,
+      findingsA,
+      findingsB
+    );
+
+    return c.json({ diff });
   } catch (error) {
     console.error('Compare latest error:', error);
     return c.json(
       {
-        error: 'Failed to prepare comparison',
+        error: 'Failed to compare snapshots',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
       500
