@@ -14,6 +14,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
 import { AuditLogPanel } from '../components/AuditLogPanel.js';
+import { MonitoredDomainsPanel } from '../components/MonitoredDomainsPanel.js';
 import { type CurrentFilters, SavedFiltersPanel } from '../components/SavedFiltersPanel.js';
 import { TemplateOverridesPanel } from '../components/TemplateOverridesPanel.js';
 
@@ -387,6 +388,9 @@ function PortfolioComponent() {
           Showing {domains.length} domain{domains.length !== 1 ? 's' : ''}
         </div>
       )}
+
+      {/* Monitored Domains */}
+      <MonitoredDomainsPanel />
 
       {/* Management Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

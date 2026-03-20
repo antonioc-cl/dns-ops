@@ -2,10 +2,12 @@ import { Hono } from 'hono';
 import { getEnvConfig } from '../config/env.js';
 import { requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
+import { alertRoutes } from './alerts.js';
 import { delegationRoutes } from './delegation.js';
 import { findingsRoutes } from './findings.js';
 import { legacyToolsRoutes } from './legacy-tools.js';
 import { mailRoutes } from './mail.js';
+import { monitoringRoutes } from './monitoring.js';
 import { portfolioRoutes } from './portfolio.js';
 import { providerTemplateRoutes } from './provider-templates.js';
 import { rulesetVersionRoutes } from './ruleset-versions.js';
@@ -53,6 +55,12 @@ apiRoutes.route('/portfolio', portfolioRoutes);
 
 // Mount ruleset version routes (Bead 1j4.8.4)
 apiRoutes.route('/ruleset-versions', rulesetVersionRoutes);
+
+// Mount monitoring routes (Bead 1j4.12.4)
+apiRoutes.route('/monitoring', monitoringRoutes);
+
+// Mount alert routes (Bead 15)
+apiRoutes.route('/alerts', alertRoutes);
 
 // Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
