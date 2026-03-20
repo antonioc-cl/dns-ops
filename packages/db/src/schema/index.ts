@@ -777,6 +777,93 @@ export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
 
 // =============================================================================
+// PROBE OBSERVATIONS TABLE
+// =============================================================================
+
+export const probeTypeEnum = pgEnum('probe_type', ['smtp_starttls', 'mta_sts', 'tls_cert', 'http']);
+
+export const probeStatusEnum = pgEnum('probe_status', [
+  'success',
+  'timeout',
+  'refused',
+  'ssrf_blocked',
+  'allowlist_denied',
+  'parse_error',
+  'error',
+]);
+
+/**
+ * Probe-specific data stored in JSONB
+ */
+export interface SMTPProbeData {
+  supportsStarttls: boolean;
+  tlsVersion?: string;
+  tlsCipher?: string;
+  certificate?: {
+    subject: string;
+    issuer: string;
+    validFrom: string;
+    validTo: string;
+    fingerprint: string;
+  };
+  smtpBanner?: string;
+}
+
+export interface MTASTSProbeData {
+  policyUrl: string;
+  policy?: {
+    version: string;
+    mode: 'enforce' | 'testing' | 'none';
+    maxAge: number;
+    mx: string[];
+  };
+  rawPolicy?: string;
+  tlsVersion?: string;
+  certificateValid?: boolean;
+}
+
+export type ProbeData = SMTPProbeData | MTASTSProbeData;
+
+export const probeObservations = pgTable(
+  'probe_observations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    snapshotId: uuid('snapshot_id')
+      .notNull()
+      .references(() => snapshots.id, { onDelete: 'cascade' }),
+
+    // Probe classification
+    probeType: probeTypeEnum('probe_type').notNull(),
+    status: probeStatusEnum('status').notNull(),
+
+    // Target details
+    hostname: varchar('hostname', { length: 253 }).notNull(),
+    port: integer('port'),
+
+    // Result
+    success: boolean('success').notNull(),
+    errorMessage: text('error_message'),
+
+    // Timing
+    probedAt: timestamp('probed_at', { withTimezone: true }).notNull().defaultNow(),
+    responseTimeMs: integer('response_time_ms'),
+
+    // Probe-specific data (SMTP TLS info, MTA-STS policy, etc.)
+    probeData: jsonb('probe_data').$type<ProbeData>(),
+  },
+  (table) => ({
+    snapshotIdx: index('probe_observation_snapshot_idx').on(table.snapshotId),
+    probeTypeIdx: index('probe_observation_type_idx').on(table.probeType),
+    hostnameIdx: index('probe_observation_hostname_idx').on(table.hostname),
+    statusIdx: index('probe_observation_status_idx').on(table.status),
+    successIdx: index('probe_observation_success_idx').on(table.success),
+  })
+);
+
+export type ProbeObservation = typeof probeObservations.$inferSelect;
+export type NewProbeObservation = typeof probeObservations.$inferInsert;
+
+// =============================================================================
 // REMEDIATION EXPORTS
 // =============================================================================
 
