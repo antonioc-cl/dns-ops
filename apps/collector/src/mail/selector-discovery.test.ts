@@ -9,14 +9,14 @@
  * 5. No selector found → partial
  */
 
-import { describe, it, expect } from 'vitest';
-import {
-  discoverSelectors,
-  detectProvider,
-  getProviderSelectors,
-  COMMON_SELECTORS,
-} from './selector-discovery.js';
+import { describe, expect, it } from 'vitest';
 import type { DNSQueryResult } from '../dns/types.js';
+import {
+  COMMON_SELECTORS,
+  detectProvider,
+  discoverSelectors,
+  getProviderSelectors,
+} from './selector-discovery.js';
 
 // Test helpers
 function createMockDNSResult(overrides: Partial<DNSQueryResult> = {}): DNSQueryResult {
@@ -51,7 +51,12 @@ describe('Provider Detection', () => {
     const mxResult = createMockDNSResult({
       query: { name: 'example.com', type: 'MX' },
       answers: [
-        { name: 'example.com', type: 'MX', ttl: 300, data: '10 example-com.mail.protection.outlook.com' },
+        {
+          name: 'example.com',
+          type: 'MX',
+          ttl: 300,
+          data: '10 example-com.mail.protection.outlook.com',
+        },
       ],
     });
 
@@ -76,9 +81,7 @@ describe('Provider Detection', () => {
   it('should return unknown when no provider indicators found', () => {
     const mxResult = createMockDNSResult({
       query: { name: 'example.com', type: 'MX' },
-      answers: [
-        { name: 'example.com', type: 'MX', ttl: 300, data: '10 mail.example.com' },
-      ],
+      answers: [{ name: 'example.com', type: 'MX', ttl: 300, data: '10 mail.example.com' }],
     });
 
     const provider = detectProvider([mxResult]);
@@ -141,9 +144,7 @@ describe('Selector Discovery - Precedence Levels', () => {
   it('Level 3: Should use provider heuristics if no operator selectors', async () => {
     const mxResult = createMockDNSResult({
       query: { name: 'example.com', type: 'MX' },
-      answers: [
-        { name: 'example.com', type: 'MX', ttl: 300, data: '10 aspmx.l.google.com' },
-      ],
+      answers: [{ name: 'example.com', type: 'MX', ttl: 300, data: '10 aspmx.l.google.com' }],
     });
 
     const config = {
@@ -239,7 +240,7 @@ describe('Mail Record Collection Targets', () => {
     ];
 
     // Verify the structure matches mail collection needs
-    expectedQueries.forEach(query => {
+    expectedQueries.forEach((query) => {
       expect(query.name).toBeDefined();
       expect(query.type).toBeDefined();
     });
@@ -248,13 +249,11 @@ describe('Mail Record Collection Targets', () => {
   it('should detect Null MX pattern', () => {
     const nullMxResult = createMockDNSResult({
       query: { name: 'example.com', type: 'MX' },
-      answers: [
-        { name: 'example.com', type: 'MX', ttl: 300, data: '0 .' },
-      ],
+      answers: [{ name: 'example.com', type: 'MX', ttl: 300, data: '0 .' }],
     });
 
-    const isNullMx = nullMxResult.answers.length === 1 && 
-      nullMxResult.answers[0].data.includes('0 .');
+    const isNullMx =
+      nullMxResult.answers.length === 1 && nullMxResult.answers[0].data.includes('0 .');
 
     expect(isNullMx).toBe(true);
   });

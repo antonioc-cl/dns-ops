@@ -4,13 +4,9 @@
  * Scheduled refresh jobs and alerting for monitored domains.
  */
 
+import { AlertRepository, DomainRepository, MonitoredDomainRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
-import {
-  MonitoredDomainRepository,
-  AlertRepository,
-  DomainRepository,
-} from '@dns-ops/db';
 
 // Alert type for type annotations
 type Alert = Awaited<ReturnType<AlertRepository['findPending']>>[number];
@@ -38,8 +34,7 @@ monitoringRoutes.post('/check', async (c) => {
       // Check if within suppression window
       if (monitored.lastAlertAt) {
         const suppressionEnd = new Date(
-          monitored.lastAlertAt.getTime() +
-            monitored.suppressionWindowMinutes * 60 * 1000
+          monitored.lastAlertAt.getTime() + monitored.suppressionWindowMinutes * 60 * 1000
         );
         if (suppressionEnd > new Date()) {
           continue; // Still in suppression window
@@ -117,7 +112,7 @@ monitoringRoutes.get('/alerts/pending', async (c) => {
     const alertRepo = new AlertRepository(db);
     const alerts = await alertRepo.findPending(tenantId);
     return c.json({ alerts, count: alerts.length });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to fetch alerts' }, 500);
   }
 });
@@ -135,7 +130,7 @@ monitoringRoutes.post('/alerts/:alertId/acknowledge', async (c) => {
     const alertRepo = new AlertRepository(db);
     const alert = await alertRepo.acknowledge(alertId, actorId);
     return c.json({ alert });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to acknowledge alert' }, 500);
   }
 });
@@ -154,7 +149,7 @@ monitoringRoutes.post('/alerts/:alertId/resolve', async (c) => {
     const alertRepo = new AlertRepository(db);
     const alert = await alertRepo.resolve(alertId, resolutionNote);
     return c.json({ alert });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to resolve alert' }, 500);
   }
 });
@@ -198,7 +193,7 @@ monitoringRoutes.get('/reports/shared', async (c) => {
         createdAt: a.createdAt,
       })),
     });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to generate report' }, 500);
   }
 });
@@ -265,7 +260,7 @@ monitoringRoutes.delete('/domains/:domainId/monitor', async (c) => {
 
     await monitoredRepo.delete(existing.id);
     return c.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Failed to stop monitoring' }, 500);
   }
 });

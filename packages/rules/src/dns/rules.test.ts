@@ -9,16 +9,16 @@
  * 5. Partial coverage finding for unmanaged zones
  */
 
-import { describe, it, expect } from 'vitest';
 import type { Observation, RecordSet } from '@dns-ops/db/schema';
+import { describe, expect, it } from 'vitest';
+import type { RuleContext } from '../engine/index.js';
 import {
   authoritativeFailureRule,
   authoritativeMismatchRule,
-  recursiveAuthoritativeMismatchRule,
   cnameCoexistenceRule,
+  recursiveAuthoritativeMismatchRule,
   unmanagedZonePartialCoverageRule,
 } from './rules.js';
-import type { RuleContext } from '../engine/index.js';
 
 // Test helpers
 function createMockObservation(overrides: Partial<Observation> = {}): Observation {
@@ -83,9 +83,9 @@ describe('Authoritative Failure Rule', () => {
       errorMessage: 'Query timed out',
     });
     const context = createMockContext({ observations: [obs] });
-    
+
     const result = authoritativeFailureRule.evaluate(context);
-    
+
     expect(result).not.toBeNull();
     expect(result?.finding).toBeDefined();
     expect(result?.finding?.severity).toBe('high');
@@ -99,9 +99,9 @@ describe('Authoritative Failure Rule', () => {
       errorMessage: 'Query refused',
     });
     const context = createMockContext({ observations: [obs] });
-    
+
     const result = authoritativeFailureRule.evaluate(context);
-    
+
     expect(result).not.toBeNull();
     expect(result?.finding?.type).toBe('dns.authoritative-refused');
   });
@@ -112,9 +112,9 @@ describe('Authoritative Failure Rule', () => {
       vantageType: 'authoritative',
     });
     const context = createMockContext({ observations: [obs] });
-    
+
     const result = authoritativeFailureRule.evaluate(context);
-    
+
     expect(result).toBeNull();
   });
 
@@ -124,9 +124,9 @@ describe('Authoritative Failure Rule', () => {
       vantageType: 'public-recursive',
     });
     const context = createMockContext({ observations: [obs] });
-    
+
     const result = authoritativeFailureRule.evaluate(context);
-    
+
     expect(result).toBeNull();
   });
 });
@@ -146,20 +146,20 @@ describe('Authoritative Mismatch Rule', () => {
       vantageIdentifier: 'ns2.example.com',
       answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.2' }],
     });
-    
+
     const rs = createMockRecordSet({
       isConsistent: false,
       consolidationNotes: 'Values differ across vantages',
       sourceVantages: ['ns1.example.com', 'ns2.example.com'],
     });
-    
+
     const context = createMockContext({
       observations: [obs, obs2],
       recordSets: [rs],
     });
-    
+
     const result = authoritativeMismatchRule.evaluate(context);
-    
+
     expect(result).not.toBeNull();
     expect(result?.finding?.type).toBe('dns.authoritative-mismatch');
     expect(result?.finding?.severity).toBe('critical');
@@ -169,11 +169,11 @@ describe('Authoritative Mismatch Rule', () => {
     const rs = createMockRecordSet({
       isConsistent: true,
     });
-    
+
     const context = createMockContext({ recordSets: [rs] });
-    
+
     const result = authoritativeMismatchRule.evaluate(context);
-    
+
     expect(result).toBeNull();
   });
 });
@@ -193,13 +193,13 @@ describe('Recursive vs Authoritative Mismatch Rule', () => {
       vantageIdentifier: 'ns1.example.com',
       answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.99' }],
     });
-    
+
     const context = createMockContext({
       observations: [recursiveObs, authObs],
     });
-    
+
     const result = recursiveAuthoritativeMismatchRule.evaluate(context);
-    
+
     expect(result).not.toBeNull();
     expect(result?.finding?.type).toBe('dns.recursive-authoritative-mismatch');
   });
@@ -216,13 +216,13 @@ describe('Recursive vs Authoritative Mismatch Rule', () => {
       vantageType: 'authoritative',
       answerSection: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
     });
-    
+
     const context = createMockContext({
       observations: [recursiveObs, authObs],
     });
-    
+
     const result = recursiveAuthoritativeMismatchRule.evaluate(context);
-    
+
     expect(result).toBeNull();
   });
 });
@@ -240,13 +240,13 @@ describe('CNAME Coexistence Rule', () => {
       type: 'A',
       values: ['192.0.2.1'],
     });
-    
+
     const context = createMockContext({
       recordSets: [cnameRs, aRs],
     });
-    
+
     const result = cnameCoexistenceRule.evaluate(context);
-    
+
     expect(result).not.toBeNull();
     expect(result?.finding?.type).toBe('dns.cname-coexistence-conflict');
     expect(result?.finding?.severity).toBe('critical');
@@ -264,13 +264,13 @@ describe('CNAME Coexistence Rule', () => {
       type: 'RRSIG',
       values: ['some-signature'],
     });
-    
+
     const context = createMockContext({
       recordSets: [cnameRs, rrsigRs],
     });
-    
+
     const result = cnameCoexistenceRule.evaluate(context);
-    
+
     // RRSIG and NSEC are allowed with CNAME (DNSSEC records)
     expect(result).toBeNull();
   });
@@ -281,13 +281,13 @@ describe('CNAME Coexistence Rule', () => {
       type: 'CNAME',
       values: ['example.com.'],
     });
-    
+
     const context = createMockContext({
       recordSets: [cnameRs],
     });
-    
+
     const result = cnameCoexistenceRule.evaluate(context);
-    
+
     expect(result).toBeNull();
   });
 });
@@ -296,13 +296,11 @@ describe('Unmanaged Zone Partial Coverage Rule', () => {
   it('should flag unmanaged zones as partial coverage', () => {
     const context = createMockContext({
       zoneManagement: 'unmanaged',
-      observations: [
-        createMockObservation({ queryName: 'example.com', queryType: 'A' }),
-      ],
+      observations: [createMockObservation({ queryName: 'example.com', queryType: 'A' })],
     });
-    
+
     const result = unmanagedZonePartialCoverageRule.evaluate(context);
-    
+
     expect(result).not.toBeNull();
     expect(result?.finding?.type).toBe('dns.partial-coverage-unmanaged');
     expect(result?.finding?.severity).toBe('info');
@@ -312,9 +310,9 @@ describe('Unmanaged Zone Partial Coverage Rule', () => {
     const context = createMockContext({
       zoneManagement: 'managed',
     });
-    
+
     const result = unmanagedZonePartialCoverageRule.evaluate(context);
-    
+
     expect(result).toBeNull();
   });
 
@@ -326,9 +324,9 @@ describe('Unmanaged Zone Partial Coverage Rule', () => {
         createMockObservation({ id: 'obs-2', queryName: 'example.com', queryType: 'MX' }),
       ],
     });
-    
+
     const result = unmanagedZonePartialCoverageRule.evaluate(context);
-    
+
     expect(result?.finding?.description).toContain('A');
     expect(result?.finding?.description).toContain('MX');
   });

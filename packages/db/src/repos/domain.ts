@@ -6,7 +6,7 @@
 
 import { eq } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { domains, type Domain, type NewDomain } from '../schema/index.js';
+import { type Domain, domains, type NewDomain } from '../schema/index.js';
 
 export interface DomainFilter {
   tenantId?: string;
@@ -28,20 +28,14 @@ export class DomainRepository {
    * Find a domain by its normalized name
    */
   async findByName(normalizedName: string): Promise<Domain | undefined> {
-    return this.db.selectOne(
-      domains,
-      eq(domains.normalizedName, normalizedName.toLowerCase())
-    );
+    return this.db.selectOne(domains, eq(domains.normalizedName, normalizedName.toLowerCase()));
   }
 
   /**
    * Find a domain by its exact name (case-insensitive)
    */
   async findByExactName(name: string): Promise<Domain | undefined> {
-    return this.db.selectOne(
-      domains,
-      eq(domains.name, name.toLowerCase())
-    );
+    return this.db.selectOne(domains, eq(domains.name, name.toLowerCase()));
   }
 
   /**
@@ -50,36 +44,38 @@ export class DomainRepository {
   async searchByName(pattern: string, limit: number = 20): Promise<Domain[]> {
     const allDomains = await this.db.select(domains);
     return allDomains
-      .filter(d => d.normalizedName.includes(pattern.toLowerCase()))
+      .filter((d) => d.normalizedName.includes(pattern.toLowerCase()))
       .slice(0, limit);
   }
 
   /**
    * Find all domains matching filter criteria
    */
-  async findAll(filter: DomainFilter = {}, options: { limit?: number; offset?: number } = {}): Promise<Domain[]> {
+  async findAll(
+    filter: DomainFilter = {},
+    options: { limit?: number; offset?: number } = {}
+  ): Promise<Domain[]> {
     let results = await this.db.select(domains);
 
     if (filter.tenantId) {
-      results = results.filter(d => d.tenantId === filter.tenantId);
+      results = results.filter((d) => d.tenantId === filter.tenantId);
     }
 
     if (filter.zoneManagement) {
-      results = results.filter(d => d.zoneManagement === filter.zoneManagement);
+      results = results.filter((d) => d.zoneManagement === filter.zoneManagement);
     }
 
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
-      results = results.filter(d => 
-        d.normalizedName.includes(searchLower) ||
-        d.name.toLowerCase().includes(searchLower)
+      results = results.filter(
+        (d) => d.normalizedName.includes(searchLower) || d.name.toLowerCase().includes(searchLower)
       );
     }
 
     // Apply pagination
     const offset = options.offset || 0;
     const limit = options.limit || results.length;
-    
+
     return results.slice(offset, offset + limit);
   }
 
@@ -90,10 +86,7 @@ export class DomainRepository {
     zoneManagement: 'managed' | 'unmanaged' | 'unknown',
     limit: number = 100
   ): Promise<Domain[]> {
-    const results = await this.db.selectWhere(
-      domains,
-      eq(domains.zoneManagement, zoneManagement)
-    );
+    const results = await this.db.selectWhere(domains, eq(domains.zoneManagement, zoneManagement));
     return results.slice(0, limit);
   }
 
@@ -123,9 +116,13 @@ export class DomainRepository {
    * Update domain metadata
    */
   async update(id: string, data: Partial<NewDomain>): Promise<Domain | undefined> {
-    return this.db.updateOne(domains, {
-      ...data,
-    }, eq(domains.id, id));
+    return this.db.updateOne(
+      domains,
+      {
+        ...data,
+      },
+      eq(domains.id, id)
+    );
   }
 
   /**
@@ -154,11 +151,11 @@ export class DomainRepository {
     let results = await this.db.select(domains);
 
     if (filter.tenantId) {
-      results = results.filter(d => d.tenantId === filter.tenantId);
+      results = results.filter((d) => d.tenantId === filter.tenantId);
     }
 
     if (filter.zoneManagement) {
-      results = results.filter(d => d.zoneManagement === filter.zoneManagement);
+      results = results.filter((d) => d.zoneManagement === filter.zoneManagement);
     }
 
     return results.length;

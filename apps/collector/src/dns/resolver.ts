@@ -5,8 +5,8 @@
  * Supports both recursive and authoritative resolution.
  */
 
-import { promises as dns } from 'dns';
-import type { DNSQuery, DNSQueryResult, VantageInfo, DNSAnswer } from './types.js';
+import { promises as dns } from 'node:dns';
+import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from './types.js';
 
 export class DNSResolver {
   /**
@@ -18,7 +18,7 @@ export class DNSResolver {
     try {
       // Create resolver with specific server if provided
       const resolver = new dns.Resolver();
-      
+
       if (vantage.type === 'public-recursive') {
         resolver.setServers([vantage.identifier]);
       } else if (vantage.type === 'authoritative') {
@@ -49,14 +49,13 @@ export class DNSResolver {
         additional: result.additional || [],
         responseTime,
       };
-
     } catch (error) {
       const responseTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       // Determine error type
       let responseCode = 2; // SERVFAIL default
-      
+
       if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('NXDOMAIN')) {
         responseCode = 3; // NXDOMAIN
       } else if (errorMessage.includes('ECONNREFUSED')) {
@@ -178,7 +177,10 @@ export class DNSResolver {
     };
   }
 
-  private async queryCNAME(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
+  private async queryCNAME(
+    resolver: dns.Resolver,
+    name: string
+  ): Promise<{ answers: DNSAnswer[] }> {
     const records = await resolver.resolveCname(name);
     return {
       answers: records.map((cname: string) => ({
@@ -191,7 +193,7 @@ export class DNSResolver {
   }
 
   private async querySOA(resolver: dns.Resolver, name: string): Promise<{ answers: DNSAnswer[] }> {
-    const soa = await resolver.resolveSoa(name) as {
+    const soa = (await resolver.resolveSoa(name)) as {
       nsname: string;
       hostmaster: string;
       serial: number;
@@ -203,12 +205,14 @@ export class DNSResolver {
     };
     const minTTL = soa.minttl ?? soa.minimumTTL ?? 300;
     return {
-      answers: [{
-        name,
-        type: 'SOA',
-        ttl: minTTL,
-        data: `${soa.nsname} ${soa.hostmaster} ${soa.serial} ${soa.refresh} ${soa.retry} ${soa.expire} ${minTTL}`,
-      }],
+      answers: [
+        {
+          name,
+          type: 'SOA',
+          ttl: minTTL,
+          data: `${soa.nsname} ${soa.hostmaster} ${soa.serial} ${soa.refresh} ${soa.retry} ${soa.expire} ${minTTL}`,
+        },
+      ],
     };
   }
 
@@ -216,8 +220,9 @@ export class DNSResolver {
     // Node.js doesn't have native CAA support, use resolveAny and filter
     try {
       const records = await resolver.resolveAny(name);
-      const caaRecords = (records as Array<{ type: string; critical?: number; issue?: string; value?: string }>)
-        .filter((r) => r.type === 'CAA');
+      const caaRecords = (
+        records as Array<{ type: string; critical?: number; issue?: string; value?: string }>
+      ).filter((r) => r.type === 'CAA');
       return {
         answers: caaRecords.map((caa) => ({
           name,

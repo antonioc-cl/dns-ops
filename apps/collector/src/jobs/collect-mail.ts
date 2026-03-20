@@ -4,13 +4,9 @@
  * Collects mail-related DNS records (DMARC, DKIM, SPF) for a domain.
  */
 
+import { createPostgresAdapter, type NewObservation, ObservationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { performMailCheck, type MailCheckResult } from '../mail/checker.js';
-import {
-  createPostgresAdapter,
-  ObservationRepository,
-  type NewObservation,
-} from '@dns-ops/db';
+import { type MailCheckResult, performMailCheck } from '../mail/checker.js';
 
 export const collectMailRoutes = new Hono();
 
@@ -21,12 +17,7 @@ export const collectMailRoutes = new Hono();
 collectMailRoutes.post('/mail', async (c) => {
   try {
     const body = await c.req.json();
-    const {
-      domain,
-      snapshotId,
-      preferredProvider,
-      explicitSelectors,
-    } = body;
+    const { domain, snapshotId, preferredProvider, explicitSelectors } = body;
 
     if (!domain || typeof domain !== 'string') {
       return c.json({ error: 'Domain is required' }, 400);
@@ -66,40 +57,45 @@ collectMailRoutes.post('/mail', async (c) => {
       );
     }
 
-    return c.json({
-      success: true,
-      domain: normalizedDomain,
-      snapshotId: snapshotId || null,
-      duration,
-      results: {
-        dmarc: {
-          present: result.dmarc.present,
-          valid: result.dmarc.valid,
-          errors: result.dmarc.errors,
+    return c.json(
+      {
+        success: true,
+        domain: normalizedDomain,
+        snapshotId: snapshotId || null,
+        duration,
+        results: {
+          dmarc: {
+            present: result.dmarc.present,
+            valid: result.dmarc.valid,
+            errors: result.dmarc.errors,
+          },
+          dkim: {
+            present: result.dkim.present,
+            valid: result.dkim.valid,
+            selector: result.dkim.selector,
+            selectorProvenance: result.dkim.selectorProvenance,
+            triedSelectors: result.dkim.triedSelectors,
+            errors: result.dkim.errors,
+          },
+          spf: {
+            present: result.spf.present,
+            valid: result.spf.valid,
+            errors: result.spf.errors,
+          },
         },
-        dkim: {
-          present: result.dkim.present,
-          valid: result.dkim.valid,
-          selector: result.dkim.selector,
-          selectorProvenance: result.dkim.selectorProvenance,
-          triedSelectors: result.dkim.triedSelectors,
-          errors: result.dkim.errors,
-        },
-        spf: {
-          present: result.spf.present,
-          valid: result.spf.valid,
-          errors: result.spf.errors,
-        },
+        observationCount,
       },
-      observationCount,
-    }, 200);
-
+      200
+    );
   } catch (error) {
     console.error('Mail collection error:', error);
-    return c.json({
-      error: 'Mail collection failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Mail collection failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 
@@ -121,16 +117,22 @@ async function storeMailObservations(
     queryName: `_dmarc.${domain}`,
     queryType: 'TXT',
     vantageType: 'public-recursive',
-    status: result.dmarc.present ? 'success' : (result.dmarc.errors?.[0]?.includes('NXDOMAIN') ? 'nxdomain' : 'error'),
+    status: result.dmarc.present
+      ? 'success'
+      : result.dmarc.errors?.[0]?.includes('NXDOMAIN')
+        ? 'nxdomain'
+        : 'error',
     queriedAt: now,
     responseTimeMs: 0, // Would need actual timing
     answerSection: result.dmarc.record
-      ? [{
-          name: `_dmarc.${domain}`,
-          type: 'TXT',
-          ttl: 3600,
-          data: result.dmarc.record,
-        }]
+      ? [
+          {
+            name: `_dmarc.${domain}`,
+            type: 'TXT',
+            ttl: 3600,
+            data: result.dmarc.record,
+          },
+        ]
       : undefined,
     errorMessage: result.dmarc.errors?.join(', ') || undefined,
   });
@@ -145,16 +147,22 @@ async function storeMailObservations(
     queryName: dkimName,
     queryType: 'TXT',
     vantageType: 'public-recursive',
-    status: result.dkim.present ? 'success' : (result.dkim.errors?.[0]?.includes('NXDOMAIN') ? 'nxdomain' : 'error'),
+    status: result.dkim.present
+      ? 'success'
+      : result.dkim.errors?.[0]?.includes('NXDOMAIN')
+        ? 'nxdomain'
+        : 'error',
     queriedAt: now,
     responseTimeMs: 0,
     answerSection: result.dkim.record
-      ? [{
-          name: dkimName,
-          type: 'TXT',
-          ttl: 3600,
-          data: result.dkim.record,
-        }]
+      ? [
+          {
+            name: dkimName,
+            type: 'TXT',
+            ttl: 3600,
+            data: result.dkim.record,
+          },
+        ]
       : undefined,
     errorMessage: result.dkim.errors?.join(', ') || undefined,
   });
@@ -169,12 +177,14 @@ async function storeMailObservations(
     queriedAt: now,
     responseTimeMs: 0,
     answerSection: result.spf.record
-      ? [{
-          name: domain,
-          type: 'TXT',
-          ttl: 3600,
-          data: result.spf.record,
-        }]
+      ? [
+          {
+            name: domain,
+            type: 'TXT',
+            ttl: 3600,
+            data: result.spf.record,
+          },
+        ]
       : undefined,
     errorMessage: result.spf.errors?.join(', ') || undefined,
   });

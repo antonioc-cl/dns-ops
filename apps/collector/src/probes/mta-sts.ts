@@ -5,8 +5,8 @@
  * Validates policy format and extracts mode/max_age/mx directives.
  */
 
-import { validateUrl } from './ssrf-guard.js';
 import { probeAllowlist } from './allowlist.js';
+import { validateUrl } from './ssrf-guard.js';
 
 export interface MTASTSProbeResult {
   success: boolean;
@@ -32,8 +32,11 @@ export interface MTASTSPolicy {
  * Parse MTA-STS policy text
  */
 function parsePolicy(raw: string): MTASTSPolicy | null {
-  const lines = raw.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-  
+  const lines = raw
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#'));
+
   const policy: Partial<MTASTSPolicy> = {
     mx: [],
     raw,
@@ -54,13 +57,13 @@ function parsePolicy(raw: string): MTASTSPolicy | null {
         break;
       case 'max_age': {
         const parsedMaxAge = parseInt(value, 10);
-        if (!isNaN(parsedMaxAge) && parsedMaxAge >= 0) {
+        if (!Number.isNaN(parsedMaxAge) && parsedMaxAge >= 0) {
           policy.maxAge = parsedMaxAge;
         }
         break;
       }
       case 'mx':
-        policy.mx!.push(value);
+        policy.mx?.push(value);
         break;
     }
   }
@@ -159,10 +162,9 @@ export async function fetchMTASTSPolicy(
       rawPolicy,
       responseTimeMs: Date.now() - startTime,
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Handle specific error types
     if (errorMessage.includes('abort')) {
       return {
@@ -192,8 +194,8 @@ export async function validateMTASTSTxtRecord(
   txtRecords: string[]
 ): Promise<{ valid: boolean; id?: string; error?: string }> {
   // Look for _mta-sts TXT record
-  const mtaStsRecord = txtRecords.find(r => r.includes('v=STSv1'));
-  
+  const mtaStsRecord = txtRecords.find((r) => r.includes('v=STSv1'));
+
   if (!mtaStsRecord) {
     return { valid: false, error: 'No MTA-STS TXT record found' };
   }

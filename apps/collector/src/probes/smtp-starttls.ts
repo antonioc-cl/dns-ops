@@ -5,10 +5,10 @@
  * Performs limited SMTP handshake to detect TLS support.
  */
 
-import * as net from 'net';
-import * as tls from 'tls';
-import { checkSSRF } from './ssrf-guard.js';
+import * as net from 'node:net';
+import * as tls from 'node:tls';
 import { probeAllowlist } from './allowlist.js';
+import { checkSSRF } from './ssrf-guard.js';
 
 export interface SMTPProbeResult {
   success: boolean;
@@ -46,12 +46,12 @@ function readResponse(socket: net.Socket, timeoutMs: number): Promise<SMTPRespon
 
     const onData = (data: Buffer) => {
       buffer += data.toString();
-      
+
       // Check for complete response (ends with \r\n)
       if (buffer.includes('\r\n')) {
-        const lines = buffer.split('\r\n').filter(l => l);
+        const lines = buffer.split('\r\n').filter((l) => l);
         const lastLine = lines[lines.length - 1];
-        
+
         // Parse response code
         const match = lastLine.match(/^(\d{3})/);
         if (match) {
@@ -77,7 +77,7 @@ function readResponse(socket: net.Socket, timeoutMs: number): Promise<SMTPRespon
  * Send SMTP command
  */
 function sendCommand(socket: net.Socket, command: string): void {
-  socket.write(command + '\r\n');
+  socket.write(`${command}\r\n`);
 }
 
 /**
@@ -129,7 +129,7 @@ export async function probeSMTPStarttls(
 
     // Create socket connection
     const socket = new net.Socket();
-    
+
     // Set timeout
     socket.setTimeout(timeoutMs);
 
@@ -233,31 +233,31 @@ export async function probeSMTPStarttls(
       supportsStarttls: true,
       tlsVersion: tlsInfo.version,
       tlsCipher: tlsInfo.name,
-      certificate: cert.subject ? {
-        subject: String(cert.subject.CN || cert.subject.O || 'Unknown'),
-        issuer: String(cert.issuer.CN || cert.issuer.O || 'Unknown'),
-        validFrom: cert.valid_from,
-        validTo: cert.valid_to,
-        fingerprint: cert.fingerprint,
-      } : undefined,
+      certificate: cert.subject
+        ? {
+            subject: String(cert.subject.CN || cert.subject.O || 'Unknown'),
+            issuer: String(cert.issuer.CN || cert.issuer.O || 'Unknown'),
+            validFrom: cert.valid_from,
+            validTo: cert.valid_to,
+            fingerprint: cert.fingerprint,
+          }
+        : undefined,
       smtpBanner,
       responseTimeMs: Date.now() - startTime,
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const isTimeout = errorMessage.toLowerCase().includes('timeout') || 
-                      errorMessage.toLowerCase().includes('etimedout') ||
-                      errorMessage.includes('ETIMEDOUT');
-    
+    const isTimeout =
+      errorMessage.toLowerCase().includes('timeout') ||
+      errorMessage.toLowerCase().includes('etimedout') ||
+      errorMessage.includes('ETIMEDOUT');
+
     return {
       success: false,
       hostname,
       port,
       supportsStarttls: false,
-      error: isTimeout
-        ? `Timeout after ${timeoutMs}ms` 
-        : errorMessage,
+      error: isTimeout ? `Timeout after ${timeoutMs}ms` : errorMessage,
       responseTimeMs: Date.now() - startTime,
     };
   }
@@ -274,19 +274,17 @@ export async function probeMXHosts(
   }
 ): Promise<SMTPProbeResult[]> {
   const { timeoutMs = 30000, concurrency = 3 } = options || {};
-  
+
   const results: SMTPProbeResult[] = [];
-  
+
   // Process in batches to limit concurrency
   for (let i = 0; i < hosts.length; i += concurrency) {
     const batch = hosts.slice(i, i + concurrency);
-    const batchPromises = batch.map(host => 
-      probeSMTPStarttls(host.hostname, { timeoutMs })
-    );
-    
+    const batchPromises = batch.map((host) => probeSMTPStarttls(host.hostname, { timeoutMs }));
+
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
   }
-  
+
   return results;
 }

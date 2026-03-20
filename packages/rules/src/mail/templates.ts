@@ -120,7 +120,11 @@ export const PROVIDER_TEMPLATES: Record<KnownProvider, ProviderTemplate> = {
 
     expected: {
       mx: [
-        { priority: 0, pattern: /\.mail\.protection\.outlook\.com$/i, description: 'Microsoft 365 MX' },
+        {
+          priority: 0,
+          pattern: /\.mail\.protection\.outlook\.com$/i,
+          description: 'Microsoft 365 MX',
+        },
       ],
       spf: {
         required: true,
@@ -181,7 +185,7 @@ export const PROVIDER_TEMPLATES: Record<KnownProvider, ProviderTemplate> = {
     },
   },
 
-  'sendgrid': {
+  sendgrid: {
     id: 'template.sendgrid.v1',
     provider: 'sendgrid',
     name: 'SendGrid',
@@ -215,7 +219,7 @@ export const PROVIDER_TEMPLATES: Record<KnownProvider, ProviderTemplate> = {
     },
   },
 
-  'mailgun': {
+  mailgun: {
     id: 'template.mailgun.v1',
     provider: 'mailgun',
     name: 'Mailgun',
@@ -223,9 +227,7 @@ export const PROVIDER_TEMPLATES: Record<KnownProvider, ProviderTemplate> = {
     version: '1.0.0',
 
     expected: {
-      mx: [
-        { priority: 10, pattern: /\.mailgun\.(org|net)$/i, description: 'Mailgun MX' },
-      ],
+      mx: [{ priority: 10, pattern: /\.mailgun\.(org|net)$/i, description: 'Mailgun MX' }],
       spf: {
         required: true,
         include: 'mailgun.org',
@@ -251,7 +253,7 @@ export const PROVIDER_TEMPLATES: Record<KnownProvider, ProviderTemplate> = {
     },
   },
 
-  'other': {
+  other: {
     id: 'template.other.v1',
     provider: 'other',
     name: 'Other Provider',
@@ -284,7 +286,7 @@ export const PROVIDER_TEMPLATES: Record<KnownProvider, ProviderTemplate> = {
     },
   },
 
-  'unknown': {
+  unknown: {
     id: 'template.unknown.v1',
     provider: 'unknown',
     name: 'Unknown Provider',
@@ -336,19 +338,19 @@ export function detectProviderFromDns(
     'google-workspace': 0,
     'microsoft-365': 0,
     'amazon-ses': 0,
-    'sendgrid': 0,
-    'mailgun': 0,
-    'other': 0,
-    'unknown': 0,
+    sendgrid: 0,
+    mailgun: 0,
+    other: 0,
+    unknown: 0,
   };
   const evidence: Record<KnownProvider, string[]> = {
     'google-workspace': [],
     'microsoft-365': [],
     'amazon-ses': [],
-    'sendgrid': [],
-    'mailgun': [],
-    'other': [],
-    'unknown': [],
+    sendgrid: [],
+    mailgun: [],
+    other: [],
+    unknown: [],
   };
 
   // Score based on MX records
@@ -453,7 +455,7 @@ export function compareToTemplate(
       });
     } else {
       const mxMatch = template.expected.mx.some((expected) =>
-        actual.mx!.some((mx) => expected.pattern.test(mx))
+        actual.mx?.some((mx) => expected.pattern.test(mx))
       );
       if (mxMatch) {
         matches.push({
@@ -482,9 +484,7 @@ export function compareToTemplate(
         severity: 'high',
       });
     } else {
-      const spfMatch = template.expected.spf.patterns.some((pattern) =>
-        pattern.test(actual.spf!)
-      );
+      const spfMatch = template.expected.spf.patterns.some((pattern) => pattern.test(actual.spf!));
       if (spfMatch) {
         matches.push({
           aspect: 'SPF',
@@ -513,9 +513,7 @@ export function compareToTemplate(
         severity: 'high',
       });
     } else {
-      const foundSelectors = actual.dkimSelectors.filter((s) =>
-        expectedSelectors.includes(s)
-      );
+      const foundSelectors = actual.dkimSelectors.filter((s) => expectedSelectors.includes(s));
       if (foundSelectors.length > 0) {
         matches.push({
           aspect: 'DKIM',
@@ -569,7 +567,9 @@ class InMemoryTemplateStorage implements TemplateStorage {
   private templates: Map<KnownProvider, ProviderTemplate>;
 
   constructor() {
-    this.templates = new Map(Object.entries(PROVIDER_TEMPLATES) as [KnownProvider, ProviderTemplate][]);
+    this.templates = new Map(
+      Object.entries(PROVIDER_TEMPLATES) as [KnownProvider, ProviderTemplate][]
+    );
   }
 
   getTemplate(provider: KnownProvider): ProviderTemplate | undefined {

@@ -99,37 +99,27 @@
       "indexes": {
         "alert_monitored_idx": {
           "name": "alert_monitored_idx",
-          "columns": [
-            "monitored_domain_id"
-          ],
+          "columns": ["monitored_domain_id"],
           "isUnique": false
         },
         "alert_status_idx": {
           "name": "alert_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "alert_tenant_idx": {
           "name": "alert_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "alert_dedup_idx": {
           "name": "alert_dedup_idx",
-          "columns": [
-            "dedup_key"
-          ],
+          "columns": ["dedup_key"],
           "isUnique": false
         },
         "alert_created_idx": {
           "name": "alert_created_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -138,12 +128,8 @@
           "name": "alerts_monitored_domain_id_monitored_domains_id_fk",
           "tableFrom": "alerts",
           "tableTo": "monitored_domains",
-          "columnsFrom": [
-            "monitored_domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["monitored_domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -151,12 +137,8 @@
           "name": "alerts_triggered_by_finding_id_findings_id_fk",
           "tableFrom": "alerts",
           "tableTo": "findings",
-          "columnsFrom": [
-            "triggered_by_finding_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["triggered_by_finding_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -246,38 +228,27 @@
       "indexes": {
         "audit_entity_idx": {
           "name": "audit_entity_idx",
-          "columns": [
-            "entity_type",
-            "entity_id"
-          ],
+          "columns": ["entity_type", "entity_id"],
           "isUnique": false
         },
         "audit_actor_idx": {
           "name": "audit_actor_idx",
-          "columns": [
-            "actor_id"
-          ],
+          "columns": ["actor_id"],
           "isUnique": false
         },
         "audit_tenant_idx": {
           "name": "audit_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "audit_action_idx": {
           "name": "audit_action_idx",
-          "columns": [
-            "action"
-          ],
+          "columns": ["action"],
           "isUnique": false
         },
         "audit_created_idx": {
           "name": "audit_created_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -338,23 +309,17 @@
       "indexes": {
         "domain_note_domain_idx": {
           "name": "domain_note_domain_idx",
-          "columns": [
-            "domain_id"
-          ],
+          "columns": ["domain_id"],
           "isUnique": false
         },
         "domain_note_tenant_idx": {
           "name": "domain_note_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "domain_note_created_idx": {
           "name": "domain_note_created_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -363,12 +328,8 @@
           "name": "domain_notes_domain_id_domains_id_fk",
           "tableFrom": "domain_notes",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -422,31 +383,22 @@
       "indexes": {
         "domain_tag_domain_idx": {
           "name": "domain_tag_domain_idx",
-          "columns": [
-            "domain_id"
-          ],
+          "columns": ["domain_id"],
           "isUnique": false
         },
         "domain_tag_tag_idx": {
           "name": "domain_tag_tag_idx",
-          "columns": [
-            "tag"
-          ],
+          "columns": ["tag"],
           "isUnique": false
         },
         "domain_tag_tenant_idx": {
           "name": "domain_tag_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "domain_tag_unique_idx": {
           "name": "domain_tag_unique_idx",
-          "columns": [
-            "domain_id",
-            "tag"
-          ],
+          "columns": ["domain_id", "tag"],
           "isUnique": true
         }
       },
@@ -455,12 +407,8 @@
           "name": "domain_tags_domain_id_domains_id_fk",
           "tableFrom": "domain_tags",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -534,23 +482,17 @@
       "indexes": {
         "domain_name_idx": {
           "name": "domain_name_idx",
-          "columns": [
-            "normalized_name"
-          ],
+          "columns": ["normalized_name"],
           "isUnique": true
         },
         "domain_tenant_idx": {
           "name": "domain_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "domain_zone_management_idx": {
           "name": "domain_zone_management_idx",
-          "columns": [
-            "zone_management"
-          ],
+          "columns": ["zone_management"],
           "isUnique": false
         }
       },
@@ -672,30 +614,22 @@
       "indexes": {
         "finding_snapshot_idx": {
           "name": "finding_snapshot_idx",
-          "columns": [
-            "snapshot_id"
-          ],
+          "columns": ["snapshot_id"],
           "isUnique": false
         },
         "finding_type_idx": {
           "name": "finding_type_idx",
-          "columns": [
-            "type"
-          ],
+          "columns": ["type"],
           "isUnique": false
         },
         "finding_severity_idx": {
           "name": "finding_severity_idx",
-          "columns": [
-            "severity"
-          ],
+          "columns": ["severity"],
           "isUnique": false
         },
         "finding_review_only_idx": {
           "name": "finding_review_only_idx",
-          "columns": [
-            "review_only"
-          ],
+          "columns": ["review_only"],
           "isUnique": false
         }
       },
@@ -704,12 +638,8 @@
           "name": "findings_snapshot_id_snapshots_id_fk",
           "tableFrom": "findings",
           "tableTo": "snapshots",
-          "columnsFrom": [
-            "snapshot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["snapshot_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -810,30 +740,22 @@
       "indexes": {
         "monitored_domain_unique_idx": {
           "name": "monitored_domain_unique_idx",
-          "columns": [
-            "domain_id"
-          ],
+          "columns": ["domain_id"],
           "isUnique": true
         },
         "monitored_domain_tenant_idx": {
           "name": "monitored_domain_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "monitored_domain_active_idx": {
           "name": "monitored_domain_active_idx",
-          "columns": [
-            "is_active"
-          ],
+          "columns": ["is_active"],
           "isUnique": false
         },
         "monitored_domain_schedule_idx": {
           "name": "monitored_domain_schedule_idx",
-          "columns": [
-            "schedule"
-          ],
+          "columns": ["schedule"],
           "isUnique": false
         }
       },
@@ -842,12 +764,8 @@
           "name": "monitored_domains_domain_id_domains_id_fk",
           "tableFrom": "monitored_domains",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -973,31 +891,22 @@
       "indexes": {
         "observation_snapshot_idx": {
           "name": "observation_snapshot_idx",
-          "columns": [
-            "snapshot_id"
-          ],
+          "columns": ["snapshot_id"],
           "isUnique": false
         },
         "observation_query_idx": {
           "name": "observation_query_idx",
-          "columns": [
-            "query_name",
-            "query_type"
-          ],
+          "columns": ["query_name", "query_type"],
           "isUnique": false
         },
         "observation_vantage_idx": {
           "name": "observation_vantage_idx",
-          "columns": [
-            "vantage_id"
-          ],
+          "columns": ["vantage_id"],
           "isUnique": false
         },
         "observation_status_idx": {
           "name": "observation_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         }
       },
@@ -1006,12 +915,8 @@
           "name": "observations_snapshot_id_snapshots_id_fk",
           "tableFrom": "observations",
           "tableTo": "snapshots",
-          "columnsFrom": [
-            "snapshot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["snapshot_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1019,12 +924,8 @@
           "name": "observations_vantage_id_vantage_points_id_fk",
           "tableFrom": "observations",
           "tableTo": "vantage_points",
-          "columnsFrom": [
-            "vantage_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["vantage_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1108,17 +1009,12 @@
       "indexes": {
         "recordset_snapshot_idx": {
           "name": "recordset_snapshot_idx",
-          "columns": [
-            "snapshot_id"
-          ],
+          "columns": ["snapshot_id"],
           "isUnique": false
         },
         "recordset_name_type_idx": {
           "name": "recordset_name_type_idx",
-          "columns": [
-            "name",
-            "type"
-          ],
+          "columns": ["name", "type"],
           "isUnique": false
         }
       },
@@ -1127,12 +1023,8 @@
           "name": "record_sets_snapshot_id_snapshots_id_fk",
           "tableFrom": "record_sets",
           "tableTo": "snapshots",
-          "columnsFrom": [
-            "snapshot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["snapshot_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1237,30 +1129,22 @@
       "indexes": {
         "remediation_domain_idx": {
           "name": "remediation_domain_idx",
-          "columns": [
-            "domain"
-          ],
+          "columns": ["domain"],
           "isUnique": false
         },
         "remediation_status_idx": {
           "name": "remediation_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "remediation_snapshot_idx": {
           "name": "remediation_snapshot_idx",
-          "columns": [
-            "snapshot_id"
-          ],
+          "columns": ["snapshot_id"],
           "isUnique": false
         },
         "remediation_created_at_idx": {
           "name": "remediation_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
@@ -1327,16 +1211,12 @@
       "indexes": {
         "ruleset_version_idx": {
           "name": "ruleset_version_idx",
-          "columns": [
-            "version"
-          ],
+          "columns": ["version"],
           "isUnique": true
         },
         "ruleset_active_idx": {
           "name": "ruleset_active_idx",
-          "columns": [
-            "active"
-          ],
+          "columns": ["active"],
           "isUnique": false
         }
       },
@@ -1410,23 +1290,17 @@
       "indexes": {
         "saved_filter_tenant_idx": {
           "name": "saved_filter_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "saved_filter_created_by_idx": {
           "name": "saved_filter_created_by_idx",
-          "columns": [
-            "created_by"
-          ],
+          "columns": ["created_by"],
           "isUnique": false
         },
         "saved_filter_shared_idx": {
           "name": "saved_filter_shared_idx",
-          "columns": [
-            "is_shared"
-          ],
+          "columns": ["is_shared"],
           "isUnique": false
         }
       },
@@ -1528,31 +1402,22 @@
       "indexes": {
         "snapshot_domain_idx": {
           "name": "snapshot_domain_idx",
-          "columns": [
-            "domain_id"
-          ],
+          "columns": ["domain_id"],
           "isUnique": false
         },
         "snapshot_created_at_idx": {
           "name": "snapshot_created_at_idx",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         },
         "snapshot_domain_created_idx": {
           "name": "snapshot_domain_created_idx",
-          "columns": [
-            "domain_id",
-            "created_at"
-          ],
+          "columns": ["domain_id", "created_at"],
           "isUnique": false
         },
         "snapshot_state_idx": {
           "name": "snapshot_state_idx",
-          "columns": [
-            "result_state"
-          ],
+          "columns": ["result_state"],
           "isUnique": false
         }
       },
@@ -1561,12 +1426,8 @@
           "name": "snapshots_domain_id_domains_id_fk",
           "tableFrom": "snapshots",
           "tableTo": "domains",
-          "columnsFrom": [
-            "domain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["domain_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1574,12 +1435,8 @@
           "name": "snapshots_ruleset_version_id_ruleset_versions_id_fk",
           "tableFrom": "snapshots",
           "tableTo": "ruleset_versions",
-          "columnsFrom": [
-            "ruleset_version_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ruleset_version_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1682,16 +1539,12 @@
       "indexes": {
         "suggestion_finding_idx": {
           "name": "suggestion_finding_idx",
-          "columns": [
-            "finding_id"
-          ],
+          "columns": ["finding_id"],
           "isUnique": false
         },
         "suggestion_review_only_idx": {
           "name": "suggestion_review_only_idx",
-          "columns": [
-            "review_only"
-          ],
+          "columns": ["review_only"],
           "isUnique": false
         }
       },
@@ -1700,12 +1553,8 @@
           "name": "suggestions_finding_id_findings_id_fk",
           "tableFrom": "suggestions",
           "tableTo": "findings",
-          "columnsFrom": [
-            "finding_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["finding_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1778,25 +1627,17 @@
       "indexes": {
         "template_override_provider_idx": {
           "name": "template_override_provider_idx",
-          "columns": [
-            "provider_key"
-          ],
+          "columns": ["provider_key"],
           "isUnique": false
         },
         "template_override_tenant_idx": {
           "name": "template_override_tenant_idx",
-          "columns": [
-            "tenant_id"
-          ],
+          "columns": ["tenant_id"],
           "isUnique": false
         },
         "template_override_unique_idx": {
           "name": "template_override_unique_idx",
-          "columns": [
-            "provider_key",
-            "template_key",
-            "tenant_id"
-          ],
+          "columns": ["provider_key", "template_key", "tenant_id"],
           "isUnique": true
         }
       },
@@ -1882,16 +1723,12 @@
       "indexes": {
         "vantage_type_idx": {
           "name": "vantage_type_idx",
-          "columns": [
-            "type"
-          ],
+          "columns": ["type"],
           "isUnique": false
         },
         "vantage_active_idx": {
           "name": "vantage_active_idx",
-          "columns": [
-            "is_active"
-          ],
+          "columns": ["is_active"],
           "isUnique": false
         }
       },

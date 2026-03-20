@@ -4,21 +4,31 @@
  * Coordinates DNS queries across multiple vantages and stores results.
  */
 
+import type {
+  IDatabaseAdapter,
+  NewObservation,
+  NewRecordSet,
+  NewSnapshot,
+  Observation,
+} from '@dns-ops/db';
+import {
+  DomainRepository,
+  ObservationRepository,
+  RecordSetRepository,
+  SnapshotRepository,
+} from '@dns-ops/db';
+import { observationsToRecordSets } from '@dns-ops/parsing';
+import { DelegationCollector } from '../delegation/collector.js';
 import { DNSResolver } from './resolver.js';
 import type {
   CollectionConfig,
-  CollectionResult,
   CollectionError,
+  CollectionResult,
+  DNSAnswer,
   DNSQuery,
   DNSQueryResult,
   VantageInfo,
-  DNSAnswer,
 } from './types.js';
-import type { IDatabaseAdapter } from '@dns-ops/db';
-import { DomainRepository, SnapshotRepository, ObservationRepository, RecordSetRepository } from '@dns-ops/db';
-import { observationsToRecordSets } from '@dns-ops/parsing';
-import type { NewObservation, NewSnapshot, NewRecordSet, Observation } from '@dns-ops/db';
-import { DelegationCollector } from '../delegation/collector.js';
 
 export class DNSCollector {
   private resolver: DNSResolver;
@@ -59,7 +69,7 @@ export class DNSCollector {
     );
 
     // Collect from authoritative vantages (for managed zones or if NS discovered)
-    let authoritativeResults: DNSQueryResult[] = [];
+    const authoritativeResults: DNSQueryResult[] = [];
     if (this.config.zoneManagement === 'managed') {
       // For managed zones, query authoritative directly
       const nsRecords = await this.discoverAuthoritativeServers();
@@ -81,7 +91,8 @@ export class DNSCollector {
 
     // Collect delegation data if enabled (Bead 12)
     let delegationData = null;
-    if (this.config.includeDelegationData !== false) { // Default to true
+    if (this.config.includeDelegationData !== false) {
+      // Default to true
       try {
         const delegationCollector = new DelegationCollector(this.config.domain);
         delegationData = await delegationCollector.collectDelegationSummary('8.8.8.8');
@@ -112,7 +123,15 @@ export class DNSCollector {
    */
   private async generateQueries(): Promise<DNSQuery[]> {
     const queries: DNSQuery[] = [];
-    const { domain, zoneManagement, recordTypes, queryNames, includeMailRecords, dkimSelectors, managedDkimSelectors } = this.config;
+    const {
+      domain,
+      zoneManagement,
+      recordTypes,
+      queryNames,
+      includeMailRecords,
+      dkimSelectors,
+      managedDkimSelectors,
+    } = this.config;
 
     if (queryNames) {
       // Use explicit query names (targeted inspection)
@@ -137,8 +156,13 @@ export class DNSCollector {
       }
 
       // Include mail records with DKIM selector discovery (Bead 08)
-      if (includeMailRecords !== false) { // Default to true
-        const mailQueries = await this.generateMailQueries(domain, dkimSelectors, managedDkimSelectors);
+      if (includeMailRecords !== false) {
+        // Default to true
+        const mailQueries = await this.generateMailQueries(
+          domain,
+          dkimSelectors,
+          managedDkimSelectors
+        );
         queries.push(...mailQueries);
       }
     } else {
@@ -149,7 +173,11 @@ export class DNSCollector {
 
       // Include mail records for managed zones
       if (includeMailRecords !== false) {
-        const mailQueries = await this.generateMailQueries(domain, dkimSelectors, managedDkimSelectors);
+        const mailQueries = await this.generateMailQueries(
+          domain,
+          dkimSelectors,
+          managedDkimSelectors
+        );
         queries.push(...mailQueries);
       }
     }
@@ -290,41 +318,46 @@ export class DNSCollector {
       domainId: domainRecord.id,
       domainName: domain,
       resultState,
-      queriedNames: [...new Set(results.map(r => r.query.name))],
-      queriedTypes: [...new Set(results.map(r => r.query.type))],
-      vantages: [...new Set(results.map(r => r.vantage.identifier))],
+      queriedNames: [...new Set(results.map((r) => r.query.name))],
+      queriedTypes: [...new Set(results.map((r) => r.query.type))],
+      vantages: [...new Set(results.map((r) => r.vantage.identifier))],
       zoneManagement,
       triggeredBy: triggeredBy || 'system',
       // Store delegation data summary if available (Bead 12)
-      metadata: delegationData ? {
-        hasDelegationData: true,
-        parentZone: delegationData.parentZone,
-        nsServers: delegationData.parentNs.map((ns: DNSAnswer) => ns.data),
-        hasDivergence: delegationData.hasDivergence,
-        lameDelegations: delegationData.lameDelegations.length,
-        hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
-      } : undefined,
+      metadata: delegationData
+        ? {
+            hasDelegationData: true,
+            parentZone: delegationData.parentZone,
+            nsServers: delegationData.parentNs.map((ns: DNSAnswer) => ns.data),
+            hasDivergence: delegationData.hasDivergence,
+            lameDelegations: delegationData.lameDelegations.length,
+            hasDnssec: delegationData.dnssecInfo?.hasRrsig || false,
+          }
+        : undefined,
     } as NewSnapshot);
 
     // Create observations for each result
-    const observationData: NewObservation[] = results.map(result => ({
+    const observationData: NewObservation[] = results.map((result) => ({
       snapshotId: snapshot.id,
       queryName: result.query.name,
       queryType: result.query.type,
-      vantageType: result.vantage.type === 'public-recursive' ? 'public-recursive' : 'authoritative',
+      vantageType:
+        result.vantage.type === 'public-recursive' ? 'public-recursive' : 'authoritative',
       vantageIdentifier: result.vantage.identifier,
       status: result.success ? 'success' : this.mapErrorToStatus(result.error),
       queriedAt: new Date(),
       responseTimeMs: result.responseTime,
       responseCode: result.responseCode ?? null,
-      flags: result.flags ? {
-        authoritative: result.flags.aa,
-        truncated: result.flags.tc,
-        recursionDesired: result.flags.rd,
-        recursionAvailable: result.flags.ra,
-        authenticated: result.flags.ad,
-        checkingDisabled: result.flags.cd,
-      } : null,
+      flags: result.flags
+        ? {
+            authoritative: result.flags.aa,
+            truncated: result.flags.tc,
+            recursionDesired: result.flags.rd,
+            recursionAvailable: result.flags.ra,
+            authenticated: result.flags.ad,
+            checkingDisabled: result.flags.cd,
+          }
+        : null,
       answerSection: result.answers.map((a: DNSAnswer) => ({
         name: a.name,
         type: a.type,
@@ -357,7 +390,9 @@ export class DNSCollector {
   /**
    * Map error message to collection status
    */
-  private mapErrorToStatus(error: string | undefined): 'timeout' | 'refused' | 'nxdomain' | 'error' {
+  private mapErrorToStatus(
+    error: string | undefined
+  ): 'timeout' | 'refused' | 'nxdomain' | 'error' {
     if (!error) return 'error';
     if (error.includes('timeout')) return 'timeout';
     if (error.includes('ECONNREFUSED') || error.includes('REFUSED')) return 'refused';
@@ -374,7 +409,7 @@ export class DNSCollector {
   ): Promise<void> {
     const normalizedRecords = observationsToRecordSets(observations);
 
-    const recordSetData: NewRecordSet[] = normalizedRecords.map(record => ({
+    const recordSetData: NewRecordSet[] = normalizedRecords.map((record) => ({
       snapshotId,
       name: record.name,
       type: record.type,

@@ -4,8 +4,8 @@
  * Performs DMARC, DKIM, and SPF checks for email security validation.
  */
 
+import { type DMARCRecord, parseDMARC, parseSPF, type SPFRecord } from '@dns-ops/parsing';
 import { resolveTXT } from './dns.js';
-import { parseDMARC, parseSPF, type DMARCRecord, type SPFRecord } from '@dns-ops/parsing';
 
 export interface MailCheckResult {
   domain: string;
@@ -40,11 +40,11 @@ export interface ProviderSelectorInfo {
 export const PROVIDER_SELECTORS: Record<string, ProviderSelectorInfo> = {
   google: { selector: 'google', confidence: 0.95 },
   'google-workspace': { selector: 'google', confidence: 0.95 },
-  microsoft: { selector: 'selector1', confidence: 0.90 },
-  'microsoft-365': { selector: 'selector1', confidence: 0.90 },
-  outlook: { selector: 'selector1', confidence: 0.90 },
+  microsoft: { selector: 'selector1', confidence: 0.9 },
+  'microsoft-365': { selector: 'selector1', confidence: 0.9 },
+  outlook: { selector: 'selector1', confidence: 0.9 },
   zoho: { selector: 'zoho', confidence: 0.95 },
-  default: { selector: 'default', confidence: 0.30 },
+  default: { selector: 'default', confidence: 0.3 },
 };
 
 // Common DKIM selectors to try as fallback
@@ -81,7 +81,7 @@ export async function performMailCheck(
 export async function checkDMARC(domain: string): Promise<RecordCheckResult> {
   try {
     const records = await resolveTXT(`_dmarc.${domain}`);
-    const dmarcRecord = records.find(r => r.includes('v=DMARC1'));
+    const dmarcRecord = records.find((r) => r.includes('v=DMARC1'));
 
     if (!dmarcRecord) {
       return {
@@ -183,16 +183,16 @@ async function tryDKIMSelector(domain: string, selector: string): Promise<Record
   try {
     const records = await resolveTXT(`${selector}._domainkey.${domain}`);
     const dkimRecord = records[0];
-    
+
     // Basic validation: should contain v=DKIM1 or k= (key type)
     const valid = dkimRecord.includes('v=DKIM1') || dkimRecord.includes('k=');
-    
+
     return {
       present: true,
       valid,
       record: dkimRecord,
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       present: false,
       valid: false,
@@ -206,7 +206,7 @@ async function tryDKIMSelector(domain: string, selector: string): Promise<Record
 export async function checkSPF(domain: string): Promise<RecordCheckResult> {
   try {
     const records = await resolveTXT(domain);
-    const spfRecord = records.find(r => r.startsWith('v=spf1'));
+    const spfRecord = records.find((r) => r.startsWith('v=spf1'));
 
     if (!spfRecord) {
       return {

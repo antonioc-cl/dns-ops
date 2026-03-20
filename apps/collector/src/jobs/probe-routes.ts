@@ -6,16 +6,16 @@
  */
 
 import { Hono } from 'hono';
+import type { DNSQueryResult } from '../dns/types.js';
+import type { AllowlistEntry } from '../probes/allowlist.js';
 import {
-  probeAllowlist,
   fetchMTASTSPolicy,
-  probeSMTPStarttls,
+  probeAllowlist,
   probeMXHosts,
+  probeSMTPStarttls,
   validateMTASTSTxtRecord,
 } from '../probes/index.js';
-import type { DNSQueryResult } from '../dns/types.js';
 import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
-import type { AllowlistEntry } from '../probes/allowlist.js';
 
 export const probeRoutes = new Hono();
 
@@ -32,16 +32,16 @@ probeRoutes.post('/mta-sts', async (c) => {
   }
 
   // Validate MTA-STS TXT record first
-  const txtValidation = await validateMTASTSTxtRecord(
-    domain,
-    txtRecords || []
-  );
+  const txtValidation = await validateMTASTSTxtRecord(domain, txtRecords || []);
 
   if (!txtValidation.valid) {
-    return c.json({
-      error: 'MTA-STS TXT record validation failed',
-      details: txtValidation.error,
-    }, 400);
+    return c.json(
+      {
+        error: 'MTA-STS TXT record validation failed',
+        details: txtValidation.error,
+      },
+      400
+    );
   }
 
   // Add to allowlist (MTA-STS endpoint is derived from DNS)
@@ -77,15 +77,22 @@ probeRoutes.post('/smtp-starttls', async (c) => {
   if (hostname) {
     // Add to allowlist if MX records provided
     if (mxRecords && Array.isArray(mxRecords)) {
-      const mockResults: DNSQueryResult[] = [{
-        query: { name: hostname, type: 'MX' },
-        vantage: { type: 'public-recursive', identifier: 'mock' },
-        success: true,
-        answers: mxRecords.map((mx: string) => ({ name: hostname, type: 'MX', ttl: 300, data: mx })),
-        authority: [],
-        additional: [],
-        responseTime: 0,
-      }];
+      const mockResults: DNSQueryResult[] = [
+        {
+          query: { name: hostname, type: 'MX' },
+          vantage: { type: 'public-recursive', identifier: 'mock' },
+          success: true,
+          answers: mxRecords.map((mx: string) => ({
+            name: hostname,
+            type: 'MX',
+            ttl: 300,
+            data: mx,
+          })),
+          authority: [],
+          additional: [],
+          responseTime: 0,
+        },
+      ];
       probeAllowlist.generateFromDnsResults(hostname, mockResults);
     }
 
@@ -110,15 +117,22 @@ probeRoutes.post('/smtp-starttls', async (c) => {
     });
 
     // Generate allowlist
-    const mockResults: DNSQueryResult[] = [{
-      query: { name: 'probe', type: 'MX' },
-      vantage: { type: 'public-recursive', identifier: 'mock' },
-      success: true,
-      answers: hosts.map(h => ({ name: 'probe', type: 'MX', ttl: 300, data: `${h.priority} ${h.hostname}.` })),
-      authority: [],
-      additional: [],
-      responseTime: 0,
-    }];
+    const mockResults: DNSQueryResult[] = [
+      {
+        query: { name: 'probe', type: 'MX' },
+        vantage: { type: 'public-recursive', identifier: 'mock' },
+        success: true,
+        answers: hosts.map((h) => ({
+          name: 'probe',
+          type: 'MX',
+          ttl: 300,
+          data: `${h.priority} ${h.hostname}.`,
+        })),
+        authority: [],
+        additional: [],
+        responseTime: 0,
+      },
+    ];
     probeAllowlist.generateFromDnsResults('probe', mockResults);
 
     const results = await probeMXHosts(hosts, {
@@ -136,9 +150,12 @@ probeRoutes.post('/smtp-starttls', async (c) => {
     });
   }
 
-  return c.json({
-    error: 'Either hostname or mxRecords is required',
-  }, 400);
+  return c.json(
+    {
+      error: 'Either hostname or mxRecords is required',
+    },
+    400
+  );
 });
 
 /**
@@ -150,9 +167,12 @@ probeRoutes.post('/allowlist/generate', async (c) => {
   const { domain, dnsResults } = body;
 
   if (!domain || !dnsResults || !Array.isArray(dnsResults)) {
-    return c.json({
-      error: 'Domain and dnsResults (array) are required',
-    }, 400);
+    return c.json(
+      {
+        error: 'Domain and dnsResults (array) are required',
+      },
+      400
+    );
   }
 
   const entries = probeAllowlist.generateFromDnsResults(domain, dnsResults);
@@ -178,7 +198,7 @@ probeRoutes.get('/allowlist', (c) => {
 
   return c.json({
     count: entries.length,
-    entries: entries.map(e => ({
+    entries: entries.map((e) => ({
       type: e.type,
       hostname: e.hostname,
       port: e.port,
@@ -195,7 +215,7 @@ probeRoutes.get('/allowlist', (c) => {
 probeRoutes.get('/ssrf-check/:target', async (c) => {
   const target = c.req.param('target');
   const { checkSSRF } = await import('../probes/index.js');
-  
+
   const result = checkSSRF(target);
 
   return c.json({

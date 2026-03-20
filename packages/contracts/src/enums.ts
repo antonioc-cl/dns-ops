@@ -1,6 +1,6 @@
 /**
  * DNS Ops Workbench - Shared Enums and Vocabulary
- * 
+ *
  * This file defines the core vocabulary for the system:
  * - Result states (complete, partial, failed)
  * - Severity levels
@@ -57,12 +57,12 @@ export type RiskPosture = 'safe' | 'low' | 'medium' | 'high' | 'critical';
  * - infrastructure: Affects shared infrastructure
  * - organization-wide: Organization-level impact
  */
-export type BlastRadius = 
-  | 'none' 
-  | 'single-domain' 
-  | 'subdomain-tree' 
-  | 'related-domains' 
-  | 'infrastructure' 
+export type BlastRadius =
+  | 'none'
+  | 'single-domain'
+  | 'subdomain-tree'
+  | 'related-domains'
+  | 'infrastructure'
   | 'organization-wide';
 
 /**
@@ -79,36 +79,28 @@ export type ReviewOnly = boolean;
 /**
  * Vantage point types for DNS collection
  */
-export type VantageType = 
-  | 'public-recursive'      // Public DNS resolver (8.8.8.8, 1.1.1.1)
-  | 'authoritative'         // Direct authoritative nameserver query
-  | 'parent-zone'          // Parent zone delegation query
-  | 'probe';               // Active probe (MTA-STS, SMTP, etc.)
+export type VantageType =
+  | 'public-recursive' // Public DNS resolver (8.8.8.8, 1.1.1.1)
+  | 'authoritative' // Direct authoritative nameserver query
+  | 'parent-zone' // Parent zone delegation query
+  | 'probe'; // Active probe (MTA-STS, SMTP, etc.)
 
 /**
  * DNS record types supported in phase 1
  */
-export type SupportedRecordType =
-  | 'A'
-  | 'AAAA'
-  | 'CNAME'
-  | 'MX'
-  | 'TXT'
-  | 'NS'
-  | 'SOA'
-  | 'CAA';
+export type SupportedRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'NS' | 'SOA' | 'CAA';
 
 /**
  * Collection status for individual queries
  */
 export type CollectionStatus =
-  | 'success'       // Query successful, data retrieved
-  | 'timeout'       // Query timed out
-  | 'refused'       // Query refused by server
-  | 'truncated'     // Response truncated (TCP retry may be needed)
-  | 'nxdomain'      // Name does not exist
-  | 'nodata'        // Name exists but no records for type
-  | 'error';        // Other error
+  | 'success' // Query successful, data retrieved
+  | 'timeout' // Query timed out
+  | 'refused' // Query refused by server
+  | 'truncated' // Response truncated (TCP retry may be needed)
+  | 'nxdomain' // Name does not exist
+  | 'nodata' // Name exists but no records for type
+  | 'error'; // Other error
 
 /**
  * Zone management classification
@@ -136,8 +128,8 @@ export type KnownProvider =
  * Tracks how a DKIM selector was discovered
  */
 export type SelectorProvenance =
-  | 'managed-zone-config'    // From our managed zone configuration
-  | 'operator-supplied'      // Explicitly provided by operator
-  | 'provider-heuristic'     // Derived from provider template
-  | 'common-dictionary'      // From common selector dictionary
-  | 'not-found';             // No selector discovered
+  | 'managed-zone-config' // From our managed zone configuration
+  | 'operator-supplied' // Explicitly provided by operator
+  | 'provider-heuristic' // Derived from provider template
+  | 'common-dictionary' // From common selector dictionary
+  | 'not-found'; // No selector discovered

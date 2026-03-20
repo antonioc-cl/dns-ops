@@ -52,7 +52,13 @@ export type RiskPosture = 'safe' | 'low' | 'medium' | 'high' | 'critical';
  * - infrastructure: Affects shared infrastructure
  * - organization-wide: Organization-level impact
  */
-export type BlastRadius = 'none' | 'single-domain' | 'subdomain-tree' | 'related-domains' | 'infrastructure' | 'organization-wide';
+export type BlastRadius =
+  | 'none'
+  | 'single-domain'
+  | 'subdomain-tree'
+  | 'related-domains'
+  | 'infrastructure'
+  | 'organization-wide';
 /**
  * Review requirement flag
  * When true, the finding or suggestion requires human review before action
@@ -74,7 +80,14 @@ export type SupportedRecordType = 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT' | 'NS' |
 /**
  * Collection status for individual queries
  */
-export type CollectionStatus = 'success' | 'timeout' | 'refused' | 'truncated' | 'nxdomain' | 'nodata' | 'error';
+export type CollectionStatus =
+  | 'success'
+  | 'timeout'
+  | 'refused'
+  | 'truncated'
+  | 'nxdomain'
+  | 'nodata'
+  | 'error';
 /**
  * Zone management classification
  * - managed: Zone is under our control (full visibility)
@@ -86,10 +99,22 @@ export type ZoneManagement = 'managed' | 'unmanaged' | 'unknown';
  * Provider templates for known mail providers
  * Used for DKIM selector discovery and configuration validation
  */
-export type KnownProvider = 'google-workspace' | 'microsoft-365' | 'amazon-ses' | 'sendgrid' | 'mailgun' | 'other' | 'unknown';
+export type KnownProvider =
+  | 'google-workspace'
+  | 'microsoft-365'
+  | 'amazon-ses'
+  | 'sendgrid'
+  | 'mailgun'
+  | 'other'
+  | 'unknown';
 /**
  * Selector discovery provenance
  * Tracks how a DKIM selector was discovered
  */
-export type SelectorProvenance = 'managed-zone-config' | 'operator-supplied' | 'provider-heuristic' | 'common-dictionary' | 'not-found';
+export type SelectorProvenance =
+  | 'managed-zone-config'
+  | 'operator-supplied'
+  | 'provider-heuristic'
+  | 'common-dictionary'
+  | 'not-found';
 //# sourceMappingURL=enums.d.ts.map

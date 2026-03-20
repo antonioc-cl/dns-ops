@@ -17,17 +17,17 @@ export interface SSRFCheckResult {
 
 // IPv4 private ranges (RFC 1918 + others)
 const BLOCKED_IPV4_RANGES = [
-  { start: 0x00000000, end: 0x00FFFFFF, name: '0.0.0.0/8 (this network)' },
-  { start: 0x7F000000, end: 0x7FFFFFFF, name: '127.0.0.0/8 (loopback)' },
-  { start: 0x0A000000, end: 0x0AFFFFFF, name: '10.0.0.0/8 (private)' },
-  { start: 0xAC100000, end: 0xAC1FFFFF, name: '172.16.0.0/12 (private)' },
-  { start: 0xC0A80000, end: 0xC0A8FFFF, name: '192.168.0.0/16 (private)' },
-  { start: 0xA9FE0000, end: 0xA9FEFFFF, name: '169.254.0.0/16 (link-local)' },
-  { start: 0xE0000000, end: 0xEFFFFFFF, name: '224.0.0.0/4 (multicast)' },
-  { start: 0xF0000000, end: 0xFFFFFFFF, name: '240.0.0.0/4 (reserved)' },
-  { start: 0xC0000200, end: 0xC00002FF, name: '192.0.2.0/24 (TEST-NET-1)' },
-  { start: 0xC6336400, end: 0xC63364FF, name: '198.51.100.0/24 (TEST-NET-2)' },
-  { start: 0xCB007100, end: 0xCB0071FF, name: '203.0.113.0/24 (TEST-NET-3)' },
+  { start: 0x00000000, end: 0x00ffffff, name: '0.0.0.0/8 (this network)' },
+  { start: 0x7f000000, end: 0x7fffffff, name: '127.0.0.0/8 (loopback)' },
+  { start: 0x0a000000, end: 0x0affffff, name: '10.0.0.0/8 (private)' },
+  { start: 0xac100000, end: 0xac1fffff, name: '172.16.0.0/12 (private)' },
+  { start: 0xc0a80000, end: 0xc0a8ffff, name: '192.168.0.0/16 (private)' },
+  { start: 0xa9fe0000, end: 0xa9feffff, name: '169.254.0.0/16 (link-local)' },
+  { start: 0xe0000000, end: 0xefffffff, name: '224.0.0.0/4 (multicast)' },
+  { start: 0xf0000000, end: 0xffffffff, name: '240.0.0.0/4 (reserved)' },
+  { start: 0xc0000200, end: 0xc00002ff, name: '192.0.2.0/24 (TEST-NET-1)' },
+  { start: 0xc6336400, end: 0xc63364ff, name: '198.51.100.0/24 (TEST-NET-2)' },
+  { start: 0xcb007100, end: 0xcb0071ff, name: '203.0.113.0/24 (TEST-NET-3)' },
 ];
 
 // IPv6 blocked ranges
@@ -44,7 +44,7 @@ const BLOCKED_IPV6_PREFIXES = [
  */
 function ipv4ToInt(ip: string): number {
   const parts = ip.split('.').map(Number);
-  if (parts.length !== 4 || parts.some(p => isNaN(p) || p < 0 || p > 255)) {
+  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) {
     return -1;
   }
   return (parts[0] << 24) + (parts[1] << 16) + (parts[2] << 8) + parts[3];
@@ -64,10 +64,15 @@ function checkIPv4(ip: string): SSRFCheckResult {
       return {
         allowed: false,
         reason: `Blocked: ${range.name}`,
-        blockedCategory: range.name.includes('loopback') ? 'loopback' :
-                        range.name.includes('link-local') ? 'link-local' :
-                        range.name.includes('multicast') ? 'multicast' :
-                        range.name.includes('private') ? 'private' : 'reserved',
+        blockedCategory: range.name.includes('loopback')
+          ? 'loopback'
+          : range.name.includes('link-local')
+            ? 'link-local'
+            : range.name.includes('multicast')
+              ? 'multicast'
+              : range.name.includes('private')
+                ? 'private'
+                : 'reserved',
       };
     }
   }
@@ -87,10 +92,15 @@ function checkIPv6(ip: string): SSRFCheckResult {
       return {
         allowed: false,
         reason: `Blocked: ${blocked.name}`,
-        blockedCategory: blocked.name.includes('loopback') ? 'loopback' :
-                        blocked.name.includes('link-local') ? 'link-local' :
-                        blocked.name.includes('multicast') ? 'multicast' :
-                        blocked.name.includes('local') ? 'private' : 'reserved',
+        blockedCategory: blocked.name.includes('loopback')
+          ? 'loopback'
+          : blocked.name.includes('link-local')
+            ? 'link-local'
+            : blocked.name.includes('multicast')
+              ? 'multicast'
+              : blocked.name.includes('local')
+                ? 'private'
+                : 'reserved',
       };
     }
   }
@@ -150,7 +160,11 @@ export function validateUrl(url: string): SSRFCheckResult & { url?: URL } {
 
   // Only allow http/https protocols
   if (!['http:', 'https:'].includes(parsed.protocol)) {
-    return { allowed: false, reason: `Blocked protocol: ${parsed.protocol}`, blockedCategory: 'invalid' };
+    return {
+      allowed: false,
+      reason: `Blocked protocol: ${parsed.protocol}`,
+      blockedCategory: 'invalid',
+    };
   }
 
   // Check the hostname

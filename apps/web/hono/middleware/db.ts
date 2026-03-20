@@ -1,6 +1,6 @@
+import type { IDatabaseAdapter } from '@dns-ops/db';
 import { createD1Adapter, createPostgresAdapter } from '@dns-ops/db';
 import { createMiddleware } from 'hono/factory';
-import type { IDatabaseAdapter } from '@dns-ops/db';
 import type { Env } from '../types.js';
 
 // PostgreSQL singleton — created once per process lifecycle.

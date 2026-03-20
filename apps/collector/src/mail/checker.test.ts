@@ -4,14 +4,13 @@
  * Tests for DMARC/DKIM/SPF checking logic.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  performMailCheck,
-  checkDMARC,
   checkDKIM,
+  checkDMARC,
   checkSPF,
   PROVIDER_SELECTORS,
-  type MailCheckResult,
+  performMailCheck,
 } from './checker.js';
 
 // Mock DNS resolution
@@ -78,7 +77,10 @@ describe('Mail Checker', () => {
     });
 
     it('should handle TXT records without DMARC', async () => {
-      mockedResolveTXT.mockResolvedValue(['v=spf1 include:_spf.example.com ~all', 'some other txt']);
+      mockedResolveTXT.mockResolvedValue([
+        'v=spf1 include:_spf.example.com ~all',
+        'some other txt',
+      ]);
 
       const result = await checkDMARC('example.com');
 
@@ -225,7 +227,9 @@ describe('BDD Scenarios', () => {
       // Given example.com has proper mail configuration
       mockedResolveTXT
         .mockResolvedValueOnce(['v=DMARC1; p=reject; rua=mailto:dmarc@example.com'])
-        .mockResolvedValueOnce(['v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY/neDgaL2oqQE8T5illKqCgDtFHc8eHVAU+nlcaGmrKmDMw9dbgiGk1ocgZ56NR4ycfUHwQhvQPMUZw0cveel/8EAGoi/UyPmqfcPibytH81NFtTMAxUeM4Op8A6iHkvAMj5qLf4YRNsTkKAKW3OkwPQIDAQAB'])
+        .mockResolvedValueOnce([
+          'v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY/neDgaL2oqQE8T5illKqCgDtFHc8eHVAU+nlcaGmrKmDMw9dbgiGk1ocgZ56NR4ycfUHwQhvQPMUZw0cveel/8EAGoi/UyPmqfcPibytH81NFtTMAxUeM4Op8A6iHkvAMj5qLf4YRNsTkKAKW3OkwPQIDAQAB',
+        ])
         .mockResolvedValueOnce(['v=spf1 include:_spf.google.com ~all']);
 
       // When the mail check is performed

@@ -11,9 +11,9 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
-import { probeRoutes } from './jobs/probe-routes.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
 import { monitoringRoutes } from './jobs/monitoring.js';
+import { probeRoutes } from './jobs/probe-routes.js';
 
 const app = new Hono();
 
@@ -22,11 +22,13 @@ app.use('*', cors());
 app.use('*', logger());
 
 // Health check endpoint
-app.get('/health', (c) => c.json({
-  status: 'healthy',
-  service: 'dns-ops-collector',
-  timestamp: new Date().toISOString(),
-}));
+app.get('/health', (c) =>
+  c.json({
+    status: 'healthy',
+    service: 'dns-ops-collector',
+    timestamp: new Date().toISOString(),
+  })
+);
 
 // Mount collection routes
 app.route('/api/collect', collectDomainRoutes);
@@ -47,21 +49,27 @@ app.notFound((c) => c.json({ error: 'Not Found' }, 404));
 // Error handler
 app.onError((err, c) => {
   console.error('Collector error:', err);
-  return c.json({
-    error: 'Internal Server Error',
-    message: err.message,
-  }, 500);
+  return c.json(
+    {
+      error: 'Internal Server Error',
+      message: err.message,
+    },
+    500
+  );
 });
 
 // Start server
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
-serve({
-  fetch: app.fetch,
-  port,
-}, (info) => {
-  console.log(`🚀 DNS Ops Collector running on port ${info.port}`);
-  console.log(`📊 Health check: http://localhost:${info.port}/health`);
-});
+serve(
+  {
+    fetch: app.fetch,
+    port,
+  },
+  (info) => {
+    console.log(`🚀 DNS Ops Collector running on port ${info.port}`);
+    console.log(`📊 Health check: http://localhost:${info.port}/health`);
+  }
+);
 
 export default app;

@@ -1,5 +1,5 @@
-import { getEvent } from '@tanstack/react-start/server';
 import { createStartAPIHandler } from '@tanstack/react-start/api';
+import { getEvent } from '@tanstack/react-start/server';
 import { Hono } from 'hono';
 import { dbMiddleware } from '../hono/middleware/db.js';
 import { apiRoutes } from '../hono/routes/api.js';
@@ -14,7 +14,6 @@ export default createStartAPIHandler(({ request }) => {
   // event.context.cloudflare.env. Pass as Hono env so c.env.DB is populated.
   // In local dev (vinxi), cloudflare context is absent — dbMiddleware falls back to PG.
   const event = getEvent();
-  const cfEnv = (event?.context as { cloudflare?: { env?: Env['Bindings'] } })
-    ?.cloudflare?.env;
+  const cfEnv = (event?.context as { cloudflare?: { env?: Env['Bindings'] } })?.cloudflare?.env;
   return app.fetch(request, cfEnv ?? {});
 });

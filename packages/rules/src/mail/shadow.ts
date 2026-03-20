@@ -15,13 +15,13 @@ export interface ShadowComparisonResult {
   snapshotId: string;
   domain: string;
   comparedAt: Date;
-  
+
   // Overall status
   status: 'match' | 'mismatch' | 'partial-match' | 'error';
-  
+
   // Individual field comparisons
   comparisons: FieldComparison[];
-  
+
   // Aggregate metrics
   metrics: {
     totalFields: number;
@@ -30,13 +30,21 @@ export interface ShadowComparisonResult {
     missingInNew: number;
     missingInLegacy: number;
   };
-  
+
   // Human-readable summary
   summary: string;
 }
 
 export interface FieldComparison {
-  field: 'dmarc-present' | 'dmarc-valid' | 'dmarc-policy' | 'spf-present' | 'spf-valid' | 'dkim-present' | 'dkim-valid' | 'dkim-selector';
+  field:
+    | 'dmarc-present'
+    | 'dmarc-valid'
+    | 'dmarc-policy'
+    | 'spf-present'
+    | 'spf-valid'
+    | 'dkim-present'
+    | 'dkim-valid'
+    | 'dkim-selector';
   legacyValue: string | boolean | null;
   newValue: string | boolean | null;
   status: 'match' | 'mismatch' | 'missing-in-legacy' | 'missing-in-new' | 'not-comparable';
@@ -85,42 +93,42 @@ export class ShadowComparator {
     legacyOutput: LegacyToolOutput
   ): ShadowComparisonResult {
     const comparisons: FieldComparison[] = [];
-    
+
     // Extract new finding data
-    const newDmarcFinding = newFindings.find(f => f.type.startsWith('mail.dmarc'));
-    const newSpfFinding = newFindings.find(f => f.type.startsWith('mail.spf'));
-    const newDkimFinding = newFindings.find(f => f.type.startsWith('mail.dkim'));
-    
+    const newDmarcFinding = newFindings.find((f) => f.type.startsWith('mail.dmarc'));
+    const newSpfFinding = newFindings.find((f) => f.type.startsWith('mail.spf'));
+    const newDkimFinding = newFindings.find((f) => f.type.startsWith('mail.dkim'));
+
     // Compare DMARC presence
     comparisons.push(this.compareDmarcPresence(newDmarcFinding, legacyOutput.dmarc));
-    
+
     // Compare DMARC validity
     comparisons.push(this.compareDmarcValidity(newDmarcFinding, legacyOutput.dmarc));
-    
+
     // Compare DMARC policy
     comparisons.push(this.compareDmarcPolicy(newDmarcFinding, legacyOutput.dmarc));
-    
+
     // Compare SPF presence
     comparisons.push(this.compareSpfPresence(newSpfFinding, legacyOutput.spf));
-    
+
     // Compare SPF validity
     comparisons.push(this.compareSpfValidity(newSpfFinding, legacyOutput.spf));
-    
+
     // Compare DKIM presence
     comparisons.push(this.compareDkimPresence(newDkimFinding, legacyOutput.dkim));
-    
+
     // Compare DKIM validity
     comparisons.push(this.compareDkimValidity(newDkimFinding, legacyOutput.dkim));
-    
+
     // Calculate metrics
     const metrics = this.calculateMetrics(comparisons);
-    
+
     // Determine overall status
     const status = this.determineOverallStatus(comparisons);
-    
+
     // Generate summary
     const summary = this.generateSummary(domain, comparisons, metrics);
-    
+
     return {
       snapshotId,
       domain,
@@ -131,14 +139,14 @@ export class ShadowComparator {
       summary,
     };
   }
-  
+
   private compareDmarcPresence(
     newFinding: NewFinding | undefined,
     legacyDmarc: LegacyToolOutput['dmarc']
   ): FieldComparison {
     const newPresent = newFinding?.type === 'mail.dmarc-present';
     const legacyPresent = legacyDmarc.present;
-    
+
     if (newPresent === legacyPresent) {
       return {
         field: 'dmarc-present',
@@ -149,7 +157,7 @@ export class ShadowComparator {
         explanation: `Both agree: DMARC is ${newPresent ? 'present' : 'absent'}`,
       };
     }
-    
+
     return {
       field: 'dmarc-present',
       legacyValue: legacyPresent,
@@ -159,7 +167,7 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says ${legacyPresent ? 'present' : 'absent'}, new says ${newPresent ? 'present' : 'absent'}`,
     };
   }
-  
+
   private compareDmarcValidity(
     newFinding: NewFinding | undefined,
     legacyDmarc: LegacyToolOutput['dmarc']
@@ -168,7 +176,7 @@ export class ShadowComparator {
     const newPresent = newFinding?.type === 'mail.dmarc-present';
     const newValid = newPresent && !newMalformed;
     const legacyValid = legacyDmarc.valid;
-    
+
     if (newValid === legacyValid) {
       return {
         field: 'dmarc-valid',
@@ -179,7 +187,7 @@ export class ShadowComparator {
         explanation: `Both agree: DMARC is ${newValid ? 'valid' : 'invalid'}`,
       };
     }
-    
+
     return {
       field: 'dmarc-valid',
       legacyValue: legacyValid,
@@ -189,7 +197,7 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says ${legacyValid ? 'valid' : 'invalid'}, new says ${newValid ? 'valid' : 'invalid'}`,
     };
   }
-  
+
   private compareDmarcPolicy(
     newFinding: NewFinding | undefined,
     legacyDmarc: LegacyToolOutput['dmarc']
@@ -198,7 +206,7 @@ export class ShadowComparator {
     const newPolicyMatch = newFinding?.description.match(/policy "(\w+)"/);
     const newPolicy = newPolicyMatch ? newPolicyMatch[1] : null;
     const legacyPolicy = legacyDmarc.policy || null;
-    
+
     if (!newPolicy && !legacyPolicy) {
       return {
         field: 'dmarc-policy',
@@ -209,7 +217,7 @@ export class ShadowComparator {
         explanation: 'Both agree: no policy found',
       };
     }
-    
+
     if (newPolicy?.toLowerCase() === legacyPolicy?.toLowerCase()) {
       return {
         field: 'dmarc-policy',
@@ -220,7 +228,7 @@ export class ShadowComparator {
         explanation: `Both agree: policy is "${newPolicy}"`,
       };
     }
-    
+
     return {
       field: 'dmarc-policy',
       legacyValue: legacyPolicy,
@@ -230,14 +238,14 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says "${legacyPolicy}", new says "${newPolicy}"`,
     };
   }
-  
+
   private compareSpfPresence(
     newFinding: NewFinding | undefined,
     legacySpf: LegacyToolOutput['spf']
   ): FieldComparison {
     const newPresent = newFinding?.type === 'mail.spf-present';
     const legacyPresent = legacySpf.present;
-    
+
     if (newPresent === legacyPresent) {
       return {
         field: 'spf-present',
@@ -248,7 +256,7 @@ export class ShadowComparator {
         explanation: `Both agree: SPF is ${newPresent ? 'present' : 'absent'}`,
       };
     }
-    
+
     return {
       field: 'spf-present',
       legacyValue: legacyPresent,
@@ -258,7 +266,7 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says ${legacyPresent ? 'present' : 'absent'}, new says ${newPresent ? 'present' : 'absent'}`,
     };
   }
-  
+
   private compareSpfValidity(
     newFinding: NewFinding | undefined,
     legacySpf: LegacyToolOutput['spf']
@@ -267,7 +275,7 @@ export class ShadowComparator {
     const newPresent = newFinding?.type === 'mail.spf-present';
     const newValid = newPresent && !newMalformed;
     const legacyValid = legacySpf.valid;
-    
+
     if (newValid === legacyValid) {
       return {
         field: 'spf-valid',
@@ -278,7 +286,7 @@ export class ShadowComparator {
         explanation: `Both agree: SPF is ${newValid ? 'valid' : 'invalid'}`,
       };
     }
-    
+
     return {
       field: 'spf-valid',
       legacyValue: legacyValid,
@@ -288,14 +296,14 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says ${legacyValid ? 'valid' : 'invalid'}, new says ${newValid ? 'valid' : 'invalid'}`,
     };
   }
-  
+
   private compareDkimPresence(
     newFinding: NewFinding | undefined,
     legacyDkim: LegacyToolOutput['dkim']
   ): FieldComparison {
     const newPresent = newFinding?.type === 'mail.dkim-keys-present';
     const legacyPresent = legacyDkim.present;
-    
+
     if (newPresent === legacyPresent) {
       return {
         field: 'dkim-present',
@@ -306,7 +314,7 @@ export class ShadowComparator {
         explanation: `Both agree: DKIM is ${newPresent ? 'present' : 'absent'}`,
       };
     }
-    
+
     return {
       field: 'dkim-present',
       legacyValue: legacyPresent,
@@ -316,7 +324,7 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says ${legacyPresent ? 'present' : 'absent'}, new says ${newPresent ? 'present' : 'absent'}`,
     };
   }
-  
+
   private compareDkimValidity(
     newFinding: NewFinding | undefined,
     legacyDkim: LegacyToolOutput['dkim']
@@ -325,7 +333,7 @@ export class ShadowComparator {
     const newKeysPresent = newFinding?.type === 'mail.dkim-keys-present';
     const newValid = newKeysPresent && !newNoValidKeys;
     const legacyValid = legacyDkim.valid;
-    
+
     if (newValid === legacyValid) {
       return {
         field: 'dkim-valid',
@@ -336,7 +344,7 @@ export class ShadowComparator {
         explanation: `Both agree: DKIM is ${newValid ? 'valid' : 'invalid'}`,
       };
     }
-    
+
     return {
       field: 'dkim-valid',
       legacyValue: legacyValid,
@@ -346,42 +354,42 @@ export class ShadowComparator {
       explanation: `MISMATCH: Legacy says ${legacyValid ? 'valid' : 'invalid'}, new says ${newValid ? 'valid' : 'invalid'}`,
     };
   }
-  
+
   private calculateMetrics(comparisons: FieldComparison[]) {
     return {
       totalFields: comparisons.length,
-      matchingFields: comparisons.filter(c => c.status === 'match').length,
-      mismatchingFields: comparisons.filter(c => c.status === 'mismatch').length,
-      missingInNew: comparisons.filter(c => c.status === 'missing-in-new').length,
-      missingInLegacy: comparisons.filter(c => c.status === 'missing-in-legacy').length,
+      matchingFields: comparisons.filter((c) => c.status === 'match').length,
+      mismatchingFields: comparisons.filter((c) => c.status === 'mismatch').length,
+      missingInNew: comparisons.filter((c) => c.status === 'missing-in-new').length,
+      missingInLegacy: comparisons.filter((c) => c.status === 'missing-in-legacy').length,
     };
   }
-  
+
   private determineOverallStatus(
     comparisons: FieldComparison[]
   ): 'match' | 'mismatch' | 'partial-match' | 'error' {
     const criticalMismatches = comparisons.filter(
-      c => c.status === 'mismatch' && c.severity === 'critical'
+      (c) => c.status === 'mismatch' && c.severity === 'critical'
     ).length;
-    
+
     if (criticalMismatches > 0) {
       return 'mismatch';
     }
-    
-    const allMismatches = comparisons.filter(c => c.status === 'mismatch').length;
-    const totalComparable = comparisons.filter(c => c.status !== 'not-comparable').length;
-    
+
+    const allMismatches = comparisons.filter((c) => c.status === 'mismatch').length;
+    const totalComparable = comparisons.filter((c) => c.status !== 'not-comparable').length;
+
     if (allMismatches === 0) {
       return 'match';
     }
-    
+
     if (allMismatches < totalComparable / 2) {
       return 'partial-match';
     }
-    
+
     return 'mismatch';
   }
-  
+
   private generateSummary(
     domain: string,
     comparisons: FieldComparison[],
@@ -390,18 +398,18 @@ export class ShadowComparator {
     const parts: string[] = [];
     parts.push(`Shadow comparison for ${domain}:`);
     parts.push(`${metrics.matchingFields}/${metrics.totalFields} fields match`);
-    
+
     if (metrics.mismatchingFields > 0) {
       parts.push(`${metrics.mismatchingFields} mismatches detected`);
-      
+
       const criticalMismatches = comparisons.filter(
-        c => c.status === 'mismatch' && c.severity === 'critical'
+        (c) => c.status === 'mismatch' && c.severity === 'critical'
       );
       if (criticalMismatches.length > 0) {
-        parts.push(`CRITICAL: ${criticalMismatches.map(c => c.field).join(', ')}`);
+        parts.push(`CRITICAL: ${criticalMismatches.map((c) => c.field).join(', ')}`);
       }
     }
-    
+
     return parts.join('. ');
   }
 }
@@ -420,7 +428,7 @@ export interface StoredShadowComparison extends ShadowComparisonResult {
 
 export class ShadowComparisonStore {
   private comparisons: Map<string, StoredShadowComparison> = new Map();
-  
+
   store(comparison: ShadowComparisonResult): StoredShadowComparison {
     const stored: StoredShadowComparison = {
       ...comparison,
@@ -429,26 +437,25 @@ export class ShadowComparisonStore {
     this.comparisons.set(stored.id, stored);
     return stored;
   }
-  
+
   get(id: string): StoredShadowComparison | undefined {
     return this.comparisons.get(id);
   }
-  
+
   getBySnapshot(snapshotId: string): StoredShadowComparison[] {
-    return Array.from(this.comparisons.values())
-      .filter(c => c.snapshotId === snapshotId);
+    return Array.from(this.comparisons.values()).filter((c) => c.snapshotId === snapshotId);
   }
-  
+
   getByDomain(domain: string): StoredShadowComparison[] {
-    return Array.from(this.comparisons.values())
-      .filter(c => c.domain === domain);
+    return Array.from(this.comparisons.values()).filter((c) => c.domain === domain);
   }
-  
+
   getMismatches(): StoredShadowComparison[] {
-    return Array.from(this.comparisons.values())
-      .filter(c => c.status === 'mismatch' || c.status === 'partial-match');
+    return Array.from(this.comparisons.values()).filter(
+      (c) => c.status === 'mismatch' || c.status === 'partial-match'
+    );
   }
-  
+
   acknowledge(
     id: string,
     by: string,
@@ -457,16 +464,16 @@ export class ShadowComparisonStore {
   ): StoredShadowComparison | undefined {
     const comparison = this.comparisons.get(id);
     if (!comparison) return undefined;
-    
+
     comparison.acknowledgedAt = new Date();
     comparison.acknowledgedBy = by;
     comparison.adjudication = adjudication;
     comparison.notes = notes;
-    
+
     this.comparisons.set(id, comparison);
     return comparison;
   }
-  
+
   getStats(): {
     total: number;
     matches: number;
@@ -478,11 +485,11 @@ export class ShadowComparisonStore {
     const all = Array.from(this.comparisons.values());
     return {
       total: all.length,
-      matches: all.filter(c => c.status === 'match').length,
-      mismatches: all.filter(c => c.status === 'mismatch').length,
-      partialMatches: all.filter(c => c.status === 'partial-match').length,
-      acknowledged: all.filter(c => c.acknowledgedAt).length,
-      pending: all.filter(c => !c.acknowledgedAt).length,
+      matches: all.filter((c) => c.status === 'match').length,
+      mismatches: all.filter((c) => c.status === 'mismatch').length,
+      partialMatches: all.filter((c) => c.status === 'partial-match').length,
+      acknowledged: all.filter((c) => c.acknowledgedAt).length,
+      pending: all.filter((c) => !c.acknowledgedAt).length,
     };
   }
 }

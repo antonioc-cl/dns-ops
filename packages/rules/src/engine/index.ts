@@ -5,13 +5,8 @@
  * All findings are evidence-backed and versioned by ruleset.
  */
 
-import type {
-  Observation,
-  RecordSet,
-  NewFinding,
-  NewSuggestion,
-} from '@dns-ops/db';
-import type { Severity, Confidence, BlastRadius } from '@dns-ops/contracts';
+import type { BlastRadius, Confidence, Severity } from '@dns-ops/contracts';
+import type { NewFinding, NewSuggestion, Observation, RecordSet } from '@dns-ops/db';
 
 export interface RuleContext {
   snapshotId: string;
@@ -116,11 +111,7 @@ export class RulesEngine {
 /**
  * Helper to create evidence links for findings
  */
-export function createEvidence(
-  observationId: string,
-  description: string,
-  recordSetId?: string
-) {
+export function createEvidence(observationId: string, description: string, recordSetId?: string) {
   return [
     {
       observationId,
@@ -173,7 +164,11 @@ export function isReviewOnly(
   }
 
   // Anything affecting multiple domains requires review
-  if (blastRadius === 'related-domains' || blastRadius === 'infrastructure' || blastRadius === 'organization-wide') {
+  if (
+    blastRadius === 'related-domains' ||
+    blastRadius === 'infrastructure' ||
+    blastRadius === 'organization-wide'
+  ) {
     return true;
   }
 

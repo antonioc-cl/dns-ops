@@ -61,7 +61,7 @@ function formatRecordLine(record: {
   data: string;
   priority?: number;
 }): string {
-  const name = record.name.endsWith('.') ? record.name : record.name + '.';
+  const name = record.name.endsWith('.') ? record.name : `${record.name}.`;
 
   if (record.type === 'MX' && record.priority !== undefined) {
     return `${name}\t${record.ttl}\tIN\t${record.type}\t${record.priority}\t${record.data}`;
@@ -78,10 +78,7 @@ function formatRecordLine(record: {
 /**
  * Format a single observation as dig-style output
  */
-export function toDigFormat(
-  observation: Observation,
-  options: DigFormatOptions = {}
-): string {
+export function toDigFormat(observation: Observation, options: DigFormatOptions = {}): string {
   const { showComments = true, showQuestion = true } = options;
   const lines: string[] = [];
 
@@ -102,7 +99,9 @@ export function toDigFormat(
   const additionalCount = observation.additionalSection?.length || 0;
 
   lines.push(`;; ->>HEADER<<- opcode: QUERY, status: ${rcode}, id: ${observation.id.slice(0, 4)}`);
-  lines.push(`;; flags: ${flags}; QUERY: 1, ANSWER: ${answerCount}, AUTHORITY: ${authorityCount}, ADDITIONAL: ${additionalCount}`);
+  lines.push(
+    `;; flags: ${flags}; QUERY: 1, ANSWER: ${answerCount}, AUTHORITY: ${authorityCount}, ADDITIONAL: ${additionalCount}`
+  );
 
   // Question section
   if (showQuestion) {
@@ -110,7 +109,7 @@ export function toDigFormat(
     lines.push(';; QUESTION SECTION:');
     const qname = observation.queryName.endsWith('.')
       ? observation.queryName
-      : observation.queryName + '.';
+      : `${observation.queryName}.`;
     lines.push(`;${qname}\t\tIN\t${observation.queryType}`);
   }
 
@@ -159,7 +158,7 @@ export function observationsToDigFormat(
   options?: DigFormatOptions
 ): string {
   return observations
-    .map(obs => toDigFormat(obs, options))
+    .map((obs) => toDigFormat(obs, options))
     .join('\n\n; ========================================\n\n');
 }
 

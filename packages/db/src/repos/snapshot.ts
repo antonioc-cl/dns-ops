@@ -7,7 +7,7 @@
 
 import { eq } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { snapshots, type Snapshot, type NewSnapshot } from '../schema/index.js';
+import { type NewSnapshot, type Snapshot, snapshots } from '../schema/index.js';
 
 export class SnapshotRepository {
   constructor(private db: IDatabaseAdapter) {}
@@ -23,10 +23,7 @@ export class SnapshotRepository {
    * Get all snapshots for a domain
    */
   async findByDomain(domainId: string, limit: number = 50): Promise<Snapshot[]> {
-    const results = await this.db.selectWhere(
-      snapshots,
-      eq(snapshots.domainId, domainId)
-    );
+    const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
     // Sort by createdAt desc and limit
     return results
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -37,13 +34,11 @@ export class SnapshotRepository {
    * Get the most recent snapshot for a domain
    */
   async findLatestByDomain(domainId: string): Promise<Snapshot | undefined> {
-    const results = await this.db.selectWhere(
-      snapshots,
-      eq(snapshots.domainId, domainId)
-    );
+    const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
     // Sort by createdAt desc and return first
-    return results
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    return results.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
   }
 
   /**
@@ -53,10 +48,7 @@ export class SnapshotRepository {
     state: 'complete' | 'partial' | 'failed',
     limit: number = 100
   ): Promise<Snapshot[]> {
-    const results = await this.db.selectWhere(
-      snapshots,
-      eq(snapshots.resultState, state)
-    );
+    const results = await this.db.selectWhere(snapshots, eq(snapshots.resultState, state));
     return results
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit);
@@ -72,29 +64,15 @@ export class SnapshotRepository {
   /**
    * Update snapshot with error information
    */
-  async updateError(
-    id: string,
-    errorMessage: string
-  ): Promise<Snapshot | undefined> {
-    return this.db.updateOne(
-      snapshots,
-      { errorMessage },
-      eq(snapshots.id, id)
-    );
+  async updateError(id: string, errorMessage: string): Promise<Snapshot | undefined> {
+    return this.db.updateOne(snapshots, { errorMessage }, eq(snapshots.id, id));
   }
 
   /**
    * Update snapshot with collection duration
    */
-  async updateDuration(
-    id: string,
-    durationMs: number
-  ): Promise<Snapshot | undefined> {
-    return this.db.updateOne(
-      snapshots,
-      { collectionDurationMs: durationMs },
-      eq(snapshots.id, id)
-    );
+  async updateDuration(id: string, durationMs: number): Promise<Snapshot | undefined> {
+    return this.db.updateOne(snapshots, { collectionDurationMs: durationMs }, eq(snapshots.id, id));
   }
 
   /**
@@ -112,10 +90,7 @@ export class SnapshotRepository {
    * Count snapshots by domain
    */
   async countByDomain(domainId: string): Promise<number> {
-    const results = await this.db.selectWhere(
-      snapshots,
-      eq(snapshots.domainId, domainId)
-    );
+    const results = await this.db.selectWhere(snapshots, eq(snapshots.domainId, domainId));
     return results.length;
   }
 }

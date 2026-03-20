@@ -9,12 +9,12 @@
 
 import type { DNSQueryResult } from '../dns/types.js';
 import {
-  discoverSelectors,
   buildDkimQueryNames,
-  parseSpfRecord,
+  isNullMx as checkIsNullMx,
+  discoverSelectors,
   isDmarcRecord,
   isMtaStsRecord,
-  isNullMx as checkIsNullMx,
+  parseSpfRecord,
   type SelectorDiscoveryConfig,
   type SelectorDiscoveryResult,
 } from './selector-discovery.js';
@@ -62,11 +62,7 @@ export async function generateMailQueries(
   };
 
   // Discover DKIM selectors
-  const selectorDiscovery = await discoverSelectors(
-    domain,
-    existingResults,
-    discoveryConfig
-  );
+  const selectorDiscovery = await discoverSelectors(domain, existingResults, discoveryConfig);
 
   // Build base queries (always collected)
   const queries: { name: string; type: string }[] = [
@@ -102,9 +98,7 @@ export async function generateMailQueries(
 /**
  * Analyze mail-related DNS results
  */
-export async function analyzeMailResults(
-  results: DNSQueryResult[]
-): Promise<{
+export async function analyzeMailResults(results: DNSQueryResult[]): Promise<{
   mx: DNSQueryResult | null;
   spf: string | null;
   dmarc: DNSQueryResult | null;
@@ -134,7 +128,10 @@ export async function analyzeMailResults(
     }
 
     // SPF record (on base domain)
-    if (result.query.type === 'TXT' && result.query.name === result.query.name.split('.').slice(-2).join('.')) {
+    if (
+      result.query.type === 'TXT' &&
+      result.query.name === result.query.name.split('.').slice(-2).join('.')
+    ) {
       const spfData = parseSpfRecord(result);
       if (spfData) {
         spf = spfData;

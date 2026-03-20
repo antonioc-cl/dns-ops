@@ -9,9 +9,9 @@
  * - Lame delegation detection
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DNSAnswer } from '../dns/types';
 import { DelegationCollector } from './collector';
-import type { DNSQueryResult, DNSAnswer } from '../dns/types';
 
 // Mock DNSResolver
 const mockQuery = vi.fn();
@@ -29,7 +29,7 @@ describe('DelegationCollector', () => {
   describe('Parent Zone Delegation View', () => {
     it('should query parent zone for NS records', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'NS' },
         success: true,
@@ -50,7 +50,7 @@ describe('DelegationCollector', () => {
 
     it('should extract parent zone from domain', () => {
       const collector = new DelegationCollector('sub.example.com');
-      
+
       expect(collector.getParentZone('sub.example.com')).toBe('example.com');
       expect(collector.getParentZone('example.com')).toBe('com');
       expect(collector.getParentZone('deep.sub.example.com')).toBe('sub.example.com');
@@ -108,7 +108,7 @@ describe('DelegationCollector', () => {
       );
 
       const divergence = collector.detectDivergence(results);
-      
+
       expect(divergence.hasDivergence).toBe(true);
       expect(divergence.serversWithDifferentAnswers).toHaveLength(2);
     });
@@ -117,13 +117,11 @@ describe('DelegationCollector', () => {
   describe('Glue Record Capture', () => {
     it('should extract glue records from additional section', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'NS' },
         success: true,
-        answers: [
-          { name: 'example.com', type: 'NS', ttl: 86400, data: 'ns1.example.com' },
-        ],
+        answers: [{ name: 'example.com', type: 'NS', ttl: 86400, data: 'ns1.example.com' }],
         additional: [
           { name: 'ns1.example.com', type: 'A', ttl: 86400, data: '192.0.2.53' },
           { name: 'ns1.example.com', type: 'AAAA', ttl: 86400, data: '2001:db8::53' },
@@ -140,13 +138,11 @@ describe('DelegationCollector', () => {
 
     it('should detect missing glue when NS is in-zone', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'NS' },
         success: true,
-        answers: [
-          { name: 'example.com', type: 'NS', ttl: 86400, data: 'ns1.example.com' },
-        ],
+        answers: [{ name: 'example.com', type: 'NS', ttl: 86400, data: 'ns1.example.com' }],
         additional: [], // Missing glue!
       });
 
@@ -161,7 +157,7 @@ describe('DelegationCollector', () => {
   describe('DNSSEC Observation Fields', () => {
     it('should capture DO bit and AD flag from resolver', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'A' },
         success: true,
@@ -180,16 +176,12 @@ describe('DelegationCollector', () => {
 
     it('should capture RRSIG records when present', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'A' },
         success: true,
-        answers: [
-          { name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' },
-        ],
-        authority: [
-          { name: 'example.com', type: 'RRSIG', ttl: 300, data: 'A 8 2 300...' },
-        ],
+        answers: [{ name: 'example.com', type: 'A', ttl: 300, data: '192.0.2.1' }],
+        authority: [{ name: 'example.com', type: 'RRSIG', ttl: 300, data: 'A 8 2 300...' }],
       });
 
       const result = await collector.collectWithDnssec('example.com', 'A', '8.8.8.8');
@@ -200,7 +192,7 @@ describe('DelegationCollector', () => {
 
     it('should capture DNSKEY for zone when queried', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'DNSKEY' },
         success: true,
@@ -237,7 +229,7 @@ describe('DelegationCollector', () => {
       );
 
       const lame = collector.detectLameDelegation(results);
-      
+
       expect(lame).toHaveLength(1);
       expect(lame[0].server).toBe('ns1.example.com');
       expect(lame[0].reason).toBe('not-authoritative');
@@ -259,7 +251,7 @@ describe('DelegationCollector', () => {
       );
 
       const lame = collector.detectLameDelegation(results);
-      
+
       expect(lame).toHaveLength(1);
       expect(lame[0].reason).toBe('timeout');
     });
@@ -268,7 +260,7 @@ describe('DelegationCollector', () => {
   describe('Delegation Summary', () => {
     it('should generate delegation summary with all sources', async () => {
       const collector = new DelegationCollector('example.com');
-      
+
       // Mock parent zone response
       mockQuery
         .mockResolvedValueOnce({
@@ -278,9 +270,7 @@ describe('DelegationCollector', () => {
             { name: 'example.com', type: 'NS', ttl: 86400, data: 'ns1.example.com' },
             { name: 'example.com', type: 'NS', ttl: 86400, data: 'ns2.example.com' },
           ],
-          additional: [
-            { name: 'ns1.example.com', type: 'A', ttl: 86400, data: '192.0.2.1' },
-          ],
+          additional: [{ name: 'ns1.example.com', type: 'A', ttl: 86400, data: '192.0.2.1' }],
         })
         // Mock auth server responses
         .mockResolvedValueOnce({

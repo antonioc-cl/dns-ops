@@ -6,27 +6,25 @@
 
 // Re-export database adapter
 export {
-  SimpleDatabaseAdapter,
   createSimpleAdapter,
   type IDatabaseAdapter,
+  SimpleDatabaseAdapter,
 } from '../database/index.js';
 
 // Domain repositories
-export { DomainRepository, type DomainFilter } from './domain.js';
-
-// Legacy repositories (using adapter pattern)
-export { SnapshotRepository } from './snapshot.js';
+export { type DomainFilter, DomainRepository } from './domain.js';
 export { ObservationRepository } from './observation.js';
-export { RecordSetRepository } from './recordset.js';
-export { RemediationRepository } from './remediation.js';
-
 // Portfolio repositories
 export {
+  AlertRepository,
+  AuditEventRepository,
   DomainNoteRepository,
   DomainTagRepository,
-  SavedFilterRepository,
-  AuditEventRepository,
-  TemplateOverrideRepository,
   MonitoredDomainRepository,
-  AlertRepository,
+  SavedFilterRepository,
+  TemplateOverrideRepository,
 } from './portfolio.js';
+export { RecordSetRepository } from './recordset.js';
+export { RemediationRepository } from './remediation.js';
+// Legacy repositories (using adapter pattern)
+export { SnapshotRepository } from './snapshot.js';

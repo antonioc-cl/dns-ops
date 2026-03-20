@@ -312,10 +312,7 @@ export const cnameCoexistenceRule: Rule = {
         reviewOnly: true,
         evidence: [
           ...context.observations
-            .filter(
-              (obs) =>
-                obs.queryName.toLowerCase() === violation.cname.name.toLowerCase()
-            )
+            .filter((obs) => obs.queryName.toLowerCase() === violation.cname.name.toLowerCase())
             .map((obs) => ({
               observationId: obs.id,
               description: `${obs.queryType} from ${obs.vantageIdentifier}`,
@@ -407,7 +404,7 @@ function groupByQuery(observations: Observation[]): Map<string, Observation[]> {
     if (!groups.has(key)) {
       groups.set(key, []);
     }
-    groups.get(key)!.push(obs);
+    groups.get(key)?.push(obs);
   }
   return groups;
 }

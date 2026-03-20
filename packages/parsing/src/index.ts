@@ -5,27 +5,25 @@
  * and formatting in dig-style output.
  */
 
+export * from './diff/index.js';
+export * from './dig/index.js';
 // DNS exports (excluding normalizeDomain to avoid conflict with idn)
 export {
+  getWildcardBase,
+  isWildcard,
+  normalizeDomain as normalizeDNSDomain,
   type ParsedAnswer,
   parseDNSAnswer,
   parseTXTRecord,
-  normalizeDomain as normalizeDNSDomain,
-  isWildcard,
-  getWildcardBase,
 } from './dns/index.js';
-
 export * from './dns/recordset.js';
-export * from './dig/index.js';
-export * from './mail/index.js';
 
 // IDN exports
 export {
   isPunycode,
+  isValidDomain,
+  normalizeDomain,
   toPunycode,
   toUnicode,
-  normalizeDomain,
-  isValidDomain,
 } from './idn/index.js';
-
-export * from './diff/index.js';
+export * from './mail/index.js';

@@ -5,7 +5,7 @@
  */
 
 export {
-  SimpleDatabaseAdapter,
   createSimpleAdapter,
   type IDatabaseAdapter,
+  SimpleDatabaseAdapter,
 } from './simple-adapter.js';

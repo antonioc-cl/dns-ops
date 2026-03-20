@@ -1,9 +1,9 @@
 export {
   compareSnapshots,
-  type SnapshotDiffResult,
-  type RecordChange,
-  type TTLChange,
   type FindingChange,
-  type ScopeChange,
+  type RecordChange,
   type RulesetChange,
+  type ScopeChange,
+  type SnapshotDiffResult,
+  type TTLChange,
 } from './snapshot-diff.js';

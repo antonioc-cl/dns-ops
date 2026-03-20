@@ -3,17 +3,17 @@
  */
 
 export {
-  performMailCheck,
-  checkDMARC,
-  checkDKIM,
-  checkSPF,
-  PROVIDER_SELECTORS,
   COMMON_SELECTORS,
-  type MailCheckResult,
-  type RecordCheckResult,
+  checkDKIM,
+  checkDMARC,
+  checkSPF,
   type DKIMCheckResult,
-  type SelectorProvenance,
+  type MailCheckResult,
+  PROVIDER_SELECTORS,
   type ProviderSelectorInfo,
+  performMailCheck,
+  type RecordCheckResult,
+  type SelectorProvenance,
 } from './checker.js';
 
 export { resolveTXT } from './dns.js';

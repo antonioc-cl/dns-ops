@@ -162,4 +162,3 @@ apiRoutes.post('/collect/domain', async (c) => {
     return c.json({ error: 'Failed to connect to collector service' }, 503);
   }
 });
-

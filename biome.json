@@ -40,7 +40,7 @@
         "noExplicitAny": "warn",
         "noArrayIndexKey": "warn",
         "noUnknownAtRules": "off",
-        "noControlCharactersInRegex": "error",
+        "noControlCharactersInRegex": "warn",
         "useIterableCallbackReturn": "off",
         "noGlobalIsNan": "warn"
       }

@@ -10,7 +10,7 @@
  */
 
 import { DNSResolver } from '../dns/resolver.js';
-import type { DNSQuery, DNSQueryResult, VantageInfo, DNSAnswer } from '../dns/types.js';
+import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from '../dns/types.js';
 
 export interface DelegationSummary {
   domain: string;
@@ -88,10 +88,7 @@ export class DelegationCollector {
       region: 'us-central',
     };
 
-    return this.resolver.query(
-      { name: this.domain, type: 'NS' },
-      vantage
-    );
+    return this.resolver.query({ name: this.domain, type: 'NS' }, vantage);
   }
 
   /**
@@ -105,7 +102,7 @@ export class DelegationCollector {
 
     for (const server of nsServers) {
       const startTime = Date.now();
-      
+
       try {
         const vantage: VantageInfo = {
           type: 'authoritative',
@@ -113,7 +110,7 @@ export class DelegationCollector {
         };
 
         const result = await this.resolver.query(query, vantage);
-        
+
         results.push({
           server,
           result,
@@ -171,10 +168,13 @@ export class DelegationCollector {
 
     for (const answer of result.answers) {
       if (answer.type !== 'NS') continue;
-      
+
       const target = answer.data.toLowerCase();
       // If NS target is in the same zone, it should have glue
-      if (target.endsWith(`.${this.domain.toLowerCase()}`) || target === this.domain.toLowerCase()) {
+      if (
+        target.endsWith(`.${this.domain.toLowerCase()}`) ||
+        target === this.domain.toLowerCase()
+      ) {
         if (!glueTargets.has(target)) {
           missing.push(target);
         }
@@ -192,7 +192,7 @@ export class DelegationCollector {
     divergenceDetails: DivergenceDetail[];
   } {
     const details: DivergenceDetail[] = [];
-    
+
     // Group by query
     const byQuery = new Map<string, AuthoritativeResponse[]>();
     for (const resp of responses) {
@@ -200,13 +200,13 @@ export class DelegationCollector {
       if (!byQuery.has(key)) {
         byQuery.set(key, []);
       }
-      byQuery.get(key)!.push(resp);
+      byQuery.get(key)?.push(resp);
     }
 
     // Check each query for divergence
     for (const [key, queryResponses] of byQuery) {
       const [name, type] = key.split('|');
-      
+
       // Get successful responses
       const successful = queryResponses.filter(
         (r) => r.result.success && r.result.answers.length > 0
@@ -221,7 +221,7 @@ export class DelegationCollector {
 
       for (let i = 1; i < successful.length; i++) {
         const currentAnswers = successful[i].result.answers.map((a: DNSAnswer) => a.data).sort();
-        
+
         if (!this.arraysEqual(firstAnswers, currentAnswers)) {
           divergentServers.push(successful[i].server);
           differentAnswers.push(successful[i].result.answers);
@@ -305,7 +305,7 @@ export class DelegationCollector {
   async collectDelegationSummary(recursiveResolver: string): Promise<DelegationSummary> {
     // 1. Get parent delegation view
     const parentResult = await this.collectParentDelegation(recursiveResolver);
-    
+
     if (!parentResult.success) {
       throw new Error(`Failed to collect parent delegation: ${parentResult.error}`);
     }
@@ -355,18 +355,14 @@ export class DelegationCollector {
     try {
       // Get DNSKEY
       const dnskeyResult = await this.collectDnskey(this.domain, recursiveResolver);
-      
+
       // Get DS from parent
       const dsResult = await this.collectDsFromParent(this.domain, recursiveResolver);
 
       // Check for RRSIG in a typical query
-      const sampleQuery = await this.collectWithDnssec(
-        this.domain,
-        'A',
-        recursiveResolver
-      );
+      const sampleQuery = await this.collectWithDnssec(this.domain, 'A', recursiveResolver);
 
-      const hasRrsig = 
+      const hasRrsig =
         sampleQuery.authority?.some((r: DNSAnswer) => r.type === 'RRSIG') ||
         sampleQuery.answers?.some((r: DNSAnswer) => r.type === 'RRSIG');
 
@@ -403,7 +399,7 @@ export class DelegationCollector {
 
 // Re-export types for convenience
 export type {
-  DNSQueryResult,
   DNSAnswer,
+  DNSQueryResult,
   VantageInfo,
 } from '../dns/types.js';

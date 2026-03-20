@@ -60,39 +60,22 @@ const PROVIDER_SELECTORS: Record<string, string[]> = {
   'google-workspace': ['google', '20210112', '20230601', '2024'],
   'microsoft-365': ['selector1', 'selector2', 'microsoft'],
   'amazon-ses': ['amazonses', 'aws'],
-  'sendgrid': ['smtpapi', 'sendgrid'],
-  'mailgun': ['mailgun', 'krs'],
+  sendgrid: ['smtpapi', 'sendgrid'],
+  mailgun: ['mailgun', 'krs'],
 };
 
 // Provider detection patterns from MX records
 const PROVIDER_MX_PATTERNS: Record<string, RegExp[]> = {
-  'google-workspace': [
-    /google\.com$/,
-    /googlemail\.com$/,
-  ],
-  'microsoft-365': [
-    /outlook\.com$/,
-    /hotmail\.com$/,
-    /microsoft$/,
-  ],
-  'amazon-ses': [
-    /amazonses\.com$/,
-  ],
+  'google-workspace': [/google\.com$/, /googlemail\.com$/],
+  'microsoft-365': [/outlook\.com$/, /hotmail\.com$/, /microsoft$/],
+  'amazon-ses': [/amazonses\.com$/],
 };
 
 // Provider detection patterns from SPF records
 const PROVIDER_SPF_PATTERNS: Record<string, RegExp[]> = {
-  'google-workspace': [
-    /_spf\.google\.com/,
-    /google\.com/,
-  ],
-  'microsoft-365': [
-    /spf\.protection\.outlook\.com/,
-    /outlook\.com/,
-  ],
-  'amazon-ses': [
-    /amazonses\.com/,
-  ],
+  'google-workspace': [/_spf\.google\.com/, /google\.com/],
+  'microsoft-365': [/spf\.protection\.outlook\.com/, /outlook\.com/],
+  'amazon-ses': [/amazonses\.com/],
 };
 
 /**
@@ -236,7 +219,10 @@ export async function discoverSelectors(
 /**
  * Build DKIM query names from selectors
  */
-export function buildDkimQueryNames(domain: string, selectors: string[]): { name: string; type: string }[] {
+export function buildDkimQueryNames(
+  domain: string,
+  selectors: string[]
+): { name: string; type: string }[] {
   return selectors.map((selector) => ({
     name: `${selector}._domainkey.${domain}`,
     type: 'TXT',

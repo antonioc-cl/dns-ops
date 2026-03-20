@@ -7,9 +7,9 @@
 import { eq } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
 import {
-  remediationRequests,
-  type RemediationRequest,
   type NewRemediationRequest,
+  type RemediationRequest,
+  remediationRequests,
 } from '../schema/remediation.js';
 
 export class RemediationRepository {
@@ -26,10 +26,7 @@ export class RemediationRepository {
    * Find remediation request by ID
    */
   async findById(id: string): Promise<RemediationRequest | null> {
-    const result = await this.db.selectOne(
-      remediationRequests,
-      eq(remediationRequests.id, id)
-    );
+    const result = await this.db.selectOne(remediationRequests, eq(remediationRequests.id, id));
     return result || null;
   }
 
@@ -41,8 +38,8 @@ export class RemediationRepository {
       remediationRequests,
       eq(remediationRequests.domain, domain)
     );
-    return results.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    return results.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
@@ -54,8 +51,8 @@ export class RemediationRepository {
       remediationRequests,
       eq(remediationRequests.snapshotId, snapshotId)
     );
-    return results.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    return results.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
@@ -135,20 +132,20 @@ export class RemediationRepository {
     let results = await this.db.select(remediationRequests);
 
     if (options?.domains?.length) {
-      results = results.filter(r => options.domains!.includes(r.domain));
+      results = results.filter((r) => options.domains?.includes(r.domain));
     }
 
     if (options?.statuses?.length) {
-      results = results.filter(r => options.statuses!.includes(r.status));
+      results = results.filter((r) => options.statuses?.includes(r.status));
     }
 
     if (options?.priorities?.length) {
-      results = results.filter(r => options.priorities!.includes(r.priority));
+      results = results.filter((r) => options.priorities?.includes(r.priority));
     }
 
     // Sort by createdAt desc
-    results = results.sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    results = results.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     // Apply pagination

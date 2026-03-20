@@ -13,8 +13,8 @@
  */
 
 import type { Observation } from '@dns-ops/db';
+import { parseDMARC, parseSPF } from '@dns-ops/parsing';
 import type { Rule, RuleContext, RuleResult } from '../engine/index.js';
-import { parseSPF, parseDMARC } from '@dns-ops/parsing';
 
 // =============================================================================
 // Rule 1: MX Record Presence
@@ -31,14 +31,11 @@ export const mxPresenceRule: Rule = {
     // Find MX observations for the apex domain
     const mxObservations = context.observations.filter(
       (obs) =>
-        obs.queryType === 'MX' &&
-        obs.queryName.toLowerCase() === context.domainName.toLowerCase()
+        obs.queryType === 'MX' && obs.queryName.toLowerCase() === context.domainName.toLowerCase()
     );
 
     const successfulObs = mxObservations.filter((obs) => obs.status === 'success');
-    const hasMx = successfulObs.some(
-      (obs) => obs.answerSection && obs.answerSection.length > 0
-    );
+    const hasMx = successfulObs.some((obs) => obs.answerSection && obs.answerSection.length > 0);
 
     // Check for Null MX (0 .)
     const nullMxObs = successfulObs.find((obs) =>
@@ -125,9 +122,7 @@ export const mxPresenceRule: Rule = {
 
     // Has MX - get the values
     const mxRecordSet = context.recordSets.find(
-      (rs) =>
-        rs.type === 'MX' &&
-        rs.name.toLowerCase() === context.domainName.toLowerCase()
+      (rs) => rs.type === 'MX' && rs.name.toLowerCase() === context.domainName.toLowerCase()
     );
 
     return {
@@ -166,8 +161,7 @@ export const spfRule: Rule = {
     // Find all TXT record queries at apex
     const allTxtObservations = context.observations.filter(
       (obs) =>
-        obs.queryType === 'TXT' &&
-        obs.queryName.toLowerCase() === context.domainName.toLowerCase()
+        obs.queryType === 'TXT' && obs.queryName.toLowerCase() === context.domainName.toLowerCase()
     );
 
     // Filter to successful observations for SPF detection
@@ -262,7 +256,7 @@ export const spfRule: Rule = {
           reviewOnly: true,
           evidence: [
             {
-              observationId: spfObservation!.id,
+              observationId: spfObservation?.id,
               description: `Raw SPF record: ${spfRecord}`,
             },
           ],
@@ -301,11 +295,18 @@ export const spfRule: Rule = {
 
     // Check for include mechanisms
     const includes = parsed.mechanisms.filter((m) => m.type === 'include');
-    if (includes.length === 0 && !parsed.mechanisms.some((m) => ['a', 'mx', 'ip4', 'ip6'].includes(m.type))) {
+    if (
+      includes.length === 0 &&
+      !parsed.mechanisms.some((m) => ['a', 'mx', 'ip4', 'ip6'].includes(m.type))
+    ) {
       issues.push('No sender sources defined');
     }
 
-    const severity = issues.some((i) => i.includes('DANGEROUS')) ? 'critical' : issues.length > 0 ? 'medium' : 'info';
+    const severity = issues.some((i) => i.includes('DANGEROUS'))
+      ? 'critical'
+      : issues.length > 0
+        ? 'medium'
+        : 'info';
 
     return {
       finding: {
@@ -314,28 +315,32 @@ export const spfRule: Rule = {
         description: `${context.domainName} has a valid SPF record. Raw: "${spfRecord}". ${issues.length > 0 ? `Issues: ${issues.join('; ')}` : 'Configuration looks good with proper all mechanism.'}`,
         severity,
         confidence: 'certain',
-        riskPosture: severity === 'critical' ? 'critical' : severity === 'medium' ? 'medium' : 'safe',
+        riskPosture:
+          severity === 'critical' ? 'critical' : severity === 'medium' ? 'medium' : 'safe',
         blastRadius: 'single-domain',
         reviewOnly: severity !== 'info',
         evidence: [
           {
-            observationId: spfObservation!.id,
+            observationId: spfObservation?.id,
             description: `Parsed SPF: ${JSON.stringify(parsed)}`,
           },
         ],
         ruleId: this.id,
         ruleVersion: this.version,
       },
-      suggestions: issues.length > 0 ? [
-        {
-          title: 'Review SPF configuration',
-          description: `The SPF record has configuration issues that may affect mail delivery.`,
-          action: `Address: ${issues.join('; ')}`,
-          riskPosture: 'medium',
-          blastRadius: 'single-domain',
-          reviewOnly: true,
-        },
-      ] : undefined,
+      suggestions:
+        issues.length > 0
+          ? [
+              {
+                title: 'Review SPF configuration',
+                description: `The SPF record has configuration issues that may affect mail delivery.`,
+                action: `Address: ${issues.join('; ')}`,
+                riskPosture: 'medium',
+                blastRadius: 'single-domain',
+                reviewOnly: true,
+              },
+            ]
+          : undefined,
     };
   },
 };
@@ -421,7 +426,7 @@ export const dmarcRule: Rule = {
           reviewOnly: true,
           evidence: [
             {
-              observationId: dmarcObservation!.id,
+              observationId: dmarcObservation?.id,
               description: `Raw DMARC: ${dmarcRecord}`,
             },
           ],
@@ -476,23 +481,26 @@ export const dmarcRule: Rule = {
         reviewOnly: severity !== 'info',
         evidence: [
           {
-            observationId: dmarcObservation!.id,
+            observationId: dmarcObservation?.id,
             description: `Policy: ${policy}${subdomainPolicy ? `, Subdomain: ${subdomainPolicy}` : ''}, RUA: ${rua?.join(', ') || 'none'}, Pct: ${pct}%`,
           },
         ],
         ruleId: this.id,
         ruleVersion: this.version,
       },
-      suggestions: policy === 'none' ? [
-        {
-          title: 'Strengthen DMARC policy',
-          description: `DMARC is in monitoring mode only. Consider progressing to quarantine or reject.`,
-          action: `After monitoring shows SPF/DKIM alignment, upgrade: "v=DMARC1; p=quarantine; rua=mailto:dmarc@${context.domainName}"`,
-          riskPosture: 'medium',
-          blastRadius: 'single-domain',
-          reviewOnly: true,
-        },
-      ] : undefined,
+      suggestions:
+        policy === 'none'
+          ? [
+              {
+                title: 'Strengthen DMARC policy',
+                description: `DMARC is in monitoring mode only. Consider progressing to quarantine or reject.`,
+                action: `After monitoring shows SPF/DKIM alignment, upgrade: "v=DMARC1; p=quarantine; rua=mailto:dmarc@${context.domainName}"`,
+                riskPosture: 'medium',
+                blastRadius: 'single-domain',
+                reviewOnly: true,
+              },
+            ]
+          : undefined,
     };
   },
 };
@@ -511,16 +519,14 @@ export const dkimRule: Rule = {
   evaluate(context: RuleContext): RuleResult | null {
     // Find DKIM observations (selector._domainkey.domain)
     const domainLower = context.domainName.toLowerCase();
-    const dkimObservations = context.observations.filter(
-      (obs) => {
-        const queryNameLower = obs.queryName.toLowerCase();
-        return (
-          obs.queryType === 'TXT' &&
-          queryNameLower.includes('._domainkey.') &&
-          queryNameLower.endsWith(`._domainkey.${domainLower}`)
-        );
-      }
-    );
+    const dkimObservations = context.observations.filter((obs) => {
+      const queryNameLower = obs.queryName.toLowerCase();
+      return (
+        obs.queryType === 'TXT' &&
+        queryNameLower.includes('._domainkey.') &&
+        queryNameLower.endsWith(`._domainkey.${domainLower}`)
+      );
+    });
 
     if (dkimObservations.length === 0) {
       return {

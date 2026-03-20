@@ -5,9 +5,9 @@
  * Drizzle's strict typing while maintaining clean interfaces.
  */
 
-import { type SQL } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { SQL } from 'drizzle-orm';
 import type { DrizzleD1Database } from 'drizzle-orm/d1';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import type * as schema from '../schema/index.js';
 
@@ -65,10 +65,7 @@ export class SimpleDatabaseAdapter {
   /**
    * Insert single record
    */
-  async insert<T extends PgTable>(
-    table: T,
-    values: T['$inferInsert']
-  ): Promise<T['$inferSelect']> {
+  async insert<T extends PgTable>(table: T, values: T['$inferInsert']): Promise<T['$inferSelect']> {
     const db = this.db as NodePgDatabase<Schema>;
     const results = await db.insert(table).values(values).returning();
     return results[0];
@@ -113,10 +110,7 @@ export class SimpleDatabaseAdapter {
   /**
    * Delete records matching condition
    */
-  async delete<T extends PgTable>(
-    table: T,
-    condition: SQL
-  ): Promise<T['$inferSelect'][]> {
+  async delete<T extends PgTable>(table: T, condition: SQL): Promise<T['$inferSelect'][]> {
     const db = this.db as NodePgDatabase<Schema>;
     return await db.delete(table).where(condition).returning();
   }

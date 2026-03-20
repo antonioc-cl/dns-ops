@@ -4,10 +4,10 @@
  * API routes for triggering DNS collection jobs.
  */
 
+import { createPostgresAdapter } from '@dns-ops/db';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
-import { createPostgresAdapter } from '@dns-ops/db';
 
 export const collectDomainRoutes = new Hono();
 
@@ -57,21 +57,26 @@ collectDomainRoutes.post('/domain', async (c) => {
     const collector = new DNSCollector(config, db);
     const result = await collector.collect();
 
-    return c.json({
-      success: true,
-      domain: normalizedDomain,
-      snapshotId: result.snapshotId,
-      observationCount: result.observationCount,
-      resultState: result.resultState,
-      duration: result.duration,
-    }, 201);
-
+    return c.json(
+      {
+        success: true,
+        domain: normalizedDomain,
+        snapshotId: result.snapshotId,
+        observationCount: result.observationCount,
+        resultState: result.resultState,
+        duration: result.duration,
+      },
+      201
+    );
   } catch (error) {
     console.error('Collection error:', error);
-    return c.json({
-      error: 'Collection failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Collection failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
   }
 });
 

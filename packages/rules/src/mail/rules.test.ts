@@ -12,19 +12,19 @@
  * 8. BIMI presence (info only)
  */
 
-import { describe, it, expect } from 'vitest';
 import type { Observation, RecordSet } from '@dns-ops/db';
+import { describe, expect, it } from 'vitest';
+import type { RuleContext } from '../engine/index.js';
 import {
+  bimiRule,
+  dkimRule,
+  dmarcRule,
+  mailRules,
+  mtaStsRule,
   mxPresenceRule,
   spfRule,
-  dmarcRule,
-  dkimRule,
-  mtaStsRule,
   tlsRptRule,
-  bimiRule,
-  mailRules,
 } from './rules.js';
-import type { RuleContext } from '../engine/index.js';
 
 // Test helpers
 function createMockObservation(overrides: Partial<Observation> = {}): Observation {
@@ -197,7 +197,9 @@ describe('SPF Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'example.com',
-      answerSection: [{ name: 'example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' }],
+      answerSection: [
+        { name: 'example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -212,7 +214,9 @@ describe('SPF Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'example.com',
-      answerSection: [{ name: 'example.com', type: 'TXT', ttl: 300, data: 'some other txt record' }],
+      answerSection: [
+        { name: 'example.com', type: 'TXT', ttl: 300, data: 'some other txt record' },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -228,7 +232,9 @@ describe('SPF Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'example.com',
-      answerSection: [{ name: 'example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' }],
+      answerSection: [
+        { name: 'example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -260,7 +266,14 @@ describe('SPF Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'example.com',
-      answerSection: [{ name: 'example.com', type: 'TXT', ttl: 300, data: 'v=spf1 invalid-mechanism-without-prefix' }],
+      answerSection: [
+        {
+          name: 'example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=spf1 invalid-mechanism-without-prefix',
+        },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -298,7 +311,14 @@ describe('DMARC Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_dmarc.example.com',
-      answerSection: [{ name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; p=reject; rua=mailto:dmarc@example.com' }],
+      answerSection: [
+        {
+          name: '_dmarc.example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=DMARC1; p=reject; rua=mailto:dmarc@example.com',
+        },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -314,7 +334,14 @@ describe('DMARC Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_dmarc.example.com',
-      answerSection: [{ name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; p=none; rua=mailto:dmarc@example.com' }],
+      answerSection: [
+        {
+          name: '_dmarc.example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=DMARC1; p=none; rua=mailto:dmarc@example.com',
+        },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -347,7 +374,9 @@ describe('DMARC Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_dmarc.example.com',
-      answerSection: [{ name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; invalid-tag' }],
+      answerSection: [
+        { name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; invalid-tag' },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -362,7 +391,9 @@ describe('DMARC Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_dmarc.example.com',
-      answerSection: [{ name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; p=quarantine' }],
+      answerSection: [
+        { name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; p=quarantine' },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -376,7 +407,14 @@ describe('DMARC Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_dmarc.example.com',
-      answerSection: [{ name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; p=quarantine; pct=50' }],
+      answerSection: [
+        {
+          name: '_dmarc.example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=DMARC1; p=quarantine; pct=50',
+        },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -396,7 +434,14 @@ describe('DKIM Rule', () => {
     const dkimObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'google._domainkey.example.com',
-      answerSection: [{ name: 'google._domainkey.example.com', type: 'TXT', ttl: 300, data: 'v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY/neDgaL2oqQE8T5illKqCgDtFHc8eHVAU+nlcaGmrKmDMw9dbgiGk1ocgZ56NR4ycfUHwQhvQPMUZw0cveel/8EAGoi/UyPmqfcPibytH81NFtTMAxUeM4Op8A6iHkvAMj5qLf4YRNsTkKAKW3OkwPQIDAQAB' }],
+      answerSection: [
+        {
+          name: 'google._domainkey.example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY/neDgaL2oqQE8T5illKqCgDtFHc8eHVAU+nlcaGmrKmDMw9dbgiGk1ocgZ56NR4ycfUHwQhvQPMUZw0cveel/8EAGoi/UyPmqfcPibytH81NFtTMAxUeM4Op8A6iHkvAMj5qLf4YRNsTkKAKW3OkwPQIDAQAB',
+        },
+      ],
     });
     const context = createMockContext({ observations: [dkimObs] });
 
@@ -457,7 +502,9 @@ describe('DKIM Rule', () => {
     const dkimObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'bad._domainkey.example.com',
-      answerSection: [{ name: 'bad._domainkey.example.com', type: 'TXT', ttl: 300, data: 'v=DKIM1' }], // Missing k= and p=
+      answerSection: [
+        { name: 'bad._domainkey.example.com', type: 'TXT', ttl: 300, data: 'v=DKIM1' },
+      ], // Missing k= and p=
     });
     const context = createMockContext({ observations: [dkimObs] });
 
@@ -471,7 +518,9 @@ describe('DKIM Rule', () => {
     const dkimObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'bad._domainkey.example.com',
-      answerSection: [{ name: 'bad._domainkey.example.com', type: 'TXT', ttl: 300, data: 'k=rsa; p=ABCD1234' }], // Missing v=DKIM1
+      answerSection: [
+        { name: 'bad._domainkey.example.com', type: 'TXT', ttl: 300, data: 'k=rsa; p=ABCD1234' },
+      ], // Missing v=DKIM1
     });
     const context = createMockContext({ observations: [dkimObs] });
 
@@ -491,7 +540,9 @@ describe('MTA-STS Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_mta-sts.example.com',
-      answerSection: [{ name: '_mta-sts.example.com', type: 'TXT', ttl: 300, data: 'v=STSv1; id=20240101' }],
+      answerSection: [
+        { name: '_mta-sts.example.com', type: 'TXT', ttl: 300, data: 'v=STSv1; id=20240101' },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -528,7 +579,14 @@ describe('TLS-RPT Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: '_smtp._tls.example.com',
-      answerSection: [{ name: '_smtp._tls.example.com', type: 'TXT', ttl: 300, data: 'v=TLSRPTv1; rua=mailto:tls-rpt@example.com' }],
+      answerSection: [
+        {
+          name: '_smtp._tls.example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=TLSRPTv1; rua=mailto:tls-rpt@example.com',
+        },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -564,7 +622,14 @@ describe('BIMI Rule', () => {
     const txtObs = createMockObservation({
       queryType: 'TXT',
       queryName: 'default._bimi.example.com',
-      answerSection: [{ name: 'default._bimi.example.com', type: 'TXT', ttl: 300, data: 'v=BIMI1; l=https://example.com/logo.svg' }],
+      answerSection: [
+        {
+          name: 'default._bimi.example.com',
+          type: 'TXT',
+          ttl: 300,
+          data: 'v=BIMI1; l=https://example.com/logo.svg',
+        },
+      ],
     });
     const context = createMockContext({ observations: [txtObs] });
 
@@ -591,22 +656,22 @@ describe('BIMI Rule', () => {
 describe('Mail Rules Export', () => {
   it('should export all 7 mail rules', () => {
     expect(mailRules).toHaveLength(7);
-    expect(mailRules.map(r => r.id)).toContain('mail.mx-presence.v1');
-    expect(mailRules.map(r => r.id)).toContain('mail.spf-analysis.v1');
-    expect(mailRules.map(r => r.id)).toContain('mail.dmarc-analysis.v1');
-    expect(mailRules.map(r => r.id)).toContain('mail.dkim-presence.v1');
-    expect(mailRules.map(r => r.id)).toContain('mail.mta-sts-presence.v1');
-    expect(mailRules.map(r => r.id)).toContain('mail.tls-rpt-presence.v1');
-    expect(mailRules.map(r => r.id)).toContain('mail.bimi-presence.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.mx-presence.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.spf-analysis.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.dmarc-analysis.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.dkim-presence.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.mta-sts-presence.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.tls-rpt-presence.v1');
+    expect(mailRules.map((r) => r.id)).toContain('mail.bimi-presence.v1');
   });
 
   it('should have unique rule IDs', () => {
-    const ids = mailRules.map(r => r.id);
+    const ids = mailRules.map((r) => r.id);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
   });
 
   it('should have all rules enabled', () => {
-    expect(mailRules.every(r => r.enabled)).toBe(true);
+    expect(mailRules.every((r) => r.enabled)).toBe(true);
   });
 });

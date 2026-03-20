@@ -1,9 +1,9 @@
 /**
  * DNS Ops Workbench - Benchmark Corpus
- * 
+ *
  * Representative domains and test cases for validating the system.
  * Each case has a known expected outcome or explicit "ambiguous by design" label.
- * 
+ *
  * Categories:
  * - known-good-managed: Well-configured zones under our management
  * - known-good-unmanaged: Well-configured third-party zones
@@ -12,36 +12,36 @@
  * - edge-cases: IDN, wildcards, NXDOMAIN, NODATA, stale IPs
  */
 
-import type { ZoneManagement, ResultState } from '@dns-ops/contracts';
+import type { ResultState, ZoneManagement } from '@dns-ops/contracts';
 
 export interface BenchmarkCase {
   /** Unique identifier for the test case */
   id: string;
-  
+
   /** Human-readable description */
   description: string;
-  
+
   /** Domain name to test */
   domain: string;
-  
+
   /** Expected zone management classification */
   zoneManagement: ZoneManagement;
-  
+
   /** Expected result state */
   expectedResult: ResultState;
-  
+
   /** Category of test case */
   category: BenchmarkCategory;
-  
+
   /** Specific test characteristics */
   characteristics: TestCharacteristic[];
-  
+
   /** Expected findings (empty for ambiguous cases) */
   expectedFindings?: ExpectedFinding[];
-  
+
   /** Notes for testers */
   notes?: string;
-  
+
   /** Whether this case is "ambiguous by design" */
   ambiguousByDesign?: boolean;
 }
@@ -81,13 +81,13 @@ export type TestCharacteristic =
 export interface ExpectedFinding {
   /** Type of finding */
   type: string;
-  
+
   /** Expected severity */
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  
+
   /** Expected confidence */
   confidence: 'certain' | 'high' | 'medium' | 'low' | 'heuristic';
-  
+
   /** Whether finding requires review */
   reviewOnly: boolean;
 }
@@ -104,15 +104,9 @@ export const knownGoodManaged: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'known-good-managed',
-    characteristics: [
-      'valid-dnssec',
-      'has-mx',
-      'has-spf',
-      'has-dmarc',
-      'has-dkim'
-    ],
+    characteristics: ['valid-dnssec', 'has-mx', 'has-spf', 'has-dmarc', 'has-dkim'],
     expectedFindings: [],
-    notes: 'Gold standard for managed zone configuration'
+    notes: 'Gold standard for managed zone configuration',
   },
   {
     id: 'managed-002',
@@ -121,15 +115,9 @@ export const knownGoodManaged: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'known-good-managed',
-    characteristics: [
-      'valid-dnssec',
-      'no-mx',
-      'no-spf',
-      'no-dmarc',
-      'no-dkim'
-    ],
+    characteristics: ['valid-dnssec', 'no-mx', 'no-spf', 'no-dmarc', 'no-dkim'],
     expectedFindings: [],
-    notes: 'Valid configuration for non-mail domains'
+    notes: 'Valid configuration for non-mail domains',
   },
   {
     id: 'managed-003',
@@ -138,15 +126,10 @@ export const knownGoodManaged: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'known-good-managed',
-    characteristics: [
-      'valid-dnssec',
-      'null-mx',
-      'no-spf',
-      'has-dmarc'
-    ],
+    characteristics: ['valid-dnssec', 'null-mx', 'no-spf', 'has-dmarc'],
     expectedFindings: [],
-    notes: 'RFC 7505 Null MX configuration for domains that don\'t accept mail'
-  }
+    notes: "RFC 7505 Null MX configuration for domains that don't accept mail",
+  },
 ];
 
 // =============================================================================
@@ -161,14 +144,8 @@ export const knownGoodUnmanaged: BenchmarkCase[] = [
     zoneManagement: 'unmanaged',
     expectedResult: 'partial',
     category: 'known-good-unmanaged',
-    characteristics: [
-      'valid-dnssec',
-      'has-mx',
-      'has-spf',
-      'has-dmarc',
-      'has-dkim'
-    ],
-    notes: 'Targeted inspection only - no zone enumeration'
+    characteristics: ['valid-dnssec', 'has-mx', 'has-spf', 'has-dmarc', 'has-dkim'],
+    notes: 'Targeted inspection only - no zone enumeration',
   },
   {
     id: 'unmanaged-002',
@@ -177,13 +154,8 @@ export const knownGoodUnmanaged: BenchmarkCase[] = [
     zoneManagement: 'unmanaged',
     expectedResult: 'partial',
     category: 'known-good-unmanaged',
-    characteristics: [
-      'valid-dnssec',
-      'has-mx',
-      'has-spf',
-      'has-dmarc'
-    ],
-    notes: 'Targeted inspection only - limited to phase-1 record types'
+    characteristics: ['valid-dnssec', 'has-mx', 'has-spf', 'has-dmarc'],
+    notes: 'Targeted inspection only - limited to phase-1 record types',
   },
   {
     id: 'unmanaged-003',
@@ -194,8 +166,8 @@ export const knownGoodUnmanaged: BenchmarkCase[] = [
     category: 'known-good-unmanaged',
     characteristics: ['no-dnssec'],
     ambiguousByDesign: true,
-    notes: 'DNS root zone - special handling required'
-  }
+    notes: 'DNS root zone - special handling required',
+  },
 ];
 
 // =============================================================================
@@ -210,20 +182,16 @@ export const historicalIncidents: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'historical-incident',
-    characteristics: [
-      'has-mx',
-      'has-spf',
-      'has-dmarc'
-    ],
+    characteristics: ['has-mx', 'has-spf', 'has-dmarc'],
     expectedFindings: [
       {
         type: 'spf-too-many-lookups',
         severity: 'high',
         confidence: 'certain',
-        reviewOnly: true
-      }
+        reviewOnly: true,
+      },
     ],
-    notes: 'SPF record exceeded 10 DNS lookup limit'
+    notes: 'SPF record exceeded 10 DNS lookup limit',
   },
   {
     id: 'incident-002',
@@ -232,20 +200,16 @@ export const historicalIncidents: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'historical-incident',
-    characteristics: [
-      'has-mx',
-      'has-spf',
-      'no-dmarc'
-    ],
+    characteristics: ['has-mx', 'has-spf', 'no-dmarc'],
     expectedFindings: [
       {
         type: 'dmarc-missing',
         severity: 'medium',
         confidence: 'certain',
-        reviewOnly: false
-      }
+        reviewOnly: false,
+      },
     ],
-    notes: 'Domain lacked DMARC policy, leading to spoofing'
+    notes: 'Domain lacked DMARC policy, leading to spoofing',
   },
   {
     id: 'incident-003',
@@ -254,20 +218,17 @@ export const historicalIncidents: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'historical-incident',
-    characteristics: [
-      'has-mx',
-      'stale-ip'
-    ],
+    characteristics: ['has-mx', 'stale-ip'],
     expectedFindings: [
       {
         type: 'a-record-stale-ip',
         severity: 'critical',
         confidence: 'high',
-        reviewOnly: true
-      }
+        reviewOnly: true,
+      },
     ],
-    notes: 'A record pointed to IP that was decommissioned'
-  }
+    notes: 'A record pointed to IP that was decommissioned',
+  },
 ];
 
 // =============================================================================
@@ -282,19 +243,16 @@ export const intentionallyMisconfigured: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'intentionally-misconfigured',
-    characteristics: [
-      'cname-at-apex',
-      'has-mx'
-    ],
+    characteristics: ['cname-at-apex', 'has-mx'],
     expectedFindings: [
       {
         type: 'cname-at-apex',
         severity: 'high',
         confidence: 'certain',
-        reviewOnly: true
-      }
+        reviewOnly: true,
+      },
     ],
-    notes: 'CNAME at apex violates RFC 1035 - should use ALIAS/ANAME'
+    notes: 'CNAME at apex violates RFC 1035 - should use ALIAS/ANAME',
   },
   {
     id: 'misconfig-002',
@@ -303,18 +261,16 @@ export const intentionallyMisconfigured: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'intentionally-misconfigured',
-    characteristics: [
-      'has-mx'
-    ],
+    characteristics: ['has-mx'],
     expectedFindings: [
       {
         type: 'mx-points-to-cname',
         severity: 'medium',
         confidence: 'certain',
-        reviewOnly: true
-      }
+        reviewOnly: true,
+      },
     ],
-    notes: 'MX records must point to A/AAAA records, not CNAMEs'
+    notes: 'MX records must point to A/AAAA records, not CNAMEs',
   },
   {
     id: 'misconfig-003',
@@ -323,18 +279,16 @@ export const intentionallyMisconfigured: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'intentionally-misconfigured',
-    characteristics: [
-      'lame-delegation'
-    ],
+    characteristics: ['lame-delegation'],
     expectedFindings: [
       {
         type: 'lame-delegation',
         severity: 'high',
         confidence: 'certain',
-        reviewOnly: true
-      }
+        reviewOnly: true,
+      },
     ],
-    notes: 'NS record points to server that is not authoritative'
+    notes: 'NS record points to server that is not authoritative',
   },
   {
     id: 'misconfig-004',
@@ -343,19 +297,17 @@ export const intentionallyMisconfigured: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'intentionally-misconfigured',
-    characteristics: [
-      'ns-mismatch'
-    ],
+    characteristics: ['ns-mismatch'],
     expectedFindings: [
       {
         type: 'ns-set-inconsistent',
         severity: 'critical',
         confidence: 'certain',
-        reviewOnly: true
-      }
+        reviewOnly: true,
+      },
     ],
-    notes: 'Different authoritative servers return different NS sets'
-  }
+    notes: 'Different authoritative servers return different NS sets',
+  },
 ];
 
 // =============================================================================
@@ -370,10 +322,8 @@ export const edgeCases: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'edge-case',
-    characteristics: [
-      'idn-punycode'
-    ],
-    notes: 'Internationalized domain name (Greek characters)'
+    characteristics: ['idn-punycode'],
+    notes: 'Internationalized domain name (Greek characters)',
   },
   {
     id: 'edge-002',
@@ -382,10 +332,8 @@ export const edgeCases: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'edge-case',
-    characteristics: [
-      'wildcard-records'
-    ],
-    notes: 'Domain uses wildcard records for subdomains'
+    characteristics: ['wildcard-records'],
+    notes: 'Domain uses wildcard records for subdomains',
   },
   {
     id: 'edge-003',
@@ -394,10 +342,8 @@ export const edgeCases: BenchmarkCase[] = [
     zoneManagement: 'unknown',
     expectedResult: 'failed',
     category: 'edge-case',
-    characteristics: [
-      'nxdomain'
-    ],
-    notes: 'Domain should return NXDOMAIN'
+    characteristics: ['nxdomain'],
+    notes: 'Domain should return NXDOMAIN',
   },
   {
     id: 'edge-004',
@@ -406,10 +352,8 @@ export const edgeCases: BenchmarkCase[] = [
     zoneManagement: 'managed',
     expectedResult: 'complete',
     category: 'edge-case',
-    characteristics: [
-      'nodata'
-    ],
-    notes: 'Query for AAAA when only A exists should return NODATA'
+    characteristics: ['nodata'],
+    notes: 'Query for AAAA when only A exists should return NODATA',
   },
   {
     id: 'edge-005',
@@ -418,11 +362,9 @@ export const edgeCases: BenchmarkCase[] = [
     zoneManagement: 'unmanaged',
     expectedResult: 'partial',
     category: 'edge-case',
-    characteristics: [
-      'timeout-prone'
-    ],
+    characteristics: ['timeout-prone'],
     ambiguousByDesign: true,
-    notes: 'Domain with slow/unresponsive nameservers - may timeout'
+    notes: 'Domain with slow/unresponsive nameservers - may timeout',
   },
   {
     id: 'edge-006',
@@ -431,11 +373,9 @@ export const edgeCases: BenchmarkCase[] = [
     zoneManagement: 'unmanaged',
     expectedResult: 'partial',
     category: 'edge-case',
-    characteristics: [
-      'refuse-queries'
-    ],
-    notes: 'Nameserver returns REFUSED for certain queries'
-  }
+    characteristics: ['refuse-queries'],
+    notes: 'Nameserver returns REFUSED for certain queries',
+  },
 ];
 
 // =============================================================================
@@ -447,44 +387,42 @@ export const benchmarkCorpus: BenchmarkCase[] = [
   ...knownGoodUnmanaged,
   ...historicalIncidents,
   ...intentionallyMisconfigured,
-  ...edgeCases
+  ...edgeCases,
 ];
 
 /**
  * Get benchmark cases by category
  */
 export function getCasesByCategory(category: BenchmarkCategory): BenchmarkCase[] {
-  return benchmarkCorpus.filter(c => c.category === category);
+  return benchmarkCorpus.filter((c) => c.category === category);
 }
 
 /**
  * Get benchmark case by ID
  */
 export function getCaseById(id: string): BenchmarkCase | undefined {
-  return benchmarkCorpus.find(c => c.id === id);
+  return benchmarkCorpus.find((c) => c.id === id);
 }
 
 /**
  * Get all managed zone test cases
  */
 export function getManagedCases(): BenchmarkCase[] {
-  return benchmarkCorpus.filter(c => c.zoneManagement === 'managed');
+  return benchmarkCorpus.filter((c) => c.zoneManagement === 'managed');
 }
 
 /**
  * Get all unmanaged zone test cases
  */
 export function getUnmanagedCases(): BenchmarkCase[] {
-  return benchmarkCorpus.filter(c => c.zoneManagement === 'unmanaged');
+  return benchmarkCorpus.filter((c) => c.zoneManagement === 'unmanaged');
 }
 
 /**
  * Get cases with specific characteristics
  */
-export function getCasesByCharacteristic(
-  characteristic: TestCharacteristic
-): BenchmarkCase[] {
-  return benchmarkCorpus.filter(c => c.characteristics.includes(characteristic));
+export function getCasesByCharacteristic(characteristic: TestCharacteristic): BenchmarkCase[] {
+  return benchmarkCorpus.filter((c) => c.characteristics.includes(characteristic));
 }
 
 export default benchmarkCorpus;

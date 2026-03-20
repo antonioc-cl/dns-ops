@@ -2,7 +2,7 @@
  * DNS Resolution utilities for mail checking
  */
 
-import { resolveTxt } from 'dns/promises';
+import { resolveTxt } from 'node:dns/promises';
 
 /**
  * Resolve TXT records for a hostname
@@ -10,5 +10,5 @@ import { resolveTxt } from 'dns/promises';
 export async function resolveTXT(hostname: string): Promise<string[]> {
   const records = await resolveTxt(hostname);
   // Join multi-part TXT records
-  return records.map(parts => parts.join(''));
+  return records.map((parts) => parts.join(''));
 }

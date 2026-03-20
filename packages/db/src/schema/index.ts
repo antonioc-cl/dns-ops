@@ -1,6 +1,6 @@
 /**
  * DNS Ops Workbench - Database Schema
- * 
+ *
  * Core entities for the persistence layer:
  * - Domain: DNS domains being monitored
  * - Snapshot: A point-in-time collection of DNS data
@@ -13,33 +13,23 @@
  */
 
 import {
-  pgTable,
-  uuid,
-  varchar,
-  timestamp,
-  jsonb,
-  text,
-  integer,
   boolean,
   index,
-  uniqueIndex,
+  integer,
+  jsonb,
   pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
 } from 'drizzle-orm/pg-core';
 
 // Enums matching the contracts package
-export const resultStateEnum = pgEnum('result_state', [
-  'complete',
-  'partial',
-  'failed',
-]);
+export const resultStateEnum = pgEnum('result_state', ['complete', 'partial', 'failed']);
 
-export const severityEnum = pgEnum('severity', [
-  'critical',
-  'high',
-  'medium',
-  'low',
-  'info',
-]);
+export const severityEnum = pgEnum('severity', ['critical', 'high', 'medium', 'low', 'info']);
 
 export const confidenceEnum = pgEnum('confidence', [
   'certain',
@@ -66,11 +56,7 @@ export const blastRadiusEnum = pgEnum('blast_radius', [
   'organization-wide',
 ]);
 
-export const zoneManagementEnum = pgEnum('zone_management', [
-  'managed',
-  'unmanaged',
-  'unknown',
-]);
+export const zoneManagementEnum = pgEnum('zone_management', ['managed', 'unmanaged', 'unknown']);
 
 export const vantageTypeEnum = pgEnum('vantage_type', [
   'public-recursive',
@@ -148,22 +134,21 @@ export const snapshots = pgTable(
       .references(() => domains.id, { onDelete: 'cascade' }),
     domainName: varchar('domain_name', { length: 253 }).notNull(), // Denormalized for queries
     resultState: resultStateEnum('result_state').notNull(),
-    
+
     // Snapshot scope - explicitly tracks what was queried
     queriedNames: jsonb('queried_names').notNull().$type<string[]>(),
     queriedTypes: jsonb('queried_types').notNull().$type<string[]>(),
     vantages: jsonb('vantages').notNull().$type<string[]>(),
     zoneManagement: zoneManagementEnum('zone_management').notNull(),
-    
+
     // Ruleset version used for findings
-    rulesetVersionId: uuid('ruleset_version_id')
-      .references(() => rulesetVersions.id),
-    
+    rulesetVersionId: uuid('ruleset_version_id').references(() => rulesetVersions.id),
+
     // Metadata
     triggeredBy: varchar('triggered_by', { length: 100 }).notNull(), // user ID or 'system'
     collectionDurationMs: integer('collection_duration_ms'),
     errorMessage: text('error_message'),
-    
+
     // Delegation and extended metadata (Bead 12)
     metadata: jsonb('metadata').$type<{
       hasDelegationData?: boolean;
@@ -173,7 +158,7 @@ export const snapshots = pgTable(
       lameDelegations?: number;
       hasDnssec?: boolean;
     }>(),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -195,17 +180,17 @@ export const vantagePoints = pgTable(
     name: varchar('name', { length: 100 }).notNull(),
     type: vantageTypeEnum('type').notNull(),
     description: text('description'),
-    
+
     // Configuration for this vantage
     config: jsonb('config').notNull(),
-    
+
     // For authoritative vantages: NS hostnames
     // For recursive vantages: resolver addresses
     endpoints: jsonb('endpoints').notNull().$type<string[]>(),
-    
+
     region: varchar('region', { length: 50 }),
     network: varchar('network', { length: 50 }),
-    
+
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -227,37 +212,36 @@ export const observations = pgTable(
     snapshotId: uuid('snapshot_id')
       .notNull()
       .references(() => snapshots.id, { onDelete: 'cascade' }),
-    
+
     // Query details
     queryName: varchar('query_name', { length: 253 }).notNull(),
     queryType: varchar('query_type', { length: 10 }).notNull(),
-    
+
     // Vantage point used
-    vantageId: uuid('vantage_id')
-      .references(() => vantagePoints.id),
+    vantageId: uuid('vantage_id').references(() => vantagePoints.id),
     vantageType: vantageTypeEnum('vantage_type').notNull(),
     vantageIdentifier: varchar('vantage_identifier', { length: 100 }), // Specific NS IP or resolver
-    
+
     // Collection status
     status: collectionStatusEnum('status').notNull(),
-    
+
     // Timing
     queriedAt: timestamp('queried_at', { withTimezone: true }).notNull().defaultNow(),
     responseTimeMs: integer('response_time_ms'),
-    
+
     // DNS response details
     responseCode: integer('response_code'),
     flags: jsonb('flags').$type<Record<string, boolean>>(), // AA, TC, RD, RA, etc.
-    
+
     // Raw sections (stored as JSON for flexibility)
     answerSection: jsonb('answer_section').$type<DNSRecord[]>(),
     authoritySection: jsonb('authority_section').$type<DNSRecord[]>(),
     additionalSection: jsonb('additional_section').$type<DNSRecord[]>(),
-    
+
     // Error details
     errorMessage: text('error_message'),
     errorDetails: jsonb('error_details'),
-    
+
     // Raw response for debugging (optional, may be large)
     rawResponse: text('raw_response'),
   },
@@ -297,23 +281,23 @@ export const recordSets = pgTable(
     snapshotId: uuid('snapshot_id')
       .notNull()
       .references(() => snapshots.id, { onDelete: 'cascade' }),
-    
+
     // Record details
     name: varchar('name', { length: 253 }).notNull(),
     type: varchar('type', { length: 10 }).notNull(),
     ttl: integer('ttl'),
-    
+
     // Values (multiple for records with same name/type)
     values: jsonb('values').notNull().$type<string[]>(),
-    
+
     // Source observations that contributed to this record set
     sourceObservationIds: jsonb('source_observation_ids').notNull().$type<string[]>(),
     sourceVantages: jsonb('source_vantages').notNull().$type<string[]>(),
-    
+
     // Consolidation metadata
     isConsistent: boolean('is_consistent').notNull(), // false if vantages disagree
     consolidationNotes: text('consolidation_notes'),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -333,31 +317,31 @@ export const findings = pgTable(
     snapshotId: uuid('snapshot_id')
       .notNull()
       .references(() => snapshots.id, { onDelete: 'cascade' }),
-    
+
     // Finding classification
     type: varchar('type', { length: 100 }).notNull(),
     title: varchar('title', { length: 200 }).notNull(),
     description: text('description').notNull(),
-    
+
     // Assessment
     severity: severityEnum('severity').notNull(),
     confidence: confidenceEnum('confidence').notNull(),
     riskPosture: riskPostureEnum('risk_posture').notNull(),
     blastRadius: blastRadiusEnum('blast_radius').notNull(),
     reviewOnly: boolean('review_only').notNull().default(false),
-    
+
     // Evidence links
     evidence: jsonb('evidence').notNull().$type<EvidenceLink[]>(),
-    
+
     // Rule that generated this finding
     ruleId: varchar('rule_id', { length: 100 }).notNull(),
     ruleVersion: varchar('rule_version', { length: 50 }).notNull(),
-    
+
     // Finding state
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
     acknowledgedBy: varchar('acknowledged_by', { length: 100 }),
     falsePositive: boolean('false_positive').default(false),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -387,24 +371,24 @@ export const suggestions = pgTable(
     findingId: uuid('finding_id')
       .notNull()
       .references(() => findings.id, { onDelete: 'cascade' }),
-    
+
     // Suggestion details
     title: varchar('title', { length: 200 }).notNull(),
     description: text('description').notNull(),
     action: text('action').notNull(), // Specific action to take
-    
+
     // Risk assessment
     riskPosture: riskPostureEnum('risk_posture').notNull(),
     blastRadius: blastRadiusEnum('blast_radius').notNull(),
     reviewOnly: boolean('review_only').notNull().default(false),
-    
+
     // Suggestion state
     appliedAt: timestamp('applied_at', { withTimezone: true }),
     appliedBy: varchar('applied_by', { length: 100 }),
     dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
     dismissedBy: varchar('dismissed_by', { length: 100 }),
     dismissalReason: text('dismissal_reason'),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -452,14 +436,14 @@ export const domainNotes = pgTable(
     domainId: uuid('domain_id')
       .notNull()
       .references(() => domains.id, { onDelete: 'cascade' }),
-    
+
     // Note content
     content: text('content').notNull(),
-    
+
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
     tenantId: uuid('tenant_id'),
-    
+
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -478,14 +462,14 @@ export const domainTags = pgTable(
     domainId: uuid('domain_id')
       .notNull()
       .references(() => domains.id, { onDelete: 'cascade' }),
-    
+
     // Tag
     tag: varchar('tag', { length: 50 }).notNull(),
-    
+
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
     tenantId: uuid('tenant_id'),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -509,11 +493,11 @@ export const savedFilters = pgTable(
   'saved_filters',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    
+
     // Filter definition
     name: varchar('name', { length: 100 }).notNull(),
     description: text('description'),
-    
+
     // Filter criteria (JSON for flexibility)
     criteria: jsonb('criteria').notNull().$type<{
       domainPatterns?: string[];
@@ -526,14 +510,14 @@ export const savedFilters = pgTable(
       tags?: string[];
       lastSnapshotWithin?: number; // hours
     }>(),
-    
+
     // Visibility
     isShared: boolean('is_shared').notNull().default(false),
-    
+
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
     tenantId: uuid('tenant_id'),
-    
+
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -570,25 +554,25 @@ export const auditEvents = pgTable(
   'audit_events',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    
+
     // Action details
     action: auditActionEnum('action').notNull(),
     entityType: varchar('entity_type', { length: 50 }).notNull(),
     entityId: uuid('entity_id').notNull(),
-    
+
     // Change details
     previousValue: jsonb('previous_value'),
     newValue: jsonb('new_value'),
-    
+
     // Actor context
     actorId: varchar('actor_id', { length: 100 }).notNull(),
     actorEmail: varchar('actor_email', { length: 255 }),
     tenantId: uuid('tenant_id'),
-    
+
     // Request context
     ipAddress: varchar('ip_address', { length: 45 }),
     userAgent: text('user_agent'),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -611,21 +595,21 @@ export const templateOverrides = pgTable(
   'template_overrides',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    
+
     // Template reference
     providerKey: varchar('provider_key', { length: 50 }).notNull(),
     templateKey: varchar('template_key', { length: 50 }).notNull(),
-    
+
     // Override content (merged with base template)
     overrideData: jsonb('override_data').notNull(),
-    
+
     // Scope
     appliesToDomains: jsonb('applies_to_domains').$type<string[]>(), // null = all domains
-    
+
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
     tenantId: uuid('tenant_id'),
-    
+
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -634,8 +618,8 @@ export const templateOverrides = pgTable(
     providerIdx: index('template_override_provider_idx').on(table.providerKey),
     tenantIdx: index('template_override_tenant_idx').on(table.tenantId),
     uniqueOverride: uniqueIndex('template_override_unique_idx').on(
-      table.providerKey, 
-      table.templateKey, 
+      table.providerKey,
+      table.templateKey,
       table.tenantId
     ),
   })
@@ -648,11 +632,7 @@ export type NewTemplateOverride = typeof templateOverrides.$inferInsert;
 // MONITORED DOMAINS (Bead 15)
 // =============================================================================
 
-export const monitoringScheduleEnum = pgEnum('monitoring_schedule', [
-  'hourly',
-  'daily',
-  'weekly',
-]);
+export const monitoringScheduleEnum = pgEnum('monitoring_schedule', ['hourly', 'daily', 'weekly']);
 
 export const monitoredDomains = pgTable(
   'monitored_domains',
@@ -661,30 +641,30 @@ export const monitoredDomains = pgTable(
     domainId: uuid('domain_id')
       .notNull()
       .references(() => domains.id, { onDelete: 'cascade' }),
-    
+
     // Schedule
     schedule: monitoringScheduleEnum('schedule').notNull().default('daily'),
-    
+
     // Alert configuration
     alertChannels: jsonb('alert_channels').notNull().$type<{
       email?: string[];
       webhook?: string;
       slack?: string;
     }>(),
-    
+
     // Noise budget
     maxAlertsPerDay: integer('max_alerts_per_day').notNull().default(5),
     suppressionWindowMinutes: integer('suppression_window_minutes').notNull().default(60),
-    
+
     // State
     isActive: boolean('is_active').notNull().default(true),
     lastCheckAt: timestamp('last_check_at', { withTimezone: true }),
     lastAlertAt: timestamp('last_alert_at', { withTimezone: true }),
-    
+
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
     tenantId: uuid('tenant_id'),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -718,33 +698,32 @@ export const alerts = pgTable(
     monitoredDomainId: uuid('monitored_domain_id')
       .notNull()
       .references(() => monitoredDomains.id, { onDelete: 'cascade' }),
-    
+
     // Alert content
     title: varchar('title', { length: 200 }).notNull(),
     description: text('description').notNull(),
     severity: severityEnum('severity').notNull(),
-    
+
     // Trigger
-    triggeredByFindingId: uuid('triggered_by_finding_id')
-      .references(() => findings.id),
-    
+    triggeredByFindingId: uuid('triggered_by_finding_id').references(() => findings.id),
+
     // Status
     status: alertStatusEnum('status').notNull().default('pending'),
-    
+
     // Deduplication
     dedupKey: varchar('dedup_key', { length: 200 }), // For grouping similar alerts
-    
+
     // Acknowledgment
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
     acknowledgedBy: varchar('acknowledged_by', { length: 100 }),
-    
+
     // Resolution
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
     resolutionNote: text('resolution_note'),
-    
+
     // Actor context
     tenantId: uuid('tenant_id'),
-    
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -764,9 +743,9 @@ export type NewAlert = typeof alerts.$inferInsert;
 // =============================================================================
 
 export {
+  type NewRemediationRequest,
+  type RemediationRequest,
+  remediationPriorityEnum,
   remediationRequests,
   remediationStatusEnum,
-  remediationPriorityEnum,
-  type RemediationRequest,
-  type NewRemediationRequest,
 } from './remediation.js';
