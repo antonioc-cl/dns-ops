@@ -150,7 +150,6 @@ The collector/probe runtime is split out because DNS ops evidence collection and
 │   └── rules/
 │
 ├── package.json
-├── pnpm-workspace.yaml
 ├── turbo.json
 ├── tsconfig.base.json
 ├── biome.json

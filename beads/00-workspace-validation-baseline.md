@@ -9,7 +9,7 @@ None.
 **Concrete change**  
 Create a reliable validation contract for the monorepo:
 - all workspaces expose real `build`, `typecheck`, `lint`, and `test` scripts,
-- root `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm test` execute real work,
+- root `bun lint`, `bun typecheck`, `bun build`, and `bun test` execute real work,
 - generated artifacts are excluded from source test execution,
 - CI skeleton actually runs the same commands developers use locally.
 

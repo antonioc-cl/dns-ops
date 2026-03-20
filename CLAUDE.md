@@ -245,10 +245,10 @@ bd close <id> --reason "Detailed completion note"
 bd show <id> --json | jq '.dependencies'
 
 # Typecheck all packages
-pnpm typecheck
+bun typecheck
 
 # Build all packages
-pnpm build
+bun build
 ```
 
 ---

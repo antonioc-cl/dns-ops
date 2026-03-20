@@ -1,14 +1,15 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
   "files": {
-    "includes": ["**", "!apps/web/app/routeTree.gen.ts"]
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
+    "includes": [
+      "**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/.vinxi/**",
+      "!**/routeTree.gen.ts",
+      "!**/.turbo/**",
+      "!**/*.css"
+    ]
   },
   "linter": {
     "enabled": true,

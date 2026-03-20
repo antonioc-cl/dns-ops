@@ -1,0 +1,31 @@
+{
+  "state": {
+    "pi": {
+      "current_delay": 33750000000,
+      "consecutive_success": 1,
+      "last_rate_limit": "2026-03-20T12:35:49.016478308Z",
+      "cooldown_until": "2026-03-20T12:36:22.766478308Z",
+      "total_rate_limits": 3,
+      "total_successes": 3
+    }
+  },
+  "history": {
+    "pi": [
+      {
+        "time": "2026-03-20T12:32:39.00452307Z",
+        "provider": "pi",
+        "action": "send"
+      },
+      {
+        "time": "2026-03-20T12:35:29.207199941Z",
+        "provider": "pi",
+        "action": "send"
+      },
+      {
+        "time": "2026-03-20T12:35:49.016478308Z",
+        "provider": "pi",
+        "action": "send"
+      }
+    ]
+  }
+}
