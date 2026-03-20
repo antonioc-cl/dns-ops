@@ -26,6 +26,7 @@ import {
   validationErrorResponse,
 } from '../middleware/validation.js';
 import type { Env } from '../types.js';
+import { trackSearch } from '../middleware/error-tracking.js';
 
 export const portfolioRoutes = new Hono<Env>();
 
@@ -37,6 +38,7 @@ portfolioRoutes.use('*', requireAuth);
 // =============================================================================
 
 portfolioRoutes.post('/search', async (c) => {
+  const startTime = Date.now();
   const db = c.get('db');
   const tenantId = c.get('tenantId');
   if (!tenantId) {
@@ -159,6 +161,15 @@ portfolioRoutes.post('/search', async (c) => {
 
     const domainResults = filteredDomains.filter(Boolean);
 
+    // Track search event (Bead 14.4)
+    trackSearch({
+      tenantId,
+      query,
+      filters: { tags, severities, zoneManagement },
+      resultCount: domainResults.length,
+      durationMs: Date.now() - startTime,
+    });
+
     return c.json({
       domains: domainResults,
       total: domainResults.length,
@@ -166,7 +177,6 @@ portfolioRoutes.post('/search', async (c) => {
       offset,
     });
   } catch (error) {
-    console.error('Portfolio search error:', error);
     return c.json({ error: 'Search failed' }, 500);
   }
 });

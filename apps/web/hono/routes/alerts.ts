@@ -12,6 +12,7 @@
 import { AlertRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/authorization.js';
+import { trackAlert, trackReport } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const alertRoutes = new Hono<Env>();
@@ -77,6 +78,16 @@ alertRoutes.post('/:id/acknowledge', async (c) => {
     return c.json({ error: 'Alert not found' }, 404);
   }
 
+  // Track alert acknowledgment (Bead 14.4)
+  const tenantId = c.get('tenantId') || 'default';
+  trackAlert({
+    tenantId,
+    alertId,
+    alertType: alert.title,
+    action: 'acknowledge',
+    severity: alert.severity,
+  });
+
   return c.json({ alert });
 });
 
@@ -98,6 +109,16 @@ alertRoutes.post('/:id/resolve', async (c) => {
     return c.json({ error: 'Alert not found' }, 404);
   }
 
+  // Track alert resolution (Bead 14.4)
+  const tenantId = c.get('tenantId') || 'default';
+  trackAlert({
+    tenantId,
+    alertId,
+    alertType: alert.title,
+    action: 'resolve',
+    severity: alert.severity,
+  });
+
   return c.json({ alert });
 });
 
@@ -115,6 +136,16 @@ alertRoutes.post('/:id/suppress', async (c) => {
   if (!alert) {
     return c.json({ error: 'Alert not found' }, 404);
   }
+
+  // Track alert suppression (Bead 14.4)
+  const tenantId = c.get('tenantId') || 'default';
+  trackAlert({
+    tenantId,
+    alertId,
+    alertType: alert.title,
+    action: 'dismiss',
+    severity: alert.severity,
+  });
 
   return c.json({ alert });
 });
@@ -142,12 +173,22 @@ alertRoutes.get('/reports', async (c) => {
  */
 alertRoutes.post('/reports', async (c) => {
   const body = await c.req.json().catch(() => ({}));
+  const reportId = 'stub-report-id';
+
+  // Track report generation (Bead 14.4)
+  const tenantId = c.get('tenantId') || 'default';
+  trackReport({
+    tenantId,
+    reportType: 'shared',
+    reportId,
+    action: 'generate',
+  });
 
   // Stub - returns placeholder until full implementation
   return c.json(
     {
       report: {
-        id: 'stub-report-id',
+        id: reportId,
         title: body.title || 'Untitled Report',
         status: 'generating',
         createdAt: new Date().toISOString(),

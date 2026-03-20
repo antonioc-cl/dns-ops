@@ -13,6 +13,7 @@ import { findings as findingsTable, snapshots as snapshotsTable } from '@dns-ops
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/authorization.js';
+import { trackLegacyOpen } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 // Domain validation regex (basic ASCII domain format)
@@ -62,7 +63,7 @@ export const legacyToolsRoutes = new Hono<Env>();
 legacyToolsRoutes.post('/log', requireAuth, async (c) => {
   try {
     const body = await c.req.json();
-    const { tool, domain, action, timestamp, metadata } = body;
+    const { tool, domain, action, metadata } = body;
 
     // Validate required fields
     if (!tool || !domain || !action) {
@@ -79,15 +80,13 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
       return c.json({ error: 'Invalid action type. Must be "view" or "navigate"' }, 400);
     }
 
-    // In a production system, this would store to a shadow_comparison_access_log table
-    // For now, we log to console and return success
-    console.log('[Legacy Tool Access]', {
-      tool,
+    // Track legacy tool access (Bead 14.4)
+    const tenantId = c.get('tenantId') || 'default';
+    trackLegacyOpen({
+      tenantId,
+      toolType: tool,
       domain,
-      action,
-      timestamp: timestamp || new Date().toISOString(),
-      metadata,
-      userAgent: c.req.header('user-agent'),
+      parameters: { action, ...metadata },
     });
 
     // TODO: Store in database for shadow comparison analysis (Bead 09)

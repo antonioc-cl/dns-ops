@@ -8,6 +8,7 @@ import { RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import { getEnvConfig } from '../config/env.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import { trackMailCheck, trackRemediation } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 interface CollectMailRequest {
@@ -114,8 +115,26 @@ export const mailRoutes = new Hono<Env>()
       }
 
       const result = await response.json();
+
+      // Track mail check event (Bead 14.4)
+      trackMailCheck({
+        tenantId,
+        domain: data.domain as string,
+        checkType: 'all',
+        success: true,
+        durationMs: undefined,
+      });
+
       return c.json(result);
     } catch (error) {
+      // Track failed mail check
+      const tenantIdFail = c.get('tenantId') || 'default';
+      trackMailCheck({
+        tenantId: tenantIdFail,
+        domain: data.domain as string,
+        checkType: 'all',
+        success: false,
+      });
       console.error('Collector connection error:', error);
       return c.json({ error: 'Failed to connect to collector service' }, 503);
     }
@@ -152,6 +171,16 @@ export const mailRoutes = new Hono<Env>()
         priority: data.priority || 'medium',
         notes: data.notes,
         status: 'open',
+      });
+
+      // Track remediation event (Bead 14.4)
+      const tenantId = c.get('tenantId') || 'default';
+      trackRemediation({
+        tenantId,
+        domain: request.domain,
+        findingId: data.snapshotId || 'unknown',
+        remediationType: 'manual',
+        status: 'started',
       });
 
       return c.json(

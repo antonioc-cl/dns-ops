@@ -227,3 +227,145 @@ export function trackInfo(message: string, context?: Record<string, unknown>): v
   const logger = getWebLogger();
   logger.info(message, context || {});
 }
+
+// =============================================================================
+// Product Event Tracking (Bead 14.4)
+// =============================================================================
+
+/**
+ * Track a portfolio search event
+ */
+export function trackSearch(context: {
+  tenantId: string;
+  query?: string;
+  filters?: Record<string, unknown>;
+  resultCount: number;
+  durationMs: number;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: search', {
+    eventType: 'product_search',
+    ...context,
+  });
+}
+
+/**
+ * Track a domain refresh (re-collect) event
+ */
+export function trackRefresh(context: {
+  tenantId: string;
+  domain: string;
+  snapshotId?: string;
+  triggeredBy: string;
+  success: boolean;
+  durationMs?: number;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: refresh', {
+    eventType: 'product_refresh',
+    ...context,
+  });
+}
+
+/**
+ * Track a mail check event
+ */
+export function trackMailCheck(context: {
+  tenantId: string;
+  domain: string;
+  checkType: 'dkim' | 'spf' | 'dmarc' | 'mta-sts' | 'all';
+  success: boolean;
+  issues?: number;
+  durationMs?: number;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: mail_check', {
+    eventType: 'product_mail_check',
+    ...context,
+  });
+}
+
+/**
+ * Track a diff/comparison view event
+ */
+export function trackDiff(context: {
+  tenantId: string;
+  domain?: string;
+  snapshotIds: [string, string];
+  changeCount: number;
+  diffType: 'records' | 'findings' | 'scope' | 'ruleset' | 'full';
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: diff', {
+    eventType: 'product_diff',
+    ...context,
+  });
+}
+
+/**
+ * Track a remediation action event
+ */
+export function trackRemediation(context: {
+  tenantId: string;
+  domain: string;
+  findingId: string;
+  remediationType: 'auto' | 'manual' | 'template';
+  status: 'started' | 'completed' | 'failed';
+  provider?: string;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: remediation', {
+    eventType: 'product_remediation',
+    ...context,
+  });
+}
+
+/**
+ * Track a legacy tool open event
+ */
+export function trackLegacyOpen(context: {
+  tenantId: string;
+  toolType: string;
+  domain?: string;
+  parameters?: Record<string, unknown>;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: legacy_open', {
+    eventType: 'product_legacy_open',
+    ...context,
+  });
+}
+
+/**
+ * Track a report generation/view event
+ */
+export function trackReport(context: {
+  tenantId: string;
+  reportType: 'fleet' | 'domain' | 'finding' | 'monitoring' | 'shared';
+  reportId?: string;
+  action: 'generate' | 'view' | 'export' | 'share';
+  format?: string;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: report', {
+    eventType: 'product_report',
+    ...context,
+  });
+}
+
+/**
+ * Track an alert event
+ */
+export function trackAlert(context: {
+  tenantId: string;
+  alertId: string;
+  alertType: string;
+  action: 'view' | 'acknowledge' | 'resolve' | 'dismiss';
+  severity?: string;
+}): void {
+  const logger = getWebLogger();
+  logger.info('Product event: alert', {
+    eventType: 'product_alert',
+    ...context,
+  });
+}

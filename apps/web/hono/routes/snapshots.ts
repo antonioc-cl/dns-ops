@@ -13,6 +13,7 @@ import { compareSnapshots } from '@dns-ops/parsing';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
+import { trackDiff } from '../middleware/error-tracking.js';
 
 export const snapshotRoutes = new Hono<Env>();
 
@@ -265,6 +266,18 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
       );
     }
 
+    // Track diff event (Bead 14.4)
+    const tenantId = c.get('tenantId');
+    if (tenantId) {
+      trackDiff({
+        tenantId,
+        domain: domainName,
+        snapshotIds: [snapshotA, snapshotB],
+        changeCount: diff.comparison.recordChanges.length + diff.comparison.findingChanges.length,
+        diffType: 'full',
+      });
+    }
+
     return c.json({
       domain: domainName,
       diff,
@@ -279,7 +292,6 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
         : undefined,
     });
   } catch (error) {
-    console.error('Snapshot diff error:', error);
     return c.json(
       {
         error: 'Failed to compare snapshots',
@@ -372,6 +384,18 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       );
     }
 
+    // Track diff event (Bead 14.4)
+    const tenantId = c.get('tenantId');
+    if (tenantId) {
+      trackDiff({
+        tenantId,
+        domain: domainName,
+        snapshotIds: [snapA.id, snapB.id],
+        changeCount: diff.comparison.recordChanges.length + diff.comparison.findingChanges.length,
+        diffType: 'full',
+      });
+    }
+
     return c.json({
       diff,
       findingsEvaluated: {
@@ -381,7 +405,6 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       warnings: warnings.length > 0 ? warnings : undefined,
     });
   } catch (error) {
-    console.error('Compare latest error:', error);
     return c.json(
       {
         error: 'Failed to compare snapshots',
