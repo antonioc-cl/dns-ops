@@ -1,17 +1,29 @@
 /**
- * Portfolio Route - dns-ops-1j4.10.1
+ * Portfolio Route - dns-ops-1j4.10.1, dns-ops-1j4.10.2
  *
  * Main entry point for the domain portfolio view.
  * Lists all monitored domains with their status and provides search/filter capabilities.
+ *
+ * Filters:
+ * - Text search by domain name
+ * - Tags (multi-select)
+ * - Severity levels (critical, high, medium, low, info)
+ * - Zone management (managed, unmanaged, unknown)
  */
 
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
 
+type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type ZoneManagement = 'managed' | 'unmanaged' | 'unknown';
+
+const SEVERITY_OPTIONS: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
+const ZONE_MANAGEMENT_OPTIONS: ZoneManagement[] = ['managed', 'unmanaged', 'unknown'];
+
 interface Domain {
   id: string;
   name: string;
-  zoneManagement: 'managed' | 'unmanaged' | 'unknown';
+  zoneManagement: ZoneManagement;
   lastSnapshotAt: string | null;
   findingCounts: {
     critical: number;
@@ -29,6 +41,17 @@ interface SearchResponse {
   hasMore: boolean;
 }
 
+interface TagsResponse {
+  tags: string[];
+}
+
+interface SearchFilters {
+  query: string;
+  tags: string[];
+  severities: Severity[];
+  zoneManagement: ZoneManagement[];
+}
+
 export const Route = createFileRoute('/portfolio')({
   component: PortfolioComponent,
 });
@@ -37,16 +60,41 @@ function PortfolioComponent() {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Debounce search input
+  // Filter state
+  const [filters, setFilters] = useState<SearchFilters>({
+    query: '',
+    tags: [],
+    severities: [],
+    zoneManagement: [],
+  });
+  const [debouncedFilters, setDebouncedFilters] = useState<SearchFilters>(filters);
+
+  // Debounce filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
+      setDebouncedFilters(filters);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [filters]);
+
+  // Fetch available tags on mount
+  useEffect(() => {
+    async function fetchTags() {
+      try {
+        const response = await fetch('/api/portfolio/tags');
+        if (response.ok) {
+          const data: TagsResponse = await response.json();
+          setAvailableTags(data.tags || []);
+        }
+      } catch {
+        // Silently fail - tags are optional
+      }
+    }
+    fetchTags();
+  }, []);
 
   const fetchDomains = useCallback(async () => {
     setLoading(true);
@@ -54,8 +102,17 @@ function PortfolioComponent() {
 
     try {
       const params = new URLSearchParams();
-      if (debouncedQuery) {
-        params.set('query', debouncedQuery);
+      if (debouncedFilters.query) {
+        params.set('query', debouncedFilters.query);
+      }
+      if (debouncedFilters.tags.length > 0) {
+        params.set('tags', debouncedFilters.tags.join(','));
+      }
+      if (debouncedFilters.severities.length > 0) {
+        params.set('severities', debouncedFilters.severities.join(','));
+      }
+      if (debouncedFilters.zoneManagement.length > 0) {
+        params.set('zoneManagement', debouncedFilters.zoneManagement.join(','));
       }
       params.set('limit', '50');
 
@@ -71,11 +128,48 @@ function PortfolioComponent() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery]);
+  }, [debouncedFilters]);
 
   useEffect(() => {
     fetchDomains();
   }, [fetchDomains]);
+
+  const activeFilterCount =
+    filters.tags.length + filters.severities.length + filters.zoneManagement.length;
+
+  const clearFilters = () => {
+    setFilters({
+      query: filters.query,
+      tags: [],
+      severities: [],
+      zoneManagement: [],
+    });
+  };
+
+  const toggleTag = (tag: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(tag) ? prev.tags.filter((t) => t !== tag) : [...prev.tags, tag],
+    }));
+  };
+
+  const toggleSeverity = (severity: Severity) => {
+    setFilters((prev) => ({
+      ...prev,
+      severities: prev.severities.includes(severity)
+        ? prev.severities.filter((s) => s !== severity)
+        : [...prev.severities, severity],
+    }));
+  };
+
+  const toggleZoneManagement = (zone: ZoneManagement) => {
+    setFilters((prev) => ({
+      ...prev,
+      zoneManagement: prev.zoneManagement.includes(zone)
+        ? prev.zoneManagement.filter((z) => z !== zone)
+        : [...prev.zoneManagement, zone],
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -89,8 +183,9 @@ function PortfolioComponent() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      {/* Search and Filters */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+        {/* Search bar */}
         <div className="flex gap-4">
           <div className="flex-1">
             <label htmlFor="search" className="sr-only">
@@ -100,11 +195,35 @@ function PortfolioComponent() {
               type="text"
               id="search"
               placeholder="Search domains by name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={filters.query}
+              onChange={(e) => setFilters((prev) => ({ ...prev, query: e.target.value }))}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${
+              showFilters || activeFilterCount > 0
+                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+              />
+            </svg>
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
           <button
             onClick={fetchDomains}
             disabled={loading}
@@ -113,6 +232,119 @@ function PortfolioComponent() {
             {loading ? 'Loading...' : 'Search'}
           </button>
         </div>
+
+        {/* Filter panels */}
+        {showFilters && (
+          <div className="border-t border-gray-200 pt-4 space-y-4">
+            {/* Active filters summary */}
+            {activeFilterCount > 0 && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-gray-500">Active filters:</span>
+                  {filters.tags.map((tag) => (
+                    <FilterChip key={`tag-${tag}`} label={tag} onRemove={() => toggleTag(tag)} />
+                  ))}
+                  {filters.severities.map((sev) => (
+                    <FilterChip
+                      key={`sev-${sev}`}
+                      label={sev}
+                      variant="severity"
+                      onRemove={() => toggleSeverity(sev)}
+                    />
+                  ))}
+                  {filters.zoneManagement.map((zone) => (
+                    <FilterChip
+                      key={`zone-${zone}`}
+                      label={zone}
+                      variant="zone"
+                      onRemove={() => toggleZoneManagement(zone)}
+                    />
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Tags filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {availableTags.length === 0 ? (
+                    <span className="text-sm text-gray-400">No tags available</span>
+                  ) : (
+                    availableTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                          filters.tags.includes(tag)
+                            ? 'bg-blue-100 border-blue-300 text-blue-800'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Severity filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Finding Severity
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {SEVERITY_OPTIONS.map((sev) => (
+                    <button
+                      key={sev}
+                      type="button"
+                      onClick={() => toggleSeverity(sev)}
+                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                        filters.severities.includes(sev)
+                          ? getSeverityActiveStyle(sev)
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {sev}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Zone management filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Zone Management
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {ZONE_MANAGEMENT_OPTIONS.map((zone) => (
+                    <button
+                      key={zone}
+                      type="button"
+                      onClick={() => toggleZoneManagement(zone)}
+                      className={`px-3 py-1 text-sm rounded-full border transition-colors ${
+                        filters.zoneManagement.includes(zone)
+                          ? getZoneActiveStyle(zone)
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {zone}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Error State */}
@@ -128,8 +360,8 @@ function PortfolioComponent() {
           <div className="p-8 text-center text-gray-500">Loading domains...</div>
         ) : domains.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            {debouncedQuery
-              ? `No domains found matching "${debouncedQuery}"`
+            {debouncedFilters.query || activeFilterCount > 0
+              ? 'No domains found matching your filters'
               : 'No domains in portfolio. Add a domain to get started.'}
           </div>
         ) : (
@@ -263,4 +495,67 @@ function formatRelativeTime(dateString: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString();
+}
+
+// =============================================================================
+// Filter Components
+// =============================================================================
+
+function FilterChip({
+  label,
+  variant = 'tag',
+  onRemove,
+}: {
+  label: string;
+  variant?: 'tag' | 'severity' | 'zone';
+  onRemove: () => void;
+}) {
+  const styles = {
+    tag: 'bg-blue-100 text-blue-800',
+    severity: 'bg-orange-100 text-orange-800',
+    zone: 'bg-purple-100 text-purple-800',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-sm ${styles[variant]}`}
+    >
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="hover:bg-black/10 rounded-full p-0.5"
+        aria-label={`Remove ${label} filter`}
+      >
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </span>
+  );
+}
+
+function getSeverityActiveStyle(severity: Severity): string {
+  const styles: Record<Severity, string> = {
+    critical: 'bg-red-100 border-red-300 text-red-800',
+    high: 'bg-orange-100 border-orange-300 text-orange-800',
+    medium: 'bg-yellow-100 border-yellow-300 text-yellow-800',
+    low: 'bg-blue-100 border-blue-300 text-blue-800',
+    info: 'bg-gray-100 border-gray-300 text-gray-800',
+  };
+  return styles[severity];
+}
+
+function getZoneActiveStyle(zone: ZoneManagement): string {
+  const styles: Record<ZoneManagement, string> = {
+    managed: 'bg-green-100 border-green-300 text-green-800',
+    unmanaged: 'bg-yellow-100 border-yellow-300 text-yellow-800',
+    unknown: 'bg-gray-100 border-gray-300 text-gray-800',
+  };
+  return styles[zone];
 }
