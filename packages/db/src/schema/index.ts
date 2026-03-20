@@ -379,6 +379,14 @@ export const findings = pgTable(
     typeIdx: index('finding_type_idx').on(table.type),
     severityIdx: index('finding_severity_idx').on(table.severity),
     reviewOnlyIdx: index('finding_review_only_idx').on(table.reviewOnly),
+    rulesetVersionIdx: index('finding_ruleset_version_idx').on(table.rulesetVersionId),
+    // Prevent duplicate findings for the same (snapshot, rule, type, ruleset version)
+    uniqueFindingIdx: uniqueIndex('finding_unique_idx').on(
+      table.snapshotId,
+      table.ruleId,
+      table.type,
+      table.rulesetVersionId
+    ),
   })
 );
 

@@ -150,4 +150,49 @@ export class FindingRepository {
     const result = await this.findBySnapshotId(snapshotId);
     return result.length > 0;
   }
+
+  /**
+   * Find findings for a snapshot evaluated with a specific ruleset version.
+   * Used for idempotent re-evaluation - returns existing findings if they match the ruleset.
+   */
+  async findBySnapshotIdAndRulesetVersionId(
+    snapshotId: string,
+    rulesetVersionId: string
+  ): Promise<Finding[]> {
+    const allFindings = await this.findBySnapshotId(snapshotId);
+    return allFindings.filter((f) => f.rulesetVersionId === rulesetVersionId);
+  }
+
+  /**
+   * Check if findings exist for a specific (snapshotId, rulesetVersionId) combination.
+   * Used to determine if re-evaluation is needed.
+   */
+  async hasFindingsForRulesetVersion(snapshotId: string, rulesetVersionId: string): Promise<boolean> {
+    const matchingFindings = await this.findBySnapshotIdAndRulesetVersionId(
+      snapshotId,
+      rulesetVersionId
+    );
+    return matchingFindings.length > 0;
+  }
+
+  /**
+   * Delete findings for a specific (snapshotId, rulesetVersionId) combination.
+   * Used when explicitly re-evaluating with the same ruleset version.
+   */
+  async deleteBySnapshotIdAndRulesetVersionId(
+    snapshotId: string,
+    rulesetVersionId: string
+  ): Promise<number> {
+    const matchingFindings = await this.findBySnapshotIdAndRulesetVersionId(
+      snapshotId,
+      rulesetVersionId
+    );
+    if (matchingFindings.length === 0) return 0;
+
+    // Delete matching findings by ID
+    for (const finding of matchingFindings) {
+      await this.db.delete(findings, eq(findings.id, finding.id));
+    }
+    return matchingFindings.length;
+  }
 }

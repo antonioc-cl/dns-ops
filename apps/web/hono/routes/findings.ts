@@ -107,7 +107,13 @@ async function ensureRulesetVersion(
 
 /**
  * GET /api/snapshot/:snapshotId/findings
- * Get persisted findings for a snapshot, or evaluate and persist if not found
+ * Get persisted findings for a snapshot, or evaluate and persist if not found.
+ *
+ * Implements idempotent re-evaluation:
+ * - If findings exist for the current ruleset version, return them
+ * - If findings exist for a different ruleset version, evaluate with current version
+ * - If no findings exist, evaluate and persist
+ * - If refresh=true, delete existing findings for current ruleset version and re-evaluate
  */
 findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
   const snapshotId = c.req.param('snapshotId');
@@ -136,33 +142,43 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
-    // Check for existing persisted findings (unless force refresh)
-    const existingFindings = await findingRepo.findBySnapshotId(snapshotId);
+    // Get current ruleset and ensure version exists
+    const ruleset = createCombinedRuleset();
+    const actorId = c.req.header('X-Actor-Id') || 'system';
+    const rulesetVersionId = await ensureRulesetVersion(rulesetVersionRepo, ruleset, actorId);
 
-    if (existingFindings.length > 0 && !forceRefresh) {
-      // Return persisted findings
-      const findingIds = existingFindings.map((f) => f.id);
+    // Check for existing findings for the current ruleset version (idempotent)
+    const existingFindingsForVersion = await findingRepo.findBySnapshotIdAndRulesetVersionId(
+      snapshotId,
+      rulesetVersionId
+    );
+
+    if (existingFindingsForVersion.length > 0 && !forceRefresh) {
+      // Idempotent return: findings already exist for this (snapshotId, rulesetVersionId)
+      const findingIds = existingFindingsForVersion.map((f) => f.id);
       const suggestionsMap = await suggestionRepo.findByFindingIds(findingIds);
 
       // Flatten suggestions
       const allSuggestions = [...suggestionsMap.values()].flat();
 
       // Categorize findings
-      const dnsFindings = existingFindings.filter((f) => f.type.startsWith('dns.'));
-      const mailFindings = existingFindings.filter((f) => f.type.startsWith('mail.'));
+      const dnsFindings = existingFindingsForVersion.filter((f) => f.type.startsWith('dns.'));
+      const mailFindings = existingFindingsForVersion.filter((f) => f.type.startsWith('mail.'));
 
       return c.json({
         snapshotId,
         domain: domain.name,
-        rulesetVersion: existingFindings[0]?.ruleVersion || CURRENT_RULESET_VERSION,
+        rulesetVersion: ruleset.version,
+        rulesetVersionId,
         persisted: true,
+        idempotent: true, // Indicates findings were already present for this ruleset version
         summary: {
-          totalFindings: existingFindings.length,
+          totalFindings: existingFindingsForVersion.length,
           dnsFindings: dnsFindings.length,
           mailFindings: mailFindings.length,
           suggestions: allSuggestions.length,
         },
-        findings: existingFindings,
+        findings: existingFindingsForVersion,
         suggestions: allSuggestions,
         categorized: {
           dns: dnsFindings,
@@ -171,14 +187,9 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
       });
     }
 
-    // No persisted findings (or refresh requested) - evaluate and persist
+    // Need to evaluate: either no findings for current version, or force refresh
     const observations = await observationRepo.findBySnapshotId(snapshotId);
     const recordSets = await recordSetRepo.findBySnapshotId(snapshotId);
-
-    // Create and ensure ruleset version exists
-    const ruleset = createCombinedRuleset();
-    const actorId = c.req.header('X-Actor-Id') || 'system';
-    const rulesetVersionId = await ensureRulesetVersion(rulesetVersionRepo, ruleset, actorId);
 
     // Create rule context
     const context: RuleContext = {
@@ -195,12 +206,13 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
     const engine = new RulesEngine(ruleset);
     const { findings, suggestions } = engine.evaluate(context);
 
-    // Delete existing findings if refreshing
-    if (forceRefresh && existingFindings.length > 0) {
-      await findingRepo.deleteBySnapshotId(snapshotId);
+    // Delete existing findings for this ruleset version only (not other versions)
+    // This preserves historical findings from previous ruleset versions
+    if (forceRefresh && existingFindingsForVersion.length > 0) {
+      await findingRepo.deleteBySnapshotIdAndRulesetVersionId(snapshotId, rulesetVersionId);
     }
 
-    // Persist findings
+    // Persist findings with rulesetVersionId for idempotent re-evaluation
     const findingsToInsert: NewFinding[] = findings.map((f) => ({
       snapshotId,
       type: f.type,
@@ -214,6 +226,7 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
       evidence: f.evidence,
       ruleId: f.ruleId,
       ruleVersion: f.ruleVersion,
+      rulesetVersionId, // Link to ruleset version for idempotent re-evaluation
     }));
 
     const persistedFindings = await findingRepo.createMany(findingsToInsert);
@@ -258,6 +271,7 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
       rulesetVersionId,
       persisted: true,
       evaluated: true,
+      idempotent: false, // Indicates findings were freshly evaluated (not cached)
       rulesEvaluated: engine.getEnabledRulesCount(),
       summary: {
         totalFindings: persistedFindings.length,
@@ -399,17 +413,21 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
 
 /**
  * POST /api/snapshot/:snapshotId/evaluate
- * Re-evaluate a snapshot with the current ruleset (or specified version)
+ * Re-evaluate a snapshot with the current ruleset.
+ *
+ * Idempotent behavior:
+ * - Deletes findings for the current ruleset version only (preserves historical versions)
+ * - Re-evaluates with the current ruleset and persists new findings
+ * - Returns the newly evaluated findings
  */
 findingsRoutes.post('/snapshot/:snapshotId/evaluate', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
-  const body = await c.req.json().catch(() => ({}));
-  const { rulesetVersion: requestedVersion } = body as { rulesetVersion?: string };
 
   try {
     const snapshotRepo = new SnapshotRepository(db);
     const findingRepo = new FindingRepository(db);
+    const rulesetVersionRepo = new RulesetVersionRepository(db);
 
     // Verify snapshot exists
     const snapshot = await snapshotRepo.findById(snapshotId);
@@ -417,10 +435,18 @@ findingsRoutes.post('/snapshot/:snapshotId/evaluate', requireAuth, async (c) => 
       return c.json({ error: 'Snapshot not found' }, 404);
     }
 
-    // Delete existing findings to force re-evaluation
-    const deletedCount = await findingRepo.deleteBySnapshotId(snapshotId);
+    // Get current ruleset version
+    const ruleset = createCombinedRuleset();
+    const actorId = c.req.header('X-Actor-Id') || 'system';
+    const rulesetVersionId = await ensureRulesetVersion(rulesetVersionRepo, ruleset, actorId);
 
-    // Redirect to GET endpoint with refresh flag
+    // Delete findings for the current ruleset version only (preserves historical versions)
+    const deletedCount = await findingRepo.deleteBySnapshotIdAndRulesetVersionId(
+      snapshotId,
+      rulesetVersionId
+    );
+
+    // Redirect to GET endpoint with refresh flag to re-evaluate
     const response = await fetch(`${c.req.url.replace('/evaluate', '/findings')}?refresh=true`, {
       headers: c.req.raw.headers,
     });
@@ -430,7 +456,8 @@ findingsRoutes.post('/snapshot/:snapshotId/evaluate', requireAuth, async (c) => 
     return c.json({
       snapshotId,
       previousFindingsDeleted: deletedCount,
-      requestedVersion: requestedVersion || CURRENT_RULESET_VERSION,
+      rulesetVersion: ruleset.version,
+      rulesetVersionId,
       ...(typeof result === 'object' && result !== null ? result : {}),
     });
   } catch (error) {
