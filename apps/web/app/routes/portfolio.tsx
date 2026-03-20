@@ -13,7 +13,9 @@
 
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useState } from 'react';
+import { AuditLogPanel } from '../components/AuditLogPanel.js';
 import { type CurrentFilters, SavedFiltersPanel } from '../components/SavedFiltersPanel.js';
+import { TemplateOverridesPanel } from '../components/TemplateOverridesPanel.js';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 type ZoneManagement = 'managed' | 'unmanaged' | 'unknown';
@@ -386,11 +388,20 @@ function PortfolioComponent() {
         </div>
       )}
 
-      {/* Saved Filters */}
-      <SavedFiltersPanel
-        currentFilters={filters}
-        onLoadFilter={handleLoadSavedFilter}
-      />
+      {/* Management Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Saved Filters */}
+        <SavedFiltersPanel
+          currentFilters={filters}
+          onLoadFilter={handleLoadSavedFilter}
+        />
+
+        {/* Template Overrides */}
+        <TemplateOverridesPanel />
+      </div>
+
+      {/* Audit Log */}
+      <AuditLogPanel />
     </div>
   );
 }
