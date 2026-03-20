@@ -9,5 +9,7 @@ export type Env = {
     tenantId?: string;
     actorId?: string;
     actorEmail?: string;
+    /** Unique request ID for tracing (set by middleware) */
+    requestId?: string;
   };
 };
