@@ -3,6 +3,10 @@
  *
  * Node.js service for DNS collection and mail probing.
  * Runs as a separate service from the web app for isolation.
+ *
+ * ## Job Queue Mode
+ * Set WORKER_ENABLED=true to start BullMQ workers for async job processing.
+ * Requires REDIS_URL for job queue connectivity.
  */
 
 import { serve } from '@hono/node-server';
@@ -15,6 +19,8 @@ import { collectMailRoutes } from './jobs/collect-mail.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
 import { monitoringRoutes } from './jobs/monitoring.js';
 import { probeRoutes } from './jobs/probe-routes.js';
+import { closeQueues, getQueueHealth } from './jobs/queue.js';
+import { startWorkers, stopWorkers, workersRunning } from './jobs/worker.js';
 import { dbMiddleware, requireServiceAuthMiddleware } from './middleware/index.js';
 
 // Validate environment at startup (fail fast with clear messages)
@@ -35,13 +41,19 @@ app.use('*', dbMiddleware);
 app.use('*', requireServiceAuthMiddleware);
 
 // Health check endpoint
-app.get('/health', (c) =>
-  c.json({
+app.get('/health', async (c) => {
+  const queueHealth = await getQueueHealth();
+
+  return c.json({
     status: 'healthy',
     service: 'dns-ops-collector',
     timestamp: new Date().toISOString(),
-  })
-);
+    workers: {
+      enabled: workersRunning(),
+      queues: queueHealth,
+    },
+  });
+});
 
 // Mount collection routes
 app.route('/api/collect', collectDomainRoutes);
@@ -74,15 +86,46 @@ app.onError((err, c) => {
 // Start server
 const { port } = getEnvConfig();
 
-serve(
+const server = serve(
   {
     fetch: app.fetch,
     port,
   },
-  (info) => {
+  async (info) => {
     console.log(`🚀 DNS Ops Collector running on port ${info.port}`);
     console.log(`📊 Health check: http://localhost:${info.port}/health`);
+
+    // Start workers if enabled
+    if (process.env.WORKER_ENABLED === 'true') {
+      console.log('[Collector] Starting job queue workers...');
+      await startWorkers();
+    }
   }
 );
+
+// Graceful shutdown
+async function shutdown(signal: string): Promise<void> {
+  console.log(`\n[Collector] Received ${signal}, shutting down...`);
+
+  // Stop workers first
+  if (workersRunning()) {
+    console.log('[Collector] Stopping workers...');
+    await stopWorkers();
+  }
+
+  // Close queue connections
+  console.log('[Collector] Closing queue connections...');
+  await closeQueues();
+
+  // Close HTTP server
+  console.log('[Collector] Closing HTTP server...');
+  server.close();
+
+  console.log('[Collector] Shutdown complete');
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 export default app;
