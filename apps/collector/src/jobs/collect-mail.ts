@@ -6,7 +6,23 @@
  * - DMARC, DKIM, SPF
  * - MTA-STS, TLS-RPT
  *
- * Persists DKIM selector provenance and mail evidence summary.
+ * ## Behavior with and without snapshotId
+ *
+ * **With snapshotId (persisted mode):**
+ * - Results are stored in the database as observations
+ * - DKIM selectors are tracked with provenance
+ * - Mail evidence summary is created for findings engine
+ * - Historical tracking enabled
+ *
+ * **Without snapshotId (ephemeral mode):**
+ * - Results are returned in the response only
+ * - No database writes occur
+ * - Useful for ad-hoc diagnostics and previews
+ * - Can be promoted to persisted by later collecting with a snapshotId
+ *
+ * This design allows:
+ * 1. Quick checks without creating state (debugging, exploration)
+ * 2. Full collection as part of a snapshot workflow
  */
 
 import {
@@ -80,11 +96,15 @@ collectMailRoutes.post('/mail', async (c) => {
       await storeMailEvidence(mailEvidenceRepo, snapshotId, normalizedDomain, result);
     }
 
+    // Determine mode based on whether snapshotId was provided
+    const persisted = !!snapshotId;
+
     return c.json(
       {
         success: true,
         domain: normalizedDomain,
         snapshotId: snapshotId || null,
+        persisted, // true if results stored, false if ephemeral
         duration,
         results: {
           dmarc: {
@@ -116,6 +136,92 @@ collectMailRoutes.post('/mail', async (c) => {
     return c.json(
       {
         error: 'Mail collection failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * POST /api/collect/mail/check
+ * Quick ephemeral mail check - never persists, for diagnostics and previews.
+ *
+ * Use this endpoint for:
+ * - Quick diagnostics without creating state
+ * - Preview before running a full collection
+ * - Testing mail configuration changes
+ */
+collectMailRoutes.post('/mail/check', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { domain, preferredProvider, explicitSelectors } = body;
+
+    if (!domain || typeof domain !== 'string') {
+      return c.json({ error: 'Domain is required' }, 400);
+    }
+
+    const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
+
+    if (!isValidDomain(normalizedDomain)) {
+      return c.json({ error: 'Invalid domain format' }, 400);
+    }
+
+    const startTime = Date.now();
+    const result = await performMailCheck(normalizedDomain, {
+      preferredProvider,
+      explicitSelectors,
+    });
+    const duration = Date.now() - startTime;
+
+    return c.json({
+      success: true,
+      domain: normalizedDomain,
+      persisted: false, // Always ephemeral
+      mode: 'check', // Indicates this was a check-only operation
+      duration,
+      mx: {
+        present: result.mx.present,
+        isNullMx: result.mx.isNullMx,
+        count: result.mx.records.length,
+        errors: result.mx.errors,
+      },
+      dmarc: {
+        present: result.dmarc.present,
+        valid: result.dmarc.valid,
+        record: result.dmarc.record,
+        errors: result.dmarc.errors,
+      },
+      dkim: {
+        present: result.dkim.present,
+        valid: result.dkim.valid,
+        selector: result.dkim.selector,
+        selectorProvenance: result.dkim.selectorProvenance,
+        provider: result.dkim.provider,
+        errors: result.dkim.errors,
+      },
+      spf: {
+        present: result.spf.present,
+        valid: result.spf.valid,
+        record: result.spf.record,
+        errors: result.spf.errors,
+      },
+      mtaSts: {
+        present: result.mtaSts.present,
+        valid: result.mtaSts.valid,
+        errors: result.mtaSts.errors,
+      },
+      tlsRpt: {
+        present: result.tlsRpt.present,
+        valid: result.tlsRpt.valid,
+        errors: result.tlsRpt.errors,
+      },
+    });
+  } catch (error) {
+    console.error('Mail check error:', error);
+    return c.json(
+      {
+        error: 'Mail check failed',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
       500
