@@ -24,6 +24,7 @@
  */
 
 import { Hono } from 'hono';
+import { getEnvConfig } from '../config/env.js';
 import type { DNSQueryResult } from '../dns/types.js';
 import type { AllowlistEntry } from '../probes/allowlist.js';
 import {
@@ -36,6 +37,47 @@ import {
 import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
 
 export const probeRoutes = new Hono();
+
+/**
+ * Middleware: Check if active probes are enabled
+ *
+ * Active probing is an OPTIONAL feature that must be explicitly enabled
+ * via ENABLE_ACTIVE_PROBES=true environment variable.
+ *
+ * Rationale:
+ * - Active probes make outbound TCP/TLS connections to external servers
+ * - This requires careful SSRF protections and operator awareness
+ * - Not all deployments need or want active probing
+ */
+probeRoutes.use('/mta-sts', async (c, next) => {
+  const config = getEnvConfig();
+  if (!config.probes.enabled) {
+    return c.json(
+      {
+        error: 'Active probing is not enabled',
+        message: 'Set ENABLE_ACTIVE_PROBES=true to enable MTA-STS probes',
+        feature: 'active-probes',
+      },
+      503
+    );
+  }
+  return next();
+});
+
+probeRoutes.use('/smtp-starttls', async (c, next) => {
+  const config = getEnvConfig();
+  if (!config.probes.enabled) {
+    return c.json(
+      {
+        error: 'Active probing is not enabled',
+        message: 'Set ENABLE_ACTIVE_PROBES=true to enable SMTP STARTTLS probes',
+        feature: 'active-probes',
+      },
+      503
+    );
+  }
+  return next();
+});
 
 /**
  * POST /api/probe/mta-sts

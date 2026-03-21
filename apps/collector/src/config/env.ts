@@ -19,6 +19,16 @@ interface EnvVarDef {
 /**
  * All environment variables used by the collector
  */
+/**
+ * Feature flags for optional functionality
+ */
+interface FeatureFlags {
+  /** Enable active probing (MTA-STS, SMTP STARTTLS) */
+  enableActiveProbes: boolean;
+  /** Enable legacy tool deeplink generation */
+  enableLegacyDeeplinks: boolean;
+}
+
 const ENV_VARS: EnvVarDef[] = [
   {
     name: 'NODE_ENV',
@@ -89,6 +99,44 @@ const ENV_VARS: EnvVarDef[] = [
       }
     },
     default: 'http://localhost:3001',
+  },
+  {
+    name: 'ENABLE_ACTIVE_PROBES',
+    required: false,
+    description: 'Enable active probing (MTA-STS, SMTP STARTTLS). Optional feature, disabled by default.',
+    validate: (v) => {
+      const valid = ['true', 'false', '1', '0'];
+      return valid.includes(v.toLowerCase())
+        ? null
+        : 'Must be true/false or 1/0';
+    },
+    default: 'false',
+  },
+  {
+    name: 'PROBE_TIMEOUT_MS',
+    required: false,
+    description: 'Timeout for active probes in milliseconds (default: 30000)',
+    validate: (v) => {
+      const ms = parseInt(v, 10);
+      if (isNaN(ms) || ms < 1000 || ms > 120000) {
+        return 'Must be between 1000 and 120000 milliseconds';
+      }
+      return null;
+    },
+    default: '30000',
+  },
+  {
+    name: 'PROBE_CONCURRENCY',
+    required: false,
+    description: 'Maximum concurrent probe connections (default: 5)',
+    validate: (v) => {
+      const n = parseInt(v, 10);
+      if (isNaN(n) || n < 1 || n > 20) {
+        return 'Must be between 1 and 20';
+      }
+      return null;
+    },
+    default: '5',
   },
 ];
 
@@ -262,8 +310,19 @@ export function getEnvConfig(processEnv: Record<string, string | undefined> = pr
   collectorUrl: string;
   isDevelopment: boolean;
   isProduction: boolean;
+  features: FeatureFlags;
+  probes: {
+    enabled: boolean;
+    timeoutMs: number;
+    concurrency: number;
+  };
 } {
   const nodeEnv = (processEnv.NODE_ENV || 'production') as 'development' | 'production' | 'test';
+
+  // Parse feature flags
+  const enableActiveProbes = ['true', '1'].includes(
+    (processEnv.ENABLE_ACTIVE_PROBES || 'false').toLowerCase()
+  );
 
   return {
     nodeEnv,
@@ -274,6 +333,15 @@ export function getEnvConfig(processEnv: Record<string, string | undefined> = pr
     collectorUrl: processEnv.COLLECTOR_URL || 'http://localhost:3001',
     isDevelopment: nodeEnv === 'development',
     isProduction: nodeEnv === 'production',
+    features: {
+      enableActiveProbes,
+      enableLegacyDeeplinks: true, // Always enabled for now
+    },
+    probes: {
+      enabled: enableActiveProbes,
+      timeoutMs: processEnv.PROBE_TIMEOUT_MS ? parseInt(processEnv.PROBE_TIMEOUT_MS, 10) : 30000,
+      concurrency: processEnv.PROBE_CONCURRENCY ? parseInt(processEnv.PROBE_CONCURRENCY, 10) : 5,
+    },
   };
 }
 
