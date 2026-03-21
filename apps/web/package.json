@@ -9,7 +9,10 @@
     "preview": "wrangler pages dev dist",
     "deploy": "wrangler pages deploy dist",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@dns-ops/contracts": "workspace:*",
@@ -31,6 +34,7 @@
     "vinxi": "0.5.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "@cloudflare/workers-types": "^4.20231218.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

@@ -13,7 +13,8 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "dev": "turbo run dev",
-    "test": "vitest run"
+    "test": "vitest run",
+    "smoke-test": "npx tsx scripts/deploy/smoke-test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
