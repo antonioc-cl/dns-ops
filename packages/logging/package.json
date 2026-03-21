@@ -16,7 +16,8 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src"
+    "lint": "biome check src",
+    "test": "echo 'No unit tests'"
   },
   "peerDependencies": {
     "hono": "^4.0.0"

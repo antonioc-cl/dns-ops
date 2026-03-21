@@ -24,7 +24,8 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src"
+    "lint": "biome check src",
+    "test": "vitest run src"
   },
   "dependencies": {
     "@dns-ops/contracts": "workspace:*",

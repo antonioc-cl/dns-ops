@@ -10,6 +10,7 @@
     "deploy": "wrangler pages deploy dist",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
+    "test": "echo 'Use pnpm e2e for browser tests'",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",
     "e2e:ui": "playwright test --ui"

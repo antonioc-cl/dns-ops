@@ -18,6 +18,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src",
+    "test": "echo 'No unit tests - schema only'",
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate",
     "studio": "drizzle-kit studio",
