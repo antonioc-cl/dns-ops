@@ -240,3 +240,310 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', async (c) => {
     );
   }
 });
+
+/**
+ * GET /api/snapshot/:snapshotId/delegation/dnssec
+ * Get DNSSEC evidence and chain validation details
+ */
+delegationRoutes.get('/snapshot/:snapshotId/delegation/dnssec', async (c) => {
+  const snapshotId = c.req.param('snapshotId');
+  const db = c.get('db');
+
+  try {
+    const snapshotRepo = new SnapshotRepository(db);
+    const observationRepo = new ObservationRepository(db);
+
+    const snapshot = await snapshotRepo.findById(snapshotId);
+    if (!snapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
+    const observations = await observationRepo.findBySnapshotId(snapshotId);
+
+    // Extract DNSSEC-related observations
+    const dsObservations = observations.filter(
+      (obs) => obs.queryType === 'DS' && obs.queryName === snapshot.domainName
+    );
+
+    const dnskeyObservations = observations.filter(
+      (obs) => obs.queryType === 'DNSKEY' && obs.queryName === snapshot.domainName
+    );
+
+    const rrsigObservations = observations.filter(
+      (obs) => obs.queryType === 'RRSIG'
+    );
+
+    // Parse DS records
+    const dsRecords = dsObservations
+      .filter((obs) => obs.status === 'success')
+      .flatMap((obs) =>
+        (obs.answerSection || [])
+          .filter((a) => a.type === 'DS')
+          .map((a) => {
+            // DS record format: keyTag algorithm digestType digest
+            const parts = a.data.split(' ');
+            return {
+              keyTag: parts[0] || '',
+              algorithm: parts[1] || '',
+              digestType: parts[2] || '',
+              digest: parts.slice(3).join(' ') || '',
+              source: obs.vantageIdentifier,
+              ttl: a.ttl,
+            };
+          })
+      );
+
+    // Parse DNSKEY records
+    const dnskeyRecords = dnskeyObservations
+      .filter((obs) => obs.status === 'success')
+      .flatMap((obs) =>
+        (obs.answerSection || [])
+          .filter((a) => a.type === 'DNSKEY')
+          .map((a) => {
+            // DNSKEY format: flags protocol algorithm publicKey
+            const parts = a.data.split(' ');
+            const flags = parseInt(parts[0] || '0', 10);
+            return {
+              flags,
+              isKSK: (flags & 0x0001) !== 0, // SEP flag
+              isZSK: (flags & 0x0001) === 0,
+              protocol: parts[1] || '',
+              algorithm: parts[2] || '',
+              publicKey: parts.slice(3).join(' ') || '',
+              source: obs.vantageIdentifier,
+              ttl: a.ttl,
+            };
+          })
+      );
+
+    // Count RRSIG coverage
+    const signedTypes = new Set(
+      rrsigObservations
+        .filter((obs) => obs.status === 'success')
+        .flatMap((obs) =>
+          (obs.answerSection || [])
+            .filter((a) => a.type === 'RRSIG')
+            .map((a) => {
+              // RRSIG first field is the covered type
+              const parts = a.data.split(' ');
+              return parts[0] || '';
+            })
+        )
+    );
+
+    // Determine DNSSEC status
+    const hasDs = dsRecords.length > 0;
+    const hasDnskey = dnskeyRecords.length > 0;
+    const hasKsk = dnskeyRecords.some((k) => k.isKSK);
+    const hasZsk = dnskeyRecords.some((k) => k.isZSK);
+    const hasRrsig = signedTypes.size > 0;
+
+    let status: 'signed' | 'partially-signed' | 'unsigned' | 'broken' = 'unsigned';
+    let statusMessage = '';
+
+    if (hasDs && hasDnskey && hasRrsig) {
+      if (hasKsk && hasZsk) {
+        status = 'signed';
+        statusMessage = 'Zone is properly DNSSEC-signed';
+      } else {
+        status = 'partially-signed';
+        statusMessage = 'Zone has DNSSEC records but may be missing KSK or ZSK';
+      }
+    } else if (hasDs && !hasDnskey) {
+      status = 'broken';
+      statusMessage = 'DS record exists in parent but DNSKEY not found in zone';
+    } else if (hasDnskey && !hasDs) {
+      status = 'partially-signed';
+      statusMessage = 'Zone has DNSKEY but no DS in parent (chain incomplete)';
+    } else {
+      status = 'unsigned';
+      statusMessage = 'Zone is not DNSSEC-signed';
+    }
+
+    // Build response
+    const dnssec = {
+      status,
+      statusMessage,
+      hasDelegationSigner: hasDs,
+      hasDnskey,
+      hasKsk,
+      hasZsk,
+      hasRrsig,
+      signedRecordTypes: Array.from(signedTypes),
+      dsRecords,
+      dnskeyRecords,
+      chainSummary: {
+        dsCount: dsRecords.length,
+        dnskeyCount: dnskeyRecords.length,
+        kskCount: dnskeyRecords.filter((k) => k.isKSK).length,
+        zskCount: dnskeyRecords.filter((k) => k.isZSK).length,
+        signedTypeCount: signedTypes.size,
+      },
+    };
+
+    return c.json({
+      snapshotId,
+      domain: snapshot.domainName,
+      dnssec,
+    });
+  } catch (error) {
+    console.error('Error fetching DNSSEC evidence:', error);
+    return c.json(
+      {
+        error: 'Failed to fetch DNSSEC evidence',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/snapshot/:snapshotId/delegation/evidence
+ * Get detailed delegation evidence with per-nameserver responses
+ */
+delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
+  const snapshotId = c.req.param('snapshotId');
+  const db = c.get('db');
+
+  try {
+    const snapshotRepo = new SnapshotRepository(db);
+    const observationRepo = new ObservationRepository(db);
+
+    const snapshot = await snapshotRepo.findById(snapshotId);
+    if (!snapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
+    const observations = await observationRepo.findBySnapshotId(snapshotId);
+
+    // Get NS observations grouped by vantage
+    const nsObservations = observations.filter(
+      (obs) => obs.queryType === 'NS' && obs.queryName === snapshot.domainName
+    );
+
+    // Build per-vantage evidence
+    const vantageEvidence = nsObservations.map((obs) => {
+      const nsRecords = (obs.answerSection || [])
+        .filter((a) => a.type === 'NS')
+        .map((a) => ({
+          name: a.data,
+          ttl: a.ttl,
+        }));
+
+      return {
+        vantageType: obs.vantageType,
+        vantageIdentifier: obs.vantageIdentifier,
+        status: obs.status,
+        responseTime: obs.responseTimeMs,
+        nsRecords,
+        nsCount: nsRecords.length,
+        rawResponse: {
+          answerCount: obs.answerSection?.length || 0,
+          authorityCount: obs.authoritySection?.length || 0,
+          additionalCount: obs.additionalSection?.length || 0,
+        },
+      };
+    });
+
+    // Find authoritative nameserver responses
+    const authoritativeResponses = observations.filter(
+      (obs) => obs.vantageType === 'authoritative'
+    );
+
+    // Build per-nameserver evidence
+    const nameserverEvidence: Record<string, {
+      hostname: string;
+      ipv4?: string;
+      ipv6?: string;
+      isResponsive: boolean;
+      responseDetails?: {
+        queryName: string;
+        queryType: string;
+        status: string;
+        responseTime: number;
+      }[];
+    }> = {};
+
+    for (const obs of authoritativeResponses) {
+      const ns = obs.vantageIdentifier;
+      if (!ns) continue; // Skip if no vantage identifier
+
+      if (!nameserverEvidence[ns]) {
+        nameserverEvidence[ns] = {
+          hostname: ns,
+          isResponsive: false,
+          responseDetails: [],
+        };
+      }
+
+      if (obs.status === 'success') {
+        nameserverEvidence[ns].isResponsive = true;
+      }
+
+      nameserverEvidence[ns].responseDetails?.push({
+        queryName: obs.queryName,
+        queryType: obs.queryType,
+        status: obs.status,
+        responseTime: obs.responseTimeMs ?? 0,
+      });
+    }
+
+    // Get glue records
+    const glueRecords = observations
+      .filter(
+        (obs) =>
+          (obs.queryType === 'A' || obs.queryType === 'AAAA') &&
+          obs.status === 'success'
+      )
+      .flatMap((obs) =>
+        (obs.answerSection || [])
+          .filter((a) => a.type === 'A' || a.type === 'AAAA')
+          .map((a) => ({
+            hostname: obs.queryName,
+            type: a.type,
+            address: a.data,
+            ttl: a.ttl,
+            source: obs.vantageIdentifier,
+          }))
+      );
+
+    // Compute consistency score
+    const allNsSets = vantageEvidence
+      .filter((v) => v.status === 'success')
+      .map((v) => v.nsRecords.map((n) => n.name).sort().join(','));
+    const uniqueNsSets = new Set(allNsSets);
+    const consistencyScore = uniqueNsSets.size === 1 ? 100 : Math.round((1 / uniqueNsSets.size) * 100);
+
+    const evidence = {
+      domain: snapshot.domainName,
+      vantageEvidence,
+      nameserverEvidence: Object.values(nameserverEvidence),
+      glueRecords,
+      summary: {
+        totalVantages: vantageEvidence.length,
+        successfulVantages: vantageEvidence.filter((v) => v.status === 'success').length,
+        consistencyScore,
+        isConsistent: uniqueNsSets.size <= 1,
+        uniqueNsSetCount: uniqueNsSets.size,
+        nameserverCount: Object.keys(nameserverEvidence).length,
+        responsiveNameservers: Object.values(nameserverEvidence).filter((n) => n.isResponsive).length,
+        glueRecordCount: glueRecords.length,
+      },
+    };
+
+    return c.json({
+      snapshotId,
+      evidence,
+    });
+  } catch (error) {
+    console.error('Error fetching delegation evidence:', error);
+    return c.json(
+      {
+        error: 'Failed to fetch delegation evidence',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
