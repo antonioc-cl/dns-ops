@@ -52,3 +52,15 @@ export {
 } from './context.js';
 
 export { createLoggingMiddleware, type LoggingMiddlewareOptions } from './middleware.js';
+
+export {
+  createFeedbackLoopMetrics,
+  createMetricsCollector,
+  MetricsCollector,
+  type AlertMetrics,
+  type FeedbackLoopMetrics,
+  type MetricEvent,
+  type MetricType,
+  type RemediationMetrics,
+  type ShadowMetrics,
+} from './metrics.js';
