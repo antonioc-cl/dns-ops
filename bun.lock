@@ -17,6 +17,7 @@
       "dependencies": {
         "@dns-ops/contracts": "workspace:*",
         "@dns-ops/db": "workspace:*",
+        "@dns-ops/logging": "workspace:*",
         "@dns-ops/parsing": "workspace:*",
         "@dns-ops/rules": "workspace:*",
         "@hono/node-server": "^1.8.0",
@@ -38,6 +39,7 @@
       "dependencies": {
         "@dns-ops/contracts": "workspace:*",
         "@dns-ops/db": "workspace:*",
+        "@dns-ops/logging": "workspace:*",
         "@dns-ops/parsing": "workspace:*",
         "@dns-ops/rules": "workspace:*",
         "@tanstack/history": "1.120.17",
@@ -84,15 +86,32 @@
         "typescript": "^5.3.0",
       },
     },
+    "packages/logging": {
+      "name": "@dns-ops/logging",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/node": "^20.10.0",
+        "hono": "^4.0.0",
+        "typescript": "^5.3.0",
+      },
+      "peerDependencies": {
+        "hono": "^4.0.0",
+      },
+      "optionalPeers": [
+        "hono",
+      ],
+    },
     "packages/parsing": {
       "name": "@dns-ops/parsing",
       "version": "0.1.0",
       "dependencies": {
         "@dns-ops/contracts": "workspace:*",
         "@dns-ops/db": "workspace:*",
+        "punycode": "^2.3.1",
       },
       "devDependencies": {
         "@types/node": "^20.0.0",
+        "@types/punycode": "^2.1.4",
         "typescript": "^5.3.0",
       },
     },
@@ -230,6 +249,8 @@
     "@dns-ops/contracts": ["@dns-ops/contracts@workspace:packages/contracts"],
 
     "@dns-ops/db": ["@dns-ops/db@workspace:packages/db"],
+
+    "@dns-ops/logging": ["@dns-ops/logging@workspace:packages/logging"],
 
     "@dns-ops/parsing": ["@dns-ops/parsing@workspace:packages/parsing"],
 
@@ -574,6 +595,8 @@
     "@types/pg": ["@types/pg@8.18.0", "", { "dependencies": { "@types/node": "*", "pg-protocol": "*", "pg-types": "^2.2.0" } }, "sha512-gT+oueVQkqnj6ajGJXblFR4iavIXWsGAFCk3dP4Kki5+a9R4NMt0JARdk6s8cUKcfUoqP5dAtDSLU8xYUTFV+Q=="],
 
     "@types/prop-types": ["@types/prop-types@15.7.15", "", {}, "sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw=="],
+
+    "@types/punycode": ["@types/punycode@2.1.4", "", {}, "sha512-trzh6NzBnq8yw5e35f8xe8VTYjqM3NE7bohBtvDVf/dtUer3zYTLK1Ka3DG3p7bdtoaOHZucma6FfVKlQ134pQ=="],
 
     "@types/react": ["@types/react@18.3.28", "", { "dependencies": { "@types/prop-types": "*", "csstype": "^3.2.2" } }, "sha512-z9VXpC7MWrhfWipitjNdgCauoMLRdIILQsAEV+ZesIzBq/oUlxk0m3ApZuMFCXdnS4U7KrI+l3WRUEGQ8K1QKw=="],
 
@@ -1221,6 +1244,8 @@
 
     "process-nextick-args": ["process-nextick-args@2.0.1", "", {}, "sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag=="],
 
+    "punycode": ["punycode@2.3.1", "", {}, "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg=="],
+
     "quansync": ["quansync@0.2.11", "", {}, "sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA=="],
 
     "queue-microtask": ["queue-microtask@1.2.3", "", {}, "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="],
@@ -1522,6 +1547,8 @@
     "@babel/helper-compilation-targets/lru-cache": ["lru-cache@5.1.1", "", { "dependencies": { "yallist": "^3.0.2" } }, "sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w=="],
 
     "@babel/helper-compilation-targets/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
+
+    "@dns-ops/logging/hono": ["hono@4.12.8", "", {}, "sha512-VJCEvtrezO1IAR+kqEYnxUOoStaQPGrCmX3j4wDTNOcD1uRPFpGlwQUIW8niPuvHXaTUxeOUl5MMDGrl+tmO9A=="],
 
     "@esbuild-kit/core-utils/esbuild": ["esbuild@0.18.20", "", { "optionalDependencies": { "@esbuild/android-arm": "0.18.20", "@esbuild/android-arm64": "0.18.20", "@esbuild/android-x64": "0.18.20", "@esbuild/darwin-arm64": "0.18.20", "@esbuild/darwin-x64": "0.18.20", "@esbuild/freebsd-arm64": "0.18.20", "@esbuild/freebsd-x64": "0.18.20", "@esbuild/linux-arm": "0.18.20", "@esbuild/linux-arm64": "0.18.20", "@esbuild/linux-ia32": "0.18.20", "@esbuild/linux-loong64": "0.18.20", "@esbuild/linux-mips64el": "0.18.20", "@esbuild/linux-ppc64": "0.18.20", "@esbuild/linux-riscv64": "0.18.20", "@esbuild/linux-s390x": "0.18.20", "@esbuild/linux-x64": "0.18.20", "@esbuild/netbsd-x64": "0.18.20", "@esbuild/openbsd-x64": "0.18.20", "@esbuild/sunos-x64": "0.18.20", "@esbuild/win32-arm64": "0.18.20", "@esbuild/win32-ia32": "0.18.20", "@esbuild/win32-x64": "0.18.20" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA=="],
 

@@ -1,9 +1,39 @@
+# Build outputs
+dist/
+*.tsbuildinfo
 
-# Dolt database files (added by bd init)
-.dolt/
-*.db
-.pi/messenger/crew/
+# Turbo cache
+.turbo/
+
+# Vinxi/Vite build
+.vinxi/
+
+# Dependencies
 node_modules/
 
-# bv (beads viewer) local config and caches
+# Database files
+.dolt/
+*.db
+*.db-shm
+*.db-wal
+
+# Local state (don't track)
+.ntm/
+.pi/messenger/crew/
 .bv/
+
+# Beads history (track issues.jsonl only)
+.beads/.br_history/
+.beads/last-touched
+.beads/*.db
+.beads/*.db-shm
+.beads/*.db-wal
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
