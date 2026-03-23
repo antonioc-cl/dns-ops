@@ -252,7 +252,7 @@ export class DelegationCollector {
             signature,
           });
         }
-        groupsBySignature.get(signature)!.servers.push(resp.server);
+        groupsBySignature.get(signature)?.servers.push(resp.server);
       }
 
       // If there's more than one group, we have divergence

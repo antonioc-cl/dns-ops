@@ -145,7 +145,7 @@ function isValidDatabaseUrl(value: string): boolean {
  */
 function isValidPort(value: string): boolean {
   const port = parseInt(value, 10);
-  return !isNaN(port) && port > 0 && port < 65536;
+  return !Number.isNaN(port) && port > 0 && port < 65536;
 }
 
 /**

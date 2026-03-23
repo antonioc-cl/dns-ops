@@ -1,72 +1,117 @@
-# DNS Ops Workbench — Implementation Pack
+# DNS Ops Workbench
 
-This repo contains the implementation planning artifacts for DNS Ops Workbench.
+DNS + mail operations platform. Split runtime:
+- `apps/web` — TanStack Start + Hono on Cloudflare Workers
+- `apps/collector` — Node.js service for collection, probes, jobs
+- `packages/db` — PostgreSQL/Drizzle schema + repos
 
-## Primary planning source of truth
+## Current truth
 
-- `IMPLEMENTATION_BEADS.md` — **authoritative revised bead plan**
+- Authoritative datastore: **PostgreSQL only**
+- Web runtime: Workers + PostgreSQL connection config
+- Collector runtime: Node + direct PostgreSQL
+- Collector public health endpoints: `/health`, `/healthz`, `/readyz`
+- Collector `/api/*` endpoints require service auth
+- Domain 360 now exposes `Overview`, `DNS`, and `Mail`, with tenant-scoped notes and tags on the overview surface
+- `/portfolio` now exposes portfolio search, saved filters, monitoring, alerts, fleet reports, shared reports, template overrides, and the audit log
+- Tenant-scoped remediation APIs and persisted shared-report APIs are implemented
+- Monitoring, alert-state, and shared-report mutations now emit persisted audit events
 
-## Important note about split bead files
+## Repo layout
 
-The files under `beads/` still reflect the older v1 bead graph.
-They are useful as historical context, but they are **not** the current source of truth until regenerated from `IMPLEMENTATION_BEADS.md`.
+```text
+dns-ops/
+├── apps/
+│   ├── web/
+│   └── collector/
+├── packages/
+│   ├── contracts/
+│   ├── db/
+│   ├── parsing/
+│   ├── rules/
+│   ├── logging/
+│   └── testkit/
+├── docs/
+└── beads/
+```
 
-## Supporting files
+## Setup
 
-- `beads/` — legacy per-bead markdown files from the older plan
-- `REPO_STRUCTURE.md` — recommended repo structure and architecture notes
-- `docs/rules/query-scope.md` — DNS scope policy
-- `docs/rules/trust-boundary.md` — non-DNS probe trust-boundary policy
+Prereqs:
+- Bun 1.3.11+
+- PostgreSQL 15+
+- Redis 7+ for queue-backed collector jobs
 
-## Recommended execution order
+Install:
 
-1. `00` — Workspace validation baseline
-2. `01` — Pilot corpus, status vocabulary, query scope, and trust boundary
-3. `02` — Authoritative runtime topology and scaffold
-4. `03` — Shared contracts and core supported schema
-5. `04` — DNS collection and normalization pipeline
-6. `05` — Single-domain evidence viewer
-7. `06` — Ruleset registry and persisted DNS findings
-8. `07` — Snapshot history and diff
-9. `08` — Legacy mail bridge
-10. `09` — Mail evidence core
-11. `10` — DKIM selector provenance and provider detection
-12. `11` — Mail findings preview
-13. `12` — Shadow comparison and parity evidence
-14. `13` — Auth, actor, tenant, and write-path governance
-15. `18` — Batch findings report
-16. `14` — Portfolio search and read models
-17. `15` — Portfolio writes, notes, tags, overrides, adjudication, and audit log
-18. `16` — Delegation evidence
-19. `17` — Non-DNS probe sandbox (optional)
-20. `19` — Job orchestration and scheduled refresh
-21. `20` — Alerts and shared reports
+```bash
+bun install
+cp .env.example .env
+```
 
-## Frozen ahead-of-plan surfaces
+## Database
 
-These code paths already exist in the repo, but they are not proof of completed beads and should be treated as frozen/experimental until their owning revised bead lands:
-- `apps/web/hono/routes/mail.ts`
-- `apps/web/hono/routes/portfolio.ts`
-- `apps/web/hono/routes/shadow-comparison.ts`
-- `apps/web/hono/routes/provider-templates.ts`
-- `apps/collector/src/jobs/fleet-report.ts`
-- `apps/collector/src/jobs/monitoring.ts`
-- `apps/collector/src/jobs/probe-routes.ts`
-- `apps/web/app/routes/domain/$domain.tsx`
-- `apps/web/app/components/mail/MailDiagnostics.tsx`
-- `apps/web/app/components/mail/RemediationForm.tsx`
-- `apps/web/app/components/DiscoveredSelectors.tsx`
-- `apps/web/app/components/DelegationPanel.tsx`
-- `apps/collector/src/index.ts`
-- `STATUS_REPORT.md` (non-authoritative; stale until rewritten)
+Use the DB package scripts from `packages/db`:
 
-## Recommended stopping points
+```bash
+cd packages/db
+bun run build
+bun run generate
+bun run check-drift
+DATABASE_URL=postgres://... bun run verify-migrations
+```
 
-- After `05`: first trustworthy single-domain evidence product
-- After `06`: persisted DNS findings
-- After `07`: strong history/diff workflow
-- After `11`: first useful workbench mail preview
-- After `12`: durable mail parity evidence program (not legacy cutover by itself)
-- After `14`: first safe portfolio read value
-- After `18`: actionable batch fleet reporting
-- After `20`: proactive operations platform
+## Run
+
+```bash
+bun dev
+# or individually
+bun run --filter @dns-ops/web dev
+bun run --filter @dns-ops/collector dev
+```
+
+## Validation
+
+```bash
+bun run typecheck
+bun run test
+bun run build
+bun run lint
+bun run smoke-test
+```
+
+Optional live-network DNS smoke (public live DNS by default, with optional controllable authoritative fixtures):
+
+```bash
+bun run test:live-dns
+```
+
+`bun run test` is deterministic by default; the live DNS suite is now opt-in because it depends on public DNS infrastructure.
+
+Optional live DNS fixtures:
+- `RUN_LIVE_DNS_TESTS=1`
+- `LIVE_DNS_RESOLVER_PRIMARY`
+- `LIVE_DNS_RESOLVER_SECONDARY`
+- `LIVE_DNS_DOMAIN`
+- `LIVE_DNS_MAIL_DOMAIN`
+- `LIVE_DNS_AUTHORITATIVE_DOMAIN`
+- `LIVE_DNS_AUTHORITATIVE_NS_IP`
+
+## Beads
+
+This repo uses `bd` for issue tracking:
+
+```bash
+bd ready --json
+bd show <id>
+bd update <id> --claim --json
+bd close <id> --reason "Done" --json
+```
+
+## Key docs
+
+- `IMPLEMENTATION_BEADS.md`
+- `docs/architecture/runtime-topology.md`
+- `docs/rules/query-scope.md`
+- `docs/rules/trust-boundary.md`
+- `STATUS_REPORT.md`

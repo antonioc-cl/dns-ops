@@ -78,7 +78,9 @@ export function createErrorTrackingMiddleware(config: ErrorTrackingConfig = {}) 
   const logger = getCollectorLogger();
 
   return createMiddleware<Env>(async (c, next) => {
-    const requestId = c.req.header('X-Request-Id') || `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const requestId =
+      c.req.header('X-Request-Id') ||
+      `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     const startTime = Date.now();
 
     try {

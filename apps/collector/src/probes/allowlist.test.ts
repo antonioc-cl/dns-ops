@@ -15,7 +15,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DNSQueryResult } from '../dns/types.js';
-import { ProbeAllowlist, type AllowlistEntry } from './allowlist.js';
+import { ProbeAllowlist } from './allowlist.js';
 
 // =============================================================================
 // Allowlist Expiry Tests
@@ -210,7 +210,9 @@ describe('Allowlist Entry Generation - Bead 13.4', () => {
         query: { name: '_mta-sts.example.com', type: 'TXT' },
         vantage: { type: 'public-recursive', identifier: 'google' },
         success: true,
-        answers: [{ name: '_mta-sts.example.com', type: 'TXT', ttl: 300, data: 'v=STSv1; id=20240101' }],
+        answers: [
+          { name: '_mta-sts.example.com', type: 'TXT', ttl: 300, data: 'v=STSv1; id=20240101' },
+        ],
         authority: [],
         additional: [],
         responseTime: 30,
@@ -349,7 +351,12 @@ describe('Custom Entries - Bead 13.4', () => {
   });
 
   it('should add custom entry with requester info', () => {
-    const entry = allowlist.addCustomEntry('custom.example.com', 443, 'operator@example.com', 'Manual probe request');
+    const entry = allowlist.addCustomEntry(
+      'custom.example.com',
+      443,
+      'operator@example.com',
+      'Manual probe request'
+    );
 
     expect(entry.type).toBe('custom');
     expect(entry.hostname).toBe('custom.example.com');
@@ -418,13 +425,19 @@ describe('Concurrent Access - Bead 13.4', () => {
   });
 
   it('should handle interleaved add and check operations', async () => {
-    const operations: Promise<boolean | void>[] = [];
+    const operations: Promise<boolean | undefined>[] = [];
 
     for (let i = 0; i < 50; i++) {
       // Add operation
-      operations.push(Promise.resolve(allowlist.addCustomEntry(`mail${i}.example.com`, 25, 'test', 'testing')).then(() => undefined));
+      operations.push(
+        Promise.resolve(
+          allowlist.addCustomEntry(`mail${i}.example.com`, 25, 'test', 'testing')
+        ).then(() => undefined)
+      );
       // Check operation (might be before or after add)
-      operations.push(Promise.resolve(allowlist.isAllowed(`mail${Math.floor(i / 2)}.example.com`, 25)));
+      operations.push(
+        Promise.resolve(allowlist.isAllowed(`mail${Math.floor(i / 2)}.example.com`, 25))
+      );
     }
 
     await Promise.all(operations);
@@ -548,7 +561,9 @@ describe('Probe Guardrails - Bead 13.4', () => {
         query: { name: 'example.com', type: 'MX' },
         vantage: { type: 'public-recursive', identifier: 'google' },
         success: true,
-        answers: [{ name: 'example.com', type: 'MX', ttl: 300, data: '10 derived-target.example.com.' }],
+        answers: [
+          { name: 'example.com', type: 'MX', ttl: 300, data: '10 derived-target.example.com.' },
+        ],
         authority: [],
         additional: [],
         responseTime: 50,

@@ -12,7 +12,6 @@
  * - Scope and ruleset warnings
  */
 
-import { describe, expect, it } from 'vitest';
 import type {
   FindingChange,
   RecordChange,
@@ -21,6 +20,7 @@ import type {
   SnapshotDiffResult,
   TTLChange,
 } from '@dns-ops/parsing';
+import { describe, expect, it } from 'vitest';
 
 // =============================================================================
 // Snapshot Listing Tests
@@ -36,9 +36,7 @@ describe('Snapshot Listing - Bead 13', () => {
       ];
 
       // Sorted by createdAt desc
-      const sorted = [...snapshots].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      );
+      const sorted = [...snapshots].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       expect(sorted[0].id).toBe('snap-3');
       expect(sorted[2].id).toBe('snap-1');
@@ -96,9 +94,7 @@ describe('Latest Snapshot - Bead 13', () => {
         { id: 'snap-3', createdAt: new Date('2024-03-01') },
       ];
 
-      const sorted = [...snapshots].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      );
+      const sorted = [...snapshots].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       const latest = sorted[0];
 
       expect(latest.id).toBe('snap-3');
@@ -169,8 +165,7 @@ describe('Snapshot Diff - Bead 13', () => {
       const snapA = { id: 'snap-1', domainId: 'domain-1' };
       const snapB = { id: 'snap-2', domainId: 'domain-2' }; // Different domain
 
-      const bothBelongToDomain =
-        snapA.domainId === domain.id && snapB.domainId === domain.id;
+      const bothBelongToDomain = snapA.domainId === domain.id && snapB.domainId === domain.id;
 
       expect(bothBelongToDomain).toBe(false);
     });
@@ -278,9 +273,7 @@ describe('Snapshot Diff - Bead 13', () => {
         vantages: ['google-dns'],
       };
 
-      const namesAdded = snapshotB.queriedNames.filter(
-        (n) => !snapshotA.queriedNames.includes(n)
-      );
+      const namesAdded = snapshotB.queriedNames.filter((n) => !snapshotA.queriedNames.includes(n));
       const namesRemoved = snapshotA.queriedNames.filter(
         (n) => !snapshotB.queriedNames.includes(n)
       );
@@ -370,9 +363,7 @@ describe('Compare Latest - Bead 13', () => {
       ];
 
       // Sort by createdAt desc and take first 2
-      const sorted = [...snapshots].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      );
+      const sorted = [...snapshots].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       const [snapB, snapA] = sorted; // B is newer, A is older
 
       expect(snapB.id).toBe('snap-3');

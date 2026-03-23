@@ -36,11 +36,12 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl">
+    <form action="/" method="get" onSubmit={handleSubmit} className="w-full max-w-2xl">
       <div className="flex flex-col gap-2">
         <div className="flex gap-2">
           <input
             type="text"
+            name="domain"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="example.com"
@@ -49,8 +50,7 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
           />
           <button
             type="submit"
-            disabled={!normalizedDomain}
-            className="focus-ring px-6 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="focus-ring px-6 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             Analyze
           </button>

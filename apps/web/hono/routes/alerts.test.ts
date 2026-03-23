@@ -19,7 +19,11 @@ describe('Alert Routes - Bead 20', () => {
 
     it('should transition from pending to acknowledged', () => {
       const alert = { id: 'alert-1', status: 'pending' };
-      const acknowledged = { ...alert, status: 'acknowledged', acknowledgedBy: 'admin@example.com' };
+      const acknowledged = {
+        ...alert,
+        status: 'acknowledged',
+        acknowledgedBy: 'admin@example.com',
+      };
 
       expect(acknowledged.status).toBe('acknowledged');
       expect(acknowledged.acknowledgedBy).toBeDefined();
@@ -76,8 +80,7 @@ describe('Alert Routes - Bead 20', () => {
       };
       const newAlertTime = new Date('2024-01-01T12:00:00Z'); // 2 hours later
 
-      const minutesDiff =
-        (newAlertTime.getTime() - alert1.createdAt.getTime()) / (1000 * 60);
+      const minutesDiff = (newAlertTime.getTime() - alert1.createdAt.getTime()) / (1000 * 60);
       const isWithinWindow = minutesDiff <= dedupWindowMinutes;
 
       expect(isWithinWindow).toBe(false);
@@ -102,7 +105,8 @@ describe('Alert Routes - Bead 20', () => {
 
       const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
       const sorted = [...alerts].sort(
-        (a, b) => severityOrder[a.severity as keyof typeof severityOrder] -
+        (a, b) =>
+          severityOrder[a.severity as keyof typeof severityOrder] -
           severityOrder[b.severity as keyof typeof severityOrder]
       );
 
@@ -139,7 +143,6 @@ describe('Alert Routes - Bead 20', () => {
         expiresAt: new Date('2024-02-01T00:00:00Z'),
       };
 
-      const isExpired = new Date() > report.expiresAt;
       // Test depends on current date, so just verify the field exists
       expect(report.expiresAt).toBeDefined();
     });
@@ -148,17 +151,17 @@ describe('Alert Routes - Bead 20', () => {
       const report = {
         config: { redactInternalNotes: true },
         data: {
-          findings: [
-            { id: 'f1', title: 'SPF failure', internalNotes: 'Discuss with team' },
-          ],
+          findings: [{ id: 'f1', title: 'SPF failure', internalNotes: 'Discuss with team' }],
         },
       };
 
       // When redaction is enabled, internal notes should be removed
-      const redactedFindings = report.data.findings.map((f: any) => ({
-        ...f,
-        internalNotes: undefined,
-      }));
+      const redactedFindings = report.data.findings.map(
+        (finding: { id: string; title: string; internalNotes?: string }) => ({
+          ...finding,
+          internalNotes: undefined,
+        })
+      );
 
       expect(redactedFindings[0].internalNotes).toBeUndefined();
     });

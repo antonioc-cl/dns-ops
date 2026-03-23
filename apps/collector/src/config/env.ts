@@ -46,7 +46,7 @@ const ENV_VARS: EnvVarDef[] = [
     description: 'Server port (default: 3001)',
     validate: (v) => {
       const port = parseInt(v, 10);
-      if (isNaN(port) || port < 1 || port > 65535) {
+      if (Number.isNaN(port) || port < 1 || port > 65535) {
         return 'Must be a valid port number (1-65535)';
       }
       return null;
@@ -103,12 +103,11 @@ const ENV_VARS: EnvVarDef[] = [
   {
     name: 'ENABLE_ACTIVE_PROBES',
     required: false,
-    description: 'Enable active probing (MTA-STS, SMTP STARTTLS). Optional feature, disabled by default.',
+    description:
+      'Enable active probing (MTA-STS, SMTP STARTTLS). Optional feature, disabled by default.',
     validate: (v) => {
       const valid = ['true', 'false', '1', '0'];
-      return valid.includes(v.toLowerCase())
-        ? null
-        : 'Must be true/false or 1/0';
+      return valid.includes(v.toLowerCase()) ? null : 'Must be true/false or 1/0';
     },
     default: 'false',
   },
@@ -118,7 +117,7 @@ const ENV_VARS: EnvVarDef[] = [
     description: 'Timeout for active probes in milliseconds (default: 30000)',
     validate: (v) => {
       const ms = parseInt(v, 10);
-      if (isNaN(ms) || ms < 1000 || ms > 120000) {
+      if (Number.isNaN(ms) || ms < 1000 || ms > 120000) {
         return 'Must be between 1000 and 120000 milliseconds';
       }
       return null;
@@ -131,7 +130,7 @@ const ENV_VARS: EnvVarDef[] = [
     description: 'Maximum concurrent probe connections (default: 5)',
     validate: (v) => {
       const n = parseInt(v, 10);
-      if (isNaN(n) || n < 1 || n > 20) {
+      if (Number.isNaN(n) || n < 1 || n > 20) {
         return 'Must be between 1 and 20';
       }
       return null;

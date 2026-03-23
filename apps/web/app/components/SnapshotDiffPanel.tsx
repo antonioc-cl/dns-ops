@@ -172,8 +172,8 @@ export function SnapshotDiffPanel({ diff, warnings }: SnapshotDiffPanelProps) {
       {/* Warnings */}
       {warnings && warnings.length > 0 && (
         <div className="px-4 py-2 bg-yellow-50 border-b border-yellow-200">
-          {warnings.map((warning, i) => (
-            <p key={i} className="text-sm text-yellow-800">
+          {warnings.map((warning) => (
+            <p key={warning} className="text-sm text-yellow-800">
               {warning}
             </p>
           ))}
@@ -198,9 +198,7 @@ export function SnapshotDiffPanel({ diff, warnings }: SnapshotDiffPanelProps) {
               {tab.count > 0 && (
                 <span
                   className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                    activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-600'
+                    activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
                   }`}
                 >
                   {tab.count}
@@ -214,7 +212,10 @@ export function SnapshotDiffPanel({ diff, warnings }: SnapshotDiffPanelProps) {
       {/* Tab content */}
       <div className="p-4 max-h-96 overflow-y-auto">
         {activeTab === 'records' && (
-          <RecordChangesView changes={diff.comparison.recordChanges} showUnchanged={showUnchanged} />
+          <RecordChangesView
+            changes={diff.comparison.recordChanges}
+            showUnchanged={showUnchanged}
+          />
         )}
         {activeTab === 'ttl' && <TTLChangesView changes={diff.comparison.ttlChanges} />}
         {activeTab === 'findings' && (
@@ -254,8 +255,11 @@ function RecordChangesView({
 
   return (
     <div className="space-y-2">
-      {filtered.map((change, i) => (
-        <RecordChangeCard key={`${change.name}-${change.recordType}-${i}`} change={change} />
+      {filtered.map((change) => (
+        <RecordChangeCard
+          key={`${change.type}-${change.name}-${change.recordType}`}
+          change={change}
+        />
       ))}
     </div>
   );
@@ -299,8 +303,8 @@ function RecordChangeCard({ change }: { change: RecordChange }) {
         <div className="mt-1 ml-5 text-xs">
           {change.diff.removed.length > 0 && (
             <div className="text-red-700">
-              {change.diff.removed.map((v, j) => (
-                <div key={j} className="font-mono">
+              {change.diff.removed.map((v) => (
+                <div key={v} className="font-mono">
                   - {v}
                 </div>
               ))}
@@ -308,8 +312,8 @@ function RecordChangeCard({ change }: { change: RecordChange }) {
           )}
           {change.diff.added.length > 0 && (
             <div className="text-green-700">
-              {change.diff.added.map((v, j) => (
-                <div key={j} className="font-mono">
+              {change.diff.added.map((v) => (
+                <div key={v} className="font-mono">
                   + {v}
                 </div>
               ))}
@@ -320,8 +324,8 @@ function RecordChangeCard({ change }: { change: RecordChange }) {
 
       {change.type === 'added' && change.valuesB && (
         <div className="mt-1 ml-5 text-xs text-green-700">
-          {change.valuesB.map((v, j) => (
-            <div key={j} className="font-mono">
+          {change.valuesB.map((v) => (
+            <div key={v} className="font-mono">
               {v}
             </div>
           ))}
@@ -330,8 +334,8 @@ function RecordChangeCard({ change }: { change: RecordChange }) {
 
       {change.type === 'removed' && change.valuesA && (
         <div className="mt-1 ml-5 text-xs text-red-700">
-          {change.valuesA.map((v, j) => (
-            <div key={j} className="font-mono">
+          {change.valuesA.map((v) => (
+            <div key={v} className="font-mono">
               {v}
             </div>
           ))}
@@ -363,8 +367,8 @@ function TTLChangesView({ changes }: { changes: TTLChange[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {changes.map((change, i) => (
-            <tr key={i}>
+          {changes.map((change) => (
+            <tr key={`${change.name}-${change.recordType}-${change.ttlA}-${change.ttlB}`}>
               <td className="px-3 py-2 font-mono">{change.name}</td>
               <td className="px-3 py-2">{change.recordType}</td>
               <td className="px-3 py-2 text-right tabular-nums">{change.ttlA}s</td>
@@ -421,8 +425,11 @@ function FindingChangesView({
         <div className="text-center text-gray-500 py-4">No finding changes</div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((change, i) => (
-            <FindingChangeCard key={`${change.findingType}-${i}`} change={change} />
+          {filtered.map((change) => (
+            <FindingChangeCard
+              key={`${change.type}-${change.findingType}-${change.ruleId ?? change.title}`}
+              change={change}
+            />
           ))}
         </div>
       )}
@@ -451,20 +458,22 @@ function FindingChangeCard({ change }: { change: FindingChange }) {
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-900">{change.title}</span>
         {change.type === 'added' && change.severityB && (
-          <span className={`px-1.5 py-0.5 rounded text-xs ${severityColors[change.severityB] || severityColors.info}`}>
+          <span
+            className={`px-1.5 py-0.5 rounded text-xs ${severityColors[change.severityB] || severityColors.info}`}
+          >
             {change.severityB}
           </span>
         )}
         {change.type === 'removed' && change.severityA && (
-          <span className={`px-1.5 py-0.5 rounded text-xs ${severityColors[change.severityA] || severityColors.info}`}>
+          <span
+            className={`px-1.5 py-0.5 rounded text-xs ${severityColors[change.severityA] || severityColors.info}`}
+          >
             {change.severityA}
           </span>
         )}
       </div>
 
-      {change.description && (
-        <p className="mt-1 text-xs text-gray-600">{change.description}</p>
-      )}
+      {change.description && <p className="mt-1 text-xs text-gray-600">{change.description}</p>}
 
       {change.changes && (
         <div className="mt-1 text-xs text-gray-600">
@@ -488,9 +497,7 @@ function FindingChangeCard({ change }: { change: FindingChange }) {
         </div>
       )}
 
-      {change.ruleId && (
-        <p className="mt-1 text-xs text-gray-400">Rule: {change.ruleId}</p>
-      )}
+      {change.ruleId && <p className="mt-1 text-xs text-gray-400">Rule: {change.ruleId}</p>}
     </div>
   );
 }

@@ -1,61 +1,267 @@
 /**
  * Alert Routes - Bead 20: Alerts and shared reports
- *
- * API routes for alert rules, alert management, suppressions, and shared reports.
- *
- * Invariants:
- * - Monitoring respects a defined noise budget
- * - Alerts do not bypass review-only safeguards
- * - Shared reports do not leak internal notes or imply unmanaged-zone completeness
  */
 
-import { AlertRepository } from '@dns-ops/db';
+import {
+  type Alert,
+  AlertRepository,
+  AuditEventRepository,
+  MonitoredDomainRepository,
+  SharedReportRepository,
+} from '@dns-ops/db';
 import { Hono } from 'hono';
-import { requireAuth } from '../middleware/authorization.js';
+import { getRequestClientIp } from '../lib/request-context.js';
+import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import { trackAlert, trackReport } from '../middleware/error-tracking.js';
+import {
+  enumValue,
+  integer,
+  optionalString,
+  validateBody,
+  validationErrorResponse,
+} from '../middleware/validation.js';
 import type { Env } from '../types.js';
+
+const VALID_STATUSES: Alert['status'][] = [
+  'pending',
+  'sent',
+  'suppressed',
+  'acknowledged',
+  'resolved',
+];
+const VALID_SEVERITIES: Alert['severity'][] = ['critical', 'high', 'medium', 'low', 'info'];
+const REPORT_VISIBILITIES = ['private', 'tenant', 'shared'] as const;
 
 export const alertRoutes = new Hono<Env>();
 
-// =============================================================================
-// MIDDLEWARE - All routes require authentication
-// =============================================================================
+function requiresAuth(path: string): boolean {
+  return !path.includes('/reports/shared/');
+}
 
-alertRoutes.use('*', requireAuth);
+alertRoutes.use('*', async (c, next) => {
+  if (!requiresAuth(c.req.path)) {
+    return next();
+  }
+  return requireAuth(c, next);
+});
 
-// =============================================================================
-// ALERTS
-// =============================================================================
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
 
-/**
- * GET /api/alerts
- * List alerts with filtering and pagination
- */
+async function buildSharedReportPayload(db: Env['Variables']['db'], tenantId: string) {
+  const monitoredRepo = new MonitoredDomainRepository(db);
+  const alertRepo = new AlertRepository(db);
+
+  const monitored = await monitoredRepo.findByTenant(tenantId);
+  const activeAlerts = await alertRepo.findPending(tenantId);
+
+  const bySeverity = {
+    critical: activeAlerts.filter((alert) => alert.severity === 'critical').length,
+    high: activeAlerts.filter((alert) => alert.severity === 'high').length,
+    medium: activeAlerts.filter((alert) => alert.severity === 'medium').length,
+    low: activeAlerts.filter((alert) => alert.severity === 'low').length,
+  };
+
+  return {
+    summary: {
+      totalMonitored: monitored.length,
+      activeAlerts: activeAlerts.length,
+      bySeverity,
+    },
+    alertSummary: activeAlerts.slice(0, 10).map((alert) => ({
+      title: alert.title,
+      severity: alert.severity,
+      status: alert.status,
+      createdAt: alert.createdAt,
+    })),
+    generatedAlertCount: activeAlerts.length,
+  };
+}
+
+alertRoutes.get('/reports/shared/:token', async (c) => {
+  const db = c.get('db');
+
+  if (!db) {
+    return c.json({ error: 'Database unavailable' }, 503);
+  }
+
+  const token = c.req.param('token');
+  const reportRepo = new SharedReportRepository(db);
+  const report = await reportRepo.findByToken(token);
+
+  if (!report) {
+    return c.json({ error: 'Shared report not found' }, 404);
+  }
+
+  return c.json({
+    report: {
+      id: report.id,
+      title: report.title,
+      visibility: report.visibility,
+      status: report.status,
+      expiresAt: report.expiresAt,
+      createdAt: report.createdAt,
+      summary: report.summary,
+      alertSummary: report.alertSummary,
+    },
+  });
+});
+
+alertRoutes.get('/reports', async (c) => {
+  const db = c.get('db');
+  const tenantId = c.get('tenantId');
+
+  if (!db || !tenantId) {
+    return c.json({ error: 'Database or tenant context unavailable' }, 503);
+  }
+
+  const reportRepo = new SharedReportRepository(db);
+  const reports = await reportRepo.listByTenant(tenantId);
+  return c.json({ reports });
+});
+
+alertRoutes.post('/reports', requireWritePermission, async (c) => {
+  const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
+  }
+
+  const validation = await validateBody(c, {
+    title: optionalString('title', { minLength: 3, maxLength: 200 }),
+    visibility: enumValue('visibility', REPORT_VISIBILITIES, false),
+    expiresInDays: integer('expiresInDays', { min: 1, max: 365, required: false }),
+  });
+
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
+  }
+
+  const payload = await buildSharedReportPayload(db, tenantId);
+  const visibility = validation.data.visibility ?? 'shared';
+  const title =
+    validation.data.title ?? `Shared alert report ${new Date().toISOString().slice(0, 10)}`;
+  const expiresAt = validation.data.expiresInDays
+    ? new Date(Date.now() + validation.data.expiresInDays * 24 * 60 * 60 * 1000)
+    : undefined;
+  const shareToken = visibility === 'shared' ? crypto.randomUUID().replaceAll('-', '') : undefined;
+
+  const reportRepo = new SharedReportRepository(db);
+  const auditRepo = new AuditEventRepository(db);
+  const report = await reportRepo.create({
+    tenantId,
+    createdBy: actorId,
+    title,
+    visibility,
+    status: 'ready',
+    shareToken,
+    expiresAt,
+    summary: payload.summary,
+    alertSummary: payload.alertSummary,
+    metadata: {
+      redacted: true,
+      generatedAlertCount: payload.generatedAlertCount,
+    },
+  });
+
+  await auditRepo.create({
+    action: 'shared_report_created',
+    entityType: 'shared_report',
+    entityId: report.id,
+    actorId,
+    tenantId,
+    newValue: {
+      title: report.title,
+      visibility: report.visibility,
+      expiresAt: report.expiresAt,
+    },
+    ipAddress: getRequestClientIp(c),
+    userAgent: c.req.header('user-agent'),
+  });
+
+  trackReport({
+    tenantId,
+    reportType: 'shared',
+    reportId: report.id,
+    action: visibility === 'shared' ? 'share' : 'generate',
+  });
+
+  return c.json(
+    {
+      report,
+      shareUrl: shareToken ? `/api/alerts/reports/shared/${shareToken}` : undefined,
+    },
+    201
+  );
+});
+
+alertRoutes.post('/reports/:id/expire', requireWritePermission, async (c) => {
+  const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  const id = c.req.param('id');
+
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
+  }
+
+  const reportRepo = new SharedReportRepository(db);
+  const existing = await reportRepo.findById(id, tenantId);
+  if (!existing) {
+    return c.json({ error: 'Shared report not found' }, 404);
+  }
+
+  const report = await reportRepo.expire(id, tenantId);
+  if (!report) {
+    return c.json({ error: 'Shared report not found' }, 404);
+  }
+
+  const auditRepo = new AuditEventRepository(db);
+  await auditRepo.create({
+    action: 'shared_report_expired',
+    entityType: 'shared_report',
+    entityId: report.id,
+    actorId,
+    tenantId,
+    previousValue: { status: existing.status },
+    newValue: { status: report.status },
+    ipAddress: getRequestClientIp(c),
+    userAgent: c.req.header('user-agent'),
+  });
+
+  return c.json({ report });
+});
+
 alertRoutes.get('/', async (c) => {
   const db = c.get('db');
   const tenantId = c.get('tenantId');
 
-  const status = c.req.query('status') as
-    | 'pending'
-    | 'sent'
-    | 'suppressed'
-    | 'acknowledged'
-    | 'resolved'
-    | undefined;
-  const severity = c.req.query('severity') as
-    | 'critical'
-    | 'high'
-    | 'medium'
-    | 'low'
-    | undefined;
-  const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
-  const offset = parseInt(c.req.query('offset') || '0');
+  if (!db || !tenantId) {
+    return c.json({ error: 'Database or tenant context unavailable' }, 503);
+  }
+
+  const statusQuery = c.req.query('status');
+  const severityQuery = c.req.query('severity');
+  const limit = Math.min(parsePositiveInt(c.req.query('limit'), 50), 100);
+  const offset = parsePositiveInt(c.req.query('offset'), 0);
+
+  if (statusQuery && !VALID_STATUSES.includes(statusQuery as Alert['status'])) {
+    return c.json({ error: 'Invalid alert status filter' }, 400);
+  }
+
+  if (severityQuery && !VALID_SEVERITIES.includes(severityQuery as Alert['severity'])) {
+    return c.json({ error: 'Invalid alert severity filter' }, 400);
+  }
 
   const alertRepo = new AlertRepository(db);
-
-  const { alerts, total } = await alertRepo.findAll(tenantId ?? undefined, {
-    status,
-    severity,
+  const { alerts, total } = await alertRepo.findAll(tenantId, {
+    status: statusQuery as Alert['status'] | undefined,
+    severity: severityQuery as Alert['severity'] | undefined,
     limit,
     offset,
   });
@@ -71,163 +277,171 @@ alertRoutes.get('/', async (c) => {
   });
 });
 
-/**
- * GET /api/alerts/:id
- * Get alert detail by ID
- */
 alertRoutes.get('/:id', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
   const alertId = c.req.param('id');
 
+  if (!db || !tenantId) {
+    return c.json({ error: 'Database or tenant context unavailable' }, 503);
+  }
+
   const alertRepo = new AlertRepository(db);
-  const alert = await alertRepo.findById(alertId);
+  const alert = await alertRepo.findById(alertId, tenantId);
 
   if (!alert) {
     return c.json({ error: 'Alert not found' }, 404);
   }
 
-  // TODO: Tenant check - verify alert.tenantId matches c.get('tenantId')
-  // For now, leaving open as tenantId may be null in dev
-
   return c.json({ alert });
 });
 
-/**
- * POST /api/alerts/:id/acknowledge
- * Acknowledge an alert
- */
-alertRoutes.post('/:id/acknowledge', async (c) => {
+alertRoutes.post('/:id/acknowledge', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const alertId = c.req.param('id');
+  const tenantId = c.get('tenantId');
   const actorId = c.get('actorId');
+  const alertId = c.req.param('id');
 
-  if (!actorId) {
-    return c.json({ error: 'Actor ID required' }, 401);
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
   }
 
-  const alertRepo = new AlertRepository(db);
-  const alert = await alertRepo.acknowledge(alertId, actorId);
+  try {
+    const alertRepo = new AlertRepository(db);
+    const existing = await alertRepo.findById(alertId, tenantId);
+    const alert = await alertRepo.acknowledge(alertId, tenantId, actorId);
 
-  if (!alert) {
-    return c.json({ error: 'Alert not found' }, 404);
+    if (!alert || !existing) {
+      return c.json({ error: 'Alert not found' }, 404);
+    }
+
+    const auditRepo = new AuditEventRepository(db);
+    await auditRepo.create({
+      action: 'alert_acknowledged',
+      entityType: 'alert',
+      entityId: alert.id,
+      actorId,
+      tenantId,
+      previousValue: { status: existing.status },
+      newValue: { status: alert.status, acknowledgedBy: alert.acknowledgedBy },
+      ipAddress: getRequestClientIp(c),
+      userAgent: c.req.header('user-agent'),
+    });
+
+    trackAlert({
+      tenantId,
+      alertId,
+      alertType: alert.title,
+      action: 'acknowledge',
+      severity: alert.severity,
+    });
+
+    return c.json({ alert });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Invalid alert transition')) {
+      return c.json({ error: error.message }, 409);
+    }
+    throw error;
   }
-
-  // Track alert acknowledgment (Bead 14.4)
-  const tenantId = c.get('tenantId') || 'default';
-  trackAlert({
-    tenantId,
-    alertId,
-    alertType: alert.title,
-    action: 'acknowledge',
-    severity: alert.severity,
-  });
-
-  return c.json({ alert });
 });
 
-/**
- * POST /api/alerts/:id/resolve
- * Resolve an alert
- */
-alertRoutes.post('/:id/resolve', async (c) => {
+alertRoutes.post('/:id/resolve', requireWritePermission, async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
   const alertId = c.req.param('id');
+
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
+  }
 
   const body = await c.req.json().catch(() => ({}));
   const resolutionNote = body.resolutionNote as string | undefined;
 
-  const alertRepo = new AlertRepository(db);
-  const alert = await alertRepo.resolve(alertId, resolutionNote);
+  try {
+    const alertRepo = new AlertRepository(db);
+    const existing = await alertRepo.findById(alertId, tenantId);
+    const alert = await alertRepo.resolve(alertId, tenantId, resolutionNote);
 
-  if (!alert) {
-    return c.json({ error: 'Alert not found' }, 404);
+    if (!alert || !existing) {
+      return c.json({ error: 'Alert not found' }, 404);
+    }
+
+    const auditRepo = new AuditEventRepository(db);
+    await auditRepo.create({
+      action: 'alert_resolved',
+      entityType: 'alert',
+      entityId: alert.id,
+      actorId,
+      tenantId,
+      previousValue: { status: existing.status },
+      newValue: { status: alert.status, resolutionNote: alert.resolutionNote },
+      ipAddress: getRequestClientIp(c),
+      userAgent: c.req.header('user-agent'),
+    });
+
+    trackAlert({
+      tenantId,
+      alertId,
+      alertType: alert.title,
+      action: 'resolve',
+      severity: alert.severity,
+    });
+
+    return c.json({ alert });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Invalid alert transition')) {
+      return c.json({ error: error.message }, 409);
+    }
+    throw error;
   }
-
-  // Track alert resolution (Bead 14.4)
-  const tenantId = c.get('tenantId') || 'default';
-  trackAlert({
-    tenantId,
-    alertId,
-    alertType: alert.title,
-    action: 'resolve',
-    severity: alert.severity,
-  });
-
-  return c.json({ alert });
 });
 
-/**
- * POST /api/alerts/:id/suppress
- * Suppress an alert
- */
-alertRoutes.post('/:id/suppress', async (c) => {
+alertRoutes.post('/:id/suppress', requireWritePermission, async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
   const alertId = c.req.param('id');
 
-  const alertRepo = new AlertRepository(db);
-  const alert = await alertRepo.updateStatus(alertId, 'suppressed');
-
-  if (!alert) {
-    return c.json({ error: 'Alert not found' }, 404);
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
   }
 
-  // Track alert suppression (Bead 14.4)
-  const tenantId = c.get('tenantId') || 'default';
-  trackAlert({
-    tenantId,
-    alertId,
-    alertType: alert.title,
-    action: 'dismiss',
-    severity: alert.severity,
-  });
+  try {
+    const alertRepo = new AlertRepository(db);
+    const existing = await alertRepo.findById(alertId, tenantId);
+    const alert = await alertRepo.updateStatus(alertId, tenantId, 'suppressed');
 
-  return c.json({ alert });
-});
+    if (!alert || !existing) {
+      return c.json({ error: 'Alert not found' }, 404);
+    }
 
-// =============================================================================
-// SHARED REPORTS (Stub for Bead 20)
-// =============================================================================
+    const auditRepo = new AuditEventRepository(db);
+    await auditRepo.create({
+      action: 'alert_suppressed',
+      entityType: 'alert',
+      entityId: alert.id,
+      actorId,
+      tenantId,
+      previousValue: { status: existing.status },
+      newValue: { status: alert.status },
+      ipAddress: getRequestClientIp(c),
+      userAgent: c.req.header('user-agent'),
+    });
 
-/**
- * GET /api/alerts/reports
- * List shared reports for tenant
- *
- * Note: Full implementation requires SharedReportRepository
- */
-alertRoutes.get('/reports', async (c) => {
-  // Stub - returns empty list until full implementation
-  return c.json({ reports: [] });
-});
+    trackAlert({
+      tenantId,
+      alertId,
+      alertType: alert.title,
+      action: 'dismiss',
+      severity: alert.severity,
+    });
 
-/**
- * POST /api/alerts/reports
- * Create a new shared report
- *
- * Note: Full implementation requires SharedReportRepository
- */
-alertRoutes.post('/reports', async (c) => {
-  const body = await c.req.json().catch(() => ({}));
-  const reportId = 'stub-report-id';
-
-  // Track report generation (Bead 14.4)
-  const tenantId = c.get('tenantId') || 'default';
-  trackReport({
-    tenantId,
-    reportType: 'shared',
-    reportId,
-    action: 'generate',
-  });
-
-  // Stub - returns placeholder until full implementation
-  return c.json(
-    {
-      report: {
-        id: reportId,
-        title: body.title || 'Untitled Report',
-        status: 'generating',
-        createdAt: new Date().toISOString(),
-      },
-    },
-    201
-  );
+    return c.json({ alert });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Invalid alert transition')) {
+      return c.json({ error: error.message }, 409);
+    }
+    throw error;
+  }
 });

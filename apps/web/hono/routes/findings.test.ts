@@ -10,8 +10,8 @@
  * - DB persistence behavior
  */
 
-import { describe, expect, it } from 'vitest';
 import type { EvidenceLink } from '@dns-ops/db/schema';
+import { describe, expect, it } from 'vitest';
 
 // =============================================================================
 // Evidence Links Tests
@@ -181,10 +181,7 @@ describe('Ruleset Version Tracking - Bead 08', () => {
 describe('Idempotent Re-evaluation - Bead 08', () => {
   describe('Evaluation decision logic', () => {
     it('should return cached findings when rulesetVersionId matches', () => {
-      const currentRulesetVersionId = 'ruleset-v2';
-      const existingFindingsForVersion = [
-        { id: 'f1', rulesetVersionId: 'ruleset-v2' },
-      ];
+      const existingFindingsForVersion = [{ id: 'f1', rulesetVersionId: 'ruleset-v2' }];
 
       const shouldEvaluate = existingFindingsForVersion.length === 0;
 
@@ -192,7 +189,6 @@ describe('Idempotent Re-evaluation - Bead 08', () => {
     });
 
     it('should evaluate when no findings exist for current version', () => {
-      const currentRulesetVersionId = 'ruleset-v2';
       const existingFindingsForVersion: Array<{ id: string; rulesetVersionId: string }> = [];
 
       const shouldEvaluate = existingFindingsForVersion.length === 0;
@@ -202,9 +198,7 @@ describe('Idempotent Re-evaluation - Bead 08', () => {
 
     it('should force evaluate when refresh=true regardless of existing findings', () => {
       const forceRefresh = true;
-      const existingFindingsForVersion = [
-        { id: 'f1', rulesetVersionId: 'ruleset-v2' },
-      ];
+      const existingFindingsForVersion = [{ id: 'f1', rulesetVersionId: 'ruleset-v2' }];
 
       const shouldEvaluate = forceRefresh || existingFindingsForVersion.length === 0;
 
@@ -305,7 +299,8 @@ describe('Findings Backfill - Bead 08', () => {
       const total = 0;
       const needsBackfill = 0;
 
-      const completionPercent = total > 0 ? Math.round(((total - needsBackfill) / total) * 100) : 100;
+      const completionPercent =
+        total > 0 ? Math.round(((total - needsBackfill) / total) * 100) : 100;
 
       expect(completionPercent).toBe(100);
     });
@@ -317,7 +312,11 @@ describe('Findings Backfill - Bead 08', () => {
       const stats = { total: 100, needsBackfill: 25 };
 
       const response = dryRun
-        ? { dryRun: true, stats, message: `${stats.needsBackfill} of ${stats.total} snapshots need backfill` }
+        ? {
+            dryRun: true,
+            stats,
+            message: `${stats.needsBackfill} of ${stats.total} snapshots need backfill`,
+          }
         : { processed: 25 };
 
       expect(response.dryRun).toBe(true);

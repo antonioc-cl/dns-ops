@@ -17,6 +17,7 @@ import type { Redis } from 'ioredis';
 // =============================================================================
 
 export type CollectDomainJobData = {
+  tenantId: string;
   domain: string;
   zoneManagement?: 'managed' | 'unmanaged' | 'unknown';
   triggeredBy: string;
@@ -83,7 +84,7 @@ export function getRedisConnection(): Redis | null {
     enableReadyCheck: false,
   });
 
-  redisConnection!.on('error', (err: Error) => {
+  redisConnection?.on('error', (err: Error) => {
     console.error('[Queue] Redis connection error:', err.message);
   });
 

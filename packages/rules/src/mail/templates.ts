@@ -484,7 +484,10 @@ export function compareToTemplate(
         severity: 'high',
       });
     } else {
-      const spfMatch = template.expected.spf.patterns.some((pattern) => pattern.test(actual.spf!));
+      const spfValue = actual.spf;
+      const spfMatch = spfValue
+        ? template.expected.spf.patterns.some((pattern) => pattern.test(spfValue))
+        : false;
       if (spfMatch) {
         matches.push({
           aspect: 'SPF',

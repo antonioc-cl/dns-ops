@@ -25,6 +25,14 @@ interface AuthContext {
   actorEmail?: string;
 }
 
+function getRuntimeSecret(
+  c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0],
+  name: 'INTERNAL_SECRET' | 'API_KEY_SECRET'
+): string | undefined {
+  const bindingValue = c.env?.[name];
+  return typeof bindingValue === 'string' ? bindingValue : process.env[name];
+}
+
 /**
  * Extract auth from Cloudflare Access JWT
  *
@@ -83,9 +91,13 @@ function extractApiKey(
     return null;
   }
 
-  const [tenantId, actorId, _secret] = parts;
+  const [tenantId, actorId, secret] = parts;
+  const expectedSecret = getRuntimeSecret(c, 'API_KEY_SECRET');
 
-  // Validate tenantId and actorId are present and valid
+  if (!expectedSecret || secret !== expectedSecret) {
+    return null;
+  }
+
   if (!tenantId || !actorId) {
     return null;
   }
@@ -212,7 +224,7 @@ export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
 export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
   // Check for internal service header
   const internalSecret = c.req.header('X-Internal-Secret');
-  const expectedSecret = process.env.INTERNAL_SECRET;
+  const expectedSecret = getRuntimeSecret(c, 'INTERNAL_SECRET');
 
   if (expectedSecret && internalSecret === expectedSecret) {
     // Internal service auth - use system tenant (normalized to UUID)

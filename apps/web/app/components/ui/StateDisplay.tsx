@@ -5,7 +5,7 @@
  * All panels should use these components for uniform UX.
  */
 
-import React from 'react';
+import type React from 'react';
 
 // =============================================================================
 // LOADING STATE
@@ -54,6 +54,7 @@ export function LoadingState({
       aria-busy="true"
     >
       <svg
+        aria-hidden="true"
         className={`${spinnerSizes[size]} text-blue-500 motion-safe:animate-spin`}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -73,9 +74,7 @@ export function LoadingState({
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      <p className={`mt-3 text-gray-500 motion-safe:animate-pulse ${textSizes[size]}`}>
-        {message}
-      </p>
+      <p className={`mt-3 text-gray-500 motion-safe:animate-pulse ${textSizes[size]}`}>{message}</p>
     </output>
   );
 }
@@ -126,7 +125,13 @@ export function ErrorState({
       role="alert"
     >
       <div className={`${iconSizes[size]} text-red-400 mb-3`}>
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg
+          aria-hidden="true"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -258,7 +263,13 @@ export function EmptyState({
     >
       <div className={`${iconSizes[size]} text-gray-300 mb-4`}>
         {customIcon || (
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg
+            aria-hidden="true"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
             {ICONS[icon]}
           </svg>
         )}
@@ -320,7 +331,9 @@ export function PanelStateWrapper({
   }
 
   if (error) {
-    return <ErrorState title={errorTitle} message={error} onRetry={onRetry} className={className} />;
+    return (
+      <ErrorState title={errorTitle} message={error} onRetry={onRetry} className={className} />
+    );
   }
 
   if (empty) {

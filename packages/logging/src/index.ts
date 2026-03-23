@@ -35,8 +35,6 @@
  * ```
  */
 
-export { createLogger, Logger, type LogContext, type LogEntry, type LoggerConfig, type LogLevel } from './logger.js';
-
 export {
   addMetadata,
   generateRequestId,
@@ -50,17 +48,23 @@ export {
   runWithContext,
   toLogContext,
 } from './context.js';
-
-export { createLoggingMiddleware, type LoggingMiddlewareOptions } from './middleware.js';
-
 export {
+  createLogger,
+  type LogContext,
+  type LogEntry,
+  Logger,
+  type LoggerConfig,
+  type LogLevel,
+} from './logger.js';
+export {
+  type AlertMetrics,
   createFeedbackLoopMetrics,
   createMetricsCollector,
-  MetricsCollector,
-  type AlertMetrics,
   type FeedbackLoopMetrics,
   type MetricEvent,
+  MetricsCollector,
   type MetricType,
   type RemediationMetrics,
   type ShadowMetrics,
 } from './metrics.js';
+export { createLoggingMiddleware, type LoggingMiddlewareOptions } from './middleware.js';

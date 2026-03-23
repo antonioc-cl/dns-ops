@@ -269,9 +269,7 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/dnssec', async (c) => {
       (obs) => obs.queryType === 'DNSKEY' && obs.queryName === snapshot.domainName
     );
 
-    const rrsigObservations = observations.filter(
-      (obs) => obs.queryType === 'RRSIG'
-    );
+    const rrsigObservations = observations.filter((obs) => obs.queryType === 'RRSIG');
 
     // Parse DS records
     const dsRecords = dsObservations
@@ -452,18 +450,21 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
     );
 
     // Build per-nameserver evidence
-    const nameserverEvidence: Record<string, {
-      hostname: string;
-      ipv4?: string;
-      ipv6?: string;
-      isResponsive: boolean;
-      responseDetails?: {
-        queryName: string;
-        queryType: string;
-        status: string;
-        responseTime: number;
-      }[];
-    }> = {};
+    const nameserverEvidence: Record<
+      string,
+      {
+        hostname: string;
+        ipv4?: string;
+        ipv6?: string;
+        isResponsive: boolean;
+        responseDetails?: {
+          queryName: string;
+          queryType: string;
+          status: string;
+          responseTime: number;
+        }[];
+      }
+    > = {};
 
     for (const obs of authoritativeResponses) {
       const ns = obs.vantageIdentifier;
@@ -492,9 +493,7 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
     // Get glue records
     const glueRecords = observations
       .filter(
-        (obs) =>
-          (obs.queryType === 'A' || obs.queryType === 'AAAA') &&
-          obs.status === 'success'
+        (obs) => (obs.queryType === 'A' || obs.queryType === 'AAAA') && obs.status === 'success'
       )
       .flatMap((obs) =>
         (obs.answerSection || [])
@@ -511,9 +510,15 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
     // Compute consistency score
     const allNsSets = vantageEvidence
       .filter((v) => v.status === 'success')
-      .map((v) => v.nsRecords.map((n) => n.name).sort().join(','));
+      .map((v) =>
+        v.nsRecords
+          .map((n) => n.name)
+          .sort()
+          .join(',')
+      );
     const uniqueNsSets = new Set(allNsSets);
-    const consistencyScore = uniqueNsSets.size === 1 ? 100 : Math.round((1 / uniqueNsSets.size) * 100);
+    const consistencyScore =
+      uniqueNsSets.size === 1 ? 100 : Math.round((1 / uniqueNsSets.size) * 100);
 
     const evidence = {
       domain: snapshot.domainName,
@@ -527,7 +532,8 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
         isConsistent: uniqueNsSets.size <= 1,
         uniqueNsSetCount: uniqueNsSets.size,
         nameserverCount: Object.keys(nameserverEvidence).length,
-        responsiveNameservers: Object.values(nameserverEvidence).filter((n) => n.isResponsive).length,
+        responsiveNameservers: Object.values(nameserverEvidence).filter((n) => n.isResponsive)
+          .length,
         glueRecordCount: glueRecords.length,
       },
     };

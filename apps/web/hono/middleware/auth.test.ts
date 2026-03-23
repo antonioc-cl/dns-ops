@@ -36,7 +36,7 @@ describe('Auth Middleware', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
+    process.env = { ...originalEnv, API_KEY_SECRET: 'secret' };
     app = new Hono<Env>();
   });
 
@@ -102,7 +102,7 @@ describe('Auth Middleware', () => {
 
       const res = await app.request('/test', {
         headers: {
-          'X-API-Key': 'my-tenant:my-actor:secret123',
+          'X-API-Key': 'my-tenant:my-actor:secret',
         },
       });
 

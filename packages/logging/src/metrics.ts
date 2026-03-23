@@ -25,16 +25,16 @@
  * ```
  */
 
-import type { Logger, LogContext } from './logger.js';
+import type { LogContext, Logger } from './logger.js';
 
 /**
  * Metric event types for structured metric emission
  */
 export type MetricType =
-  | 'counter'   // Incremental count (e.g., "remediations created")
-  | 'gauge'     // Point-in-time value (e.g., "active alerts")
+  | 'counter' // Incremental count (e.g., "remediations created")
+  | 'gauge' // Point-in-time value (e.g., "active alerts")
   | 'histogram' // Distribution (e.g., "time to acknowledge")
-  | 'summary';  // Similar to histogram, with percentiles
+  | 'summary'; // Similar to histogram, with percentiles
 
 /**
  * A single metric data point
@@ -52,12 +52,7 @@ export interface MetricEvent {
  */
 export interface RemediationMetrics {
   /** Track when a remediation request is created */
-  created(context: {
-    tenantId?: string;
-    domainId?: string;
-    type: string;
-    priority?: string;
-  }): void;
+  created(context: { tenantId?: string; domainId?: string; type: string; priority?: string }): void;
 
   /** Track when a remediation is started (in_progress) */
   started(context: {
@@ -85,12 +80,7 @@ export interface RemediationMetrics {
   }): void;
 
   /** Track when a remediation is cancelled */
-  cancelled(context: {
-    tenantId?: string;
-    domainId?: string;
-    type: string;
-    reason?: string;
-  }): void;
+  cancelled(context: { tenantId?: string; domainId?: string; type: string; reason?: string }): void;
 }
 
 /**
@@ -135,11 +125,7 @@ export interface AlertMetrics {
   }): void;
 
   /** Track alert acknowledgment */
-  acknowledged(context: {
-    tenantId?: string;
-    alertId: string;
-    timeToAckMs: number;
-  }): void;
+  acknowledged(context: { tenantId?: string; alertId: string; timeToAckMs: number }): void;
 
   /** Track alert resolution */
   resolved(context: {
@@ -166,11 +152,7 @@ export interface AlertMetrics {
   }): void;
 
   /** Track active alert count (gauge) */
-  activeCount(context: {
-    tenantId?: string;
-    severity?: string;
-    count: number;
-  }): void;
+  activeCount(context: { tenantId?: string; severity?: string; count: number }): void;
 }
 
 /**

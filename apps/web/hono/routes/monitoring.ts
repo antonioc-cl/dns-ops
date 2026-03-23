@@ -2,37 +2,60 @@
  * Monitoring Routes - dns-ops-1j4.12.4
  *
  * API routes for managing monitored domains.
- * Provides CRUD operations for the monitoring configuration.
+ * Provides CRUD operations for tenant-scoped monitoring configuration.
  */
 
-import { DomainRepository, MonitoredDomainRepository } from '@dns-ops/db';
+import {
+  AuditEventRepository,
+  DomainRepository,
+  type MonitoredDomain,
+  MonitoredDomainRepository,
+} from '@dns-ops/db';
 import { Hono } from 'hono';
-import { requireAuth } from '../middleware/authorization.js';
+import { getRequestClientIp } from '../lib/request-context.js';
+import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
 export const monitoringRoutes = new Hono<Env>();
 
-// All routes require authentication
 monitoringRoutes.use('*', requireAuth);
 
-// =============================================================================
-// MONITORED DOMAINS CRUD
-// =============================================================================
+async function findTenantMonitoredDomain(
+  repo: MonitoredDomainRepository,
+  tenantId: string,
+  idOrDomainId: string
+) {
+  const monitoredDomains = await repo.findByTenant(tenantId);
+  return monitoredDomains.find(
+    (item) => item.id === idOrDomainId || item.domainId === idOrDomainId
+  );
+}
 
-/**
- * GET /api/monitoring/domains
- * List monitored domains for the current tenant
- */
+function isUniqueConstraintError(error: unknown, constraintName: string): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('duplicate key') ||
+    message.includes('unique constraint') ||
+    message.includes(constraintName.toLowerCase())
+  );
+}
+
 monitoringRoutes.get('/domains', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId') || 'default';
+  const tenantId = c.get('tenantId');
+
+  if (!db || !tenantId) {
+    return c.json({ error: 'Database or tenant context unavailable' }, 503);
+  }
 
   const repo = new MonitoredDomainRepository(db);
   const domainRepo = new DomainRepository(db);
-
   const monitoredDomains = await repo.findByTenant(tenantId);
 
-  // Enrich with domain names
   const domainsWithNames = await Promise.all(
     monitoredDomains.map(async (md) => {
       const domain = await domainRepo.findById(md.domainId);
@@ -46,26 +69,24 @@ monitoringRoutes.get('/domains', async (c) => {
   return c.json({ monitoredDomains: domainsWithNames });
 });
 
-/**
- * GET /api/monitoring/domains/:id
- * Get a specific monitored domain configuration
- */
 monitoringRoutes.get('/domains/:id', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
   const id = c.req.param('id');
+
+  if (!db || !tenantId) {
+    return c.json({ error: 'Database or tenant context unavailable' }, 503);
+  }
 
   const repo = new MonitoredDomainRepository(db);
   const domainRepo = new DomainRepository(db);
-
-  // Try to find by ID first
-  const monitoredDomain = await repo.findByDomainId(id);
+  const monitoredDomain = await findTenantMonitoredDomain(repo, tenantId, id);
 
   if (!monitoredDomain) {
     return c.json({ error: 'Monitored domain not found' }, 404);
   }
 
   const domain = await domainRepo.findById(monitoredDomain.domainId);
-
   return c.json({
     monitoredDomain: {
       ...monitoredDomain,
@@ -74,14 +95,14 @@ monitoringRoutes.get('/domains/:id', async (c) => {
   });
 });
 
-/**
- * POST /api/monitoring/domains
- * Create a new monitored domain configuration
- */
-monitoringRoutes.post('/domains', async (c) => {
+monitoringRoutes.post('/domains', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId') || 'default';
-  const actorId = c.get('actorId') || 'system';
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
+  }
 
   const body = (await c.req.json().catch(() => ({}))) as {
     domainId?: string;
@@ -96,7 +117,6 @@ monitoringRoutes.post('/domains', async (c) => {
     suppressionWindowMinutes?: number;
   };
 
-  // Validate required fields
   if (!body.domainId && !body.domainName) {
     return c.json({ error: 'Either domainId or domainName is required' }, 400);
   }
@@ -104,12 +124,20 @@ monitoringRoutes.post('/domains', async (c) => {
   const domainRepo = new DomainRepository(db);
   const repo = new MonitoredDomainRepository(db);
 
-  // Find or create domain
   let domainId = body.domainId;
+  let domainName = body.domainName;
+  let domain = domainId ? await domainRepo.findById(domainId) : undefined;
+
+  if (domain?.tenantId && domain.tenantId !== tenantId) {
+    return c.json({ error: 'Domain not found' }, 404);
+  }
+
   if (!domainId && body.domainName) {
-    let domain = await domainRepo.findByName(body.domainName);
+    domain = await domainRepo.findByName(body.domainName);
+    if (domain?.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
     if (!domain) {
-      // Create the domain
       domain = await domainRepo.create({
         name: body.domainName,
         normalizedName: body.domainName.toLowerCase(),
@@ -118,14 +146,14 @@ monitoringRoutes.post('/domains', async (c) => {
       });
     }
     domainId = domain.id;
+    domainName = domain.name;
   }
 
   if (!domainId) {
     return c.json({ error: 'Could not resolve domain' }, 400);
   }
 
-  // Check if already monitored
-  const existing = await repo.findByDomainId(domainId);
+  const existing = await findTenantMonitoredDomain(repo, tenantId, domainId);
   if (existing) {
     return c.json(
       {
@@ -136,28 +164,59 @@ monitoringRoutes.post('/domains', async (c) => {
     );
   }
 
-  // Create monitored domain
-  const monitoredDomain = await repo.create({
-    domainId,
-    schedule: body.schedule || 'daily',
-    alertChannels: body.alertChannels || {},
-    maxAlertsPerDay: body.maxAlertsPerDay ?? 5,
-    suppressionWindowMinutes: body.suppressionWindowMinutes ?? 60,
-    isActive: true,
-    createdBy: actorId,
+  const globalExisting = await repo.findByDomainId(domainId);
+  if (globalExisting) {
+    return c.json({ error: 'Domain is already being monitored' }, 409);
+  }
+
+  let monitoredDomain: MonitoredDomain;
+  try {
+    monitoredDomain = await repo.create({
+      domainId,
+      schedule: body.schedule || 'daily',
+      alertChannels: body.alertChannels || {},
+      maxAlertsPerDay: body.maxAlertsPerDay ?? 5,
+      suppressionWindowMinutes: body.suppressionWindowMinutes ?? 60,
+      isActive: true,
+      createdBy: actorId,
+      tenantId,
+    });
+  } catch (error) {
+    if (isUniqueConstraintError(error, 'monitored_domain_unique_idx')) {
+      return c.json({ error: 'Domain is already being monitored' }, 409);
+    }
+    throw error;
+  }
+
+  const auditRepo = new AuditEventRepository(db);
+  await auditRepo.create({
+    action: 'monitored_domain_created',
+    entityType: 'monitored_domain',
+    entityId: monitoredDomain.id,
+    actorId,
     tenantId,
+    newValue: {
+      domainId: monitoredDomain.domainId,
+      domainName,
+      schedule: monitoredDomain.schedule,
+      isActive: monitoredDomain.isActive,
+    },
+    ipAddress: getRequestClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ monitoredDomain }, 201);
 });
 
-/**
- * PUT /api/monitoring/domains/:id
- * Update a monitored domain configuration
- */
-monitoringRoutes.put('/domains/:id', async (c) => {
+monitoringRoutes.put('/domains/:id', requireWritePermission, async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
   const id = c.req.param('id');
+
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
+  }
 
   const body = (await c.req.json().catch(() => ({}))) as {
     schedule?: 'hourly' | 'daily' | 'weekly';
@@ -172,15 +231,7 @@ monitoringRoutes.put('/domains/:id', async (c) => {
   };
 
   const repo = new MonitoredDomainRepository(db);
-
-  // Find the monitored domain (either by monitoring ID or domain ID)
-  let monitoredDomain = await repo.findByDomainId(id);
-
-  // If not found by domainId, the id might be the monitoring record id itself
-  if (!monitoredDomain) {
-    const allDomains = await repo.findByTenant(c.get('tenantId') || 'default');
-    monitoredDomain = allDomains.find((md) => md.id === id);
-  }
+  const monitoredDomain = await findTenantMonitoredDomain(repo, tenantId, id);
 
   if (!monitoredDomain) {
     return c.json({ error: 'Monitored domain not found' }, 404);
@@ -196,52 +247,89 @@ monitoringRoutes.put('/domains/:id', async (c) => {
     ...(body.isActive !== undefined && { isActive: body.isActive }),
   });
 
+  if (updated) {
+    const auditRepo = new AuditEventRepository(db);
+    await auditRepo.create({
+      action: 'monitored_domain_updated',
+      entityType: 'monitored_domain',
+      entityId: updated.id,
+      actorId,
+      tenantId,
+      previousValue: {
+        schedule: monitoredDomain.schedule,
+        isActive: monitoredDomain.isActive,
+        alertChannels: monitoredDomain.alertChannels,
+        maxAlertsPerDay: monitoredDomain.maxAlertsPerDay,
+        suppressionWindowMinutes: monitoredDomain.suppressionWindowMinutes,
+      },
+      newValue: {
+        schedule: updated.schedule,
+        isActive: updated.isActive,
+        alertChannels: updated.alertChannels,
+        maxAlertsPerDay: updated.maxAlertsPerDay,
+        suppressionWindowMinutes: updated.suppressionWindowMinutes,
+      },
+      ipAddress: getRequestClientIp(c),
+      userAgent: c.req.header('user-agent'),
+    });
+  }
+
   return c.json({ monitoredDomain: updated });
 });
 
-/**
- * DELETE /api/monitoring/domains/:id
- * Remove a domain from monitoring
- */
-monitoringRoutes.delete('/domains/:id', async (c) => {
+monitoringRoutes.delete('/domains/:id', requireWritePermission, async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
   const id = c.req.param('id');
 
-  const repo = new MonitoredDomainRepository(db);
-
-  // Find the monitored domain
-  let monitoredDomain = await repo.findByDomainId(id);
-
-  if (!monitoredDomain) {
-    const allDomains = await repo.findByTenant(c.get('tenantId') || 'default');
-    monitoredDomain = allDomains.find((md) => md.id === id);
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
   }
+
+  const repo = new MonitoredDomainRepository(db);
+  const domainRepo = new DomainRepository(db);
+  const monitoredDomain = await findTenantMonitoredDomain(repo, tenantId, id);
 
   if (!monitoredDomain) {
     return c.json({ error: 'Monitored domain not found' }, 404);
   }
 
+  const domain = await domainRepo.findById(monitoredDomain.domainId);
   await repo.delete(monitoredDomain.id);
+
+  const auditRepo = new AuditEventRepository(db);
+  await auditRepo.create({
+    action: 'monitored_domain_deleted',
+    entityType: 'monitored_domain',
+    entityId: monitoredDomain.id,
+    actorId,
+    tenantId,
+    previousValue: {
+      domainId: monitoredDomain.domainId,
+      domainName: domain?.name,
+      schedule: monitoredDomain.schedule,
+      isActive: monitoredDomain.isActive,
+    },
+    ipAddress: getRequestClientIp(c),
+    userAgent: c.req.header('user-agent'),
+  });
 
   return c.json({ success: true, deletedId: monitoredDomain.id });
 });
 
-/**
- * POST /api/monitoring/domains/:id/toggle
- * Toggle active state of a monitored domain
- */
-monitoringRoutes.post('/domains/:id/toggle', async (c) => {
+monitoringRoutes.post('/domains/:id/toggle', requireWritePermission, async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
   const id = c.req.param('id');
 
-  const repo = new MonitoredDomainRepository(db);
-
-  let monitoredDomain = await repo.findByDomainId(id);
-
-  if (!monitoredDomain) {
-    const allDomains = await repo.findByTenant(c.get('tenantId') || 'default');
-    monitoredDomain = allDomains.find((md) => md.id === id);
+  if (!db || !tenantId || !actorId) {
+    return c.json({ error: 'Database, tenant, and actor context required' }, 503);
   }
+
+  const repo = new MonitoredDomainRepository(db);
+  const monitoredDomain = await findTenantMonitoredDomain(repo, tenantId, id);
 
   if (!monitoredDomain) {
     return c.json({ error: 'Monitored domain not found' }, 404);
@@ -250,6 +338,21 @@ monitoringRoutes.post('/domains/:id/toggle', async (c) => {
   const updated = await repo.update(monitoredDomain.id, {
     isActive: !monitoredDomain.isActive,
   });
+
+  if (updated) {
+    const auditRepo = new AuditEventRepository(db);
+    await auditRepo.create({
+      action: 'monitored_domain_toggled',
+      entityType: 'monitored_domain',
+      entityId: updated.id,
+      actorId,
+      tenantId,
+      previousValue: { isActive: monitoredDomain.isActive },
+      newValue: { isActive: updated.isActive },
+      ipAddress: getRequestClientIp(c),
+      userAgent: c.req.header('user-agent'),
+    });
+  }
 
   return c.json({ monitoredDomain: updated });
 });

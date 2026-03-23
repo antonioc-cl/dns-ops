@@ -167,7 +167,10 @@ export class FindingRepository {
    * Check if findings exist for a specific (snapshotId, rulesetVersionId) combination.
    * Used to determine if re-evaluation is needed.
    */
-  async hasFindingsForRulesetVersion(snapshotId: string, rulesetVersionId: string): Promise<boolean> {
+  async hasFindingsForRulesetVersion(
+    snapshotId: string,
+    rulesetVersionId: string
+  ): Promise<boolean> {
     const matchingFindings = await this.findBySnapshotIdAndRulesetVersionId(
       snapshotId,
       rulesetVersionId

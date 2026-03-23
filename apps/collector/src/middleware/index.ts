@@ -15,6 +15,8 @@ export {
   createErrorTrackingMiddleware,
   createNotFoundHandler,
   createRequestLoggingMiddleware,
+  type ErrorContext,
+  type ErrorTrackingConfig,
   getCollectorLogger,
   trackCollectionError,
   trackCollectionResult,
@@ -26,6 +28,4 @@ export {
   trackProbeError,
   trackProbeResult,
   trackWarning,
-  type ErrorContext,
-  type ErrorTrackingConfig,
 } from './error-tracking.js';

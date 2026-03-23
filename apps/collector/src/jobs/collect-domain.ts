@@ -11,15 +11,29 @@ import {
   type CollectDomainResponse,
   validateCollectDomainRequest,
 } from '@dns-ops/contracts';
-import { createPostgresAdapter, SnapshotRepository } from '@dns-ops/db';
+import { SnapshotRepository } from '@dns-ops/db';
 import { isValidDomain, normalizeDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
-import { getCollectorLogger, trackCollectionError, trackCollectionResult } from '../middleware/error-tracking.js';
+import {
+  getCollectorLogger,
+  trackCollectionError,
+  trackCollectionResult,
+} from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 const logger = getCollectorLogger();
+
+class DomainOwnershipError extends Error {
+  constructor(
+    message: string,
+    readonly code: 'LEGACY_UNSCOPED_DOMAIN' | 'DOMAIN_TENANT_CONFLICT'
+  ) {
+    super(message);
+    this.name = 'DomainOwnershipError';
+  }
+}
 
 export const collectDomainRoutes = new Hono<Env>();
 
@@ -59,15 +73,23 @@ collectDomainRoutes.post('/domain', async (c) => {
       return c.json(error, 400);
     }
 
+    const tenantId = c.get('tenantId');
+    const actorId = c.get('actorId');
+
+    if (!tenantId || !actorId) {
+      return c.json({ error: 'Authenticated tenant and actor context required' }, 401);
+    }
+
     const normalizedDomain = domainInfo.normalized;
     const zoneManagement = req.zoneManagement ?? 'unknown';
-    const triggeredBy = req.triggeredBy ?? 'api';
+    const triggeredBy = req.triggeredBy ?? actorId;
 
     // Extract mail collection options (Bead 08)
     const { dkimSelectors, managedDkimSelectors, includeMailRecords } = req;
 
     // Configuration for collection
     const config: CollectionConfig = {
+      tenantId,
       domain: normalizedDomain,
       zoneManagement: zoneManagement as 'managed' | 'unmanaged' | 'unknown',
       recordTypes: ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'CAA'],
@@ -77,12 +99,10 @@ collectDomainRoutes.post('/domain', async (c) => {
       managedDkimSelectors: Array.isArray(managedDkimSelectors) ? managedDkimSelectors : undefined,
     };
 
-    // Create database connection
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      return c.json({ error: 'DATABASE_URL not configured' }, 500);
+    const db = c.get('db');
+    if (!db) {
+      return c.json({ error: 'Database unavailable' }, 503);
     }
-    const db = createPostgresAdapter(dbUrl);
 
     // Run collection
     const collector = new DNSCollector(config, db);
@@ -108,6 +128,24 @@ collectDomainRoutes.post('/domain', async (c) => {
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
     trackCollectionError(error, { domain: 'unknown' });
+
+    if (
+      error instanceof DomainOwnershipError ||
+      (error.name === 'DomainOwnershipError' && 'code' in error)
+    ) {
+      const code =
+        'code' in error && typeof error.code === 'string' ? error.code : 'DOMAIN_TENANT_CONFLICT';
+
+      return c.json(
+        {
+          error: 'Collection blocked by domain ownership policy',
+          message: error.message,
+          code,
+        },
+        409
+      );
+    }
+
     const errResponse: ApiErrorResponse = {
       error: 'Collection failed',
       message: error.message,

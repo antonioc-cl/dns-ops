@@ -11,12 +11,12 @@
  * - Shared reports must be tenant-aware
  */
 
+import type { IDatabaseAdapter } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { requireServiceAuthMiddleware } from '../middleware/index.js';
 import type { Env } from '../types.js';
 import { monitoringRoutes } from './monitoring.js';
-import { requireServiceAuthMiddleware } from '../middleware/index.js';
-import type { IDatabaseAdapter } from '@dns-ops/db';
 
 // =============================================================================
 // Authentication Tests
@@ -106,15 +106,16 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [
-          createMockMonitoredDomain({ domainId: 'dom-1' }),
-          createMockMonitoredDomain({ id: 'mon-2', domainId: 'dom-2' }),
-        ],
-        alerts: [
-          createMockAlert({ monitoredDomainId: 'mon-1', title: 'Alert 1' }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [
+            createMockMonitoredDomain({ domainId: 'dom-1' }),
+            createMockMonitoredDomain({ id: 'mon-2', domainId: 'dom-2' }),
+          ],
+          alerts: [createMockAlert({ monitoredDomainId: 'mon-1', title: 'Alert 1' })],
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -134,16 +135,19 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [createMockMonitoredDomain()],
-        alerts: [
-          createMockAlert({
-            title: 'Alert 1',
-            description: 'Internal investigation notes - confidential',
-            resolutionNote: 'Resolved by admin - internal only',
-          }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain()],
+          alerts: [
+            createMockAlert({
+              title: 'Alert 1',
+              description: 'Internal investigation notes - confidential',
+              resolutionNote: 'Resolved by admin - internal only',
+            }),
+          ],
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -165,14 +169,17 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [createMockMonitoredDomain()],
-        alerts: [
-          createMockAlert({
-            acknowledgedBy: 'admin@internal.company.com',
-          }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain()],
+          alerts: [
+            createMockAlert({
+              acknowledgedBy: 'admin@internal.company.com',
+            }),
+          ],
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -192,22 +199,25 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [createMockMonitoredDomain()],
-        alerts: [
-          createMockAlert({
-            id: 'alert-123',
-            title: 'High severity alert',
-            severity: 'high',
-            status: 'pending',
-            createdAt: new Date('2024-01-15'),
-            // These should NOT appear:
-            description: 'Sensitive details',
-            acknowledgedBy: 'internal-user',
-            resolutionNote: 'Internal notes',
-          }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain()],
+          alerts: [
+            createMockAlert({
+              id: 'alert-123',
+              title: 'High severity alert',
+              severity: 'high',
+              status: 'pending',
+              createdAt: new Date('2024-01-15'),
+              // These should NOT appear:
+              description: 'Sensitive details',
+              acknowledgedBy: 'internal-user',
+              resolutionNote: 'Internal notes',
+            }),
+          ],
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -250,14 +260,13 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     // This test verifies the route passes tenantId to the repository
     app.use('*', async (c, next) => {
       const tenantIdFromContext = c.get('tenantId') || 'unknown';
-      c.set('db', createMockDb({
-        monitoredDomains: [
-          createMockMonitoredDomain({ tenantId: tenantIdFromContext }),
-        ],
-        alerts: [
-          createMockAlert({ tenantId: tenantIdFromContext }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain({ tenantId: tenantIdFromContext })],
+          alerts: [createMockAlert({ tenantId: tenantIdFromContext })],
+        })
+      );
       c.set('tenantId', 'tenant-A');
       await next();
     });
@@ -276,10 +285,13 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [], // No domains for this tenant
-        alerts: [],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [], // No domains for this tenant
+          alerts: [],
+        })
+      );
       c.set('tenantId', 'empty-tenant');
       await next();
     });
@@ -299,16 +311,19 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [createMockMonitoredDomain()],
-        alerts: [
-          createMockAlert({ severity: 'critical' }),
-          createMockAlert({ id: 'alert-2', severity: 'critical' }),
-          createMockAlert({ id: 'alert-3', severity: 'high' }),
-          createMockAlert({ id: 'alert-4', severity: 'medium' }),
-          createMockAlert({ id: 'alert-5', severity: 'low' }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain()],
+          alerts: [
+            createMockAlert({ severity: 'critical' }),
+            createMockAlert({ id: 'alert-2', severity: 'critical' }),
+            createMockAlert({ id: 'alert-3', severity: 'high' }),
+            createMockAlert({ id: 'alert-4', severity: 'medium' }),
+            createMockAlert({ id: 'alert-5', severity: 'low' }),
+          ],
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -340,10 +355,13 @@ describe('Shared Reports Alert Limits - Bead 12.7', () => {
     );
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [createMockMonitoredDomain()],
-        alerts,
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain()],
+          alerts,
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -365,14 +383,17 @@ describe('Shared Reports Alert Limits - Bead 12.7', () => {
     const app = new Hono<Env>();
 
     app.use('*', async (c, next) => {
-      c.set('db', createMockDb({
-        monitoredDomains: [createMockMonitoredDomain()],
-        alerts: [
-          createMockAlert({ id: 'alert-1' }),
-          createMockAlert({ id: 'alert-2' }),
-          createMockAlert({ id: 'alert-3' }),
-        ],
-      }));
+      c.set(
+        'db',
+        createMockDb({
+          monitoredDomains: [createMockMonitoredDomain()],
+          alerts: [
+            createMockAlert({ id: 'alert-1' }),
+            createMockAlert({ id: 'alert-2' }),
+            createMockAlert({ id: 'alert-3' }),
+          ],
+        })
+      );
       c.set('tenantId', 'test-tenant');
       await next();
     });
@@ -428,7 +449,9 @@ interface MockDbOptions {
   alerts?: MockAlert[];
 }
 
-function createMockMonitoredDomain(overrides: Partial<MockMonitoredDomain> = {}): MockMonitoredDomain {
+function createMockMonitoredDomain(
+  overrides: Partial<MockMonitoredDomain> = {}
+): MockMonitoredDomain {
   return {
     id: 'mon-1',
     domainId: 'dom-1',

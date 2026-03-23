@@ -9,7 +9,7 @@
     "preview": "wrangler pages dev dist",
     "deploy": "wrangler pages deploy dist",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
+    "lint": "biome check app hono e2e app.config.ts playwright.config.ts postcss.config.js tailwind.config.js wrangler.jsonc",
     "test": "echo 'Use pnpm e2e for browser tests'",
     "e2e": "playwright test",
     "e2e:headed": "playwright test --headed",

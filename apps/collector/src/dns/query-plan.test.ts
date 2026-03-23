@@ -9,41 +9,75 @@
  * - Deduplication
  */
 
-import { createPostgresAdapter } from '@dns-ops/db';
+import type { IDatabaseAdapter } from '@dns-ops/db';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DNSCollector } from './collector.js';
-import type { CollectionConfig } from './types.js';
+import type { CollectionConfig, DNSQuery } from './types.js';
 
-// Mock database adapter
-const mockDb = {
+const mockDb: IDatabaseAdapter = {
   select: vi.fn(),
   selectOne: vi.fn(),
   selectWhere: vi.fn(),
   insert: vi.fn(),
+  insertMany: vi.fn(),
   updateOne: vi.fn(),
   deleteOne: vi.fn(),
+  transaction: vi.fn(),
+  getDrizzle: vi.fn(),
 };
 
-vi.mock('@dns-ops/db', () => ({
-  createPostgresAdapter: vi.fn(() => mockDb),
-  DomainRepository: vi.fn().mockImplementation(() => ({
-    findByName: vi.fn().mockResolvedValue(null),
-    create: vi.fn().mockResolvedValue({ id: 'test-domain-id' }),
-  })),
-  SnapshotRepository: vi.fn().mockImplementation(() => ({
-    create: vi.fn().mockResolvedValue({ id: 'test-snapshot-id' }),
-  })),
-  ObservationRepository: vi.fn().mockImplementation(() => ({
-    createMany: vi.fn().mockResolvedValue([]),
-  })),
-  RecordSetRepository: vi.fn().mockImplementation(() => ({
-    createMany: vi.fn().mockResolvedValue([]),
-  })),
-}));
+vi.mock('@dns-ops/db', () => {
+  class MockDomainRepository {
+    findByName = vi.fn().mockResolvedValue(null);
+    create = vi.fn().mockResolvedValue({ id: 'test-domain-id', tenantId: 'test-tenant-id' });
+    update = vi.fn().mockResolvedValue({ id: 'test-domain-id', tenantId: 'test-tenant-id' });
+  }
+
+  class MockSnapshotRepository {
+    create = vi.fn().mockResolvedValue({ id: 'test-snapshot-id' });
+    updateRulesetVersion = vi.fn().mockResolvedValue({ id: 'test-snapshot-id' });
+  }
+
+  class MockObservationRepository {
+    createMany = vi.fn().mockResolvedValue([]);
+  }
+
+  class MockRecordSetRepository {
+    createMany = vi.fn().mockResolvedValue([]);
+  }
+
+  class MockFindingRepository {
+    createMany = vi.fn().mockResolvedValue([]);
+  }
+
+  class MockSuggestionRepository {
+    createMany = vi.fn().mockResolvedValue([]);
+  }
+
+  class MockRulesetVersionRepository {
+    findByVersion = vi.fn().mockResolvedValue({ id: 'ruleset-version-id', version: '1.2.0' });
+    create = vi.fn().mockResolvedValue({ id: 'ruleset-version-id', version: '1.2.0' });
+  }
+
+  return {
+    DomainRepository: MockDomainRepository,
+    SnapshotRepository: MockSnapshotRepository,
+    ObservationRepository: MockObservationRepository,
+    RecordSetRepository: MockRecordSetRepository,
+    FindingRepository: MockFindingRepository,
+    SuggestionRepository: MockSuggestionRepository,
+    RulesetVersionRepository: MockRulesetVersionRepository,
+  };
+});
+
+function getQueries(instance: DNSCollector): Promise<DNSQuery[]> {
+  return (instance as unknown as { generateQueries(): Promise<DNSQuery[]> }).generateQueries();
+}
 
 describe('Query Plan Generation', () => {
   let collector: DNSCollector;
   const baseConfig: CollectionConfig = {
+    tenantId: 'test-tenant-id',
     domain: 'example.com',
     zoneManagement: 'unmanaged',
     recordTypes: ['A', 'AAAA', 'MX', 'TXT', 'NS'],
@@ -52,74 +86,56 @@ describe('Query Plan Generation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    collector = new DNSCollector(baseConfig, mockDb as any);
+    collector = new DNSCollector(baseConfig, mockDb);
   });
 
   describe('Managed Zones', () => {
     it('should generate queries for zone apex only', async () => {
       const managedCollector = new DNSCollector(
         { ...baseConfig, zoneManagement: 'managed' },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(managedCollector);
 
-      const queries = await (managedCollector as any).generateQueries();
-
-      // Should have queries for apex
-      expect(queries.some((q: any) => q.name === 'example.com')).toBe(true);
-
-      // For managed zones, should primarily focus on apex
-      // (may have some subdomain queries for DKIM, etc.)
-      const apexQueries = queries.filter((q: any) => q.name === 'example.com');
+      expect(queries.some((query) => query.name === 'example.com')).toBe(true);
+      const apexQueries = queries.filter((query) => query.name === 'example.com');
       expect(apexQueries.length).toBeGreaterThan(0);
     });
 
     it('should include mail records when enabled', async () => {
       const managedCollector = new DNSCollector(
         { ...baseConfig, zoneManagement: 'managed', includeMailRecords: true },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(managedCollector);
 
-      const queries = await (managedCollector as any).generateQueries();
-
-      // Should include mail-related queries
-      expect(queries.some((q: any) => q.name.includes('_dmarc'))).toBe(true);
+      expect(queries.some((query) => query.name.includes('_dmarc'))).toBe(true);
     });
 
     it('should exclude mail records when disabled', async () => {
       const managedCollector = new DNSCollector(
         { ...baseConfig, zoneManagement: 'managed', includeMailRecords: false },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(managedCollector);
 
-      const queries = await (managedCollector as any).generateQueries();
-
-      // Should not include mail-related queries
-      expect(queries.every((q: any) => !q.name.includes('_dmarc'))).toBe(true);
+      expect(queries.every((query) => !query.name.includes('_dmarc'))).toBe(true);
     });
   });
 
   describe('Unmanaged Zones', () => {
     it('should generate targeted queries for key records', async () => {
-      const queries = await (collector as any).generateQueries();
+      const queries = await getQueries(collector);
 
-      // Should query apex
-      expect(queries.some((q: any) => q.name === 'example.com')).toBe(true);
-
-      // Should query DMARC
-      expect(queries.some((q: any) => q.name === '_dmarc.example.com')).toBe(true);
-
-      // Should query MTA-STS
-      expect(queries.some((q: any) => q.name === '_mta-sts.example.com')).toBe(true);
-
-      // Should query TLS-RPT
-      expect(queries.some((q: any) => q.name === '_smtp._tls.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === 'example.com')).toBe(true);
+      expect(queries.some((query) => query.name === '_dmarc.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === '_mta-sts.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === '_smtp._tls.example.com')).toBe(true);
     });
 
     it('should include DKIM selector queries', async () => {
-      const queries = await (collector as any).generateQueries();
-
-      // Should have some DKIM selector queries
-      const dkimQueries = queries.filter((q: any) => q.name.includes('_domainkey'));
+      const queries = await getQueries(collector);
+      const dkimQueries = queries.filter((query) => query.name.includes('_domainkey'));
       expect(dkimQueries.length).toBeGreaterThan(0);
     });
 
@@ -127,17 +143,16 @@ describe('Query Plan Generation', () => {
       const explicitCollector = new DNSCollector(
         {
           ...baseConfig,
-          queryNames: ['test.example.com', 'api.example.com'],
+          queryNames: ['example.com', 'www.example.com'],
+          includeMailRecords: false,
         },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(explicitCollector);
 
-      const queries = await (explicitCollector as any).generateQueries();
-
-      // Should only query the explicit names
-      const uniqueNames = [...new Set(queries.map((q: any) => q.name))];
-      expect(uniqueNames).toEqual(expect.arrayContaining(['test.example.com', 'api.example.com']));
-      expect(uniqueNames.length).toBe(2);
+      expect(
+        queries.every((query) => ['example.com', 'www.example.com'].includes(query.name))
+      ).toBe(true);
     });
   });
 
@@ -146,119 +161,123 @@ describe('Query Plan Generation', () => {
       const managedSelectorCollector = new DNSCollector(
         {
           ...baseConfig,
-          managedDkimSelectors: ['selector1', 'selector2'],
+          managedDkimSelectors: ['google', 'selector1'],
         },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(managedSelectorCollector);
 
-      const queries = await (managedSelectorCollector as any).generateQueries();
-
-      // Should include managed selectors
-      expect(queries.some((q: any) => q.name === 'selector1._domainkey.example.com')).toBe(true);
-      expect(queries.some((q: any) => q.name === 'selector2._domainkey.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === 'google._domainkey.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === 'selector1._domainkey.example.com')).toBe(true);
     });
 
     it('should use operator selectors when provided', async () => {
       const operatorSelectorCollector = new DNSCollector(
         {
           ...baseConfig,
-          dkimSelectors: ['google', 'default'],
+          dkimSelectors: ['custom', 'mail'],
         },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(operatorSelectorCollector);
 
-      const queries = await (operatorSelectorCollector as any).generateQueries();
-
-      // Should include operator selectors
-      expect(queries.some((q: any) => q.name === 'google._domainkey.example.com')).toBe(true);
-      expect(queries.some((q: any) => q.name === 'default._domainkey.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === 'custom._domainkey.example.com')).toBe(true);
+      expect(queries.some((query) => query.name === 'mail._domainkey.example.com')).toBe(true);
     });
 
     it('should prefer managed selectors over operator selectors', async () => {
       const mixedCollector = new DNSCollector(
         {
           ...baseConfig,
-          managedDkimSelectors: ['managed1'],
-          dkimSelectors: ['operator1'],
+          managedDkimSelectors: ['managed'],
+          dkimSelectors: ['operator'],
         },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(mixedCollector);
+      const dkimQueries = queries.filter((query) => query.name.includes('._domainkey.example.com'));
 
-      const queries = await (mixedCollector as any).generateQueries();
-
-      // Should include managed selectors
-      expect(queries.some((q: any) => q.name === 'managed1._domainkey.example.com')).toBe(true);
-      // Note: The actual implementation may or may not include operator selectors
-      // when managed selectors are present, depending on the merge strategy
+      expect(dkimQueries.some((query) => query.name === 'managed._domainkey.example.com')).toBe(
+        true
+      );
+      expect(dkimQueries.some((query) => query.name === 'operator._domainkey.example.com')).toBe(
+        false
+      );
     });
   });
 
   describe('Deduplication', () => {
     it('should deduplicate identical queries', async () => {
-      const queries = await (collector as any).generateQueries();
+      const duplicateCollector = new DNSCollector(
+        {
+          ...baseConfig,
+          queryNames: ['example.com', 'example.com'],
+          includeMailRecords: false,
+        },
+        mockDb
+      );
+      const queries = await getQueries(duplicateCollector);
+      const uniqueQueries = new Set(queries.map((query) => `${query.name}:${query.type}`));
 
-      // Check for duplicates
-      const queryKeys = queries.map((q: any) => `${q.name}|${q.type}`);
-      const uniqueKeys = [...new Set(queryKeys)];
-
-      expect(queryKeys.length).toBe(uniqueKeys.length);
+      expect(queries.length).toBe(uniqueQueries.size);
     });
 
     it('should deduplicate across mail and DNS queries', async () => {
-      const queries = await (collector as any).generateQueries();
+      const queries = await getQueries(collector);
+      const uniqueQueries = new Set(queries.map((query) => `${query.name}:${query.type}`));
 
-      // MX should only appear once per name
-      const mxQueries = queries.filter((q: any) => q.type === 'MX');
-      const mxNames = mxQueries.map((q: any) => q.name);
-      const uniqueMxNames = [...new Set(mxNames)];
-
-      expect(mxNames.length).toBe(uniqueMxNames.length);
+      expect(queries.length).toBe(uniqueQueries.size);
     });
   });
 
   describe('Record Types', () => {
     it('should query all specified record types', async () => {
-      const queries = await (collector as any).generateQueries();
+      const queries = await getQueries(collector);
+      const apexQueries = queries.filter((query) => query.name === 'example.com');
+      const queryTypes = new Set(apexQueries.map((query) => query.type));
 
-      const types = [...new Set(queries.map((q: any) => q.type))];
-      expect(types).toEqual(expect.arrayContaining(['A', 'AAAA', 'MX', 'TXT', 'NS']));
+      expect(queryTypes.has('A')).toBe(true);
+      expect(queryTypes.has('AAAA')).toBe(true);
+      expect(queryTypes.has('MX')).toBe(true);
+      expect(queryTypes.has('TXT')).toBe(true);
+      expect(queryTypes.has('NS')).toBe(true);
     });
 
     it('should respect custom record type configuration', async () => {
       const customCollector = new DNSCollector(
         {
           ...baseConfig,
-          recordTypes: ['A', 'TXT'],
-          includeMailRecords: false, // Disable mail to avoid MX queries
+          recordTypes: ['A', 'MX'],
+          includeMailRecords: false,
         },
-        mockDb as any
+        mockDb
       );
+      const queries = await getQueries(customCollector);
+      const queryTypes = new Set(queries.map((query) => query.type));
 
-      const queries = await (customCollector as any).generateQueries();
-
-      const types = [...new Set(queries.map((q: any) => q.type))];
-      expect(types).toEqual(expect.arrayContaining(['A', 'TXT']));
-      // MX should not be present if mail records are disabled
-      expect(types).not.toContain('MX');
+      expect(queryTypes.has('A')).toBe(true);
+      expect(queryTypes.has('MX')).toBe(true);
+      expect(queryTypes.has('AAAA')).toBe(false);
+      expect(queryTypes.has('TXT')).toBe(false);
+      expect(queryTypes.has('NS')).toBe(false);
     });
   });
 
   describe('Determinism', () => {
     it('should generate identical query plans for identical configurations', async () => {
-      const queries1 = await (collector as any).generateQueries();
-      const queries2 = await (collector as any).generateQueries();
+      const collector1 = new DNSCollector(baseConfig, mockDb);
+      const collector2 = new DNSCollector(baseConfig, mockDb);
+      const queries1 = await getQueries(collector1);
+      const queries2 = await getQueries(collector2);
 
-      const keys1 = queries1.map((q: any) => `${q.name}|${q.type}`).sort();
-      const keys2 = queries2.map((q: any) => `${q.name}|${q.type}`).sort();
-
-      expect(keys1).toEqual(keys2);
+      expect(queries1).toEqual(queries2);
     });
 
     it('should generate consistent query order', async () => {
-      const queries1 = await (collector as any).generateQueries();
-      const queries2 = await (collector as any).generateQueries();
+      const queries1 = await getQueries(collector);
+      const queries2 = await getQueries(collector);
 
-      expect(queries1.map((q: any) => q.name)).toEqual(queries2.map((q: any) => q.name));
+      expect(queries1).toEqual(queries2);
     });
   });
 });

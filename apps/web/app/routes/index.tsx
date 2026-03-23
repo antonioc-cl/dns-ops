@@ -1,7 +1,23 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { DomainInput } from '../components/DomainInput.js';
 
+interface HomeSearchParams {
+  domain?: string;
+}
+
 export const Route = createFileRoute('/')({
+  validateSearch: (search: Record<string, unknown>): HomeSearchParams => ({
+    domain:
+      typeof search.domain === 'string' && search.domain.length > 0 ? search.domain : undefined,
+  }),
+  beforeLoad: ({ search }) => {
+    if (search.domain) {
+      throw redirect({
+        to: '/domain/$domain',
+        params: { domain: search.domain },
+      });
+    }
+  },
   component: HomeComponent,
 });
 
@@ -27,9 +43,7 @@ function HomeComponent() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
         <div className="flex items-start gap-4">
           <div className="flex-1">
-            <p className="block text-sm font-medium text-gray-700 mb-2">
-              Analyze any domain
-            </p>
+            <p className="block text-sm font-medium text-gray-700 mb-2">Analyze any domain</p>
             <DomainInput onSubmit={handleDomainSubmit} />
             <div className="mt-3 text-sm text-gray-500">
               <p>Examples: example.com, google.com, your-domain.com</p>
@@ -52,8 +66,8 @@ function HomeComponent() {
         />
         <FeatureCard
           icon="chart"
-          title="Delegation Health"
-          description="Check parent zone delegation, glue records, and detect NS/IP divergence issues."
+          title="Rules-Based Findings"
+          description="Review snapshot metadata, DNS evidence, and mail diagnostics with deterministic checks."
         />
       </div>
 
@@ -67,8 +81,8 @@ function HomeComponent() {
               Targeted Inspection
             </h3>
             <p className="text-sm text-gray-600">
-              Analyze any domain instantly. We collect DNS records and run rules-based analysis
-              without needing zone access. Perfect for troubleshooting and audits.
+              Analyze any domain instantly. Review DNS evidence immediately, then use operator
+              access for refreshes and deeper diagnostics.
             </p>
             <ul className="mt-2 text-sm text-gray-500 space-y-1">
               <li>• Point-in-time snapshots</li>
@@ -79,17 +93,28 @@ function HomeComponent() {
           <div>
             <h3 className="font-medium text-green-800 mb-2 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500" />
-              Managed Zones <span className="text-xs text-green-600 bg-green-100 px-1.5 py-0.5 rounded">Portfolio</span>
+              Managed Zones{' '}
+              <span className="text-xs text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                Portfolio
+              </span>
             </h3>
             <p className="text-sm text-gray-600">
-              Add domains to your portfolio for continuous monitoring, alerting, and historical
-              tracking. Ideal for domains you own or manage.
+              Add domains to your portfolio for monitoring, alert triage, shared reporting, and
+              ongoing operator workflows. Ideal for domains you own or manage.
             </p>
             <ul className="mt-2 text-sm text-gray-500 space-y-1">
-              <li>• Scheduled monitoring</li>
-              <li>• Alert on changes</li>
-              <li>• Diff history over time</li>
+              <li>• Monitored domains and alert triage</li>
+              <li>• Shared reports for stakeholders</li>
+              <li>• Broader portfolio tooling phased in</li>
             </ul>
+            <div className="mt-4">
+              <Link
+                to="/portfolio"
+                className="focus-ring inline-flex min-h-10 items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+              >
+                Open Portfolio Workspace
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -98,8 +123,8 @@ function HomeComponent() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FeatureCard
           icon="folder"
-          title="Portfolio Management"
-          description="Organize domains, run fleet-wide reports, and share findings with stakeholders."
+          title="Portfolio Workspace"
+          description="Open the operator workspace for monitoring, alert triage, shared reports, and later phased portfolio workflows."
         />
         <FeatureCard
           icon="document"
@@ -163,7 +188,13 @@ function FeatureCard({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
       <div className="w-8 h-8 text-blue-500 mb-3">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <svg
+          aria-hidden="true"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
           {FEATURE_ICONS[icon]}
         </svg>
       </div>

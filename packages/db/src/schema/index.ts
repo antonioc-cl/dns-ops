@@ -586,6 +586,17 @@ export const auditActionEnum = pgEnum('audit_action', [
   'template_override_created',
   'template_override_updated',
   'template_override_deleted',
+  'remediation_request_created',
+  'remediation_request_updated',
+  'shared_report_created',
+  'shared_report_expired',
+  'monitored_domain_created',
+  'monitored_domain_updated',
+  'monitored_domain_deleted',
+  'monitored_domain_toggled',
+  'alert_acknowledged',
+  'alert_resolved',
+  'alert_suppressed',
 ]);
 
 export const auditEvents = pgTable(
@@ -729,6 +740,19 @@ export const alertStatusEnum = pgEnum('alert_status', [
   'resolved',
 ]);
 
+export const sharedReportVisibilityEnum = pgEnum('shared_report_visibility', [
+  'private',
+  'tenant',
+  'shared',
+]);
+
+export const sharedReportStatusEnum = pgEnum('shared_report_status', [
+  'generating',
+  'ready',
+  'expired',
+  'error',
+]);
+
 export const alerts = pgTable(
   'alerts',
   {
@@ -760,7 +784,7 @@ export const alerts = pgTable(
     resolutionNote: text('resolution_note'),
 
     // Actor context
-    tenantId: uuid('tenant_id'),
+    tenantId: uuid('tenant_id').notNull(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -775,6 +799,46 @@ export const alerts = pgTable(
 
 export type Alert = typeof alerts.$inferSelect;
 export type NewAlert = typeof alerts.$inferInsert;
+
+export const sharedReports = pgTable(
+  'shared_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id').notNull(),
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    title: varchar('title', { length: 200 }).notNull(),
+    visibility: sharedReportVisibilityEnum('visibility').notNull().default('shared'),
+    status: sharedReportStatusEnum('status').notNull().default('generating'),
+    shareToken: varchar('share_token', { length: 128 }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    summary: jsonb('summary').notNull(),
+    alertSummary: jsonb('alert_summary').notNull().$type<
+      Array<{
+        title: string;
+        severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+        status: 'pending' | 'sent' | 'suppressed' | 'acknowledged' | 'resolved';
+        createdAt: Date | string;
+      }>
+    >(),
+    metadata: jsonb('metadata').$type<{
+      sourceAlertIds?: string[];
+      redacted?: boolean;
+      generatedAlertCount?: number;
+    }>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantIdx: index('shared_report_tenant_idx').on(table.tenantId),
+    statusIdx: index('shared_report_status_idx').on(table.status),
+    visibilityIdx: index('shared_report_visibility_idx').on(table.visibility),
+    shareTokenIdx: uniqueIndex('shared_report_share_token_idx').on(table.shareToken),
+    createdIdx: index('shared_report_created_idx').on(table.createdAt),
+  })
+);
+
+export type SharedReport = typeof sharedReports.$inferSelect;
+export type NewSharedReport = typeof sharedReports.$inferInsert;
 
 // =============================================================================
 // PROBE OBSERVATIONS TABLE

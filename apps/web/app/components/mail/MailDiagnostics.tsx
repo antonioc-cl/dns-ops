@@ -12,7 +12,8 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
   const [isChecking, setIsChecking] = useState(false);
   const [results, setResults] = useState<MailCheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showRemediation, setShowRemediation] = useState(false);
+  const [showRemediationForm, setShowRemediationForm] = useState(false);
+  const [remediationSubmitted, setRemediationSubmitted] = useState(false);
 
   const handleCheck = async () => {
     setIsChecking(true);
@@ -30,11 +31,15 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Operator sign-in is required to run mail diagnostics.');
+        }
         throw new Error(data.error || 'Mail check failed');
       }
 
       const data = (await response.json()) as { results?: MailCheckResult };
       setResults(data.results || null);
+      setRemediationSubmitted(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -66,7 +71,8 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
     return issues;
   };
 
-  const hasIssues = results && extractIssues(results).length > 0;
+  const issues = results ? extractIssues(results) : [];
+  const hasIssues = issues.length > 0;
 
   if (!results) {
     return (
@@ -102,31 +108,43 @@ export function MailDiagnostics({ domain, snapshotId }: MailDiagnosticsProps) {
     <div className="space-y-6">
       <MailCheckResults result={results} />
 
-      {hasIssues && !showRemediation && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-semibold text-yellow-900 mb-2">Issues Detected</h4>
-          <p className="text-yellow-800 text-sm mb-3">
-            Some mail security records are missing or misconfigured. Request remediation to fix
-            these issues.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowRemediation(true)}
-            className="focus-ring min-h-10 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-          >
-            Request Remediation
-          </button>
-        </div>
-      )}
+      {hasIssues && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-3">
+          <div>
+            <h4 className="font-semibold text-yellow-900 mb-2">Issues Detected</h4>
+            <p className="text-yellow-800 text-sm">
+              Submit a tenant-scoped remediation request for the issues detected on{' '}
+              <strong>{domain}</strong>.
+            </p>
+          </div>
 
-      {showRemediation && (
-        <RemediationForm
-          domain={domain}
-          snapshotId={snapshotId}
-          issues={extractIssues(results)}
-          onClose={() => setShowRemediation(false)}
-          onSuccess={() => setShowRemediation(false)}
-        />
+          {remediationSubmitted ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+              Remediation request submitted.
+            </div>
+          ) : null}
+
+          {showRemediationForm ? (
+            <RemediationForm
+              domain={domain}
+              snapshotId={snapshotId}
+              issues={issues}
+              onClose={() => setShowRemediationForm(false)}
+              onSuccess={() => {
+                setRemediationSubmitted(true);
+                setShowRemediationForm(false);
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowRemediationForm(true)}
+              className="focus-ring min-h-10 px-4 py-2 rounded-lg bg-yellow-600 text-white hover:bg-yellow-700"
+            >
+              Request Remediation
+            </button>
+          )}
+        </div>
       )}
 
       <div className="flex gap-3">

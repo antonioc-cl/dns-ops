@@ -5,7 +5,7 @@
  * Allows operators to check SPF, DMARC, MX, and infrastructure across many domains.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 interface ReportTemplate {
   id: string;
@@ -74,11 +74,13 @@ const DEFAULT_TEMPLATES: ReportTemplate[] = [
 ];
 
 export function FleetReportsPanel() {
+  const inventoryFieldId = useId();
   const [templates] = useState<ReportTemplate[]>(DEFAULT_TEMPLATES);
   const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
   const [inventoryInput, setInventoryInput] = useState('');
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
   const [report, setReport] = useState<FleetReportResponse | null>(null);
   const [showResultDetails, setShowResultDetails] = useState(false);
 
@@ -86,7 +88,7 @@ export function FleetReportsPanel() {
     return input
       .split(/[\n,]/)
       .map((d) => d.trim().toLowerCase())
-      .filter((d) => d && d.includes('.'));
+      .filter((d) => d?.includes('.'));
   };
 
   const handleCsvUpload = useCallback(async (file: File) => {
@@ -98,9 +100,18 @@ export function FleetReportsPanel() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          throw new Error('Operator sign-in is required to import fleet report inventories.');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to import fleet report inventories.');
+        }
         const errorData = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(errorData.error || 'Failed to parse CSV');
       }
+
+      setAuthRequired(false);
 
       const data = (await response.json()) as { inventory: string[] };
       setInventoryInput(data.inventory.join('\n'));
@@ -138,9 +149,18 @@ export function FleetReportsPanel() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          throw new Error('Operator sign-in is required to run fleet reports.');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to run fleet reports.');
+        }
         const errorData = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(errorData.error || 'Failed to run report');
       }
+
+      setAuthRequired(false);
 
       const data = (await response.json()) as FleetReportResponse;
       setReport(data);
@@ -159,6 +179,12 @@ export function FleetReportsPanel() {
       </div>
 
       <div className="p-4 space-y-4">
+        {authRequired && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            Operator sign-in is required to import inventory or run tenant fleet reports.
+          </div>
+        )}
+
         {/* Error message */}
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
@@ -175,7 +201,7 @@ export function FleetReportsPanel() {
 
         {/* Template Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Report Template</label>
+          <p className="block text-sm font-medium text-gray-700 mb-2">Report Template</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {templates.map((template) => (
               <button
@@ -208,13 +234,13 @@ export function FleetReportsPanel() {
         {/* Inventory Input */}
         <div>
           <label
-            htmlFor="inventory"
+            htmlFor={inventoryFieldId}
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             Domain Inventory
           </label>
           <textarea
-            id="inventory"
+            id={inventoryFieldId}
             value={inventoryInput}
             onChange={(e) => setInventoryInput(e.target.value)}
             rows={6}
@@ -232,6 +258,7 @@ example.org, example.net"
                 type="file"
                 accept=".csv"
                 className="hidden"
+                disabled={authRequired}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleCsvUpload(file);
@@ -247,7 +274,12 @@ example.org, example.net"
           <button
             type="button"
             onClick={handleRunReport}
-            disabled={running || !selectedTemplate || parseInventory(inventoryInput).length === 0}
+            disabled={
+              authRequired ||
+              running ||
+              !selectedTemplate ||
+              parseInventory(inventoryInput).length === 0
+            }
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {running ? 'Running Report...' : 'Run Report'}
@@ -266,11 +298,7 @@ example.org, example.net"
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <SummaryCard
-                label="Domains Checked"
-                value={report.domainsChecked}
-                color="blue"
-              />
+              <SummaryCard label="Domains Checked" value={report.domainsChecked} color="blue" />
               <SummaryCard
                 label="With Issues"
                 value={report.summary.domainsWithIssues}
@@ -293,8 +321,8 @@ example.org, example.net"
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <h5 className="font-medium text-red-900 mb-2">High Priority Issues</h5>
                 <div className="space-y-2">
-                  {report.highPriorityIssues.slice(0, 10).map((issue, idx) => (
-                    <div key={idx} className="text-sm">
+                  {report.highPriorityIssues.slice(0, 10).map((issue) => (
+                    <div key={`${issue.severity}-${issue.message}`} className="text-sm">
                       <span
                         className={`inline-block w-16 px-1.5 py-0.5 rounded text-xs text-center font-medium ${
                           issue.severity === 'critical'
@@ -342,8 +370,8 @@ example.org, example.net"
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <h5 className="font-medium text-orange-900 mb-2">Errors</h5>
                 <div className="space-y-1 text-sm text-orange-800">
-                  {report.errors.slice(0, 10).map((err, idx) => (
-                    <div key={idx}>
+                  {report.errors.slice(0, 10).map((err) => (
+                    <div key={`${err.domain}-${err.error}`}>
                       <span className="font-mono">{err.domain}</span>: {err.error}
                     </div>
                   ))}
@@ -402,9 +430,7 @@ function DomainResultCard({ result }: { result: FleetReportResult }) {
       <div className="flex items-center justify-between">
         <div>
           <span className="font-medium text-gray-900">{result.domain}</span>
-          <span className="ml-2 text-xs text-gray-500">
-            {result.findingsCount} findings
-          </span>
+          <span className="ml-2 text-xs text-gray-500">{result.findingsCount} findings</span>
         </div>
         <button
           type="button"
@@ -417,8 +443,11 @@ function DomainResultCard({ result }: { result: FleetReportResult }) {
 
       {expanded && (
         <div className="mt-2 space-y-1">
-          {result.checks.map((check, idx) => (
-            <div key={idx} className="flex items-center gap-2 text-sm">
+          {result.checks.map((check) => (
+            <div
+              key={`${check.check}-${check.status}-${check.message}`}
+              className="flex items-center gap-2 text-sm"
+            >
               <StatusBadge status={check.status} />
               <span className="uppercase text-xs font-medium text-gray-600 w-20">
                 {check.check}
@@ -448,7 +477,9 @@ function StatusBadge({ status }: { status: CheckResult['status'] }) {
   };
 
   return (
-    <span className={`w-5 h-5 flex items-center justify-center rounded text-xs font-bold ${styles[status]}`}>
+    <span
+      className={`w-5 h-5 flex items-center justify-center rounded text-xs font-bold ${styles[status]}`}
+    >
       {icons[status]}
     </span>
   );

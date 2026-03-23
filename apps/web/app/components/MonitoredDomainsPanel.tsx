@@ -5,7 +5,8 @@
  * Allows operators to add, configure, and remove domains from monitoring.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useCallback, useEffect, useId, useState } from 'react';
 
 interface MonitoredDomain {
   id: string;
@@ -36,6 +37,7 @@ export function MonitoredDomainsPanel() {
   const [domains, setDomains] = useState<MonitoredDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingDomain, setEditingDomain] = useState<MonitoredDomain | null>(null);
 
@@ -46,8 +48,17 @@ export function MonitoredDomainsPanel() {
     try {
       const response = await fetch('/api/monitoring/domains');
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          setDomains([]);
+          return;
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to view monitored domains.');
+        }
         throw new Error('Failed to fetch monitored domains');
       }
+      setAuthRequired(false);
       const data = (await response.json()) as { monitoredDomains: MonitoredDomain[] };
       setDomains(data.monitoredDomains || []);
     } catch (err) {
@@ -70,6 +81,14 @@ export function MonitoredDomainsPanel() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          setDomains([]);
+          return;
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to delete monitored domains.');
+        }
         throw new Error('Failed to delete');
       }
 
@@ -86,6 +105,14 @@ export function MonitoredDomainsPanel() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          setDomains([]);
+          return;
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to update monitored domains.');
+        }
         throw new Error('Failed to toggle');
       }
 
@@ -105,13 +132,20 @@ export function MonitoredDomainsPanel() {
         <button
           type="button"
           onClick={() => setShowAddDialog(true)}
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          disabled={authRequired}
+          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
         >
           + Add Domain
         </button>
       </div>
 
       <div className="p-4">
+        {authRequired && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            Operator sign-in is required to view or change monitored domains.
+          </div>
+        )}
+
         {/* Error message */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
@@ -130,6 +164,13 @@ export function MonitoredDomainsPanel() {
         {(showAddDialog || editingDomain) && (
           <MonitoredDomainDialog
             editingDomain={editingDomain}
+            authRequired={authRequired}
+            onAuthRequired={() => {
+              setAuthRequired(true);
+              setDomains([]);
+              setShowAddDialog(false);
+              setEditingDomain(null);
+            }}
             onClose={() => {
               setShowAddDialog(false);
               setEditingDomain(null);
@@ -145,6 +186,10 @@ export function MonitoredDomainsPanel() {
         {/* Content */}
         {loading ? (
           <div className="text-center text-gray-500 py-8">Loading monitored domains...</div>
+        ) : authRequired ? (
+          <div className="text-center py-8 text-gray-500">
+            Sign in to view and manage tenant monitoring configuration.
+          </div>
         ) : domains.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-400 mb-2">
@@ -153,6 +198,7 @@ export function MonitoredDomainsPanel() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -166,7 +212,8 @@ export function MonitoredDomainsPanel() {
             <button
               type="button"
               onClick={() => setShowAddDialog(true)}
-              className="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium"
+              disabled={authRequired}
+              className="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium disabled:text-gray-400"
             >
               Add your first domain
             </button>
@@ -180,6 +227,7 @@ export function MonitoredDomainsPanel() {
                 onEdit={() => setEditingDomain(domain)}
                 onDelete={() => handleDelete(domain.id)}
                 onToggle={() => handleToggle(domain.id)}
+                disabled={authRequired}
               />
             ))}
           </div>
@@ -198,9 +246,16 @@ interface MonitoredDomainCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onToggle: () => void;
+  disabled?: boolean;
 }
 
-function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDomainCardProps) {
+function MonitoredDomainCard({
+  domain,
+  onEdit,
+  onDelete,
+  onToggle,
+  disabled = false,
+}: MonitoredDomainCardProps) {
   const formatTime = (dateString: string | null): string => {
     if (!dateString) return 'Never';
     const date = new Date(dateString);
@@ -234,20 +289,22 @@ function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDo
   return (
     <div
       className={`p-4 rounded-lg border ${
-        domain.isActive
-          ? 'border-gray-200 bg-white'
-          : 'border-gray-200 bg-gray-50 opacity-75'
+        domain.isActive ? 'border-gray-200 bg-white' : 'border-gray-200 bg-gray-50 opacity-75'
       }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">{domain.domainName}</span>
+            <Link
+              to="/domain/$domain"
+              params={{ domain: domain.domainName.toLowerCase() }}
+              className="font-medium text-blue-600 hover:text-blue-700"
+            >
+              {domain.domainName}
+            </Link>
             <span
               className={`px-2 py-0.5 rounded text-xs font-medium ${
-                domain.isActive
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-200 text-gray-600'
+                domain.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
               }`}
             >
               {domain.isActive ? 'Active' : 'Paused'}
@@ -281,11 +338,18 @@ function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDo
           <button
             type="button"
             onClick={onToggle}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded disabled:text-gray-300 disabled:hover:bg-transparent"
             title={domain.isActive ? 'Pause monitoring' : 'Resume monitoring'}
+            disabled={disabled}
           >
             {domain.isActive ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -294,7 +358,13 @@ function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDo
                 />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                aria-hidden="true"
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -313,10 +383,17 @@ function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDo
           <button
             type="button"
             onClick={onEdit}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded disabled:text-gray-300 disabled:hover:bg-transparent"
             title="Edit"
+            disabled={disabled}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -328,10 +405,17 @@ function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDo
           <button
             type="button"
             onClick={onDelete}
-            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded disabled:text-gray-300 disabled:hover:bg-transparent"
             title="Remove from monitoring"
+            disabled={disabled}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -352,11 +436,27 @@ function MonitoredDomainCard({ domain, onEdit, onDelete, onToggle }: MonitoredDo
 
 interface MonitoredDomainDialogProps {
   editingDomain: MonitoredDomain | null;
+  authRequired: boolean;
+  onAuthRequired: () => void;
   onClose: () => void;
   onSave: () => Promise<void>;
 }
 
-function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDomainDialogProps) {
+function MonitoredDomainDialog({
+  editingDomain,
+  authRequired,
+  onAuthRequired,
+  onClose,
+  onSave,
+}: MonitoredDomainDialogProps) {
+  const idPrefix = useId();
+  const domainNameId = `${idPrefix}-domain-name`;
+  const scheduleId = `${idPrefix}-schedule`;
+  const emailsId = `${idPrefix}-emails`;
+  const webhookId = `${idPrefix}-webhook`;
+  const slackId = `${idPrefix}-slack`;
+  const maxAlertsId = `${idPrefix}-max-alerts`;
+  const suppressionId = `${idPrefix}-suppression`;
   const [domainName, setDomainName] = useState(editingDomain?.domainName || '');
   const [schedule, setSchedule] = useState<'hourly' | 'daily' | 'weekly'>(
     editingDomain?.schedule || 'daily'
@@ -400,8 +500,8 @@ function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDoma
           ...(webhook.trim() && { webhook: webhook.trim() }),
           ...(slack.trim() && { slack: slack.trim() }),
         },
-        maxAlertsPerDay: parseInt(maxAlertsPerDay) || 5,
-        suppressionWindowMinutes: parseInt(suppressionWindow) || 60,
+        maxAlertsPerDay: parseInt(maxAlertsPerDay, 10) || 5,
+        suppressionWindowMinutes: parseInt(suppressionWindow, 10) || 60,
       };
 
       const url = editingDomain
@@ -415,6 +515,13 @@ function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDoma
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          onAuthRequired();
+          throw new Error('Operator sign-in is required to save monitoring configuration.');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to save monitoring configuration.');
+        }
         const errorData = (await response.json().catch(() => ({}))) as { error?: string };
         throw new Error(errorData.error || 'Failed to save');
       }
@@ -444,30 +551,35 @@ function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDoma
           {/* Domain name (only for new) */}
           {!editingDomain && (
             <div>
-              <label htmlFor="domain-name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor={domainNameId}
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Domain Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                id="domain-name"
+                id={domainNameId}
                 value={domainName}
                 onChange={(e) => setDomainName(e.target.value)}
                 placeholder="example.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                disabled={authRequired}
               />
             </div>
           )}
 
           {/* Schedule */}
           <div>
-            <label htmlFor="schedule" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={scheduleId} className="block text-sm font-medium text-gray-700 mb-1">
               Check Schedule
             </label>
             <select
-              id="schedule"
+              id={scheduleId}
               value={schedule}
               onChange={(e) => setSchedule(e.target.value as 'hourly' | 'daily' | 'weekly')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              disabled={authRequired}
             >
               {SCHEDULE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -483,44 +595,47 @@ function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDoma
 
             <div className="space-y-2">
               <div>
-                <label htmlFor="emails" className="block text-xs text-gray-500 mb-1">
+                <label htmlFor={emailsId} className="block text-xs text-gray-500 mb-1">
                   Email addresses (comma-separated)
                 </label>
                 <input
                   type="text"
-                  id="emails"
+                  id={emailsId}
                   value={emailsInput}
                   onChange={(e) => setEmailsInput(e.target.value)}
                   placeholder="admin@example.com, ops@example.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                  disabled={authRequired}
                 />
               </div>
 
               <div>
-                <label htmlFor="webhook" className="block text-xs text-gray-500 mb-1">
+                <label htmlFor={webhookId} className="block text-xs text-gray-500 mb-1">
                   Webhook URL
                 </label>
                 <input
                   type="url"
-                  id="webhook"
+                  id={webhookId}
                   value={webhook}
                   onChange={(e) => setWebhook(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                  disabled={authRequired}
                 />
               </div>
 
               <div>
-                <label htmlFor="slack" className="block text-xs text-gray-500 mb-1">
+                <label htmlFor={slackId} className="block text-xs text-gray-500 mb-1">
                   Slack Channel
                 </label>
                 <input
                   type="text"
-                  id="slack"
+                  id={slackId}
                   value={slack}
                   onChange={(e) => setSlack(e.target.value)}
                   placeholder="#dns-alerts"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                  disabled={authRequired}
                 />
               </div>
             </div>
@@ -532,31 +647,33 @@ function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDoma
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="max-alerts" className="block text-xs text-gray-500 mb-1">
+                <label htmlFor={maxAlertsId} className="block text-xs text-gray-500 mb-1">
                   Max alerts per day
                 </label>
                 <input
                   type="number"
-                  id="max-alerts"
+                  id={maxAlertsId}
                   value={maxAlertsPerDay}
                   onChange={(e) => setMaxAlertsPerDay(e.target.value)}
                   min="1"
                   max="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                  disabled={authRequired}
                 />
               </div>
               <div>
-                <label htmlFor="suppression" className="block text-xs text-gray-500 mb-1">
+                <label htmlFor={suppressionId} className="block text-xs text-gray-500 mb-1">
                   Suppression window (minutes)
                 </label>
                 <input
                   type="number"
-                  id="suppression"
+                  id={suppressionId}
                   value={suppressionWindow}
                   onChange={(e) => setSuppressionWindow(e.target.value)}
                   min="1"
                   max="1440"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-100"
+                  disabled={authRequired}
                 />
               </div>
             </div>
@@ -568,13 +685,13 @@ function MonitoredDomainDialog({ editingDomain, onClose, onSave }: MonitoredDoma
             type="button"
             onClick={onClose}
             className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
-            disabled={saving}
+            disabled={saving || authRequired}
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={saving || (!editingDomain && !domainName.trim())}
+            disabled={saving || authRequired || (!editingDomain && !domainName.trim())}
             className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           >
             {saving ? 'Saving...' : editingDomain ? 'Update' : 'Add Domain'}

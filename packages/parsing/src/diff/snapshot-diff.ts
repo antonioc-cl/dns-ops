@@ -311,16 +311,24 @@ function compareFindings(findingsA: Finding[], findingsB: Finding[]): FindingCha
         // Build description from changes
         const descriptions: string[] = [];
         if (changesDetected.severity) {
-          descriptions.push(`severity: ${changesDetected.severity.from} → ${changesDetected.severity.to}`);
+          descriptions.push(
+            `severity: ${changesDetected.severity.from} → ${changesDetected.severity.to}`
+          );
         }
         if (changesDetected.confidence) {
-          descriptions.push(`confidence: ${changesDetected.confidence.from} → ${changesDetected.confidence.to}`);
+          descriptions.push(
+            `confidence: ${changesDetected.confidence.from} → ${changesDetected.confidence.to}`
+          );
         }
         if (changesDetected.ruleVersion) {
-          descriptions.push(`rule version: ${changesDetected.ruleVersion.from} → ${changesDetected.ruleVersion.to}`);
+          descriptions.push(
+            `rule version: ${changesDetected.ruleVersion.from} → ${changesDetected.ruleVersion.to}`
+          );
         }
         if (changesDetected.evidenceCount) {
-          descriptions.push(`evidence: ${changesDetected.evidenceCount.from} → ${changesDetected.evidenceCount.to}`);
+          descriptions.push(
+            `evidence: ${changesDetected.evidenceCount.from} → ${changesDetected.evidenceCount.to}`
+          );
         }
 
         changes.push({

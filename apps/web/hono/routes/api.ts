@@ -1,10 +1,18 @@
+import {
+  DomainRepository,
+  type IDatabaseAdapter,
+  ObservationRepository,
+  RecordSetRepository,
+  SnapshotRepository,
+} from '@dns-ops/db';
 import { Hono } from 'hono';
-import { getEnvConfig } from '../config/env.js';
-import { requireAuth } from '../middleware/authorization.js';
+import { getCollectorProxyConfig } from '../lib/collector-proxy.js';
+import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
 import { delegationRoutes } from './delegation.js';
 import { findingsRoutes } from './findings.js';
+import { fleetReportRoutes } from './fleet-report.js';
 import { legacyToolsRoutes } from './legacy-tools.js';
 import { mailRoutes } from './mail.js';
 import { monitoringRoutes } from './monitoring.js';
@@ -17,7 +25,35 @@ import { snapshotRoutes } from './snapshots.js';
 
 export const apiRoutes = new Hono<Env>();
 
-// Health check — must be before wildcard subroutes (e.g. /:id in shadow-comparison)
+async function resolveAccessibleSnapshot(
+  db: IDatabaseAdapter,
+  snapshotId: string,
+  tenantId?: string
+) {
+  const snapshotRepo = new SnapshotRepository(db);
+  const domainRepo = new DomainRepository(db);
+
+  const snapshot = await snapshotRepo.findById(snapshotId);
+  if (!snapshot) {
+    return null;
+  }
+
+  const domain = await domainRepo.findById(snapshot.domainId);
+  if (!domain) {
+    return null;
+  }
+
+  if (domain.tenantId && domain.tenantId !== tenantId) {
+    return null;
+  }
+
+  if (!tenantId && domain.tenantId) {
+    return null;
+  }
+
+  return { snapshot, domain };
+}
+
 apiRoutes.get('/health', (c) => {
   return c.json({
     status: 'healthy',
@@ -26,90 +62,75 @@ apiRoutes.get('/health', (c) => {
   });
 });
 
-// Mount findings routes
 apiRoutes.route('/', findingsRoutes);
-
-// Mount legacy tools routes
 apiRoutes.route('/', legacyToolsRoutes);
-
-// Mount selector routes
 apiRoutes.route('/', selectorRoutes);
-
-// Mount delegation routes
 apiRoutes.route('/', delegationRoutes);
-
-// Mount mail routes
 apiRoutes.route('/', mailRoutes);
-
-// Mount shadow comparison routes (Bead 09)
 apiRoutes.route('/shadow-comparison', shadowComparisonRoutes);
-
-// Mount provider template routes (Bead 09)
 apiRoutes.route('/mail', providerTemplateRoutes);
-
-// Mount snapshot routes (Bead 13)
 apiRoutes.route('/snapshots', snapshotRoutes);
-
-// Mount portfolio routes (Bead 14)
 apiRoutes.route('/portfolio', portfolioRoutes);
-
-// Mount ruleset version routes (Bead 1j4.8.4)
 apiRoutes.route('/ruleset-versions', rulesetVersionRoutes);
-
-// Mount monitoring routes (Bead 1j4.12.4)
 apiRoutes.route('/monitoring', monitoringRoutes);
-
-// Mount alert routes (Bead 15)
 apiRoutes.route('/alerts', alertRoutes);
+apiRoutes.route('/fleet-report', fleetReportRoutes);
 
-// Get latest snapshot for a domain
 apiRoutes.get('/domain/:domain/latest', async (c) => {
-  const domain = c.req.param('domain');
-  const dbAdapter = c.get('db');
-  if (!dbAdapter) return c.json({ error: 'Database not available' }, 503);
-  const db = dbAdapter.getDrizzle();
+  const tenantId = c.get('tenantId');
+  const db = c.get('db');
+
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
+  const domainName = c.req.param('domain').toLowerCase();
+  const domainRepo = new DomainRepository(db);
+  const snapshotRepo = new SnapshotRepository(db);
 
   try {
-    const domainRecord = await db.query.domains.findFirst({
-      where: (domains, { eq }) => eq(domains.normalizedName, domain),
-    });
-
-    if (!domainRecord) {
+    const domain = await domainRepo.findByName(domainName);
+    if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
-    const snapshot = await db.query.snapshots.findFirst({
-      where: (snapshots, { eq }) => eq(snapshots.domainId, domainRecord.id),
-      orderBy: (snapshots, { desc }) => [desc(snapshots.createdAt)],
-    });
+    if (domain.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
 
+    if (!tenantId && domain.tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
+    const snapshot = await snapshotRepo.findLatestByDomain(domain.id);
     if (!snapshot) {
       return c.json({ error: 'No snapshots found' }, 404);
     }
 
     return c.json(snapshot);
   } catch (error) {
-    console.error('Error fetching snapshot:', error);
+    console.error('Error fetching latest snapshot:', error);
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
 
-// Get observations for a snapshot
 apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
+  const tenantId = c.get('tenantId');
+  const db = c.get('db');
   const snapshotId = c.req.param('snapshotId');
-  const dbAdapter = c.get('db');
-  if (!dbAdapter) return c.json({ error: 'Database not available' }, 503);
-  const db = dbAdapter.getDrizzle();
+
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
 
   try {
-    const observations = await db.query.observations.findMany({
-      where: (observations, { eq }) => eq(observations.snapshotId, snapshotId),
-      orderBy: (observations, { asc }) => [
-        asc(observations.queryName),
-        asc(observations.queryType),
-      ],
-    });
+    const accessibleSnapshot = await resolveAccessibleSnapshot(db, snapshotId, tenantId);
+    if (!accessibleSnapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
 
+    const observationRepo = new ObservationRepository(db);
+    const observations = await observationRepo.findBySnapshotId(accessibleSnapshot.snapshot.id);
     return c.json(observations);
   } catch (error) {
     console.error('Error fetching observations:', error);
@@ -117,19 +138,23 @@ apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
   }
 });
 
-// Get record sets for a snapshot
 apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
+  const tenantId = c.get('tenantId');
+  const db = c.get('db');
   const snapshotId = c.req.param('snapshotId');
-  const dbAdapter = c.get('db');
-  if (!dbAdapter) return c.json({ error: 'Database not available' }, 503);
-  const db = dbAdapter.getDrizzle();
+
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
 
   try {
-    const recordSets = await db.query.recordSets.findMany({
-      where: (recordSets, { eq }) => eq(recordSets.snapshotId, snapshotId),
-      orderBy: (recordSets, { asc }) => [asc(recordSets.type), asc(recordSets.name)],
-    });
+    const accessibleSnapshot = await resolveAccessibleSnapshot(db, snapshotId, tenantId);
+    if (!accessibleSnapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
 
+    const recordSetRepo = new RecordSetRepository(db);
+    const recordSets = await recordSetRepo.findBySnapshotId(accessibleSnapshot.snapshot.id);
     return c.json(recordSets);
   } catch (error) {
     console.error('Error fetching record sets:', error);
@@ -137,53 +162,54 @@ apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
   }
 });
 
-// Trigger collection (proxies to collector service)
-apiRoutes.post('/collect/domain', requireAuth, async (c) => {
+apiRoutes.post('/collect/domain', requireAuth, requireWritePermission, async (c) => {
   let body: { domain?: string; zoneManagement?: string };
+
   try {
     body = await c.req.json();
   } catch {
     return c.json({ error: 'Invalid JSON in request body' }, 400);
   }
-  const { domain, zoneManagement = 'unmanaged' } = body;
 
+  const { domain, zoneManagement = 'unmanaged' } = body;
   if (!domain) {
     return c.json({ error: 'Domain is required' }, 400);
   }
 
-  const { collectorUrl, internalSecret } = getEnvConfig();
-  const tenantId = c.get('tenantId') || 'default';
-  const actorId = c.get('actorId') || 'web-ui';
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
+
+  const proxyConfig = getCollectorProxyConfig(c, { contentType: 'application/json' });
+  if (proxyConfig instanceof Response) {
+    return proxyConfig;
+  }
 
   try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    // Add internal auth headers if secret is configured
-    if (internalSecret) {
-      headers['X-Internal-Secret'] = internalSecret;
-      headers['X-Tenant-Id'] = tenantId;
-      headers['X-Actor-Id'] = actorId;
-    }
-
-    const response = await fetch(`${collectorUrl}/api/collect/domain`, {
+    const response = await fetch(`${proxyConfig.collectorUrl}/api/collect/domain`, {
       method: 'POST',
-      headers,
+      headers: proxyConfig.headers,
       body: JSON.stringify({
         domain,
         zoneManagement,
-        triggeredBy: 'web-ui',
+        triggeredBy: actorId,
       }),
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      return c.json({ error: `Collector error: ${error}` }, 502);
+      const upstream = await response.text();
+      return c.json(
+        {
+          error: 'Collector request failed',
+          message: upstream,
+        },
+        response.status
+      );
     }
 
-    const result = await response.json();
-    return c.json(result);
+    return c.json(await response.json());
   } catch (error) {
     console.error('Error triggering collection:', error);
     return c.json({ error: 'Failed to connect to collector service' }, 503);

@@ -113,11 +113,12 @@ describe('Monitoring Routes', () => {
 
       // Create a mock with domains that DON'T match 'hourly' schedule
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [
-            createMockMonitoredDomain({ schedule: 'daily', isActive: true }),
-          ],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [createMockMonitoredDomain({ schedule: 'daily', isActive: true })],
+          })
+        );
         c.set('tenantId', 'test-tenant');
         await next();
       });
@@ -140,9 +141,12 @@ describe('Monitoring Routes', () => {
       const app = new Hono<Env>();
 
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [],
+          })
+        );
         c.set('tenantId', 'test-tenant');
         await next();
       });
@@ -166,9 +170,12 @@ describe('Monitoring Routes', () => {
       const app = new Hono<Env>();
 
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [],
+          })
+        );
         c.set('tenantId', 'test-tenant');
         await next();
       });
@@ -195,16 +202,19 @@ describe('Monitoring Routes', () => {
       const recentAlert = new Date(now.getTime() - 30 * 60 * 1000); // 30 minutes ago
 
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [
-            createMockMonitoredDomain({
-              lastAlertAt: recentAlert, // 30 min ago
-              suppressionWindowMinutes: 60, // 60 min window - still suppressed
-            }),
-          ],
-          domains: [{ id: 'dom-1', name: 'example.com' }],
-          alerts: [],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [
+              createMockMonitoredDomain({
+                lastAlertAt: recentAlert, // 30 min ago
+                suppressionWindowMinutes: 60, // 60 min window - still suppressed
+              }),
+            ],
+            domains: [{ id: 'dom-1', name: 'example.com' }],
+            alerts: [],
+          })
+        );
         c.set('tenantId', 'test-tenant');
         await next();
       });
@@ -243,21 +253,48 @@ describe('Monitoring Routes', () => {
       today.setHours(1, 0, 0, 0); // Early today
 
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [
-            createMockMonitoredDomain({
-              lastAlertAt: null, // No suppression window
-              maxAlertsPerDay: 3, // Max 3 alerts
-            }),
-          ],
-          domains: [{ id: 'dom-1', name: 'example.com' }],
-          // Already 3 alerts today
-          alerts: [
-            { id: 'alert-1', monitoredDomainId: 'mon-1', createdAt: today, severity: 'high', status: 'pending', title: 'Alert 1', tenantId: 'tenant-1' },
-            { id: 'alert-2', monitoredDomainId: 'mon-1', createdAt: today, severity: 'high', status: 'pending', title: 'Alert 2', tenantId: 'tenant-1' },
-            { id: 'alert-3', monitoredDomainId: 'mon-1', createdAt: today, severity: 'high', status: 'pending', title: 'Alert 3', tenantId: 'tenant-1' },
-          ],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [
+              createMockMonitoredDomain({
+                lastAlertAt: null, // No suppression window
+                maxAlertsPerDay: 3, // Max 3 alerts
+              }),
+            ],
+            domains: [{ id: 'dom-1', name: 'example.com' }],
+            // Already 3 alerts today
+            alerts: [
+              {
+                id: 'alert-1',
+                monitoredDomainId: 'mon-1',
+                createdAt: today,
+                severity: 'high',
+                status: 'pending',
+                title: 'Alert 1',
+                tenantId: 'tenant-1',
+              },
+              {
+                id: 'alert-2',
+                monitoredDomainId: 'mon-1',
+                createdAt: today,
+                severity: 'high',
+                status: 'pending',
+                title: 'Alert 2',
+                tenantId: 'tenant-1',
+              },
+              {
+                id: 'alert-3',
+                monitoredDomainId: 'mon-1',
+                createdAt: today,
+                severity: 'high',
+                status: 'pending',
+                title: 'Alert 3',
+                tenantId: 'tenant-1',
+              },
+            ],
+          })
+        );
         c.set('tenantId', 'test-tenant');
         await next();
       });
@@ -312,11 +349,7 @@ describe('Monitoring Routes', () => {
       today.setHours(1, 0, 0, 0);
       const maxAlertsPerDay = 3;
 
-      const alerts = [
-        { createdAt: today },
-        { createdAt: today },
-        { createdAt: today },
-      ];
+      const alerts = [{ createdAt: today }, { createdAt: today }, { createdAt: today }];
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
@@ -335,11 +368,7 @@ describe('Monitoring Routes', () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      const alerts = [
-        { createdAt: yesterday },
-        { createdAt: yesterday },
-        { createdAt: yesterday },
-      ];
+      const alerts = [{ createdAt: yesterday }, { createdAt: yesterday }, { createdAt: yesterday }];
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
@@ -406,7 +435,9 @@ interface MockDbOptions {
   onFindActiveBySchedule?: (schedule: string) => MockMonitoredDomain[];
 }
 
-function createMockMonitoredDomain(overrides: Partial<MockMonitoredDomain> = {}): MockMonitoredDomain {
+function createMockMonitoredDomain(
+  overrides: Partial<MockMonitoredDomain> = {}
+): MockMonitoredDomain {
   return {
     id: 'mon-1',
     domainId: 'dom-1',
@@ -435,7 +466,7 @@ function createMockDb(options: MockDbOptions = {}) {
   // The select method receives a table schema, we'll identify it by its name property
   return {
     select: (table: { _: { name: string } }) => {
-      const tableName = table?._ ?.name;
+      const tableName = table?._?.name;
       if (tableName === 'monitored_domains') {
         if (onFindActiveBySchedule) {
           // For scheduler tests, we intercept and call the callback

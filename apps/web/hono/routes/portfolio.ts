@@ -8,6 +8,7 @@
 import {
   AuditEventRepository,
   DomainNoteRepository,
+  DomainRepository,
   DomainTagRepository,
   SavedFilterRepository,
   TemplateOverrideRepository,
@@ -16,6 +17,7 @@ import { domains, findings, snapshots } from '@dns-ops/db/schema';
 import { and, desc, eq, inArray, like, or } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import { trackSearch } from '../middleware/error-tracking.js';
 import {
   boolean,
   integer,
@@ -26,7 +28,6 @@ import {
   validationErrorResponse,
 } from '../middleware/validation.js';
 import type { Env } from '../types.js';
-import { trackSearch } from '../middleware/error-tracking.js';
 
 export const portfolioRoutes = new Hono<Env>();
 
@@ -176,8 +177,39 @@ portfolioRoutes.post('/search', async (c) => {
       limit,
       offset,
     });
-  } catch (error) {
+  } catch (_error) {
     return c.json({ error: 'Search failed' }, 500);
+  }
+});
+
+portfolioRoutes.get('/domains/by-name/:domain', async (c) => {
+  const db = c.get('db');
+  const tenantId = c.get('tenantId');
+
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
+
+  const domainName = c.req.param('domain').toLowerCase();
+
+  try {
+    const domainRepo = new DomainRepository(db);
+    const domain = await domainRepo.findByNameForTenant(domainName, tenantId);
+
+    if (!domain) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
+    return c.json({
+      domain: {
+        id: domain.id,
+        name: domain.name,
+        normalizedName: domain.normalizedName,
+        zoneManagement: domain.zoneManagement,
+      },
+    });
+  } catch (_error) {
+    return c.json({ error: 'Failed to resolve domain context' }, 500);
   }
 });
 
@@ -187,9 +219,20 @@ portfolioRoutes.post('/search', async (c) => {
 
 portfolioRoutes.get('/domains/:domainId/notes', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
   const domainId = c.req.param('domainId');
 
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
+
   try {
+    const domainRepo = new DomainRepository(db);
+    const domain = await domainRepo.findById(domainId);
+    if (!domain || domain.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
     const noteRepo = new DomainNoteRepository(db);
     const notes = await noteRepo.findByDomainId(domainId);
     return c.json({ notes });
@@ -200,8 +243,11 @@ portfolioRoutes.get('/domains/:domainId/notes', async (c) => {
 
 portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const domainId = c.req.param('domainId');
 
   const validation = await validateBody(c, {
@@ -215,6 +261,12 @@ portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (
   const { content } = validation.data;
 
   try {
+    const domainRepo = new DomainRepository(db);
+    const domain = await domainRepo.findById(domainId);
+    if (!domain || domain.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
     const noteRepo = new DomainNoteRepository(db);
     const auditRepo = new AuditEventRepository(db);
 
@@ -244,8 +296,11 @@ portfolioRoutes.post('/domains/:domainId/notes', requireWritePermission, async (
 
 portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const noteId = c.req.param('noteId');
 
   const validation = await validateBody(c, {
@@ -263,7 +318,7 @@ portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
     const auditRepo = new AuditEventRepository(db);
 
     const existing = await noteRepo.findById(noteId);
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return c.json({ error: 'Note not found' }, 404);
     }
 
@@ -290,8 +345,11 @@ portfolioRoutes.put('/notes/:noteId', requireWritePermission, async (c) => {
 
 portfolioRoutes.delete('/notes/:noteId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const noteId = c.req.param('noteId');
 
   try {
@@ -299,7 +357,7 @@ portfolioRoutes.delete('/notes/:noteId', requireWritePermission, async (c) => {
     const auditRepo = new AuditEventRepository(db);
 
     const existing = await noteRepo.findById(noteId);
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return c.json({ error: 'Note not found' }, 404);
     }
 
@@ -324,11 +382,38 @@ portfolioRoutes.delete('/notes/:noteId', requireWritePermission, async (c) => {
 // DOMAIN TAGS
 // =============================================================================
 
-portfolioRoutes.get('/domains/:domainId/tags', async (c) => {
+portfolioRoutes.get('/tags', async (c) => {
   const db = c.get('db');
-  const domainId = c.req.param('domainId');
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
 
   try {
+    const tagRepo = new DomainTagRepository(db);
+    const tags = await tagRepo.listByTenant(tenantId);
+    return c.json({ tags });
+  } catch (_error) {
+    return c.json({ error: 'Failed to fetch tags' }, 500);
+  }
+});
+
+portfolioRoutes.get('/domains/:domainId/tags', async (c) => {
+  const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  const domainId = c.req.param('domainId');
+
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
+
+  try {
+    const domainRepo = new DomainRepository(db);
+    const domain = await domainRepo.findById(domainId);
+    if (!domain || domain.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
     const tagRepo = new DomainTagRepository(db);
     const tags = await tagRepo.findByDomainId(domainId);
     return c.json({ tags });
@@ -339,9 +424,18 @@ portfolioRoutes.get('/domains/:domainId/tags', async (c) => {
 
 portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const domainId = c.req.param('domainId');
+
+  const domainRepo = new DomainRepository(db);
+  const domain = await domainRepo.findById(domainId);
+  if (!domain || domain.tenantId !== tenantId) {
+    return c.json({ error: 'Domain not found' }, 404);
+  }
 
   const validation = await validateBody(c, {
     tag: requiredString('tag', {
@@ -386,12 +480,21 @@ portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c
 
 portfolioRoutes.delete('/domains/:domainId/tags/:tag', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const domainId = c.req.param('domainId');
   const tag = decodeURIComponent(c.req.param('tag'));
 
   try {
+    const domainRepo = new DomainRepository(db);
+    const domain = await domainRepo.findById(domainId);
+    if (!domain || domain.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
     const tagRepo = new DomainTagRepository(db);
     const auditRepo = new AuditEventRepository(db);
 
@@ -418,13 +521,21 @@ portfolioRoutes.delete('/domains/:domainId/tags/:tag', requireWritePermission, a
 
 portfolioRoutes.get('/filters', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
 
   try {
     const filterRepo = new SavedFilterRepository(db);
     const filters = await filterRepo.findByTenant(tenantId, actorId);
-    return c.json({ filters });
+    return c.json({
+      filters: filters.map((filter) => ({
+        ...filter,
+        canManage: filter.createdBy === actorId,
+      })),
+    });
   } catch (_error) {
     return c.json({ error: 'Failed to fetch filters' }, 500);
   }
@@ -432,8 +543,11 @@ portfolioRoutes.get('/filters', async (c) => {
 
 portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
 
   const validation = await validateBody(c, {
     name: requiredString('name', { minLength: 1, maxLength: 100 }),
@@ -479,17 +593,63 @@ portfolioRoutes.post('/filters', requireWritePermission, async (c) => {
 
 portfolioRoutes.put('/filters/:filterId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const filterId = c.req.param('filterId');
-  const body = await c.req.json().catch(() => ({}));
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+
+  if (!body || typeof body !== 'object') {
+    return c.json({ error: 'Invalid JSON in request body' }, 400);
+  }
+
+  const updateData: {
+    name?: string;
+    description?: string | null;
+    isShared?: boolean;
+  } = {};
+
+  if ('criteria' in body) {
+    return c.json({ error: 'Filter criteria cannot be updated from this route' }, 400);
+  }
+
+  if ('name' in body) {
+    if (typeof body.name !== 'string' || body.name.trim().length === 0 || body.name.length > 100) {
+      return c.json({ error: 'name must be a non-empty string up to 100 characters' }, 400);
+    }
+    updateData.name = body.name.trim();
+  }
+
+  if ('description' in body) {
+    if (body.description !== null && typeof body.description !== 'string') {
+      return c.json({ error: 'description must be a string or null' }, 400);
+    }
+    if (typeof body.description === 'string' && body.description.length > 500) {
+      return c.json({ error: 'description must be 500 characters or fewer' }, 400);
+    }
+    updateData.description =
+      typeof body.description === 'string' ? body.description.trim() || null : null;
+  }
+
+  if ('isShared' in body) {
+    if (typeof body.isShared !== 'boolean') {
+      return c.json({ error: 'isShared must be a boolean' }, 400);
+    }
+    updateData.isShared = body.isShared;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return c.json({ error: 'At least one editable filter field is required' }, 400);
+  }
 
   try {
     const filterRepo = new SavedFilterRepository(db);
     const auditRepo = new AuditEventRepository(db);
 
     const existing = await filterRepo.findById(filterId);
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return c.json({ error: 'Filter not found' }, 404);
     }
 
@@ -497,7 +657,7 @@ portfolioRoutes.put('/filters/:filterId', requireWritePermission, async (c) => {
       return c.json({ error: 'Cannot edit filter created by another user' }, 403);
     }
 
-    const updated = await filterRepo.update(filterId, body);
+    const updated = await filterRepo.update(filterId, updateData);
     if (!updated) {
       return c.json({ error: 'Filter not found' }, 404);
     }
@@ -520,8 +680,11 @@ portfolioRoutes.put('/filters/:filterId', requireWritePermission, async (c) => {
 
 portfolioRoutes.delete('/filters/:filterId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const filterId = c.req.param('filterId');
 
   try {
@@ -529,8 +692,12 @@ portfolioRoutes.delete('/filters/:filterId', requireWritePermission, async (c) =
     const auditRepo = new AuditEventRepository(db);
 
     const existing = await filterRepo.findById(filterId);
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return c.json({ error: 'Filter not found' }, 404);
+    }
+
+    if (existing.createdBy !== actorId) {
+      return c.json({ error: 'Cannot delete filter created by another user' }, 403);
     }
 
     await filterRepo.delete(filterId);
@@ -556,7 +723,10 @@ portfolioRoutes.delete('/filters/:filterId', requireWritePermission, async (c) =
 
 portfolioRoutes.get('/templates/overrides', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
   const providerKey = c.req.query('provider');
 
   try {
@@ -570,8 +740,11 @@ portfolioRoutes.get('/templates/overrides', async (c) => {
 
 portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
 
   const validation = await validateBody(c, {
     providerKey: requiredString('providerKey', { minLength: 1, maxLength: 64 }),
@@ -621,21 +794,64 @@ portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) =
 
 portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const overrideId = c.req.param('overrideId');
-  const body = await c.req.json().catch(() => ({}));
+  const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+
+  if (!body || typeof body !== 'object') {
+    return c.json({ error: 'Invalid JSON in request body' }, 400);
+  }
+
+  const allowedKeys = new Set(['overrideData', 'appliesToDomains']);
+  const unexpectedKeys = Object.keys(body).filter((key) => !allowedKeys.has(key));
+  if (unexpectedKeys.length > 0) {
+    return c.json({ error: `Unsupported override fields: ${unexpectedKeys.join(', ')}` }, 400);
+  }
+
+  const updateData: {
+    overrideData?: Record<string, unknown>;
+    appliesToDomains?: string[];
+  } = {};
+
+  if ('overrideData' in body) {
+    if (
+      !body.overrideData ||
+      typeof body.overrideData !== 'object' ||
+      Array.isArray(body.overrideData)
+    ) {
+      return c.json({ error: 'overrideData must be an object' }, 400);
+    }
+    updateData.overrideData = body.overrideData as Record<string, unknown>;
+  }
+
+  if ('appliesToDomains' in body) {
+    if (
+      !Array.isArray(body.appliesToDomains) ||
+      !body.appliesToDomains.every((item) => typeof item === 'string')
+    ) {
+      return c.json({ error: 'appliesToDomains must be an array of strings' }, 400);
+    }
+    updateData.appliesToDomains = body.appliesToDomains as string[];
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return c.json({ error: 'At least one editable override field is required' }, 400);
+  }
 
   try {
     const overrideRepo = new TemplateOverrideRepository(db);
     const auditRepo = new AuditEventRepository(db);
 
     const existing = await overrideRepo.findById(overrideId);
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return c.json({ error: 'Override not found' }, 404);
     }
 
-    const updated = await overrideRepo.update(overrideId, body);
+    const updated = await overrideRepo.update(overrideId, updateData);
     if (!updated) {
       return c.json({ error: 'Override not found' }, 404);
     }
@@ -658,8 +874,11 @@ portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, 
 
 portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
-  const actorId = c.get('actorId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
+  }
   const overrideId = c.req.param('overrideId');
 
   try {
@@ -667,7 +886,7 @@ portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermissio
     const auditRepo = new AuditEventRepository(db);
 
     const existing = await overrideRepo.findById(overrideId);
-    if (!existing) {
+    if (!existing || existing.tenantId !== tenantId) {
       return c.json({ error: 'Override not found' }, 404);
     }
 
@@ -694,7 +913,10 @@ portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermissio
 
 portfolioRoutes.get('/audit', async (c) => {
   const db = c.get('db');
-  const tenantId = c.get('tenantId')!; // biome-ignore lint/style/noNonNullAssertion: Validated by requireAuth middleware
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
   const limit = parseInt(c.req.query('limit') || '50', 10);
 
   try {

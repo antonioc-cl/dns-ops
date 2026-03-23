@@ -77,6 +77,11 @@ monitoringRoutes.post('/check', async (c) => {
       });
 
       if (!response.ok) {
+        if (!monitored.tenantId) {
+          console.error(`Monitored domain missing tenant ownership: ${monitored.id}`);
+          continue;
+        }
+
         // Create alert for collection failure
         await alertRepo.create({
           monitoredDomainId: monitored.id,
@@ -136,11 +141,16 @@ monitoringRoutes.post('/alerts/:alertId/acknowledge', async (c) => {
   }
 
   const alertId = c.req.param('alertId');
-  const actorId = c.get('actorId') || 'unknown';
+  const actorId = c.get('actorId');
+  const tenantId = c.get('tenantId');
+
+  if (!actorId || !tenantId) {
+    return c.json({ error: 'Tenant and actor context required' }, 401);
+  }
 
   try {
     const alertRepo = new AlertRepository(db);
-    const alert = await alertRepo.acknowledge(alertId, actorId);
+    const alert = await alertRepo.acknowledge(alertId, tenantId, actorId);
     return c.json({ alert });
   } catch (_error) {
     return c.json({ error: 'Failed to acknowledge alert' }, 500);
@@ -158,12 +168,17 @@ monitoringRoutes.post('/alerts/:alertId/resolve', async (c) => {
   }
 
   const alertId = c.req.param('alertId');
+  const tenantId = c.get('tenantId');
   const body = await c.req.json().catch(() => ({}));
   const { resolutionNote } = body;
 
+  if (!tenantId) {
+    return c.json({ error: 'Tenant context required' }, 401);
+  }
+
   try {
     const alertRepo = new AlertRepository(db);
-    const alert = await alertRepo.resolve(alertId, resolutionNote);
+    const alert = await alertRepo.resolve(alertId, tenantId, resolutionNote);
     return c.json({ alert });
   } catch (_error) {
     return c.json({ error: 'Failed to resolve alert' }, 500);
@@ -229,8 +244,8 @@ monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
   }
 
   const domainId = c.req.param('domainId');
-  const tenantId = c.get('tenantId') || 'default';
-  const actorId = c.get('actorId') || 'unknown';
+  const tenantId = c.get('tenantId');
+  const actorId = c.get('actorId');
   const body = await c.req.json().catch(() => ({}));
   const {
     schedule = 'daily',
@@ -238,6 +253,10 @@ monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
     maxAlertsPerDay = 5,
     suppressionWindowMinutes = 60,
   } = body;
+
+  if (!tenantId || !actorId) {
+    return c.json({ error: 'Tenant and actor context required' }, 401);
+  }
 
   try {
     const monitoredRepo = new MonitoredDomainRepository(db);

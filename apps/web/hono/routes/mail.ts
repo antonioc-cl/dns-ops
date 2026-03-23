@@ -1,14 +1,24 @@
 /**
  * Mail Routes
  *
- * API endpoints for mail diagnostics and remediation requests.
+ * API endpoints for mail diagnostics and remediation workflows.
  */
 
-import { RemediationRepository } from '@dns-ops/db';
+import { AuditEventRepository, RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { getEnvConfig } from '../config/env.js';
+import { getRequestEnvConfig } from '../config/env.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
-import { trackMailCheck, trackRemediation } from '../middleware/error-tracking.js';
+import { trackMailCheck } from '../middleware/error-tracking.js';
+import {
+  domainName,
+  email,
+  enumValue,
+  optionalArray,
+  optionalString,
+  uuid,
+  validateBody,
+  validationErrorResponse,
+} from '../middleware/validation.js';
 import type { Env } from '../types.js';
 
 interface CollectMailRequest {
@@ -17,20 +27,8 @@ interface CollectMailRequest {
   explicitSelectors?: string[];
 }
 
-interface RemediationRequest {
-  domain?: string;
-  snapshotId?: string;
-  contactEmail?: string;
-  contactName?: string;
-  contactPhone?: string;
-  priority?: 'low' | 'medium' | 'high' | 'critical';
-  issues?: string[];
-  notes?: string;
-}
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_RE = /^\+?[\d\s-]{8,20}$/;
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const REMEDIATION_STATUSES = ['open', 'in-progress', 'resolved', 'closed'] as const;
+const REMEDIATION_PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 
 function validateCollectMail(data: CollectMailRequest): string | null {
   if (!data.domain || data.domain.length > 253) return 'Domain is required';
@@ -46,35 +44,8 @@ function validateCollectMail(data: CollectMailRequest): string | null {
   return null;
 }
 
-function validateRemediation(data: RemediationRequest): string | null {
-  if (!data.domain || data.domain.length > 253) return 'Domain is required';
-  if (!data.contactEmail || !EMAIL_RE.test(data.contactEmail)) {
-    return 'Valid contactEmail is required';
-  }
-  if (!data.contactName || data.contactName.trim().length < 2) {
-    return 'contactName must be at least 2 characters';
-  }
-  if (data.snapshotId && !UUID_RE.test(data.snapshotId)) {
-    return 'snapshotId must be a UUID';
-  }
-  if (data.contactPhone && !PHONE_RE.test(data.contactPhone)) {
-    return 'Valid phone number required';
-  }
-  if (data.priority && !['low', 'medium', 'high', 'critical'].includes(data.priority)) {
-    return 'Invalid priority';
-  }
-  if (!data.issues || !Array.isArray(data.issues) || data.issues.length === 0) {
-    return 'At least one issue must be selected';
-  }
-  if (data.notes && data.notes.length > 1000) {
-    return 'notes must be <= 1000 chars';
-  }
-  return null;
-}
-
 export const mailRoutes = new Hono<Env>()
-  // Trigger mail check via collector
-  .post('/collect/mail', requireAuth, async (c) => {
+  .post('/collect/mail', requireAuth, requireWritePermission, async (c) => {
     let data: CollectMailRequest;
     try {
       data = (await c.req.json()) as CollectMailRequest;
@@ -87,36 +58,43 @@ export const mailRoutes = new Hono<Env>()
       return c.json({ error: validationError }, 400);
     }
 
-    const { collectorUrl, internalSecret } = getEnvConfig();
-    const tenantId = c.get('tenantId') || 'default';
-    const actorId = c.get('actorId') || 'web-ui';
+    const { collectorUrl, internalSecret } = getRequestEnvConfig(c.env);
+    const tenantId = c.get('tenantId');
+    const actorId = c.get('actorId');
+
+    if (!tenantId || !actorId) {
+      return c.json({ error: 'Authenticated tenant and actor required' }, 403);
+    }
+
+    if (!internalSecret) {
+      return c.json({ error: 'Collector integration is not configured' }, 503);
+    }
 
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      // Add internal auth headers if secret is configured
-      if (internalSecret) {
-        headers['X-Internal-Secret'] = internalSecret;
-        headers['X-Tenant-Id'] = tenantId;
-        headers['X-Actor-Id'] = actorId;
-      }
-
       const response = await fetch(`${collectorUrl}/api/collect/mail`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Secret': internalSecret,
+          'X-Tenant-Id': tenantId,
+          'X-Actor-Id': actorId,
+        },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        const error = (await response.json().catch(() => ({}))) as { message?: string };
-        return c.json({ error: error.message || 'Collector error' }, response.status);
+        const error = (await response.json().catch(() => ({}))) as {
+          message?: string;
+          error?: string;
+        };
+        return c.json(
+          { error: error.message || error.error || 'Collector error' },
+          response.status
+        );
       }
 
       const result = await response.json();
 
-      // Track mail check event (Bead 14.4)
       trackMailCheck({
         tenantId,
         domain: data.domain as string,
@@ -127,10 +105,8 @@ export const mailRoutes = new Hono<Env>()
 
       return c.json(result);
     } catch (error) {
-      // Track failed mail check
-      const tenantIdFail = c.get('tenantId') || 'default';
       trackMailCheck({
-        tenantId: tenantIdFail,
+        tenantId,
         domain: data.domain as string,
         checkType: 'all',
         success: false,
@@ -139,241 +115,225 @@ export const mailRoutes = new Hono<Env>()
       return c.json({ error: 'Failed to connect to collector service' }, 503);
     }
   })
-
-  // Create remediation request
   .post('/remediation', requireAuth, requireWritePermission, async (c) => {
-    let data: RemediationRequest;
-    try {
-      data = (await c.req.json()) as RemediationRequest;
-    } catch {
-      return c.json({ error: 'Invalid JSON body' }, 400);
+    const db = c.get('db');
+    const tenantId = c.get('tenantId');
+    const actorId = c.get('actorId');
+
+    if (!db || !tenantId || !actorId) {
+      return c.json({ error: 'Database, tenant, and actor context required' }, 503);
     }
 
-    const validationError = validateRemediation(data);
-    if (validationError) {
-      return c.json({ error: validationError }, 400);
+    const validation = await validateBody(c, {
+      domain: domainName('domain'),
+      snapshotId: uuid('snapshotId', false),
+      contactEmail: email('contactEmail'),
+      contactName: optionalString('contactName', { minLength: 2, maxLength: 100 }),
+      contactPhone: optionalString('contactPhone', {
+        minLength: 8,
+        maxLength: 20,
+        pattern: /^\+?[\d\s-]{8,20}$/,
+        patternMessage: 'contactPhone must be a valid phone number',
+      }),
+      issues: optionalArray<string>('issues', (value, index) => {
+        if (typeof value !== 'string' || value.length === 0) {
+          throw new Error(`issues[${index}] must be a non-empty string`);
+        }
+        return value;
+      }),
+      priority: enumValue('priority', REMEDIATION_PRIORITIES, false),
+      notes: optionalString('notes', { maxLength: 5000 }),
+    });
+
+    if (!validation.success) {
+      return validationErrorResponse(c, validation.error);
     }
 
-    const dbAdapter = c.get('db');
-    if (!dbAdapter) {
-      return c.json({ error: 'Database not available' }, 503);
+    const { contactEmail, contactName, contactPhone, domain, issues, notes, priority, snapshotId } =
+      validation.data;
+
+    if (!domain) {
+      return c.json({ error: 'domain is required' }, 400);
     }
 
-    try {
-      const repo = new RemediationRepository(dbAdapter);
-      const request = await repo.create({
-        snapshotId: data.snapshotId,
-        domain: data.domain as string,
-        contactEmail: data.contactEmail as string,
-        contactName: data.contactName as string,
-        contactPhone: data.contactPhone,
-        issues: data.issues as string[],
-        priority: data.priority || 'medium',
-        notes: data.notes,
-        status: 'open',
-      });
-
-      // Track remediation event (Bead 14.4)
-      const tenantId = c.get('tenantId') || 'default';
-      trackRemediation({
-        tenantId,
-        domain: request.domain,
-        findingId: data.snapshotId || 'unknown',
-        remediationType: 'manual',
-        status: 'started',
-      });
-
-      return c.json(
-        {
-          id: request.id,
-          domain: request.domain,
-          status: request.status,
-          createdAt: request.createdAt,
-        },
-        201
-      );
-    } catch (error) {
-      console.error('Remediation creation error:', error);
-      return c.json(
-        {
-          error: 'Failed to create remediation request',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        500
-      );
+    if (!contactEmail) {
+      return c.json({ error: 'contactEmail is required' }, 400);
     }
+
+    if (!contactName) {
+      return c.json({ error: 'contactName is required' }, 400);
+    }
+
+    if (!issues || issues.length === 0) {
+      return c.json({ error: 'issues must include at least one item' }, 400);
+    }
+
+    const remediationRepo = new RemediationRepository(db);
+    const auditRepo = new AuditEventRepository(db);
+
+    const remediation = await remediationRepo.create({
+      tenantId,
+      createdBy: actorId,
+      domain,
+      snapshotId,
+      contactEmail,
+      contactName,
+      contactPhone,
+      issues,
+      priority: priority ?? 'medium',
+      notes,
+      status: 'open',
+    });
+
+    await auditRepo.create({
+      action: 'remediation_request_created',
+      entityType: 'remediation_request',
+      entityId: remediation.id,
+      actorId,
+      tenantId,
+      newValue: {
+        domain,
+        issues,
+        priority: remediation.priority,
+        status: remediation.status,
+      },
+      ipAddress: c.req.header('x-forwarded-for') || c.req.header('x-real-ip'),
+      userAgent: c.req.header('user-agent'),
+    });
+
+    return c.json({ remediation }, 201);
   })
-
-  // List all remediation requests with filtering
   .get('/remediation', requireAuth, async (c) => {
-    const dbAdapter = c.get('db');
+    const db = c.get('db');
+    const tenantId = c.get('tenantId');
 
-    if (!dbAdapter) {
-      return c.json({ error: 'Database not available' }, 503);
+    if (!db || !tenantId) {
+      return c.json({ error: 'Database or tenant context unavailable' }, 503);
     }
 
-    try {
-      const repo = new RemediationRepository(dbAdapter);
+    const status = c.req.query('status');
+    const priority = c.req.query('priority');
+    const domain = c.req.query('domain');
 
-      // Parse query params
-      const domains = c.req.query('domains')?.split(',').filter(Boolean);
-      const statuses = c.req.query('statuses')?.split(',').filter(Boolean) as
-        | ('open' | 'in-progress' | 'resolved' | 'closed')[]
-        | undefined;
-      const priorities = c.req.query('priorities')?.split(',').filter(Boolean) as
-        | ('low' | 'medium' | 'high' | 'critical')[]
-        | undefined;
-      const limit = c.req.query('limit') ? parseInt(c.req.query('limit')!, 10) : undefined;
-      const offset = c.req.query('offset') ? parseInt(c.req.query('offset')!, 10) : undefined;
-
-      const requests = await repo.list({ domains, statuses, priorities, limit, offset });
-
-      return c.json({
-        requests,
-        count: requests.length,
-        filters: { domains, statuses, priorities },
-      });
-    } catch (error) {
-      console.error('Remediation list error:', error);
-      return c.json(
-        {
-          error: 'Failed to list remediation requests',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        500
-      );
+    if (status && !REMEDIATION_STATUSES.includes(status as (typeof REMEDIATION_STATUSES)[number])) {
+      return c.json({ error: 'Invalid remediation status filter' }, 400);
     }
+
+    if (
+      priority &&
+      !REMEDIATION_PRIORITIES.includes(priority as (typeof REMEDIATION_PRIORITIES)[number])
+    ) {
+      return c.json({ error: 'Invalid remediation priority filter' }, 400);
+    }
+
+    const remediationRepo = new RemediationRepository(db);
+    const remediation = await remediationRepo.list(tenantId, {
+      domains: domain ? [domain] : undefined,
+      statuses: status ? [status as (typeof REMEDIATION_STATUSES)[number]] : undefined,
+      priorities: priority ? [priority as (typeof REMEDIATION_PRIORITIES)[number]] : undefined,
+    });
+
+    return c.json({ remediation });
   })
-
-  // Get remediation statistics/counts
   .get('/remediation/stats', requireAuth, async (c) => {
-    const dbAdapter = c.get('db');
+    const db = c.get('db');
+    const tenantId = c.get('tenantId');
 
-    if (!dbAdapter) {
-      return c.json({ error: 'Database not available' }, 503);
+    if (!db || !tenantId) {
+      return c.json({ error: 'Database or tenant context unavailable' }, 503);
     }
 
-    try {
-      const repo = new RemediationRepository(dbAdapter);
-      const countsByStatus = await repo.countByStatus();
-
-      return c.json({
-        total:
-          countsByStatus.open +
-          countsByStatus['in-progress'] +
-          countsByStatus.resolved +
-          countsByStatus.closed,
-        byStatus: countsByStatus,
-      });
-    } catch (error) {
-      console.error('Remediation stats error:', error);
-      return c.json(
-        {
-          error: 'Failed to get remediation stats',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        500
-      );
-    }
+    const remediationRepo = new RemediationRepository(db);
+    const counts = await remediationRepo.countByStatus(tenantId);
+    return c.json({ counts });
   })
-
-  // Get single remediation request by ID
   .get('/remediation/by-id/:id', requireAuth, async (c) => {
+    const db = c.get('db');
+    const tenantId = c.get('tenantId');
     const id = c.req.param('id');
 
-    if (!UUID_RE.test(id)) {
-      return c.json({ error: 'Invalid remediation ID' }, 400);
+    if (!db || !tenantId) {
+      return c.json({ error: 'Database or tenant context unavailable' }, 503);
     }
 
-    const dbAdapter = c.get('db');
+    const remediationRepo = new RemediationRepository(db);
+    const remediation = await remediationRepo.findById(id, tenantId);
 
-    if (!dbAdapter) {
-      return c.json({ error: 'Database not available' }, 503);
+    if (!remediation) {
+      return c.json({ error: 'Remediation request not found' }, 404);
     }
 
-    try {
-      const repo = new RemediationRepository(dbAdapter);
-      const request = await repo.findById(id);
-
-      if (!request) {
-        return c.json({ error: 'Remediation request not found' }, 404);
-      }
-
-      return c.json(request);
-    } catch (error) {
-      console.error('Remediation fetch by id error:', error);
-      return c.json(
-        {
-          error: 'Failed to fetch remediation request',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        500
-      );
-    }
+    return c.json({ remediation });
   })
-
-  // Get remediation requests for a domain
   .get('/remediation/domain/:domain', requireAuth, async (c) => {
+    const db = c.get('db');
+    const tenantId = c.get('tenantId');
     const domain = c.req.param('domain');
-    const dbAdapter = c.get('db');
 
-    if (!dbAdapter) {
-      return c.json({ error: 'Database not available' }, 503);
+    if (!db || !tenantId) {
+      return c.json({ error: 'Database or tenant context unavailable' }, 503);
     }
 
-    try {
-      const repo = new RemediationRepository(dbAdapter);
-      const requests = await repo.findByDomain(domain);
-      return c.json({ requests, count: requests.length });
-    } catch (error) {
-      console.error('Remediation fetch error:', error);
-      return c.json(
-        {
-          error: 'Failed to fetch remediation requests',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        500
-      );
-    }
+    const remediationRepo = new RemediationRepository(db);
+    const remediation = await remediationRepo.findByDomain(domain, tenantId);
+    return c.json({ remediation });
   })
-
-  // Update remediation status
   .patch('/remediation/:id', requireAuth, requireWritePermission, async (c) => {
+    const db = c.get('db');
+    const tenantId = c.get('tenantId');
+    const actorId = c.get('actorId');
     const id = c.req.param('id');
-    const body = (await c.req.json().catch(() => ({}))) as {
-      status?: string;
-      assignedTo?: string;
-    };
-    const { status, assignedTo } = body;
 
-    if (!status || !['open', 'in-progress', 'resolved', 'closed'].includes(status)) {
-      return c.json({ error: 'Valid status required' }, 400);
+    if (!db || !tenantId || !actorId) {
+      return c.json({ error: 'Database, tenant, and actor context required' }, 503);
     }
 
-    const nextStatus = status as 'open' | 'in-progress' | 'resolved' | 'closed';
+    const validation = await validateBody(c, {
+      status: enumValue('status', REMEDIATION_STATUSES, false),
+      assignedTo: optionalString('assignedTo', { maxLength: 100 }),
+      notes: optionalString('notes', { maxLength: 5000 }),
+    });
 
-    const dbAdapter = c.get('db');
-    if (!dbAdapter) {
-      return c.json({ error: 'Database not available' }, 503);
+    if (!validation.success) {
+      return validationErrorResponse(c, validation.error);
     }
 
-    try {
-      const repo = new RemediationRepository(dbAdapter);
-      const updated = await repo.updateStatus(id, nextStatus, assignedTo);
-
-      if (!updated) {
-        return c.json({ error: 'Remediation request not found' }, 404);
-      }
-
-      return c.json(updated);
-    } catch (error) {
-      console.error('Remediation update error:', error);
-      return c.json(
-        {
-          error: 'Failed to update remediation request',
-          message: error instanceof Error ? error.message : 'Unknown error',
-        },
-        500
-      );
+    const existingRepo = new RemediationRepository(db);
+    const existing = await existingRepo.findById(id, tenantId);
+    if (!existing) {
+      return c.json({ error: 'Remediation request not found' }, 404);
     }
+
+    const status = validation.data.status ?? existing.status;
+    const remediation = await existingRepo.updateStatus(id, tenantId, status, {
+      assignedTo: validation.data.assignedTo,
+      notes: validation.data.notes,
+    });
+
+    if (!remediation) {
+      return c.json({ error: 'Remediation request not found' }, 404);
+    }
+
+    const auditRepo = new AuditEventRepository(db);
+    await auditRepo.create({
+      action: 'remediation_request_updated',
+      entityType: 'remediation_request',
+      entityId: remediation.id,
+      actorId,
+      tenantId,
+      previousValue: {
+        status: existing.status,
+        assignedTo: existing.assignedTo,
+        notes: existing.notes,
+      },
+      newValue: {
+        status: remediation.status,
+        assignedTo: remediation.assignedTo,
+        notes: remediation.notes,
+      },
+      ipAddress: c.req.header('x-forwarded-for') || c.req.header('x-real-ip'),
+      userAgent: c.req.header('user-agent'),
+    });
+
+    return c.json({ remediation });
   });

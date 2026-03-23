@@ -2,36 +2,41 @@
  * Database Middleware
  *
  * Sets up database context for collector routes.
- * Creates a PostgreSQL adapter and attaches it to the Hono context.
+ * Creates a PostgreSQL adapter once per process and attaches it to the Hono context.
  */
 
+import type { IDatabaseAdapter } from '@dns-ops/db';
 import { createPostgresAdapter } from '@dns-ops/db';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types.js';
 
-/**
- * Database middleware - attaches DB adapter to context
- *
- * Requires DATABASE_URL environment variable to be set.
- * Returns 500 error if database is not configured or connection fails.
- */
-export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
+let sharedAdapter: IDatabaseAdapter | null = null;
+let sharedDatabaseUrl: string | null = null;
+
+function getDatabaseUrl(): string {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (!databaseUrl) {
-    console.error('DATABASE_URL environment variable is not set');
-    return c.json(
-      {
-        error: 'Database configuration error',
-        message: 'DATABASE_URL not configured',
-      },
-      500
-    );
+    throw new Error('DATABASE_URL not configured');
   }
 
+  return databaseUrl;
+}
+
+export function getSharedDbAdapter(): IDatabaseAdapter {
+  const databaseUrl = getDatabaseUrl();
+
+  if (!sharedAdapter || sharedDatabaseUrl !== databaseUrl) {
+    sharedAdapter = createPostgresAdapter(databaseUrl);
+    sharedDatabaseUrl = databaseUrl;
+  }
+
+  return sharedAdapter;
+}
+
+export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
   try {
-    const adapter = createPostgresAdapter(databaseUrl);
-    c.set('db', adapter);
+    c.set('db', getSharedDbAdapter());
   } catch (error) {
     console.error('Failed to create database adapter:', error);
     return c.json(
@@ -46,20 +51,7 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
   return next();
 });
 
-/**
- * Database middleware with validation - fails on startup if misconfigured
- *
- * Use this for strict environments where DB must be available.
- * Throws error instead of returning JSON response.
- */
 export const dbMiddlewareStrict = createMiddleware<Env>(async (c, next) => {
-  const databaseUrl = process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is required but not set');
-  }
-
-  const adapter = createPostgresAdapter(databaseUrl);
-  c.set('db', adapter);
+  c.set('db', getSharedDbAdapter());
   return next();
 });

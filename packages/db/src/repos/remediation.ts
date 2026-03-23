@@ -23,44 +23,48 @@ export class RemediationRepository {
   }
 
   /**
-   * Find remediation request by ID
+   * Find remediation request by ID within tenant scope
    */
-  async findById(id: string): Promise<RemediationRequest | null> {
+  async findById(id: string, tenantId: string): Promise<RemediationRequest | null> {
     const result = await this.db.selectOne(remediationRequests, eq(remediationRequests.id, id));
-    return result || null;
+    if (!result || result.tenantId !== tenantId) {
+      return null;
+    }
+    return result;
   }
 
   /**
-   * Find all remediation requests for a domain
+   * Find all remediation requests for a domain within tenant scope
    */
-  async findByDomain(domain: string): Promise<RemediationRequest[]> {
+  async findByDomain(domain: string, tenantId: string): Promise<RemediationRequest[]> {
     const results = await this.db.selectWhere(
       remediationRequests,
       eq(remediationRequests.domain, domain)
     );
-    return results.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return results
+      .filter((request) => request.tenantId === tenantId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   /**
-   * Find remediation requests by snapshot ID
+   * Find remediation requests by snapshot ID within tenant scope
    */
-  async findBySnapshotId(snapshotId: string): Promise<RemediationRequest[]> {
+  async findBySnapshotId(snapshotId: string, tenantId: string): Promise<RemediationRequest[]> {
     const results = await this.db.selectWhere(
       remediationRequests,
       eq(remediationRequests.snapshotId, snapshotId)
     );
-    return results.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return results
+      .filter((request) => request.tenantId === tenantId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   /**
-   * Find remediation requests by status
+   * Find remediation requests by status within tenant scope
    */
   async findByStatus(
     status: RemediationRequest['status'],
+    tenantId: string,
     limit?: number
   ): Promise<RemediationRequest[]> {
     const results = await this.db.selectWhere(
@@ -68,29 +72,47 @@ export class RemediationRepository {
       eq(remediationRequests.status, status)
     );
     return results
+      .filter((request) => request.tenantId === tenantId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit);
   }
 
   /**
-   * Update remediation request status
+   * Update remediation request status within tenant scope
    */
   async updateStatus(
     id: string,
+    tenantId: string,
     status: RemediationRequest['status'],
-    assignedTo?: string
+    options?: {
+      assignedTo?: string;
+      notes?: string;
+    }
   ): Promise<RemediationRequest | null> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) {
+      return null;
+    }
+
     const updates: Partial<NewRemediationRequest> = {
       status,
       updatedAt: new Date(),
     };
 
-    if (assignedTo !== undefined) {
-      updates.assignedTo = assignedTo;
+    if (options?.assignedTo !== undefined) {
+      updates.assignedTo = options.assignedTo;
+    }
+
+    if (options?.notes !== undefined) {
+      updates.notes = options.notes;
     }
 
     if (status === 'resolved') {
       updates.resolvedAt = new Date();
+    }
+
+    if (status === 'closed') {
+      updates.resolvedAt = existing.resolvedAt ?? new Date();
     }
 
     const result = await this.db.updateOne(
@@ -98,57 +120,49 @@ export class RemediationRepository {
       updates,
       eq(remediationRequests.id, id)
     );
-
-    return result || null;
+    return result ?? null;
   }
 
   /**
-   * Close a remediation request
+   * Close a remediation request within tenant scope
    */
-  async close(id: string, reason?: string): Promise<RemediationRequest | null> {
-    const result = await this.db.updateOne(
-      remediationRequests,
-      {
-        status: 'closed',
-        notes: reason,
-        updatedAt: new Date(),
-      },
-      eq(remediationRequests.id, id)
-    );
-
-    return result || null;
+  async close(id: string, tenantId: string, reason?: string): Promise<RemediationRequest | null> {
+    return this.updateStatus(id, tenantId, 'closed', { notes: reason });
   }
 
   /**
-   * List remediation requests with filtering
+   * List remediation requests with filtering within tenant scope
    */
-  async list(options?: {
-    domains?: string[];
-    statuses?: RemediationRequest['status'][];
-    priorities?: RemediationRequest['priority'][];
-    limit?: number;
-    offset?: number;
-  }): Promise<RemediationRequest[]> {
+  async list(
+    tenantId: string,
+    options?: {
+      domains?: string[];
+      statuses?: RemediationRequest['status'][];
+      priorities?: RemediationRequest['priority'][];
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<RemediationRequest[]> {
     let results = await this.db.select(remediationRequests);
 
+    results = results.filter((request) => request.tenantId === tenantId);
+
     if (options?.domains?.length) {
-      results = results.filter((r) => options.domains?.includes(r.domain));
+      results = results.filter((request) => options.domains?.includes(request.domain));
     }
 
     if (options?.statuses?.length) {
-      results = results.filter((r) => options.statuses?.includes(r.status));
+      results = results.filter((request) => options.statuses?.includes(request.status));
     }
 
     if (options?.priorities?.length) {
-      results = results.filter((r) => options.priorities?.includes(r.priority));
+      results = results.filter((request) => options.priorities?.includes(request.priority));
     }
 
-    // Sort by createdAt desc
     results = results.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    // Apply pagination
     const offset = options?.offset || 0;
     const limit = options?.limit || results.length;
 
@@ -156,14 +170,15 @@ export class RemediationRepository {
   }
 
   /**
-   * Count remediation requests by status
+   * Count remediation requests by status within tenant scope
    */
-  async countByStatus(): Promise<Record<RemediationRequest['status'], number>> {
+  async countByStatus(tenantId: string): Promise<Record<RemediationRequest['status'], number>> {
     const results = await this.db.select(remediationRequests);
+    const tenantResults = results.filter((request) => request.tenantId === tenantId);
 
     const counts = { open: 0, 'in-progress': 0, resolved: 0, closed: 0 };
 
-    for (const row of results) {
+    for (const row of tenantResults) {
       counts[row.status]++;
     }
 

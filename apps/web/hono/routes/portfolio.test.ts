@@ -188,6 +188,13 @@ function getTableName(table: unknown): string {
   return '';
 }
 
+function getConditionParam(condition: unknown): unknown {
+  const sql = condition as {
+    queryChunks?: Array<{ constructor?: { name?: string }; value?: unknown }>;
+  };
+  return sql.queryChunks?.find((chunk) => chunk?.constructor?.name === 'Param')?.value;
+}
+
 function createMockDb(data: MockData) {
   let noteId = 0;
   let tagId = 0;
@@ -219,6 +226,7 @@ function createMockDb(data: MockData) {
 
   // Map Drizzle table names to our mock data keys
   const tableNameMap: Record<string, keyof MockData> = {
+    domains: 'domains',
     domain_notes: 'domainNotes',
     domain_tags: 'domainTags',
     saved_filters: 'savedFilters',
@@ -235,6 +243,7 @@ function createMockDb(data: MockData) {
     getDrizzle: () => mockDrizzle,
     select: vi.fn(async (table: unknown) => {
       const tableName = getTable(table);
+      if (tableName === 'domains') return [...data.domains];
       if (tableName === 'domainNotes') return [...data.domainNotes];
       if (tableName === 'domainTags') return [...data.domainTags];
       if (tableName === 'savedFilters') return [...data.savedFilters];
@@ -244,16 +253,30 @@ function createMockDb(data: MockData) {
     }),
     selectWhere: vi.fn(async (table: unknown, _condition: unknown) => {
       const tableName = getTable(table);
+      if (tableName === 'domains') return [...data.domains];
       if (tableName === 'domainNotes') return [...data.domainNotes];
       if (tableName === 'domainTags') return [...data.domainTags];
       if (tableName === 'auditEvents') return [...data.auditEvents];
       return [];
     }),
-    selectOne: vi.fn(async (table: unknown, _condition: unknown) => {
+    selectOne: vi.fn(async (table: unknown, condition: unknown) => {
       const tableName = getTable(table);
-      if (tableName === 'domainNotes') return data.domainNotes[0];
-      if (tableName === 'savedFilters') return data.savedFilters[0];
-      if (tableName === 'templateOverrides') return data.templateOverrides[0];
+      const param = getConditionParam(condition);
+      if (tableName === 'domains') {
+        return data.domains.find(
+          (domain) =>
+            domain.id === param || domain.normalizedName === param || domain.name === param
+        );
+      }
+      if (tableName === 'domainNotes') {
+        return data.domainNotes.find((note) => note.id === param);
+      }
+      if (tableName === 'savedFilters') {
+        return data.savedFilters.find((filter) => filter.id === param);
+      }
+      if (tableName === 'templateOverrides') {
+        return data.templateOverrides.find((override) => override.id === param);
+      }
       return undefined;
     }),
     insert: vi.fn(async (table: unknown, values: Record<string, unknown>) => {
@@ -658,6 +681,55 @@ describe('Portfolio Routes', () => {
   });
 
   // ===========================================================================
+  // DOMAIN LOOKUP TESTS
+  // ===========================================================================
+
+  describe('Domain Lookup', () => {
+    it('should resolve a tenant-owned domain by name', async () => {
+      const res = await app.request('/api/portfolio/domains/by-name/example.com');
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as JsonBody;
+      expect(body.domain).toMatchObject({ id: 'domain-1', name: 'example.com' });
+    });
+
+    it('should return 404 when domain name is not in the tenant portfolio', async () => {
+      const res = await app.request('/api/portfolio/domains/by-name/missing.example');
+
+      expect(res.status).toBe(404);
+    });
+
+    it('should resolve exact tenant match even when many partial matches exist first', async () => {
+      for (let index = 0; index < 25; index += 1) {
+        mockData.domains.push({
+          id: `domain-extra-${index}`,
+          name: `example-${index}.com`,
+          normalizedName: `example-${index}.com`,
+          tenantId: 'tenant-1',
+          zoneManagement: 'managed',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+      mockData.domains.push({
+        id: 'domain-exact-tail',
+        name: 'target.example.com',
+        normalizedName: 'target.example.com',
+        tenantId: 'tenant-1',
+        zoneManagement: 'managed',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/domains/by-name/target.example.com');
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as JsonBody;
+      expect(body.domain).toMatchObject({ id: 'domain-exact-tail', name: 'target.example.com' });
+    });
+  });
+
+  // ===========================================================================
   // DOMAIN NOTES TESTS
   // ===========================================================================
 
@@ -770,6 +842,26 @@ describe('Portfolio Routes', () => {
 
       expect(res.status).toBe(404);
     });
+
+    it('should reject updating a note from another tenant', async () => {
+      mockData.domainNotes.push({
+        id: 'note-foreign',
+        domainId: 'domain-3',
+        content: 'Foreign tenant note',
+        createdBy: 'user-999',
+        tenantId: 'tenant-2',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/notes/note-foreign', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: 'Nope' }),
+      });
+
+      expect(res.status).toBe(404);
+    });
   });
 
   // ===========================================================================
@@ -777,6 +869,39 @@ describe('Portfolio Routes', () => {
   // ===========================================================================
 
   describe('Domain Tags', () => {
+    it('should list tenant tag suggestions', async () => {
+      mockData.domainTags.push({
+        id: 'tag-1',
+        domainId: 'domain-1',
+        tag: 'production',
+        createdBy: 'user-123',
+        tenantId: 'tenant-1',
+        createdAt: new Date(),
+      });
+      mockData.domainTags.push({
+        id: 'tag-2',
+        domainId: 'domain-2',
+        tag: 'shared',
+        createdBy: 'user-123',
+        tenantId: 'tenant-1',
+        createdAt: new Date(),
+      });
+      mockData.domainTags.push({
+        id: 'tag-3',
+        domainId: 'domain-3',
+        tag: 'other-tenant',
+        createdBy: 'user-999',
+        tenantId: 'tenant-2',
+        createdAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/tags');
+
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as JsonBody;
+      expect(body.tags).toEqual(['production', 'shared']);
+    });
+
     it('should list tags for a domain', async () => {
       mockData.domainTags.push({
         id: 'tag-1',
@@ -864,6 +989,8 @@ describe('Portfolio Routes', () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as JsonBody;
       expect(body.filters).toBeDefined();
+      const filters = body.filters as Array<{ canManage?: boolean }>;
+      expect(filters[0]).toHaveProperty('canManage', true);
     });
 
     it('should create a saved filter', async () => {
@@ -939,6 +1066,29 @@ describe('Portfolio Routes', () => {
       expect(body.error).toContain('another user');
     });
 
+    it('should reject criteria updates through metadata-only filter edit route', async () => {
+      mockData.savedFilters.push({
+        id: 'filter-criteria',
+        name: 'Immutable Criteria',
+        criteria: { tags: ['production'] },
+        isShared: false,
+        createdBy: 'user-123',
+        tenantId: 'tenant-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/filters/filter-criteria', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ criteria: { tags: ['critical'] } }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as JsonBody;
+      expect(body.error).toContain('criteria');
+    });
+
     it('should delete a saved filter', async () => {
       mockData.savedFilters.push({
         id: 'filter-1',
@@ -958,6 +1108,48 @@ describe('Portfolio Routes', () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as JsonBody;
       expect(body.success).toBe(true);
+    });
+
+    it('should reject deleting filter owned by another user', async () => {
+      mockData.savedFilters.push({
+        id: 'filter-shared',
+        name: 'Shared Foreign Filter',
+        criteria: {},
+        isShared: true,
+        createdBy: 'other-user',
+        tenantId: 'tenant-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/filters/filter-shared', {
+        method: 'DELETE',
+      });
+
+      expect(res.status).toBe(403);
+      const body = (await res.json()) as JsonBody;
+      expect(body.error).toContain('another user');
+    });
+
+    it('should reject updating a filter from another tenant', async () => {
+      mockData.savedFilters.push({
+        id: 'filter-foreign',
+        name: 'Foreign Filter',
+        criteria: {},
+        isShared: false,
+        createdBy: 'user-123',
+        tenantId: 'tenant-2',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/filters/filter-foreign', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Still Foreign' }),
+      });
+
+      expect(res.status).toBe(404);
     });
   });
 
@@ -1037,6 +1229,30 @@ describe('Portfolio Routes', () => {
       expect(res.status).toBe(200);
     });
 
+    it('should reject protected field updates for a template override', async () => {
+      mockData.templateOverrides.push({
+        id: 'override-1',
+        providerKey: 'google',
+        templateKey: 'dkim',
+        overrideData: { selector: 'old' },
+        appliesToDomains: [],
+        createdBy: 'user-123',
+        tenantId: 'tenant-1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/templates/overrides/override-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: 'tenant-2' }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as JsonBody;
+      expect(body.error).toContain('Unsupported override fields');
+    });
+
     it('should delete a template override', async () => {
       mockData.templateOverrides.push({
         id: 'override-1',
@@ -1057,6 +1273,28 @@ describe('Portfolio Routes', () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as JsonBody;
       expect(body.success).toBe(true);
+    });
+
+    it('should reject updating an override from another tenant', async () => {
+      mockData.templateOverrides.push({
+        id: 'override-foreign',
+        providerKey: 'google',
+        templateKey: 'dkim',
+        overrideData: { selector: 'foreign' },
+        appliesToDomains: [],
+        createdBy: 'user-999',
+        tenantId: 'tenant-2',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const res = await app.request('/api/portfolio/templates/overrides/override-foreign', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overrideData: { selector: 'new' } }),
+      });
+
+      expect(res.status).toBe(404);
     });
   });
 

@@ -12,8 +12,8 @@ import { findings, recordSets } from '@dns-ops/db/schema';
 import { compareSnapshots } from '@dns-ops/parsing';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import type { Env } from '../types.js';
 import { trackDiff } from '../middleware/error-tracking.js';
+import type { Env } from '../types.js';
 
 export const snapshotRoutes = new Hono<Env>();
 

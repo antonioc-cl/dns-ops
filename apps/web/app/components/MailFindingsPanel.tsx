@@ -119,8 +119,8 @@ export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <h5 className="text-sm font-medium text-red-800 mb-2">Issues</h5>
               <ul className="space-y-1">
-                {mailConfig.issues.map((issue, i) => (
-                  <li key={i} className="text-sm text-red-700 flex items-start gap-2">
+                {mailConfig.issues.map((issue) => (
+                  <li key={issue} className="text-sm text-red-700 flex items-start gap-2">
                     <span className="text-red-500 mt-0.5">×</span>
                     {issue}
                   </li>
@@ -133,8 +133,8 @@ export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <h5 className="text-sm font-medium text-amber-800 mb-2">Recommendations</h5>
               <ul className="space-y-1">
-                {mailConfig.recommendations.map((rec, i) => (
-                  <li key={i} className="text-sm text-amber-700 flex items-start gap-2">
+                {mailConfig.recommendations.map((rec) => (
+                  <li key={rec} className="text-sm text-amber-700 flex items-start gap-2">
                     <span className="text-amber-500 mt-0.5">→</span>
                     {rec}
                   </li>

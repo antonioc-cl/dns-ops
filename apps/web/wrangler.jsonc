@@ -3,39 +3,19 @@
   "name": "dns-ops-web",
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2024-01-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat"]
 
-  // ==========================================================================
-  // Production Bindings Configuration
-  // ==========================================================================
-  // These bindings must be configured via the Cloudflare Dashboard or CLI:
-  //   wrangler pages project create dns-ops-web
-  //   wrangler pages project edit dns-ops-web
+  // Runtime contract for the current code:
+  // - PostgreSQL only
+  // - Workers read connection config from env/bindings, not D1
+  // - Required vars:
+  //   - COLLECTOR_URL
+  //   - INTERNAL_SECRET
+  //   - DATABASE_URL or HYPERDRIVE_URL
   //
-  // Required bindings:
-  //
-  // 1. HYPERDRIVE - PostgreSQL connection pooling
-  //    Create: wrangler hyperdrive create dns-ops-db --connection-string="..."
-  //    Bind to Pages project in dashboard under Settings > Functions > Bindings
-  //
-  // 2. CACHE (KV) - Edge caching for read-heavy data
-  //    Create: wrangler kv namespace create CACHE
-  //    Bind to Pages project in dashboard
-  //
-  // 3. Environment Variables (set in dashboard or .dev.vars locally):
-  //    - ENVIRONMENT: "production" | "staging" | "development"
-  //    - COLLECTOR_URL: URL to the collector service (e.g., https://collector.dns-ops.example.com)
-  //    - INTERNAL_SECRET: Shared secret for web -> collector auth
-  //
-  // ==========================================================================
-  // Local Development
-  // ==========================================================================
-  // For local development, create apps/web/.dev.vars:
-  //
-  //   ENVIRONMENT=development
+  // Example local .dev.vars:
+  //   NODE_ENV=development
   //   COLLECTOR_URL=http://localhost:3001
+  //   INTERNAL_SECRET=replace-with-real-secret
   //   DATABASE_URL=postgres://user:pass@localhost:5432/dns_ops
-  //
-  // Then run: bun run preview
-  // ==========================================================================
 }

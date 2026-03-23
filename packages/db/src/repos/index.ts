@@ -17,7 +17,6 @@ export { FindingRepository } from './finding.js';
 // Mail evidence repositories
 export { DkimSelectorRepository, MailEvidenceRepository } from './mail-evidence.js';
 export { ObservationRepository } from './observation.js';
-export { ProbeObservationRepository } from './probe-observation.js';
 // Parity evidence repositories
 export {
   LegacyAccessLogRepository,
@@ -33,8 +32,10 @@ export {
   DomainTagRepository,
   MonitoredDomainRepository,
   SavedFilterRepository,
+  SharedReportRepository,
   TemplateOverrideRepository,
 } from './portfolio.js';
+export { ProbeObservationRepository } from './probe-observation.js';
 export { RecordSetRepository } from './recordset.js';
 export { RemediationRepository } from './remediation.js';
 export { RulesetVersionRepository } from './ruleset-version.js';

@@ -8,6 +8,41 @@
       "when": 1773954616400,
       "tag": "0000_nebulous_steve_rogers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1774194743540,
+      "tag": "0001_clear_hairball",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774197329460,
+      "tag": "0002_fine_wolf_cub",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1774199016787,
+      "tag": "0003_yummy_kate_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1774199177511,
+      "tag": "0004_rare_agent_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1774216569802,
+      "tag": "0005_right_human_torch",
+      "breakpoints": true
     }
   ]
 }

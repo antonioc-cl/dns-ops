@@ -7,6 +7,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const E2E_DEV_TENANT = process.env.E2E_DEV_TENANT;
+const E2E_DEV_ACTOR = process.env.E2E_DEV_ACTOR;
+
+const extraHTTPHeaders: Record<string, string> = {};
+if (E2E_DEV_TENANT && E2E_DEV_ACTOR) {
+  extraHTTPHeaders['X-Dev-Tenant'] = E2E_DEV_TENANT;
+  extraHTTPHeaders['X-Dev-Actor'] = E2E_DEV_ACTOR;
+}
 
 export default defineConfig({
   // Directory with test files
@@ -28,10 +36,7 @@ export default defineConfig({
   workers: process.env.CI ? '50%' : undefined,
 
   // Reporter to use
-  reporter: [
-    ['html', { open: 'never' }],
-    ['list'],
-  ],
+  reporter: [['html', { open: 'never' }], ['list']],
 
   // Shared settings for all projects
   use: {
@@ -46,6 +51,9 @@ export default defineConfig({
 
     // Video on failure
     video: 'retain-on-failure',
+
+    // Allow local E2E runs to exercise auth-gated routes without app-level fallbacks.
+    extraHTTPHeaders,
   },
 
   // Configure projects for major browsers

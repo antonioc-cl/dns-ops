@@ -24,9 +24,12 @@ import {
   type NewDomainTag,
   type NewMonitoredDomain,
   type NewSavedFilter,
+  type NewSharedReport,
   type NewTemplateOverride,
   type SavedFilter,
+  type SharedReport,
   savedFilters,
+  sharedReports,
   type TemplateOverride,
   templateOverrides,
 } from '../schema/index.js';
@@ -96,6 +99,11 @@ export class DomainTagRepository {
       results = results.filter((r) => r.tenantId === tenantId);
     }
     return [...new Set(results.map((r) => r.domainId))];
+  }
+
+  async listByTenant(tenantId: string): Promise<string[]> {
+    const results = await this.db.select(domainTags);
+    return [...new Set(results.filter((r) => r.tenantId === tenantId).map((r) => r.tag))].sort();
   }
 
   async create(data: NewDomainTag): Promise<DomainTag> {
@@ -320,6 +328,28 @@ export class MonitoredDomainRepository {
 // ALERTS REPOSITORY (Bead 15)
 // =============================================================================
 
+type AlertStatus = Alert['status'];
+
+function canTransitionAlert(currentStatus: AlertStatus, nextStatus: AlertStatus): boolean {
+  if (currentStatus === nextStatus) {
+    return true;
+  }
+
+  switch (nextStatus) {
+    case 'acknowledged':
+      return ['pending', 'sent', 'suppressed'].includes(currentStatus);
+    case 'resolved':
+      return ['pending', 'sent', 'acknowledged', 'suppressed'].includes(currentStatus);
+    case 'suppressed':
+      return ['pending', 'sent', 'acknowledged'].includes(currentStatus);
+    case 'pending':
+    case 'sent':
+      return false;
+    default:
+      return false;
+  }
+}
+
 export class AlertRepository {
   constructor(private db: IDatabaseAdapter) {}
 
@@ -331,6 +361,43 @@ export class AlertRepository {
     return results.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  }
+
+  async findAll(
+    tenantId: string,
+    options: {
+      status?: AlertStatus;
+      severity?: Alert['severity'];
+      limit: number;
+      offset: number;
+    }
+  ): Promise<{ alerts: Alert[]; total: number }> {
+    let results = await this.db.select(alerts);
+    results = results.filter((alert) => alert.tenantId === tenantId);
+
+    if (options.status) {
+      results = results.filter((alert) => alert.status === options.status);
+    }
+
+    if (options.severity) {
+      results = results.filter((alert) => alert.severity === options.severity);
+    }
+
+    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const total = results.length;
+
+    return {
+      alerts: results.slice(options.offset, options.offset + options.limit),
+      total,
+    };
+  }
+
+  async findById(id: string, tenantId: string): Promise<Alert | undefined> {
+    const alert = await this.db.selectOne(alerts, eq(alerts.id, id));
+    if (!alert || alert.tenantId !== tenantId) {
+      return undefined;
+    }
+    return alert;
   }
 
   async findPending(tenantId?: string): Promise<Alert[]> {
@@ -354,9 +421,23 @@ export class AlertRepository {
 
   async updateStatus(
     id: string,
-    status: 'pending' | 'sent' | 'suppressed' | 'acknowledged' | 'resolved',
+    tenantId: string,
+    status: AlertStatus,
     metadata?: { acknowledgedBy?: string; resolutionNote?: string }
   ): Promise<Alert | undefined> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) {
+      return undefined;
+    }
+
+    if (!canTransitionAlert(existing.status, status)) {
+      throw new Error(`Invalid alert transition: ${existing.status} -> ${status}`);
+    }
+
+    if (existing.status === status) {
+      return existing;
+    }
+
     const update: Partial<NewAlert> = { status };
 
     if (status === 'acknowledged' && metadata?.acknowledgedBy) {
@@ -374,11 +455,72 @@ export class AlertRepository {
     return this.db.updateOne(alerts, update, eq(alerts.id, id));
   }
 
-  async acknowledge(id: string, acknowledgedBy: string): Promise<Alert | undefined> {
-    return this.updateStatus(id, 'acknowledged', { acknowledgedBy });
+  async acknowledge(
+    id: string,
+    tenantId: string,
+    acknowledgedBy: string
+  ): Promise<Alert | undefined> {
+    return this.updateStatus(id, tenantId, 'acknowledged', { acknowledgedBy });
   }
 
-  async resolve(id: string, resolutionNote?: string): Promise<Alert | undefined> {
-    return this.updateStatus(id, 'resolved', { resolutionNote });
+  async resolve(id: string, tenantId: string, resolutionNote?: string): Promise<Alert | undefined> {
+    return this.updateStatus(id, tenantId, 'resolved', { resolutionNote });
+  }
+}
+
+// =============================================================================
+// SHARED REPORTS REPOSITORY (Bead 20)
+// =============================================================================
+
+export class SharedReportRepository {
+  constructor(private db: IDatabaseAdapter) {}
+
+  async create(data: NewSharedReport): Promise<SharedReport> {
+    return this.db.insert(sharedReports, data);
+  }
+
+  async findById(id: string, tenantId: string): Promise<SharedReport | undefined> {
+    const report = await this.db.selectOne(sharedReports, eq(sharedReports.id, id));
+    if (!report || report.tenantId !== tenantId) {
+      return undefined;
+    }
+    return report;
+  }
+
+  async findByToken(token: string): Promise<SharedReport | undefined> {
+    const reports = await this.db.select(sharedReports);
+    const now = new Date();
+    return reports.find((report) => {
+      if (report.shareToken !== token || report.visibility !== 'shared' || !report.tenantId) {
+        return false;
+      }
+      if (report.status !== 'ready') {
+        return false;
+      }
+      if (report.expiresAt && new Date(report.expiresAt) <= now) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  async listByTenant(tenantId: string): Promise<SharedReport[]> {
+    const reports = await this.db.select(sharedReports);
+    return reports
+      .filter((report) => report.tenantId === tenantId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async expire(id: string, tenantId: string): Promise<SharedReport | undefined> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) {
+      return undefined;
+    }
+
+    return this.db.updateOne(
+      sharedReports,
+      { status: 'expired', updatedAt: new Date() },
+      eq(sharedReports.id, id)
+    );
   }
 }

@@ -293,7 +293,7 @@ export function integer(
       return undefined;
     }
     const num = typeof value === 'string' ? parseInt(value, 10) : value;
-    if (typeof num !== 'number' || isNaN(num) || !Number.isInteger(num)) {
+    if (typeof num !== 'number' || Number.isNaN(num) || !Number.isInteger(num)) {
       throw new FieldValidationError(
         fieldName,
         'INVALID_FORMAT',

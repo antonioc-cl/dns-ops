@@ -66,6 +66,10 @@ export const remediationRequests = pgTable(
     contactName: varchar('contact_name', { length: 100 }).notNull(),
     contactPhone: varchar('contact_phone', { length: 20 }),
 
+    // Tenant / actor context
+    tenantId: uuid('tenant_id').notNull(),
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+
     // Issue classification
     issues: jsonb('issues').notNull().$type<string[]>(),
     priority: remediationPriorityEnum('priority').notNull().default('medium'),
@@ -84,6 +88,8 @@ export const remediationRequests = pgTable(
     domainIdx: index('remediation_domain_idx').on(table.domain),
     statusIdx: index('remediation_status_idx').on(table.status),
     snapshotIdx: index('remediation_snapshot_idx').on(table.snapshotId),
+    tenantIdx: index('remediation_tenant_idx').on(table.tenantId),
+    createdByIdx: index('remediation_created_by_idx').on(table.createdBy),
     createdAtIdx: index('remediation_created_at_idx').on(table.createdAt),
   })
 );

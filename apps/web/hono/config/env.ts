@@ -1,58 +1,75 @@
-/**
- * Environment Configuration and Validation
- *
- * Fail-fast validation for required runtime configuration.
- * This module validates environment variables at startup and provides
- * typed access to configuration values.
- *
- * Environment modes:
- * - Production (Cloudflare Workers): Uses D1 binding, wrangler vars
- * - Development (Node.js): Uses process.env, PostgreSQL
- */
+import type { Env } from '../types.js';
 
-/**
- * Environment variable definitions with validation rules
- */
 interface EnvVarDef {
-  name: string;
+  name:
+    | 'NODE_ENV'
+    | 'DATABASE_URL'
+    | 'HYPERDRIVE_URL'
+    | 'COLLECTOR_URL'
+    | 'INTERNAL_SECRET'
+    | 'API_KEY_SECRET';
   required: boolean | 'development' | 'production';
   description: string;
-  validate?: (value: string) => string | null; // Returns error message or null if valid
+  validate?: (value: string) => string | null;
   default?: string;
 }
 
-/**
- * All environment variables used by the web app
- */
+interface EnvError {
+  name: string;
+  error: string;
+  description: string;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  errors: EnvError[];
+  warnings: string[];
+  environment: 'development' | 'production' | 'test';
+}
+
+type RuntimeBindings = Partial<
+  Env['Bindings'] & {
+    NODE_ENV?: string;
+    HYPERDRIVE_URL?: string;
+  }
+>;
+
 const ENV_VARS: EnvVarDef[] = [
   {
     name: 'NODE_ENV',
     required: false,
     description: 'Runtime environment (development/production/test)',
-    validate: (v) => {
-      const valid = ['development', 'production', 'test'];
-      return valid.includes(v) ? null : `Must be one of: ${valid.join(', ')}`;
-    },
+    validate: (value) =>
+      ['development', 'production', 'test'].includes(value)
+        ? null
+        : 'Must be one of: development, production, test',
     default: 'production',
   },
   {
     name: 'DATABASE_URL',
     required: 'development',
-    description: 'PostgreSQL connection URL for local development',
-    validate: (v) => {
-      if (!v.startsWith('postgresql://') && !v.startsWith('postgres://')) {
-        return 'Must be a valid PostgreSQL URL (postgresql://... or postgres://...)';
-      }
-      return null;
-    },
+    description: 'PostgreSQL connection URL for local development or bound runtime',
+    validate: (value) =>
+      value.startsWith('postgresql://') || value.startsWith('postgres://')
+        ? null
+        : 'Must be a valid PostgreSQL URL (postgresql://... or postgres://...)',
+  },
+  {
+    name: 'HYPERDRIVE_URL',
+    required: false,
+    description: 'Optional Cloudflare-bound PostgreSQL/Hyperdrive connection URL',
+    validate: (value) =>
+      value.startsWith('postgresql://') || value.startsWith('postgres://')
+        ? null
+        : 'Must be a valid PostgreSQL URL (postgresql://... or postgres://...)',
   },
   {
     name: 'COLLECTOR_URL',
     required: true,
-    description: 'URL for the DNS/mail collector service',
-    validate: (v) => {
+    description: 'URL for the DNS collector service',
+    validate: (value) => {
       try {
-        new URL(v);
+        new URL(value);
         return null;
       } catch {
         return 'Must be a valid URL';
@@ -63,65 +80,65 @@ const ENV_VARS: EnvVarDef[] = [
   {
     name: 'INTERNAL_SECRET',
     required: 'production',
-    description: 'Shared secret for internal service-to-service authentication',
-    validate: (v) => {
-      if (v.length < 16) {
-        return 'Must be at least 16 characters for security';
-      }
-      return null;
-    },
+    description: 'Shared secret for internal web → collector authentication',
+    validate: (value) =>
+      value.length >= 16 ? null : 'Must be at least 16 characters for security',
+  },
+  {
+    name: 'API_KEY_SECRET',
+    required: false,
+    description: 'Shared secret for service API key authentication',
+    validate: (value) =>
+      value.length >= 16 ? null : 'Must be at least 16 characters for security',
   },
 ];
 
-/**
- * Validation error for a single environment variable
- */
-interface EnvError {
-  name: string;
-  error: string;
-  description: string;
-}
-
-/**
- * Result of environment validation
- */
-interface ValidationResult {
-  valid: boolean;
-  errors: EnvError[];
-  warnings: string[];
-  environment: 'development' | 'production' | 'test';
-}
-
-/**
- * Check if a variable is required in the current environment
- */
 function isRequired(def: EnvVarDef, env: 'development' | 'production' | 'test'): boolean {
   if (def.required === true) return true;
   if (def.required === false) return false;
   return def.required === env;
 }
 
-/**
- * Validate all environment variables
- *
- * @param processEnv - The process.env object (or mock for testing)
- * @returns Validation result with errors and warnings
- */
+function readEnvValue(
+  name: EnvVarDef['name'],
+  bindings?: RuntimeBindings,
+  processEnv: Record<string, string | undefined> = process.env
+): string | undefined {
+  switch (name) {
+    case 'DATABASE_URL':
+      return (
+        bindings?.DATABASE_URL ??
+        bindings?.HYPERDRIVE_URL ??
+        processEnv.DATABASE_URL ??
+        processEnv.HYPERDRIVE_URL
+      );
+    case 'HYPERDRIVE_URL':
+      return bindings?.HYPERDRIVE_URL ?? processEnv.HYPERDRIVE_URL;
+    case 'COLLECTOR_URL':
+      return bindings?.COLLECTOR_URL ?? processEnv.COLLECTOR_URL;
+    case 'INTERNAL_SECRET':
+      return bindings?.INTERNAL_SECRET ?? processEnv.INTERNAL_SECRET;
+    case 'API_KEY_SECRET':
+      return bindings?.API_KEY_SECRET ?? processEnv.API_KEY_SECRET;
+    case 'NODE_ENV':
+      return bindings?.NODE_ENV ?? processEnv.NODE_ENV;
+  }
+}
+
 export function validateEnv(
   processEnv: Record<string, string | undefined> = process.env
 ): ValidationResult {
   const errors: EnvError[] = [];
   const warnings: string[] = [];
-
-  // Determine environment first
-  const nodeEnv = processEnv.NODE_ENV || 'production';
-  const environment = nodeEnv as 'development' | 'production' | 'test';
+  const environment = (processEnv.NODE_ENV || 'production') as
+    | 'development'
+    | 'production'
+    | 'test';
 
   for (const def of ENV_VARS) {
-    const value = processEnv[def.name];
+    const value = readEnvValue(def.name, undefined, processEnv);
     const required = isRequired(def, environment);
 
-    // Check if required variable is missing
     if (required && !value) {
       errors.push({
         name: def.name,
@@ -131,17 +148,13 @@ export function validateEnv(
       continue;
     }
 
-    // Skip validation if not set and not required
     if (!value) {
-      if (def.default) {
-        // Has default, no warning needed
-      } else if (def.required === 'production' && environment === 'development') {
+      if (def.required === 'production' && environment === 'development') {
         warnings.push(`${def.name} not set (required in production): ${def.description}`);
       }
       continue;
     }
 
-    // Run custom validation if provided
     if (def.validate) {
       const validationError = def.validate(value);
       if (validationError) {
@@ -154,17 +167,9 @@ export function validateEnv(
     }
   }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-    environment,
-  };
+  return { valid: errors.length === 0, errors, warnings, environment };
 }
 
-/**
- * Format validation errors as a readable string
- */
 export function formatValidationErrors(result: ValidationResult): string {
   const lines: string[] = [
     '',
@@ -203,17 +208,9 @@ export function formatValidationErrors(result: ValidationResult): string {
   return lines.join('\n');
 }
 
-/**
- * Validate environment and throw if invalid
- *
- * Call this at application startup to fail fast with clear messages.
- *
- * @throws Error with formatted message if validation fails
- */
 export function assertEnvValid(processEnv: Record<string, string | undefined> = process.env): void {
   const result = validateEnv(processEnv);
 
-  // Log warnings even if valid
   if (result.warnings.length > 0) {
     console.warn('[ENV] Warnings:');
     for (const warn of result.warnings) {
@@ -228,51 +225,58 @@ export function assertEnvValid(processEnv: Record<string, string | undefined> = 
   }
 }
 
-/**
- * Get typed environment configuration
- *
- * Returns the current environment values with proper typing.
- * Uses defaults where appropriate.
- */
-export function getEnvConfig(processEnv: Record<string, string | undefined> = process.env): {
+export function getEnvConfig(
+  bindings?: RuntimeBindings,
+  processEnv: Record<string, string | undefined> = process.env
+): {
   nodeEnv: 'development' | 'production' | 'test';
   databaseUrl: string | undefined;
   collectorUrl: string;
   internalSecret: string | undefined;
+  apiKeySecret: string | undefined;
   isDevelopment: boolean;
   isProduction: boolean;
 } {
-  const nodeEnv = (processEnv.NODE_ENV || 'production') as 'development' | 'production' | 'test';
+  const nodeEnv = (readEnvValue('NODE_ENV', bindings, processEnv) || 'production') as
+    | 'development'
+    | 'production'
+    | 'test';
 
   return {
     nodeEnv,
-    databaseUrl: processEnv.DATABASE_URL,
-    collectorUrl: processEnv.COLLECTOR_URL || 'http://localhost:3001',
-    internalSecret: processEnv.INTERNAL_SECRET,
+    databaseUrl: readEnvValue('DATABASE_URL', bindings, processEnv),
+    collectorUrl: readEnvValue('COLLECTOR_URL', bindings, processEnv) || 'http://localhost:3001',
+    internalSecret: readEnvValue('INTERNAL_SECRET', bindings, processEnv),
+    apiKeySecret: readEnvValue('API_KEY_SECRET', bindings, processEnv),
     isDevelopment: nodeEnv === 'development',
     isProduction: nodeEnv === 'production',
   };
 }
 
-/**
- * Environment variable names for documentation/tooling
- */
-export const ENV_VAR_NAMES = ENV_VARS.map((v) => v.name);
+export function getRequestEnvConfig(
+  bindings?: RuntimeBindings,
+  processEnv: Record<string, string | undefined> = process.env
+) {
+  return getEnvConfig(bindings, processEnv);
+}
 
-/**
- * Get documentation for all environment variables
- */
+export const ENV_VAR_NAMES = ENV_VARS.map((value) => value.name);
+
 export function getEnvDocs(): Array<{
   name: string;
   required: string;
   description: string;
   default?: string;
 }> {
-  return ENV_VARS.map((v) => ({
-    name: v.name,
+  return ENV_VARS.map((value) => ({
+    name: value.name,
     required:
-      v.required === true ? 'always' : v.required === false ? 'optional' : `in ${v.required}`,
-    description: v.description,
-    default: v.default,
+      value.required === true
+        ? 'always'
+        : value.required === false
+          ? 'optional'
+          : `in ${value.required}`,
+    description: value.description,
+    default: value.default,
   }));
 }

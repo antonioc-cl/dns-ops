@@ -39,6 +39,20 @@ export class DomainRepository {
   }
 
   /**
+   * Find a domain by normalized name and tenant ownership.
+   * Returns undefined for unscoped or foreign-tenant rows.
+   */
+  async findByNameForTenant(normalizedName: string, tenantId: string): Promise<Domain | undefined> {
+    const domain = await this.findByName(normalizedName);
+
+    if (!domain || !domain.tenantId) {
+      return undefined;
+    }
+
+    return domain.tenantId === tenantId ? domain : undefined;
+  }
+
+  /**
    * Search domains by name pattern
    */
   async searchByName(pattern: string, limit: number = 20): Promise<Domain[]> {

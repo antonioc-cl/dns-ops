@@ -3,6 +3,7 @@
  */
 
 export interface CollectionConfig {
+  tenantId: string;
   domain: string;
   zoneManagement: 'managed' | 'unmanaged' | 'unknown';
   recordTypes: string[];

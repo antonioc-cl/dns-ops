@@ -1,9 +1,9 @@
 /**
  * DNS Ops Workbench - Shared Request/Response DTOs
  *
- * This file defines the API contract layer between web and collector.
- * All request/response shapes MUST be defined here to ensure type safety
- * and prevent divergence between runtimes.
+ * This file defines shared request/response DTOs used across web and collector.
+ * It does not yet cover every live route shape in the repo; some newer web-facing
+ * workflows still need first-class contract DTOs to fully eliminate divergence risk.
  */
 
 import type {
@@ -140,12 +140,146 @@ export interface ListFindingsResponse {
 }
 
 // =============================================================================
-// REMEDIATION REQUESTS (RESERVED - NOT ACTIVATED)
+// REMEDIATION & SHARED REPORT ROUTES (LIVE WEB SURFACE)
+// =============================================================================
+
+export type RemediationStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
+export type RemediationPriority = 'low' | 'medium' | 'high' | 'critical';
+export type SharedReportVisibility = 'private' | 'tenant' | 'shared';
+export type SharedReportStatus = 'generating' | 'ready' | 'expired' | 'error';
+export type AlertLifecycleStatus = 'pending' | 'sent' | 'suppressed' | 'acknowledged' | 'resolved';
+
+export interface RemediationRequestDto {
+  id: string;
+  tenantId: string;
+  createdBy: string;
+  snapshotId?: string | null;
+  domain: string;
+  contactEmail: string;
+  contactName: string;
+  contactPhone?: string | null;
+  issues: string[];
+  priority: RemediationPriority;
+  notes?: string | null;
+  status: RemediationStatus;
+  assignedTo?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string | null;
+}
+
+export interface CreateRemediationRequest {
+  domain: string;
+  snapshotId?: string;
+  contactEmail: string;
+  contactName: string;
+  contactPhone?: string;
+  issues: string[];
+  priority?: RemediationPriority;
+  notes?: string;
+}
+
+export interface CreateRemediationResponse {
+  remediation: RemediationRequestDto;
+}
+
+export interface ListRemediationResponse {
+  remediation: RemediationRequestDto[];
+}
+
+export interface RemediationStatsResponse {
+  counts: Record<RemediationStatus, number>;
+}
+
+export interface UpdateRemediationRequest {
+  status?: RemediationStatus;
+  assignedTo?: string;
+  notes?: string;
+}
+
+export interface UpdateRemediationResponse {
+  remediation: RemediationRequestDto;
+}
+
+export interface SharedReportSummary {
+  totalMonitored: number;
+  activeAlerts: number;
+  bySeverity: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
+export interface SharedReportAlertSummaryItem {
+  title: string;
+  severity: Severity;
+  status: AlertLifecycleStatus;
+  createdAt: string;
+}
+
+export interface SharedReportDto {
+  id: string;
+  tenantId: string;
+  createdBy: string;
+  title: string;
+  visibility: SharedReportVisibility;
+  status: SharedReportStatus;
+  shareToken?: string | null;
+  expiresAt?: string | null;
+  summary: SharedReportSummary;
+  alertSummary: SharedReportAlertSummaryItem[];
+  metadata?: {
+    sourceAlertIds?: string[];
+    redacted?: boolean;
+    generatedAlertCount?: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSharedReportRequest {
+  title?: string;
+  visibility?: SharedReportVisibility;
+  expiresInDays?: number;
+}
+
+export interface CreateSharedReportResponse {
+  report: SharedReportDto;
+  shareUrl?: string;
+}
+
+export interface ListSharedReportsResponse {
+  reports: SharedReportDto[];
+}
+
+export interface SharedReportPublicView {
+  id: string;
+  title: string;
+  visibility: 'shared';
+  status: SharedReportStatus;
+  expiresAt?: string | null;
+  createdAt: string;
+  summary: SharedReportSummary;
+  alertSummary: SharedReportAlertSummaryItem[];
+}
+
+export interface GetSharedReportResponse {
+  report: SharedReportPublicView;
+}
+
+export interface ExpireSharedReportResponse {
+  report: SharedReportDto;
+}
+
+// =============================================================================
+// LEGACY RESERVED REQUEST SHAPES (NOT THE LIVE REMEDIATION API)
 // =============================================================================
 
 /**
- * Reserved for Bead 15: Portfolio writes
- * DO NOT implement until that bead is active
+ * Historical reserved shape for Bead 15 portfolio writes.
+ * This does NOT describe the live remediation-request workflow now exposed by web routes.
  */
 export interface _ReservedRemediationRequest {
   findingId: string;
@@ -156,8 +290,8 @@ export interface _ReservedRemediationRequest {
 }
 
 /**
- * Reserved for Bead 15: Remediation result
- * DO NOT implement until that bead is active
+ * Historical reserved remediation result shape.
+ * This does NOT describe the live remediation-request workflow now exposed by web routes.
  */
 export interface _ReservedRemediationResponse {
   success: boolean;
@@ -169,12 +303,12 @@ export interface _ReservedRemediationResponse {
 }
 
 // =============================================================================
-// PORTFOLIO REQUESTS (RESERVED - NOT ACTIVATED)
+// LEGACY PORTFOLIO REQUEST SHAPES (NOT THE CURRENT MOUNTED UI SURFACE)
 // =============================================================================
 
 /**
- * Reserved for Bead 14/15: Portfolio operations
- * DO NOT implement until those beads are active
+ * Historical reserved portfolio request shape.
+ * The currently mounted portfolio UI is narrower than this reserved surface.
  */
 export interface _ReservedPortfolioRequest {
   name: string;

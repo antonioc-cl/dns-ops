@@ -1,7 +1,7 @@
 # DNS Ops API Reference
 
 > **Source of Truth**: This document is derived from the actual route definitions in the codebase.
-> Last updated: 2026-03-20
+> Last updated: 2026-03-22
 
 ## Overview
 
@@ -53,7 +53,10 @@ Base URL: `http://localhost:3000/api`
 | GET | `/snapshots/domain/:domain` | No | Get snapshots for a domain |
 | GET | `/snapshots/:id1/diff/:id2` | No | Compare two snapshots |
 
-### Portfolio Management (`/portfolio`)
+### Portfolio APIs (`/portfolio`)
+
+> Backend portfolio APIs exist beyond the currently mounted `/portfolio` UI.
+> The shipped operator surface is currently centered on shared reports; broader portfolio workflows remain phased.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -85,6 +88,20 @@ Base URL: `http://localhost:3000/api`
 | POST | `/alerts/:id/suppress` | Yes | Suppress an alert |
 | GET | `/alerts/reports` | Yes | List shared reports |
 | POST | `/alerts/reports` | Yes | Create shared report |
+| POST | `/alerts/reports/:id/expire` | Yes | Expire shared report |
+| GET | `/alerts/reports/shared/:token` | No | Read public shared report |
+
+### Mail & Remediation
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/collect/mail` | Yes | Run mail diagnostics |
+| POST | `/remediation` | Yes | Create remediation request |
+| GET | `/remediation` | Yes | List remediation requests |
+| GET | `/remediation/stats` | Yes | Get remediation counts |
+| GET | `/remediation/by-id/:id` | Yes | Get remediation request |
+| GET | `/remediation/domain/:domain` | Yes | List remediation by domain |
+| PATCH | `/remediation/:id` | Yes | Update remediation request |
 
 ### Findings & Rules
 
@@ -129,11 +146,12 @@ Base URL: `http://localhost:3000/api`
 
 ---
 
-## Collector API (`/api/*`)
+## Collector API
 
-Base URL: `http://localhost:4000/api`
+Public health base URL: `http://localhost:3001`
+Authenticated collector API base URL: `http://localhost:3001/api`
 
-### Health & Readiness
+### Health & Readiness (root endpoints)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -141,7 +159,7 @@ Base URL: `http://localhost:4000/api`
 | GET | `/health` | No | Liveness probe (alias) |
 | GET | `/readyz` | No | Readiness probe (checks DB, queues) |
 
-### DNS Collection (`/collect`)
+### DNS Collection (`/api/collect`)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -149,7 +167,7 @@ Base URL: `http://localhost:4000/api`
 | POST | `/collect/mail` | Yes | Collect mail records |
 | POST | `/collect/mail/check` | Yes | Ephemeral mail check (no persistence) |
 
-### Probes (`/probe`)
+### Probes (`/api/probe`)
 
 > **Note:** Probes are for programmatic use only (collector, monitoring jobs).
 > No operator UI is provided. Results are integrated into snapshot evidence.
@@ -160,7 +178,7 @@ Base URL: `http://localhost:4000/api`
 | POST | `/probe/smtp-starttls` | Yes | Probe SMTP STARTTLS |
 | GET | `/probe/allowlist` | Yes | Get probe allowlist |
 
-### Fleet Reports (`/fleet-report`)
+### Fleet Reports (`/api/fleet-report`)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -168,7 +186,7 @@ Base URL: `http://localhost:4000/api`
 | POST | `/fleet-report/import-csv` | Yes | Import domains from CSV |
 | GET | `/fleet-report/:id` | Yes | Get report results |
 
-### Monitoring Jobs (`/monitoring`)
+### Monitoring Jobs (`/api/monitoring`)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|

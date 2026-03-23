@@ -34,9 +34,6 @@ export function rcodeToStatus(rcode: number): CollectionStatus {
       return 'nxdomain';
     case DNS_RCODE.REFUSED:
       return 'refused';
-    case DNS_RCODE.SERVFAIL:
-    case DNS_RCODE.FORMERR:
-    case DNS_RCODE.NOTIMP:
     default:
       return 'error';
   }
@@ -165,7 +162,6 @@ export function categorizeError(status: CollectionStatus): DnsErrorCategory {
     case 'nodata':
     case 'truncated':
       return 'dns-protocol';
-    case 'error':
     default:
       return 'client';
   }

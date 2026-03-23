@@ -58,7 +58,8 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
   snapshotId?: string;
   error?: string;
 }> {
-  const { domain, zoneManagement, triggeredBy, includeMailRecords, dkimSelectors } = job.data;
+  const { tenantId, domain, zoneManagement, triggeredBy, includeMailRecords, dkimSelectors } =
+    job.data;
   const startTime = Date.now();
 
   trackJobStart({
@@ -72,6 +73,7 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
     const db = getDbAdapter();
 
     const config: CollectionConfig = {
+      tenantId,
       domain,
       zoneManagement: zoneManagement || 'unknown',
       recordTypes: ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'CAA'],
@@ -154,6 +156,7 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
     }
 
     const config: CollectionConfig = {
+      tenantId: job.data.tenantId,
       domain: domainName,
       zoneManagement: domain.zoneManagement || 'unknown',
       recordTypes: ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'CAA'],

@@ -28,6 +28,10 @@ interface AuthContext {
   isInternal?: boolean;
 }
 
+function getRuntimeSecret(name: 'INTERNAL_SECRET' | 'API_KEY_SECRET'): string | undefined {
+  return process.env[name];
+}
+
 /**
  * Extract auth from internal secret header
  *
@@ -38,7 +42,7 @@ function extractInternalSecret(
   c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
 ): AuthContext | null {
   const internalSecret = c.req.header('X-Internal-Secret');
-  const expectedSecret = process.env.INTERNAL_SECRET;
+  const expectedSecret = getRuntimeSecret('INTERNAL_SECRET');
 
   if (!expectedSecret || !internalSecret) {
     return null;
@@ -49,9 +53,16 @@ function extractInternalSecret(
     return null;
   }
 
-  // Extract tenant/actor from forwarded headers
-  const tenantId = c.req.header('X-Tenant-Id') || 'system';
-  const actorId = c.req.header('X-Actor-Id') || 'internal-service';
+  const tenantId = c.req.header('X-Tenant-Id');
+  const actorId = c.req.header('X-Actor-Id');
+
+  if (!tenantId || !actorId) {
+    logger.warn('Missing tenant or actor headers on internal request', {
+      method: c.req.method,
+      path: c.req.path,
+    });
+    return null;
+  }
 
   return {
     tenantId,
@@ -82,9 +93,19 @@ function extractApiKey(
 
   const [tenantId, actorId, secret] = parts;
 
-  // Validate against expected secret
-  const expectedSecret = process.env.API_KEY_SECRET;
-  if (expectedSecret && secret !== expectedSecret) {
+  const expectedSecret = getRuntimeSecret('API_KEY_SECRET');
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (!expectedSecret) {
+    if (isProduction) {
+      logger.warn('Rejected API key auth because API_KEY_SECRET is not configured', {
+        tenantId,
+        method: c.req.method,
+        path: c.req.path,
+      });
+      return null;
+    }
+  } else if (secret !== expectedSecret) {
     logger.warn('Invalid API key attempt', { tenantId, method: c.req.method, path: c.req.path });
     return null;
   }

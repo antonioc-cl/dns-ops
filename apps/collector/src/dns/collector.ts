@@ -62,6 +62,16 @@ const CURRENT_RULESET_NAME = 'DNS and Mail Rules';
 
 const logger = getCollectorLogger();
 
+class DomainOwnershipError extends Error {
+  constructor(
+    message: string,
+    readonly code: 'LEGACY_UNSCOPED_DOMAIN' | 'DOMAIN_TENANT_CONFLICT'
+  ) {
+    super(message);
+    this.name = 'DomainOwnershipError';
+  }
+}
+
 /**
  * Create the combined ruleset with DNS and Mail rules
  */
@@ -164,7 +174,10 @@ export class DNSCollector {
         const delegationCollector = new DelegationCollector(this.config.domain);
         delegationData = await delegationCollector.collectDelegationSummary('8.8.8.8');
       } catch (error) {
-        logger.warn('Delegation collection failed', { domain: this.config.domain, error: error instanceof Error ? error.message : String(error) });
+        logger.warn('Delegation collection failed', {
+          domain: this.config.domain,
+          error: error instanceof Error ? error.message : String(error),
+        });
         // Don't fail the entire collection if delegation fails
       }
     }
@@ -329,7 +342,10 @@ export class DNSCollector {
         return nsResult.answers.map((a: DNSAnswer) => a.data.replace(/\.$/, ''));
       }
     } catch (error) {
-      logger.warn('Failed to discover NS records', { domain: this.config.domain, error: error instanceof Error ? error.message : String(error) });
+      logger.warn('Failed to discover NS records', {
+        domain: this.config.domain,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     return [];
@@ -368,7 +384,8 @@ export class DNSCollector {
     resultState: 'complete' | 'partial' | 'failed',
     delegationData?: import('../delegation/collector.js').DelegationSummary | null
   ): Promise<string> {
-    const { domain, zoneManagement, triggeredBy } = this.config;
+    const { tenantId, domain, zoneManagement, triggeredBy } = this.config;
+    const isProduction = process.env.NODE_ENV === 'production';
 
     // Find or create domain
     let domainRecord = await this.domainRepo.findByName(domain);
@@ -377,7 +394,24 @@ export class DNSCollector {
         name: domain,
         normalizedName: domain.toLowerCase(),
         zoneManagement,
+        tenantId,
       });
+    } else if (!domainRecord.tenantId) {
+      if (isProduction) {
+        throw new DomainOwnershipError(
+          `Existing domain ${domain} has no tenant owner. Backfill tenant_id before collecting in production.`,
+          'LEGACY_UNSCOPED_DOMAIN'
+        );
+      }
+
+      domainRecord =
+        (await this.domainRepo.update(domainRecord.id, { tenantId, zoneManagement })) ??
+        domainRecord;
+    } else if (domainRecord.tenantId !== tenantId) {
+      throw new DomainOwnershipError(
+        `Domain ${domain} is already owned by another tenant and cannot be collected in this context.`,
+        'DOMAIN_TENANT_CONFLICT'
+      );
     }
 
     // Create snapshot
@@ -657,7 +691,11 @@ export class DNSCollector {
       };
     } catch (error) {
       // Log error but don't fail the collection
-      logger.error('Error evaluating and persisting findings', error instanceof Error ? error : new Error(String(error)), { domain: this.config.domain });
+      logger.error(
+        'Error evaluating and persisting findings',
+        error instanceof Error ? error : new Error(String(error)),
+        { domain: this.config.domain }
+      );
       return { findingsCount: 0, suggestionsCount: 0 };
     }
   }

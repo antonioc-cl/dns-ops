@@ -14,6 +14,7 @@
     "lint": "turbo run lint",
     "dev": "turbo run dev",
     "test": "vitest run",
+    "test:live-dns": "bun run --filter @dns-ops/collector test:live-dns",
     "smoke-test": "npx tsx scripts/deploy/smoke-test.ts"
   },
   "devDependencies": {

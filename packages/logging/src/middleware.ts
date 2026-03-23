@@ -8,8 +8,8 @@ import type { MiddlewareHandler } from 'hono';
 import {
   generateRequestId,
   getDurationMs,
-  runWithContext,
   type RequestLogContext,
+  runWithContext,
 } from './context.js';
 import type { Logger } from './logger.js';
 
@@ -37,7 +37,12 @@ export interface LoggingMiddlewareOptions {
  * 4. Injects logger into Hono context for route handlers
  */
 export function createLoggingMiddleware(options: LoggingMiddlewareOptions): MiddlewareHandler {
-  const { logger, skipPaths = ['/health', '/healthz', '/ready'], getTenantId, getActorId } = options;
+  const {
+    logger,
+    skipPaths = ['/health', '/healthz', '/ready'],
+    getTenantId,
+    getActorId,
+  } = options;
 
   return async (c, next) => {
     const path = c.req.path;

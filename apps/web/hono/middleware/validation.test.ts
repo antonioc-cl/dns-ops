@@ -184,7 +184,7 @@ describe('domainName', () => {
 
   it('throws on too long domain', () => {
     const validator = domainName('domain');
-    const longDomain = 'a'.repeat(254) + '.com';
+    const longDomain = `${'a'.repeat(254)}.com`;
     expect(() => validator(longDomain)).toThrow('at most 253 characters');
   });
 

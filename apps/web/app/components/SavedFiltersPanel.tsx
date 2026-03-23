@@ -5,22 +5,16 @@
  * Allows saving, loading, updating, deleting, and sharing filters.
  */
 
-import { useCallback, useEffect, useState } from 'react';
-
-type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
-type ZoneManagement = 'managed' | 'unmanaged' | 'unknown';
-
-interface FilterCriteria {
-  domainPatterns?: string[];
-  zoneManagement?: ZoneManagement[];
-  findings?: {
-    types?: string[];
-    severities?: Severity[];
-    minConfidence?: 'certain' | 'high' | 'medium' | 'low' | 'heuristic';
-  };
-  tags?: string[];
-  lastSnapshotWithin?: number;
-}
+import { useCallback, useEffect, useId, useState } from 'react';
+import {
+  assessSavedCriteriaCompatibility,
+  type CurrentFilters,
+  currentFiltersToSavedCriteria,
+  type FilterCriteria,
+  hasActiveFilters,
+  normalizeCurrentFilters,
+  savedCriteriaToCurrentFilters,
+} from '../lib/portfolio-filters.js';
 
 interface SavedFilter {
   id: string;
@@ -31,23 +25,16 @@ interface SavedFilter {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface CurrentFilters {
-  query: string;
-  tags: string[];
-  severities: Severity[];
-  zoneManagement: ZoneManagement[];
+  canManage: boolean;
 }
 
 interface SavedFiltersPanelProps {
-  /** Current filter state from the portfolio */
   currentFilters: CurrentFilters;
-  /** Callback when a saved filter is loaded */
   onLoadFilter: (filters: CurrentFilters) => void;
-  /** Callback when filters are saved (for notification) */
   onSaveComplete?: () => void;
 }
+
+export type { CurrentFilters } from '../lib/portfolio-filters.js';
 
 export function SavedFiltersPanel({
   currentFilters,
@@ -57,9 +44,9 @@ export function SavedFiltersPanel({
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [editingFilter, setEditingFilter] = useState<SavedFilter | null>(null);
-  const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
 
   const fetchFilters = useCallback(async () => {
     setLoading(true);
@@ -68,8 +55,19 @@ export function SavedFiltersPanel({
     try {
       const response = await fetch('/api/portfolio/filters');
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          setSavedFilters([]);
+          return;
+        }
+        if (response.status === 403) {
+          setSavedFilters([]);
+          throw new Error('You do not have permission to view tenant saved filters.');
+        }
         throw new Error('Failed to fetch filters');
       }
+
+      setAuthRequired(false);
       const data = (await response.json()) as { filters: SavedFilter[] };
       setSavedFilters(data.filters || []);
     } catch (err) {
@@ -80,19 +78,19 @@ export function SavedFiltersPanel({
   }, []);
 
   useEffect(() => {
-    fetchFilters();
+    void fetchFilters();
   }, [fetchFilters]);
 
   const handleLoadFilter = (filter: SavedFilter) => {
-    setActiveFilterId(filter.id);
-    const loaded: CurrentFilters = {
-      query:
-        filter.criteria.domainPatterns?.length === 1 ? filter.criteria.domainPatterns[0] : '',
-      tags: filter.criteria.tags || [],
-      severities: filter.criteria.findings?.severities || [],
-      zoneManagement: filter.criteria.zoneManagement || [],
-    };
-    onLoadFilter(loaded);
+    const compatibility = assessSavedCriteriaCompatibility(filter.criteria);
+    if (!compatibility.supported) {
+      setError(
+        `This saved filter uses unsupported criteria for the current UI: ${compatibility.reasons.join(', ')}.`
+      );
+      return;
+    }
+
+    onLoadFilter(savedCriteriaToCurrentFilters(filter.criteria));
   };
 
   const handleDeleteFilter = async (filterId: string) => {
@@ -104,12 +102,16 @@ export function SavedFiltersPanel({
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          throw new Error('Operator sign-in is required to delete saved filters.');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to delete this filter.');
+        }
         throw new Error('Failed to delete filter');
       }
 
-      if (activeFilterId === filterId) {
-        setActiveFilterId(null);
-      }
       await fetchFilters();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete filter');
@@ -125,6 +127,13 @@ export function SavedFiltersPanel({
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setAuthRequired(true);
+          throw new Error('Operator sign-in is required to manage saved filters.');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to manage this filter.');
+        }
         throw new Error('Failed to update filter');
       }
 
@@ -134,21 +143,20 @@ export function SavedFiltersPanel({
     }
   };
 
-  const hasActiveFilters =
-    currentFilters.tags.length > 0 ||
-    currentFilters.severities.length > 0 ||
-    currentFilters.zoneManagement.length > 0 ||
-    currentFilters.query.length > 0;
+  const controlsDisabled = authRequired;
+  const activeFilters = hasActiveFilters(currentFilters);
+  const normalizedCurrentFilters = normalizeCurrentFilters(currentFilters);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <h3 className="text-lg font-medium text-gray-900">Saved Filters</h3>
-        {hasActiveFilters && (
+        {activeFilters && (
           <button
             type="button"
             onClick={() => setShowSaveDialog(true)}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            disabled={controlsDisabled}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400"
           >
             + Save Current
           </button>
@@ -156,9 +164,14 @@ export function SavedFiltersPanel({
       </div>
 
       <div className="p-4">
-        {/* Error message */}
+        {authRequired && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            Operator sign-in is required to view or manage saved filters.
+          </div>
+        )}
+
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
             {error}
             <button
               type="button"
@@ -170,11 +183,16 @@ export function SavedFiltersPanel({
           </div>
         )}
 
-        {/* Save/Edit dialog */}
         {(showSaveDialog || editingFilter) && (
           <SaveFilterDialog
             currentFilters={currentFilters}
             editingFilter={editingFilter}
+            authRequired={authRequired}
+            onAuthRequired={() => {
+              setAuthRequired(true);
+              setShowSaveDialog(false);
+              setEditingFilter(null);
+            }}
             onClose={() => {
               setShowSaveDialog(false);
               setEditingFilter(null);
@@ -188,19 +206,27 @@ export function SavedFiltersPanel({
           />
         )}
 
-        {/* Loading state */}
         {loading ? (
-          <div className="text-center text-gray-500 py-4">Loading saved filters...</div>
+          <div className="py-4 text-center text-gray-500">Loading saved filters...</div>
+        ) : authRequired ? (
+          <div className="py-4 text-center text-gray-500">
+            Sign in to view tenant saved filters.
+          </div>
+        ) : error && savedFilters.length === 0 ? (
+          <div className="py-4 text-center text-gray-500">
+            Saved filters are unavailable right now.
+          </div>
         ) : savedFilters.length === 0 ? (
-          <div className="text-center text-gray-500 py-4">
+          <div className="py-4 text-center text-gray-500">
             No saved filters yet.
-            {hasActiveFilters && (
+            {activeFilters && (
               <>
-                {' '}
+                {` `}
                 <button
                   type="button"
                   onClick={() => setShowSaveDialog(true)}
-                  className="text-blue-600 hover:text-blue-700"
+                  className="text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+                  disabled={controlsDisabled}
                 >
                   Save current filters
                 </button>
@@ -213,7 +239,7 @@ export function SavedFiltersPanel({
               <SavedFilterCard
                 key={filter.id}
                 filter={filter}
-                isActive={activeFilterId === filter.id}
+                isActive={isFilterActive(normalizedCurrentFilters, filter)}
                 onLoad={() => handleLoadFilter(filter)}
                 onEdit={() => setEditingFilter(filter)}
                 onDelete={() => handleDeleteFilter(filter.id)}
@@ -226,10 +252,6 @@ export function SavedFiltersPanel({
     </div>
   );
 }
-
-// =============================================================================
-// Saved Filter Card
-// =============================================================================
 
 interface SavedFilterCardProps {
   filter: SavedFilter;
@@ -249,44 +271,62 @@ function SavedFilterCard({
   onToggleShare,
 }: SavedFilterCardProps) {
   const criteriaCount = getCriteriaCount(filter.criteria);
+  const compatibility = assessSavedCriteriaCompatibility(filter.criteria);
 
   return (
     <div
-      className={`p-3 rounded-lg border ${
+      className={`rounded-lg border p-3 ${
         isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-gray-50'
       }`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900 truncate">{filter.name}</span>
+            <span className="truncate font-medium text-gray-900">{filter.name}</span>
             {filter.isShared && (
-              <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+              <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700">
                 Shared
               </span>
             )}
             {isActive && (
-              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+              <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700">
                 Active
+              </span>
+            )}
+            {!compatibility.supported && (
+              <span className="rounded bg-yellow-100 px-1.5 py-0.5 text-xs text-yellow-800">
+                Partial
               </span>
             )}
           </div>
           {filter.description && (
-            <p className="mt-1 text-sm text-gray-600 truncate">{filter.description}</p>
+            <p className="mt-1 truncate text-sm text-gray-600">{filter.description}</p>
           )}
           <div className="mt-1 text-xs text-gray-500">
-            {criteriaCount} filter{criteriaCount !== 1 ? 's' : ''}
+            {criteriaCount} filter{criteriaCount !== 1 ? 's' : ''} · owner {filter.createdBy}
           </div>
+          {!compatibility.supported && (
+            <p className="mt-1 text-xs text-yellow-700">
+              Unsupported criteria: {compatibility.reasons.join(', ')}
+            </p>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 ml-2">
+        <div className="ml-2 flex items-center gap-1">
           <button
             type="button"
             onClick={onLoad}
-            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
-            title="Load filter"
+            disabled={!compatibility.supported}
+            className="rounded p-1.5 text-gray-500 hover:bg-blue-50 hover:text-blue-600 disabled:text-gray-300 disabled:hover:bg-transparent"
+            title={compatibility.supported ? 'Load filter' : 'Filter uses unsupported criteria'}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -298,10 +338,17 @@ function SavedFilterCard({
           <button
             type="button"
             onClick={onEdit}
-            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
-            title="Edit filter"
+            disabled={!filter.canManage}
+            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:text-gray-300 disabled:hover:bg-transparent"
+            title={filter.canManage ? 'Edit filter' : 'Only the creator can edit this filter'}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -313,14 +360,27 @@ function SavedFilterCard({
           <button
             type="button"
             onClick={onToggleShare}
-            className={`p-1.5 rounded ${
+            disabled={!filter.canManage}
+            className={`rounded p-1.5 disabled:text-gray-300 disabled:hover:bg-transparent ${
               filter.isShared
-                ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                ? 'text-green-600 hover:bg-green-50 hover:text-green-700'
+                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
             }`}
-            title={filter.isShared ? 'Unshare filter' : 'Share filter'}
+            title={
+              filter.canManage
+                ? filter.isShared
+                  ? 'Unshare filter'
+                  : 'Share filter'
+                : 'Only the creator can share this filter'
+            }
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -332,10 +392,17 @@ function SavedFilterCard({
           <button
             type="button"
             onClick={onDelete}
-            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
-            title="Delete filter"
+            disabled={!filter.canManage}
+            className="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 disabled:text-gray-300 disabled:hover:bg-transparent"
+            title={filter.canManage ? 'Delete filter' : 'Only the creator can delete this filter'}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -350,13 +417,11 @@ function SavedFilterCard({
   );
 }
 
-// =============================================================================
-// Save Filter Dialog
-// =============================================================================
-
 interface SaveFilterDialogProps {
   currentFilters: CurrentFilters;
   editingFilter: SavedFilter | null;
+  authRequired: boolean;
+  onAuthRequired: () => void;
   onClose: () => void;
   onSave: () => Promise<void>;
 }
@@ -364,17 +429,23 @@ interface SaveFilterDialogProps {
 function SaveFilterDialog({
   currentFilters,
   editingFilter,
+  authRequired,
+  onAuthRequired,
   onClose,
   onSave,
 }: SaveFilterDialogProps) {
+  const idPrefix = useId();
+  const nameId = `${idPrefix}-filter-name`;
+  const descriptionId = `${idPrefix}-filter-description`;
+  const sharedId = `${idPrefix}-filter-shared`;
   const [name, setName] = useState(editingFilter?.name || '');
   const [description, setDescription] = useState(editingFilter?.description || '');
   const [isShared, setIsShared] = useState(editingFilter?.isShared || false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     if (!name.trim()) {
       setError('Name is required');
@@ -385,27 +456,18 @@ function SaveFilterDialog({
     setError(null);
 
     try {
-      const criteria: FilterCriteria = {};
-
-      if (currentFilters.query) {
-        criteria.domainPatterns = [currentFilters.query];
-      }
-      if (currentFilters.tags.length > 0) {
-        criteria.tags = currentFilters.tags;
-      }
-      if (currentFilters.severities.length > 0) {
-        criteria.findings = { severities: currentFilters.severities };
-      }
-      if (currentFilters.zoneManagement.length > 0) {
-        criteria.zoneManagement = currentFilters.zoneManagement;
-      }
-
-      const body = {
-        name: name.trim(),
-        description: description.trim() || null,
-        criteria,
-        isShared,
-      };
+      const body = editingFilter
+        ? {
+            name: name.trim(),
+            description: description.trim() || null,
+            isShared,
+          }
+        : {
+            name: name.trim(),
+            description: description.trim() || null,
+            criteria: currentFiltersToSavedCriteria(currentFilters),
+            isShared,
+          };
 
       const url = editingFilter
         ? `/api/portfolio/filters/${editingFilter.id}`
@@ -419,6 +481,13 @@ function SaveFilterDialog({
 
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as { error?: string };
+        if (response.status === 401) {
+          onAuthRequired();
+          throw new Error('Operator sign-in is required to save filters.');
+        }
+        if (response.status === 403) {
+          throw new Error('You do not have permission to manage this filter.');
+        }
         throw new Error(errorData.error || 'Failed to save filter');
       }
 
@@ -430,105 +499,76 @@ function SaveFilterDialog({
     }
   };
 
+  const criteriaPreview = editingFilter?.criteria || currentFiltersToSavedCriteria(currentFilters);
+
   return (
-    <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
       <form onSubmit={handleSubmit}>
-        <h4 className="font-medium text-gray-900 mb-3">
-          {editingFilter ? 'Edit Filter' : 'Save Filter'}
+        <h4 className="mb-3 font-medium text-gray-900">
+          {editingFilter ? 'Edit Filter Metadata' : 'Save Filter'}
         </h4>
 
+        {editingFilter && (
+          <p className="mb-3 text-sm text-gray-600">
+            Editing updates name, description, and sharing only. Stored filter criteria stay
+            unchanged.
+          </p>
+        )}
+
         {error && (
-          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+          <div className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-800">
             {error}
           </div>
         )}
 
         <div className="space-y-3">
           <div>
-            <label htmlFor="filter-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={nameId} className="mb-1 block text-sm font-medium text-gray-700">
               Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              id="filter-name"
+              id={nameId}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Critical Issues"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              autoFocus
+              disabled={authRequired}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="filter-description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor={descriptionId} className="mb-1 block text-sm font-medium text-gray-700">
               Description
             </label>
             <input
               type="text"
-              id="filter-description"
+              id={descriptionId}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={authRequired}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
           </div>
 
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              id="filter-shared"
+              id={sharedId}
               checked={isShared}
               onChange={(e) => setIsShared(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              disabled={authRequired}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="filter-shared" className="text-sm text-gray-700">
+            <label htmlFor={sharedId} className="text-sm text-gray-700">
               Share with team
             </label>
           </div>
 
-          {/* Preview of what will be saved */}
-          <div className="bg-white p-2 rounded border border-gray-200">
-            <p className="text-xs font-medium text-gray-500 mb-1">Filter criteria:</p>
-            <div className="flex flex-wrap gap-1">
-              {currentFilters.query && (
-                <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">
-                  Query: "{currentFilters.query}"
-                </span>
-              )}
-              {currentFilters.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-0.5 bg-blue-100 rounded text-xs text-blue-700"
-                >
-                  {tag}
-                </span>
-              ))}
-              {currentFilters.severities.map((sev) => (
-                <span
-                  key={sev}
-                  className="px-2 py-0.5 bg-orange-100 rounded text-xs text-orange-700"
-                >
-                  {sev}
-                </span>
-              ))}
-              {currentFilters.zoneManagement.map((zone) => (
-                <span
-                  key={zone}
-                  className="px-2 py-0.5 bg-purple-100 rounded text-xs text-purple-700"
-                >
-                  {zone}
-                </span>
-              ))}
-              {!currentFilters.query &&
-                currentFilters.tags.length === 0 &&
-                currentFilters.severities.length === 0 &&
-                currentFilters.zoneManagement.length === 0 && (
-                  <span className="text-xs text-gray-400">No filters selected</span>
-                )}
-            </div>
+          <div className="rounded border border-gray-200 bg-white p-2">
+            <p className="mb-1 text-xs font-medium text-gray-500">Filter criteria:</p>
+            <CriteriaPreview criteria={criteriaPreview} />
           </div>
         </div>
 
@@ -537,14 +577,14 @@ function SaveFilterDialog({
             type="button"
             onClick={onClose}
             className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
-            disabled={saving}
+            disabled={saving || authRequired}
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={saving || !name.trim()}
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            disabled={saving || authRequired || !name.trim()}
+            className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {saving ? 'Saving...' : editingFilter ? 'Update' : 'Save'}
           </button>
@@ -554,9 +594,57 @@ function SaveFilterDialog({
   );
 }
 
-// =============================================================================
-// Helpers
-// =============================================================================
+function CriteriaPreview({ criteria }: { criteria: FilterCriteria }) {
+  const chips: string[] = [];
+
+  if (criteria.domainPatterns?.length) {
+    chips.push(...criteria.domainPatterns.map((pattern) => `Query: ${pattern}`));
+  }
+  if (criteria.tags?.length) {
+    chips.push(...criteria.tags);
+  }
+  if (criteria.findings?.severities?.length) {
+    chips.push(...criteria.findings.severities);
+  }
+  if (criteria.zoneManagement?.length) {
+    chips.push(...criteria.zoneManagement);
+  }
+  if (criteria.findings?.types?.length) {
+    chips.push(...criteria.findings.types.map((type) => `Type: ${type}`));
+  }
+  if (criteria.findings?.minConfidence) {
+    chips.push(`Confidence: ${criteria.findings.minConfidence}`);
+  }
+  if (criteria.lastSnapshotWithin) {
+    chips.push(`Snapshot <= ${criteria.lastSnapshotWithin}d`);
+  }
+
+  if (chips.length === 0) {
+    return <span className="text-xs text-gray-400">No filters selected</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {chips.map((chip) => (
+        <span key={chip} className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+          {chip}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function isFilterActive(currentFilters: CurrentFilters, filter: SavedFilter): boolean {
+  const compatibility = assessSavedCriteriaCompatibility(filter.criteria);
+  if (!compatibility.supported) {
+    return false;
+  }
+
+  return (
+    JSON.stringify(normalizeCurrentFilters(currentFilters)) ===
+    JSON.stringify(savedCriteriaToCurrentFilters(filter.criteria))
+  );
+}
 
 function getCriteriaCount(criteria: FilterCriteria): number {
   let count = 0;

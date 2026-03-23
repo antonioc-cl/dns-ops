@@ -190,7 +190,8 @@ function IssueCard({ issue }: { issue: DelegationIssue }) {
     low: { bg: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500' },
   };
 
-  const colors = severityColors[issue.severity as keyof typeof severityColors] || severityColors.medium;
+  const colors =
+    severityColors[issue.severity as keyof typeof severityColors] || severityColors.medium;
 
   return (
     <div className={`rounded-lg border ${colors.bg}`}>
@@ -210,12 +211,18 @@ function IssueCard({ issue }: { issue: DelegationIssue }) {
               className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
             >
               <svg
+                aria-hidden="true"
                 className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
               Evidence
             </button>
@@ -227,11 +234,14 @@ function IssueCard({ issue }: { issue: DelegationIssue }) {
       {expanded && hasEvidence && (
         <div className="border-t border-gray-200 bg-white/50 p-4">
           <h5 className="text-xs font-medium text-gray-500 uppercase mb-3">
-            Observation Evidence ({issue.evidence!.length})
+            Observation Evidence ({issue.evidence?.length})
           </h5>
           <div className="space-y-3">
-            {issue.evidence!.map((evidence, idx) => (
-              <EvidenceCard key={idx} evidence={evidence} />
+            {issue.evidence?.map((evidence) => (
+              <EvidenceCard
+                key={`${evidence.queryName}-${evidence.queryType}-${evidence.source}-${evidence.status}`}
+                evidence={evidence}
+              />
             ))}
           </div>
         </div>
@@ -259,7 +269,9 @@ function EvidenceCard({ evidence }: { evidence: ObservationEvidence }) {
             <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">
               {evidence.queryType}
             </span>
-            <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${statusColors[evidence.status] || 'bg-gray-100 text-gray-600'}`}>
+            <span
+              className={`px-1.5 py-0.5 text-xs rounded font-medium ${statusColors[evidence.status] || 'bg-gray-100 text-gray-600'}`}
+            >
               {evidence.status}
             </span>
           </div>

@@ -591,7 +591,11 @@ findingsRoutes.patch(
 findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
   const db = c.get('db');
   const body = await c.req.json().catch(() => ({}));
-  const { domainId, limit = 50, dryRun = false } = body as {
+  const {
+    domainId,
+    limit = 50,
+    dryRun = false,
+  } = body as {
     domainId?: string;
     limit?: number;
     dryRun?: boolean;
@@ -822,7 +826,9 @@ findingsRoutes.get('/findings/backfill/status', requireAuth, async (c) => {
       needsBackfill: stats.needsBackfill,
       evaluated: stats.total - stats.needsBackfill,
       completionPercent:
-        stats.total > 0 ? Math.round(((stats.total - stats.needsBackfill) / stats.total) * 100) : 100,
+        stats.total > 0
+          ? Math.round(((stats.total - stats.needsBackfill) / stats.total) * 100)
+          : 100,
     });
   } catch (error) {
     console.error('Error getting backfill status:', error);
