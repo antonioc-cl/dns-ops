@@ -4,6 +4,7 @@ import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'rea
 import { DNSViews } from '../../components/DNSViews.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
+import { SimulationPanel } from '../../components/SimulationPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
 import { TagsPanel } from '../../components/TagsPanel.js';
 
@@ -320,6 +321,14 @@ function OverviewTab({
           value={errorCount}
           color={errorCount > 0 ? 'red' : 'gray'}
         />
+      </div>
+
+      <div>
+        <h3 className="font-semibold text-gray-900 mb-2">Fix Simulation</h3>
+        <p className="text-sm text-gray-500 mb-3">
+          Simulate DNS changes to see which findings would be resolved.
+        </p>
+        <SimulationPanel snapshotId={snapshot.id} />
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

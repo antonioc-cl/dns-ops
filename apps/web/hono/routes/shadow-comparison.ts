@@ -179,90 +179,6 @@ shadowComparisonRoutes.get('/stats', async (c) => {
 });
 
 /**
- * GET /api/shadow-comparison/:id
- * Get a specific comparison by ID
- */
-shadowComparisonRoutes.get('/:id', async (c) => {
-  const id = c.req.param('id');
-  const db = c.get('db');
-
-  try {
-    const shadowRepo = new ShadowComparisonRepository(db);
-    const comparison = await shadowRepo.findById(id);
-
-    if (!comparison) {
-      return c.json({ error: 'Comparison not found' }, 404);
-    }
-
-    return c.json({ comparison });
-  } catch (error) {
-    console.error('Shadow comparison get error:', error);
-    return c.json(
-      {
-        error: 'Failed to get shadow comparison',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      500
-    );
-  }
-});
-
-/**
- * POST /api/shadow-comparison/:id/adjudicate
- * Adjudicate a shadow comparison mismatch (persisted)
- */
-shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => {
-  const id = c.req.param('id');
-  const db = c.get('db');
-  const body = await c.req.json().catch(() => ({}));
-  const { adjudication, notes, operator } = body;
-
-  const validAdjudications = [
-    'new-correct',
-    'legacy-correct',
-    'both-wrong',
-    'acceptable-difference',
-  ];
-  if (!adjudication || !validAdjudications.includes(adjudication)) {
-    return c.json(
-      {
-        error: 'Invalid adjudication',
-        validOptions: validAdjudications,
-      },
-      400
-    );
-  }
-
-  try {
-    const shadowRepo = new ShadowComparisonRepository(db);
-    const updated = await shadowRepo.adjudicate(
-      id,
-      operator || 'unknown',
-      adjudication as 'new-correct' | 'legacy-correct' | 'both-wrong' | 'acceptable-difference',
-      notes
-    );
-
-    if (!updated) {
-      return c.json({ error: 'Comparison not found' }, 404);
-    }
-
-    return c.json({
-      message: 'Adjudication recorded and persisted',
-      comparison: updated,
-    });
-  } catch (error) {
-    console.error('Shadow adjudication error:', error);
-    return c.json(
-      {
-        error: 'Failed to adjudicate shadow comparison',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      500
-    );
-  }
-});
-
-/**
  * GET /api/shadow-comparison/domain/:domain
  * Get comparisons for a specific domain
  */
@@ -598,6 +514,94 @@ shadowComparisonRoutes.post('/seed-baselines', requireAdminAccess, async (c) => 
     return c.json(
       {
         error: 'Failed to seed provider baselines',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/shadow-comparison/:id
+ * Get a specific comparison by ID
+ *
+ * IMPORTANT: This wildcard route MUST be registered after all specific
+ * path routes (stats, domain/:domain, legacy-logs, provider-baselines, etc.)
+ * to avoid shadowing them.
+ */
+shadowComparisonRoutes.get('/:id', async (c) => {
+  const id = c.req.param('id');
+  const db = c.get('db');
+
+  try {
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const comparison = await shadowRepo.findById(id);
+
+    if (!comparison) {
+      return c.json({ error: 'Comparison not found' }, 404);
+    }
+
+    return c.json({ comparison });
+  } catch (error) {
+    console.error('Shadow comparison get error:', error);
+    return c.json(
+      {
+        error: 'Failed to get shadow comparison',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
+ * POST /api/shadow-comparison/:id/adjudicate
+ * Adjudicate a shadow comparison mismatch (persisted)
+ */
+shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => {
+  const id = c.req.param('id');
+  const db = c.get('db');
+  const body = await c.req.json().catch(() => ({}));
+  const { adjudication, notes, operator } = body;
+
+  const validAdjudications = [
+    'new-correct',
+    'legacy-correct',
+    'both-wrong',
+    'acceptable-difference',
+  ];
+  if (!adjudication || !validAdjudications.includes(adjudication)) {
+    return c.json(
+      {
+        error: 'Invalid adjudication',
+        validOptions: validAdjudications,
+      },
+      400
+    );
+  }
+
+  try {
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const updated = await shadowRepo.adjudicate(
+      id,
+      operator || 'unknown',
+      adjudication as 'new-correct' | 'legacy-correct' | 'both-wrong' | 'acceptable-difference',
+      notes
+    );
+
+    if (!updated) {
+      return c.json({ error: 'Comparison not found' }, 404);
+    }
+
+    return c.json({
+      message: 'Adjudication recorded and persisted',
+      comparison: updated,
+    });
+  } catch (error) {
+    console.error('Shadow adjudication error:', error);
+    return c.json(
+      {
+        error: 'Failed to adjudicate shadow comparison',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
       500

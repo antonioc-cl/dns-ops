@@ -48,7 +48,7 @@ const CURRENT_RULESET_NAME = 'DNS and Mail Rules';
 /**
  * Create the combined ruleset with DNS and Mail rules
  */
-function createCombinedRuleset(): Ruleset {
+export function createCombinedRuleset(): Ruleset {
   return {
     id: 'dns-mail-v1',
     version: CURRENT_RULESET_VERSION,

@@ -21,6 +21,7 @@ import { providerTemplateRoutes } from './provider-templates.js';
 import { rulesetVersionRoutes } from './ruleset-versions.js';
 import { selectorRoutes } from './selectors.js';
 import { shadowComparisonRoutes } from './shadow-comparison.js';
+import { simulationRoutes } from './simulation.js';
 import { snapshotRoutes } from './snapshots.js';
 
 export const apiRoutes = new Hono<Env>();
@@ -75,6 +76,7 @@ apiRoutes.route('/ruleset-versions', rulesetVersionRoutes);
 apiRoutes.route('/monitoring', monitoringRoutes);
 apiRoutes.route('/alerts', alertRoutes);
 apiRoutes.route('/fleet-report', fleetReportRoutes);
+apiRoutes.route('/simulate', simulationRoutes);
 
 apiRoutes.get('/domain/:domain/latest', async (c) => {
   const tenantId = c.get('tenantId');

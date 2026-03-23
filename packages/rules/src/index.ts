@@ -14,3 +14,5 @@ export * from './engine/index.js';
 export * from './mail/rules.js';
 export * from './mail/shadow.js';
 export * from './mail/templates.js';
+// Simulation Engine
+export * from './simulation/index.js';
