@@ -4,3 +4,4 @@
 // and test helpers for the entire monorepo.
 
 export * from './benchmark-corpus/index.js';
+export * from './mock-db.js';

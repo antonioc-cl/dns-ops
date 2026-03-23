@@ -437,9 +437,9 @@ describe('DNS Collector Integration', () => {
     const collector = createCollectorWithMockedResolver(config, db, queryResults);
     const result = await collector.collect();
 
-    // Unmanaged zones produce 'complete' or 'partial' depending on
-    // which auto-generated queries the collector adds beyond our mocked set
-    expect(['complete', 'partial']).toContain(result.resultState);
+    // Unmanaged zones get targeted inspection only — limited record types
+    // mean the collector may classify as partial when auto-added queries miss mocks
+    expect(result.resultState).toBe('partial');
     expect(result.domain).toBe('example.com');
 
     // Unmanaged zones should still create a snapshot
@@ -479,7 +479,8 @@ describe('DNS Collector Integration', () => {
     expect(result.snapshotId).toBeDefined();
     // Some observations succeeded, so it shouldn't be 'failed'
     expect(['complete', 'partial']).toContain(result.resultState);
-    expect(result.errors.length).toBeGreaterThanOrEqual(0);
+    // SERVFAIL on AAAA should surface at least one error
+    expect(result.errors.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should persist observations to database', async () => {

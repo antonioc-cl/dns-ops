@@ -6,7 +6,7 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { getCollectorProxyConfig } from '../lib/collector-proxy.js';
+import { proxyToCollector } from '../lib/collector-proxy.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
@@ -178,42 +178,18 @@ apiRoutes.post('/collect/domain', requireAuth, requireWritePermission, async (c)
     return c.json({ error: 'Domain is required' }, 400);
   }
 
-  const tenantId = c.get('tenantId');
   const actorId = c.get('actorId');
-  if (!tenantId || !actorId) {
-    return c.json({ error: 'Authenticated tenant and actor required' }, 401);
-  }
 
-  const proxyConfig = getCollectorProxyConfig(c, { contentType: 'application/json' });
-  if (proxyConfig instanceof Response) {
-    return proxyConfig;
-  }
+  const result = await proxyToCollector(c, {
+    path: '/api/collect/domain',
+    method: 'POST',
+    body: JSON.stringify({
+      domain,
+      zoneManagement,
+      triggeredBy: actorId,
+    }),
+  });
 
-  try {
-    const response = await fetch(`${proxyConfig.collectorUrl}/api/collect/domain`, {
-      method: 'POST',
-      headers: proxyConfig.headers,
-      body: JSON.stringify({
-        domain,
-        zoneManagement,
-        triggeredBy: actorId,
-      }),
-    });
-
-    if (!response.ok) {
-      const upstream = await response.text();
-      return c.json(
-        {
-          error: 'Collector request failed',
-          message: upstream,
-        },
-        response.status
-      );
-    }
-
-    return c.json(await response.json());
-  } catch (error) {
-    console.error('Error triggering collection:', error);
-    return c.json({ error: 'Failed to connect to collector service' }, 503);
-  }
+  if (result instanceof Response) return result;
+  return c.json(result.json);
 });

@@ -367,6 +367,58 @@ export class MetricsCollector {
       },
     };
   }
+
+  /**
+   * Create job execution metrics tracker
+   */
+  createJobMetrics(): JobMetrics {
+    return {
+      started: (ctx) => {
+        this.counter('job_started_total', 1, {
+          job_type: ctx.jobType,
+          queue: ctx.queue,
+        });
+      },
+      completed: (ctx) => {
+        this.counter('job_completed_total', 1, {
+          job_type: ctx.jobType,
+          queue: ctx.queue,
+        });
+        this.histogram('job_duration_ms', ctx.durationMs, {
+          job_type: ctx.jobType,
+          queue: ctx.queue,
+          outcome: 'success',
+        });
+      },
+      failed: (ctx) => {
+        // Truncate error to avoid cardinality explosion in metrics backends.
+        // Full error is available in structured logs via trackJobError.
+        const errorClass = ctx.error.length > 60 ? `${ctx.error.slice(0, 57)}...` : ctx.error;
+        this.counter('job_failed_total', 1, {
+          job_type: ctx.jobType,
+          queue: ctx.queue,
+          error: errorClass,
+        });
+        this.histogram('job_duration_ms', ctx.durationMs, {
+          job_type: ctx.jobType,
+          queue: ctx.queue,
+          outcome: 'failure',
+        });
+      },
+      retried: (ctx) => {
+        this.counter('job_retried_total', 1, {
+          job_type: ctx.jobType,
+          queue: ctx.queue,
+          attempt: String(ctx.attempt),
+        });
+      },
+      queueDepth: (ctx) => {
+        this.gauge('queue_waiting', ctx.waiting, { queue: ctx.queue });
+        this.gauge('queue_active', ctx.active, { queue: ctx.queue });
+        this.gauge('queue_failed', ctx.failed, { queue: ctx.queue });
+      },
+    };
+  }
 }
 
 /**
@@ -377,12 +429,40 @@ export function createMetricsCollector(logger: Logger, prefix?: string): Metrics
 }
 
 /**
+ * Job execution metrics
+ */
+export interface JobMetrics {
+  /** Track job start */
+  started(context: { jobType: string; queue: string; jobId: string }): void;
+
+  /** Track job completion */
+  completed(context: { jobType: string; queue: string; jobId: string; durationMs: number }): void;
+
+  /** Track job failure */
+  failed(context: {
+    jobType: string;
+    queue: string;
+    jobId: string;
+    durationMs: number;
+    error: string;
+    attempt: number;
+  }): void;
+
+  /** Track job retry */
+  retried(context: { jobType: string; queue: string; jobId: string; attempt: number }): void;
+
+  /** Track queue depth (gauge) */
+  queueDepth(context: { queue: string; waiting: number; active: number; failed: number }): void;
+}
+
+/**
  * Convenience type for all metrics
  */
 export interface FeedbackLoopMetrics {
   remediation: RemediationMetrics;
   shadow: ShadowMetrics;
   alerts: AlertMetrics;
+  jobs: JobMetrics;
 }
 
 /**
@@ -394,5 +474,6 @@ export function createFeedbackLoopMetrics(logger: Logger, prefix?: string): Feed
     remediation: collector.createRemediationMetrics(),
     shadow: collector.createShadowMetrics(),
     alerts: collector.createAlertMetrics(),
+    jobs: collector.createJobMetrics(),
   };
 }

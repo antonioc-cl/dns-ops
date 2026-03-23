@@ -418,81 +418,8 @@ export class ShadowComparator {
 // Shadow Comparison Storage
 // =============================================================================
 
-export interface StoredShadowComparison extends ShadowComparisonResult {
-  id: string;
-  acknowledgedAt?: Date;
-  acknowledgedBy?: string;
-  adjudication?: 'new-correct' | 'legacy-correct' | 'both-wrong' | 'acceptable-difference';
-  notes?: string;
-}
+// NOTE: In-memory ShadowComparisonStore was removed.
+// Shadow comparisons are persisted durably via ShadowComparisonRepository (packages/db).
+// See apps/web/hono/routes/shadow-comparison.ts for the DB-backed implementation.
 
-export class ShadowComparisonStore {
-  private comparisons: Map<string, StoredShadowComparison> = new Map();
-
-  store(comparison: ShadowComparisonResult): StoredShadowComparison {
-    const stored: StoredShadowComparison = {
-      ...comparison,
-      id: crypto.randomUUID(),
-    };
-    this.comparisons.set(stored.id, stored);
-    return stored;
-  }
-
-  get(id: string): StoredShadowComparison | undefined {
-    return this.comparisons.get(id);
-  }
-
-  getBySnapshot(snapshotId: string): StoredShadowComparison[] {
-    return Array.from(this.comparisons.values()).filter((c) => c.snapshotId === snapshotId);
-  }
-
-  getByDomain(domain: string): StoredShadowComparison[] {
-    return Array.from(this.comparisons.values()).filter((c) => c.domain === domain);
-  }
-
-  getMismatches(): StoredShadowComparison[] {
-    return Array.from(this.comparisons.values()).filter(
-      (c) => c.status === 'mismatch' || c.status === 'partial-match'
-    );
-  }
-
-  acknowledge(
-    id: string,
-    by: string,
-    adjudication: StoredShadowComparison['adjudication'],
-    notes?: string
-  ): StoredShadowComparison | undefined {
-    const comparison = this.comparisons.get(id);
-    if (!comparison) return undefined;
-
-    comparison.acknowledgedAt = new Date();
-    comparison.acknowledgedBy = by;
-    comparison.adjudication = adjudication;
-    comparison.notes = notes;
-
-    this.comparisons.set(id, comparison);
-    return comparison;
-  }
-
-  getStats(): {
-    total: number;
-    matches: number;
-    mismatches: number;
-    partialMatches: number;
-    acknowledged: number;
-    pending: number;
-  } {
-    const all = Array.from(this.comparisons.values());
-    return {
-      total: all.length,
-      matches: all.filter((c) => c.status === 'match').length,
-      mismatches: all.filter((c) => c.status === 'mismatch').length,
-      partialMatches: all.filter((c) => c.status === 'partial-match').length,
-      acknowledged: all.filter((c) => c.acknowledgedAt).length,
-      pending: all.filter((c) => !c.acknowledgedAt).length,
-    };
-  }
-}
-
-export const shadowStore = new ShadowComparisonStore();
 export const shadowComparator = new ShadowComparator();

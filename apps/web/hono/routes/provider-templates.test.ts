@@ -6,8 +6,9 @@
  */
 
 import type { IDatabaseAdapter } from '@dns-ops/db';
+import { createMockDb as createGenericMockDb } from '@dns-ops/testkit';
 import { Hono } from 'hono';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Env } from '../types.js';
 import { providerTemplateRoutes } from './provider-templates.js';
 
@@ -15,61 +16,16 @@ import { providerTemplateRoutes } from './provider-templates.js';
 // MOCK DB HELPERS
 // =============================================================================
 
-function getTableName(table: unknown): string {
-  if (!table || typeof table !== 'object') return '';
-  const record = table as Record<symbol | string, unknown>;
-  const symbolName = Symbol.for('drizzle:Name');
-  if (typeof record[symbolName] === 'string') {
-    return record[symbolName] as string;
-  }
-  const symbols = Object.getOwnPropertySymbols(record);
-  const drizzleName = symbols.find((s) => String(s) === 'Symbol(drizzle:Name)');
-  if (drizzleName && typeof record[drizzleName] === 'string') {
-    return record[drizzleName] as string;
-  }
-  return '';
-}
-
-function getConditionParam(condition: unknown): unknown {
-  const sql = condition as {
-    queryChunks?: Array<{ constructor?: { name?: string }; value?: unknown }>;
-  };
-  return sql.queryChunks?.find((c) => c?.constructor?.name === 'Param')?.value;
-}
-
 interface MockState {
   snapshots: Array<Record<string, unknown>>;
   recordSets: Array<Record<string, unknown>>;
 }
 
 function createMockDb(state: MockState): IDatabaseAdapter {
-  return {
-    getDrizzle: vi.fn(),
-    select: vi.fn(async (table: unknown) => {
-      const name = getTableName(table);
-      if (name === 'snapshots') return [...state.snapshots];
-      if (name === 'record_sets') return [...state.recordSets];
-      return [];
-    }),
-    selectWhere: vi.fn(async (table: unknown, condition: unknown) => {
-      const name = getTableName(table);
-      const param = getConditionParam(condition);
-      if (name === 'snapshots') return state.snapshots.filter((s) => s.id === param);
-      if (name === 'record_sets') return state.recordSets.filter((r) => r.snapshotId === param);
-      return [];
-    }),
-    selectOne: vi.fn(async (table: unknown, condition: unknown) => {
-      const name = getTableName(table);
-      const param = getConditionParam(condition);
-      if (name === 'snapshots') return state.snapshots.find((s) => s.id === param);
-      return undefined;
-    }),
-    insert: vi.fn(async (_table: unknown, values: Record<string, unknown>) => values),
-    insertMany: vi.fn(),
-    update: vi.fn(async () => []),
-    updateOne: vi.fn(async () => undefined),
-    delete: vi.fn(async () => 0),
-  } as unknown as IDatabaseAdapter;
+  return createGenericMockDb({
+    snapshots: state.snapshots,
+    record_sets: state.recordSets,
+  });
 }
 
 // =============================================================================

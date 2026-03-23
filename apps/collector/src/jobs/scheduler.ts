@@ -58,7 +58,11 @@ export const SCHEDULE_DESCRIPTIONS: Record<ScheduleType, string> = {
 // SCHEDULER STATE
 // =============================================================================
 
-// Track active schedules in memory (would persist in Redis in production)
+// Track active schedules in memory.
+// LIMITATION (V1): Schedule state is lost on process restart.
+// BullMQ repeatable jobs survive in Redis, so jobs re-execute on schedule,
+// but the activeSchedules Map (used for observability) resets.
+// initializeSchedules() must be called on startup to repopulate.
 const activeSchedules = new Map<string, ScheduleConfig>();
 
 /**

@@ -35,6 +35,7 @@
     "vinxi": "0.5.3"
   },
   "devDependencies": {
+    "@dns-ops/testkit": "workspace:*",
     "@playwright/test": "^1.40.0",
     "@cloudflare/workers-types": "^4.20231218.0",
     "@types/react": "^18.2.0",

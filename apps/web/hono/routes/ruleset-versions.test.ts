@@ -6,8 +6,9 @@
  */
 
 import type { IDatabaseAdapter } from '@dns-ops/db';
+import { createMockDb as createGenericMockDb } from '@dns-ops/testkit';
 import { Hono } from 'hono';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Env } from '../types.js';
 import { rulesetVersionRoutes } from './ruleset-versions.js';
 
@@ -15,73 +16,14 @@ import { rulesetVersionRoutes } from './ruleset-versions.js';
 // MOCK DB HELPERS
 // =============================================================================
 
-function getTableName(table: unknown): string {
-  if (!table || typeof table !== 'object') return '';
-  const record = table as Record<symbol | string, unknown>;
-  const symbolName = Symbol.for('drizzle:Name');
-  if (typeof record[symbolName] === 'string') {
-    return record[symbolName] as string;
-  }
-  const symbols = Object.getOwnPropertySymbols(record);
-  const drizzleName = symbols.find((s) => String(s) === 'Symbol(drizzle:Name)');
-  if (drizzleName && typeof record[drizzleName] === 'string') {
-    return record[drizzleName] as string;
-  }
-  return '';
-}
-
-function getConditionParam(condition: unknown): unknown {
-  const sql = condition as {
-    queryChunks?: Array<{ constructor?: { name?: string }; value?: unknown }>;
-  };
-  return sql.queryChunks?.find((c) => c?.constructor?.name === 'Param')?.value;
-}
-
 interface MockState {
   rulesetVersions: Array<Record<string, unknown>>;
 }
 
 function createMockDb(state: MockState): IDatabaseAdapter {
-  return {
-    getDrizzle: vi.fn(),
-    select: vi.fn(async (table: unknown) => {
-      const name = getTableName(table);
-      if (name === 'ruleset_versions') return [...state.rulesetVersions];
-      return [];
-    }),
-    selectWhere: vi.fn(async (table: unknown, condition: unknown) => {
-      const name = getTableName(table);
-      const param = getConditionParam(condition);
-      if (name === 'ruleset_versions') {
-        return state.rulesetVersions.filter(
-          (r) => r.id === param || r.version === param || r.active === param
-        );
-      }
-      return [];
-    }),
-    selectOne: vi.fn(async (table: unknown, condition: unknown) => {
-      const name = getTableName(table);
-      const param = getConditionParam(condition);
-      if (name === 'ruleset_versions') {
-        return state.rulesetVersions.find(
-          (r) => r.id === param || r.version === param || r.active === param
-        );
-      }
-      return undefined;
-    }),
-    insert: vi.fn(async (_table: unknown, values: Record<string, unknown>) => ({
-      id: `rv-${Date.now()}`,
-      createdAt: new Date(),
-      ...values,
-    })),
-    insertMany: vi.fn(),
-    update: vi.fn(async (_table: unknown, values: Record<string, unknown>) => {
-      // For setActive, update matching versions
-      return [{ ...values }];
-    }),
-    updateOne: vi.fn(async () => undefined),
-    delete: vi.fn(async () => 0),
-  } as unknown as IDatabaseAdapter;
+  return createGenericMockDb({
+    ruleset_versions: state.rulesetVersions,
+  });
 }
 
 // =============================================================================

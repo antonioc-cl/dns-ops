@@ -121,14 +121,16 @@ function extractApiKey(
 function extractDevBypass(
   c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
 ): AuthContext | null {
-  if (process.env.NODE_ENV !== 'development') {
+  // Explicit opt-in: only allow dev bypass when NODE_ENV is explicitly set to 'development'.
+  // If NODE_ENV is unset, undefined, or any other value, dev bypass is rejected.
+  if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development') {
     return null;
   }
 
   const tenantId = c.req.header('X-Dev-Tenant');
   const actorId = c.req.header('X-Dev-Actor');
 
-  // Both headers must to be present
+  // Both headers must be present
   if (!tenantId || !actorId) {
     return null;
   }
@@ -195,6 +197,13 @@ export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
   const authContext = extractCloudflareAccess(c) || extractApiKey(c) || extractDevBypass(c);
 
   if (!authContext) {
+    console.warn('[Auth] Rejected unauthenticated request', {
+      method: c.req.method,
+      path: c.req.path,
+      hasApiKey: !!c.req.header('X-API-Key'),
+      hasCfAccess: !!c.req.header('CF-Access-Authenticated-User-Email'),
+      hasDevHeaders: !!c.req.header('X-Dev-Tenant'),
+    });
     return c.json(
       {
         error: 'Unauthorized',

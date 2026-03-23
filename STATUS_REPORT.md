@@ -1,6 +1,6 @@
 # DNS Ops Workbench — Status Report
 
-**Report Date:** 2026-03-22
+**Report Date:** 2026-03-23
 **Method:** direct command execution against current repo state
 
 ## Executive summary
@@ -8,46 +8,64 @@
 Current validation truth:
 - `bun run lint` ✅
 - `bun run typecheck` ✅
-- `bun run test` ✅ (deterministic default gate; live DNS smoke excluded unless opted in)
+- `bun run test` ✅ (815 passed, 6 skipped — deterministic gate; live DNS opt-in)
 - `bun run build` ✅
 - `packages/db: bun run check-drift` ✅
-- `packages/db: DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres bun run verify-migrations` ✅
-- `E2E_DEV_TENANT=test-tenant E2E_DEV_ACTOR=test-actor bun run --filter @dns-ops/web e2e` ✅ (`8 passed`)
+- E2E: requires DATABASE_URL in playwright env (fixed in this batch)
 
-This repo is back to green on the verified local command set above.
+## Bead coverage (per IMPLEMENTATION_BEADS.md)
 
-## Fixed in the latest batch
+Code exists touching all 21 beads (00–20). However, coverage is not uniform:
 
-- Collector DNS integration tests are now opt-in instead of running in the default repo gate
-- Added root and collector `test:live-dns` scripts for intentional real-network smoke
-- Reduced live DNS assertions to stable smoke checks with explicit fixtures and longer timeouts
-- CI now forces `RUN_LIVE_DNS_TESTS=0` for the default `Test` step
-- Reopened `/portfolio` further with monitored-domain management, alert triage, fleet-report, template-override, audit-log, and saved-filter-backed search panels
-- Added same-origin web fleet-report proxy coverage and tenant tag-suggestions backend glue
-- Added tenant-safe domain-context lookup so Domain 360 notes/tags no longer depend on snapshots existing first
-- Added route-owned portfolio filter state plus real saved-filter load/save/share wiring
-- Added persisted audit coverage for monitoring mutations and alert lifecycle transitions
-- Added direct Domain 360 links from monitoring and alert cards plus shared-report expire controls
-- Extended web smoke to verify Domain 360 operator context plus portfolio search/saved-filters/monitoring/alerts/shared-reports/governance reachability
+### Proven (unit + runtime/integration tests)
+- **B00** Workspace validation baseline ✅
+- **B01** Pilot corpus, vocabulary, query scope ✅
+- **B02** Runtime topology ✅
+- **B03** Shared contracts and schema ✅
+- **B04** DNS collection pipeline 🟡 (live DNS opt-in only)
+- **B06** Ruleset registry + persisted findings ✅
+- **B07** Snapshot history + diff ✅
+- **B09** Mail evidence core 🟡
+- **B10** DKIM selector provenance 🟡
+- **B11** Mail findings preview 🟡
+- **B12** Shadow comparison (DB-backed) ✅
+- **B13** Auth, actor, tenant governance ✅
 
-## Current product truth
+### Code-complete, pending E2E verification
+- **B05** Domain 360 viewer (route + API exist, e2e needs DB env)
+- **B08** Legacy mail bridge (depends on external URL config)
+- **B14** Portfolio search (full API + UI wired)
+- **B15** Portfolio writes, notes, tags, overrides, audit (full CRUD)
+- **B16** Delegation evidence (collector + API, UI tab hidden per B05 plan)
+- **B18** Batch findings report (collector + web proxy)
+- **B20** Alerts + shared reports (full lifecycle, no notification delivery)
 
-- Collector health/auth/db lifecycle is fixed and validated
-- Default repo validation no longer depends on public DNS reachability
-- Live DNS integration coverage remains available through the opt-in `test:live-dns` path
-- Web write paths fail closed and carry tenant/actor context
-- Remediation requests are now repo-backed and tenant-scoped
-- Shared reports are now persisted, redacted, shareable by token, reachable from `/portfolio`, and expirable from the UI
-- Monitoring, alert-state, remediation, and shared-report mutations now emit persisted tenant audit events
-- `/portfolio` now exposes portfolio search, saved filters, monitored domains, alerts, fleet reports, shared reports, template overrides, and the tenant audit log
-- Domain 360 now exposes `Overview`, `DNS`, and `Mail`, with tenant-scoped notes and tags on `Overview`
+### Structurally incomplete
+- **B17** Non-DNS probe sandbox (feature-flagged, needs security review)
+- **B19** Job orchestration (requires Redis; scheduler state is in-memory only)
 
-## Still pending
+## What was fixed in this batch (2026-03-23)
 
-No blocking items. All runtime contracts finalized.
+- Added circuit breaker to collector proxy (3-failure threshold, 30s cooldown, clear 503 responses)
+- Migrated all proxy consumers (fleet-report, collection trigger) to proxyToCollector() helper
+- Fixed playwright config: added DATABASE_URL, NODE_ENV, COLLECTOR_URL to webServer env
+- Fixed selector suggestion route: replaced self-referencing fetch with direct repo calls (was broken on Workers)
+- Removed dead in-memory ShadowComparisonStore from rules package (DB-backed repo is authoritative)
+- Clarified InMemoryTemplateStorage as read-only cache (DB-backed ProviderBaselineRepository for durable writes)
+- Hardened dev bypass auth: explicit NODE_ENV === 'development' check (rejects if unset)
+- Added auth failure logging to web requireAuthMiddleware
+- Removed committed build artifact (app.config.timestamp_*.js)
+- Added app.config.timestamp_*.js to .gitignore
+- Marked vantagePoints table as de-scoped in schema
+- Reconciled this status report with IMPLEMENTATION_BEADS.md
 
-### Completed (previously pending)
-- Workers/Hyperdrive runtime contract: `wrangler.jsonc` documents the Hyperdrive binding pattern with activation instructions. `hono/config/env.ts` resolves `HYPERDRIVE_URL` → `DATABASE_URL` fallback. See `docs/architecture/runtime-topology.md` for the full topology.
+## Known limitations (V1)
+
+1. **Job orchestration (B19):** Requires Redis for BullMQ. Without REDIS_URL, queue degrades to synchronous. Scheduler state is process-local (lost on restart).
+2. **Alert notifications (B20):** Alert lifecycle is tracked (create → ack → resolve), but no actual notification delivery (email/webhook) exists. Alerts are dashboard-only for V1.
+3. **Multi-tenant domain uniqueness:** Unique index is on `normalizedName` alone. Two tenants cannot own the same domain.
+4. **Delegation UI (B16):** Collector and API are wired, but the UI tab is intentionally hidden per B05 plan.
+5. **Non-DNS probes (B17):** Feature-flagged. SSRF guards and allowlist exist but need formal security review before enabling.
 
 ## Notes
 

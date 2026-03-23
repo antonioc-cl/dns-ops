@@ -24,6 +24,7 @@ import {
   trackJobError,
   trackJobStart,
 } from '../middleware/error-tracking.js';
+import { getJobMetrics } from '../middleware/job-metrics.js';
 import {
   type CollectDomainJobData,
   type FleetReportJobData,
@@ -309,6 +310,7 @@ export async function startWorkers(): Promise<void> {
     return;
   }
 
+  const jobMetrics = getJobMetrics();
   logger.info('Starting job workers...');
 
   const connectionOptions: ConnectionOptions = connection as ConnectionOptions;
@@ -326,11 +328,40 @@ export async function startWorkers(): Promise<void> {
   );
 
   collectionWorker.on('completed', (job) => {
-    logger.debug('Collection job completed', { jobId: job.id });
+    const result = job.returnvalue as { success?: boolean; error?: string } | undefined;
+    const durationMs = job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : 0;
+    if (result?.success === false) {
+      logger.debug('Collection job completed with failure', { jobId: job.id });
+      jobMetrics.failed({
+        jobType: 'collect-domain',
+        queue: QUEUE_NAMES.COLLECTION,
+        jobId: job.id || 'unknown',
+        durationMs,
+        error: result.error || 'Unknown error',
+        attempt: job.attemptsMade || 0,
+      });
+    } else {
+      logger.debug('Collection job completed', { jobId: job.id });
+      jobMetrics.completed({
+        jobType: 'collect-domain',
+        queue: QUEUE_NAMES.COLLECTION,
+        jobId: job.id || 'unknown',
+        durationMs,
+      });
+    }
   });
 
+  // Fires only on uncaught processor crashes (processors catch known errors)
   collectionWorker.on('failed', (job, error) => {
-    logger.error('Collection job failed', error, { jobId: job?.id });
+    logger.error('Collection job crashed', error, { jobId: job?.id });
+    jobMetrics.failed({
+      jobType: 'collect-domain',
+      queue: QUEUE_NAMES.COLLECTION,
+      jobId: job?.id || 'unknown',
+      durationMs: job?.processedOn ? Date.now() - job.processedOn : 0,
+      error: error.message,
+      attempt: job?.attemptsMade || 0,
+    });
   });
 
   // Monitoring worker
@@ -346,11 +377,39 @@ export async function startWorkers(): Promise<void> {
   );
 
   monitoringWorker.on('completed', (job) => {
-    logger.debug('Monitoring job completed', { jobId: job.id });
+    const result = job.returnvalue as { success?: boolean; error?: string } | undefined;
+    const durationMs = job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : 0;
+    if (result?.success === false) {
+      logger.debug('Monitoring job completed with failure', { jobId: job.id });
+      jobMetrics.failed({
+        jobType: 'monitoring-refresh',
+        queue: QUEUE_NAMES.MONITORING,
+        jobId: job.id || 'unknown',
+        durationMs,
+        error: result.error || 'Unknown error',
+        attempt: job.attemptsMade || 0,
+      });
+    } else {
+      logger.debug('Monitoring job completed', { jobId: job.id });
+      jobMetrics.completed({
+        jobType: 'monitoring-refresh',
+        queue: QUEUE_NAMES.MONITORING,
+        jobId: job.id || 'unknown',
+        durationMs,
+      });
+    }
   });
 
   monitoringWorker.on('failed', (job, error) => {
-    logger.error('Monitoring job failed', error, { jobId: job?.id });
+    logger.error('Monitoring job crashed', error, { jobId: job?.id });
+    jobMetrics.failed({
+      jobType: 'monitoring-refresh',
+      queue: QUEUE_NAMES.MONITORING,
+      jobId: job?.id || 'unknown',
+      durationMs: job?.processedOn ? Date.now() - job.processedOn : 0,
+      error: error.message,
+      attempt: job?.attemptsMade || 0,
+    });
   });
 
   // Reports worker
@@ -366,11 +425,39 @@ export async function startWorkers(): Promise<void> {
   );
 
   reportsWorker.on('completed', (job) => {
-    logger.debug('Reports job completed', { jobId: job.id });
+    const result = job.returnvalue as { success?: boolean; error?: string } | undefined;
+    const durationMs = job.finishedOn && job.processedOn ? job.finishedOn - job.processedOn : 0;
+    if (result?.success === false) {
+      logger.debug('Reports job completed with failure', { jobId: job.id });
+      jobMetrics.failed({
+        jobType: 'fleet-report',
+        queue: QUEUE_NAMES.REPORTS,
+        jobId: job.id || 'unknown',
+        durationMs,
+        error: result.error || 'Unknown error',
+        attempt: job.attemptsMade || 0,
+      });
+    } else {
+      logger.debug('Reports job completed', { jobId: job.id });
+      jobMetrics.completed({
+        jobType: 'fleet-report',
+        queue: QUEUE_NAMES.REPORTS,
+        jobId: job.id || 'unknown',
+        durationMs,
+      });
+    }
   });
 
   reportsWorker.on('failed', (job, error) => {
-    logger.error('Reports job failed', error, { jobId: job?.id });
+    logger.error('Reports job crashed', error, { jobId: job?.id });
+    jobMetrics.failed({
+      jobType: 'fleet-report',
+      queue: QUEUE_NAMES.REPORTS,
+      jobId: job?.id || 'unknown',
+      durationMs: job?.processedOn ? Date.now() - job.processedOn : 0,
+      error: error.message,
+      attempt: job?.attemptsMade || 0,
+    });
   });
 
   logger.info('All workers started');

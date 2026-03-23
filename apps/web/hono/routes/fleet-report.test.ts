@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { collectorCircuit } from '../lib/collector-proxy.js';
 import type { Env } from '../types.js';
 import { fleetReportRoutes } from './fleet-report.js';
 
@@ -19,6 +20,7 @@ describe('Fleet report web proxy routes', () => {
     process.env = originalEnv;
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    collectorCircuit.reset();
   });
 
   function createApp(withAuth = true) {

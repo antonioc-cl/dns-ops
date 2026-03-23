@@ -90,6 +90,7 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
     });
 
     // Persist to database for shadow comparison analysis (Bead 09/12)
+    let persisted = false;
     const db = c.get('db');
     if (db) {
       const legacyLogRepo = new LegacyAccessLogRepository(db);
@@ -105,19 +106,23 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
         responseStatus: 'success',
         tenantId: tenantId === 'default' ? undefined : tenantId,
       });
+      persisted = true;
     }
 
     return c.json({
       success: true,
       logged: true,
+      persisted,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('Error logging legacy tool access:', error);
-    // Return 200 even on error to not break the user experience
+    // Return 200 to not break the UI, but signal that persistence failed
     return c.json(
       {
         success: false,
+        logged: false,
+        persisted: false,
         error: 'Failed to log access',
       },
       200

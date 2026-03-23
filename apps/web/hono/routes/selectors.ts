@@ -5,7 +5,12 @@
  * Provenance/confidence/provider are stored at collection time in dkim_selectors table.
  */
 
-import { DkimSelectorRepository, ObservationRepository, SnapshotRepository } from '@dns-ops/db';
+import {
+  DkimSelectorRepository,
+  DomainRepository,
+  ObservationRepository,
+  SnapshotRepository,
+} from '@dns-ops/db';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
 
@@ -114,28 +119,33 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
 /**
  * GET /api/domain/:domain/selectors/suggest
  * Suggest DKIM selectors based on provider detection
+ *
+ * Uses direct repo access instead of self-referencing HTTP fetch,
+ * which would fail on Cloudflare Workers (no loopback).
  */
 selectorRoutes.get('/domain/:domain/selectors/suggest', async (c) => {
   const domain = c.req.param('domain');
+  const db = c.get('db');
 
   try {
-    // Fetch existing observations to detect provider
-    const obsResponse = await fetch(`/api/domain/${domain}/latest`);
-    if (!obsResponse.ok) {
+    const domainRepo = new DomainRepository(db);
+    const snapshotRepo = new SnapshotRepository(db);
+    const observationRepo = new ObservationRepository(db);
+
+    // Look up domain and latest snapshot via repos (not self-fetch)
+    const domainRecord = await domainRepo.findByName(domain);
+    if (!domainRecord) {
       return c.json({ error: 'No data for domain' }, 404);
     }
 
-    const snapshot = (await obsResponse.json()) as { id: string };
+    const snapshots = await snapshotRepo.findByDomain(domainRecord.id, 1);
+    if (snapshots.length === 0) {
+      return c.json({ error: 'No snapshots for domain' }, 404);
+    }
 
-    // Get observations
-    const observations = (await fetch(`/api/snapshot/${snapshot.id}/observations`).then((r) =>
-      r.json()
-    )) as Array<{
-      queryType: string;
-      answerSection?: Array<{ data: string }>;
-    }>;
+    const observations = await observationRepo.findBySnapshotId(snapshots[0].id);
 
-    // Simple provider detection from MX
+    // Simple provider detection from MX observations
     const mxObs = observations.find((o) => o.queryType === 'MX');
     let provider: string | null = null;
     let suggestedSelectors: string[] = [];

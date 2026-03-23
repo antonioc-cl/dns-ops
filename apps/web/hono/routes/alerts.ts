@@ -362,7 +362,9 @@ alertRoutes.post('/:id/resolve', requireWritePermission, async (c) => {
   }
 
   const body = await c.req.json().catch(() => ({}));
-  const resolutionNote = body.resolutionNote as string | undefined;
+  const rawNote = body.resolutionNote;
+  const resolutionNote =
+    typeof rawNote === 'string' ? rawNote.slice(0, 5000).trim() || undefined : undefined;
 
   try {
     const alertRepo = new AlertRepository(db);

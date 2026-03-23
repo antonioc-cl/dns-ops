@@ -93,6 +93,9 @@ export const domains = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
+    // NOTE (V1): Unique on normalizedName alone. Two tenants cannot own the same domain.
+    // When multi-tenancy is fully activated, migrate this to:
+    //   uniqueIndex('domain_name_tenant_idx').on(table.normalizedName, table.tenantId)
     nameIdx: uniqueIndex('domain_name_idx').on(table.normalizedName),
     tenantIdx: index('domain_tenant_idx').on(table.tenantId),
     zoneMgmtIdx: index('domain_zone_management_idx').on(table.zoneManagement),
@@ -195,7 +198,11 @@ export const snapshots = pgTable(
 );
 
 // =============================================================================
-// VANTAGE POINT TABLE
+// VANTAGE POINT TABLE (DE-SCOPED)
+//
+// This table is retained for schema integrity (observations.vantageId FK)
+// but is not actively used by V1. No VantagePointRepository exists.
+// Future: remove table and FK via migration when vantage tracking is redesigned.
 // =============================================================================
 
 export const vantagePoints = pgTable(

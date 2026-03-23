@@ -127,7 +127,9 @@ function extractApiKey(
 function extractDevBypass(
   c: Parameters<Parameters<typeof createMiddleware<Env>>[0]>[0]
 ): AuthContext | null {
-  if (process.env.NODE_ENV !== 'development') {
+  // Explicit opt-in: only allow dev bypass when NODE_ENV is explicitly set to 'development'.
+  // If NODE_ENV is unset, undefined, or any other value, dev bypass is rejected.
+  if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development') {
     return null;
   }
 

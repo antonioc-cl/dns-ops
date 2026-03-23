@@ -61,6 +61,7 @@ export {
   createFeedbackLoopMetrics,
   createMetricsCollector,
   type FeedbackLoopMetrics,
+  type JobMetrics,
   type MetricEvent,
   MetricsCollector,
   type MetricType,

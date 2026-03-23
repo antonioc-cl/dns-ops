@@ -565,7 +565,16 @@ export interface TemplateStorage {
   addCustomSelector(provider: KnownProvider, selector: string): void;
 }
 
-// In-memory implementation (to be replaced with database-backed storage)
+/**
+ * Read-only in-memory template cache.
+ *
+ * This provides fast access to the static PROVIDER_TEMPLATES constant data.
+ * For durable, tenant-scoped template overrides, use ProviderBaselineRepository
+ * and TemplateOverrideRepository from @dns-ops/db.
+ *
+ * Mutations via addCustomSelector/updateTemplate are process-local only —
+ * they do NOT persist across restarts. Use the DB-backed repos for durable writes.
+ */
 class InMemoryTemplateStorage implements TemplateStorage {
   private templates: Map<KnownProvider, ProviderTemplate>;
 
