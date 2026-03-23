@@ -5,7 +5,7 @@
  * Uses the 'punycode' package for proper RFC 3492 implementation.
  */
 
-import { toASCII, toUnicode } from 'punycode';
+import { toASCII, toUnicode } from 'punycode/';
 
 const PREFIX = 'xn--';
 

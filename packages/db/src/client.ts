@@ -77,20 +77,17 @@ export function createClient(config: DBConfig): Database {
 export function createPostgresClient(connectionString: string): NodePgDatabase<typeof schema> {
   const pool = new Pool({
     connectionString,
-    // In production, require proper TLS configuration
+    // TLS configuration:
+    //   Production: Validates server certificates by default (rejectUnauthorized=true).
+    //     - DB_TLS_REJECT_UNAUTHORIZED: Set to 'false' to disable cert validation (NOT recommended).
+    //     - For custom CA/mTLS, extend ssl config with ca/key/cert from env-provided file paths.
+    //   Development: Self-signed certificates are accepted.
     ssl:
       process.env.NODE_ENV === 'production'
         ? {
-            // Production: require valid TLS certificates
-            // SECURITY TODO: Configure proper TLS certificates
-            // Options:
-            // 1. Use CA certificate: Set DB_TLS_CA_CERT env var with path to cert file
-            // 2. Use key file: Set DB_TLS_KEY env var with path to key file
-            // 3. Use system CA store: Set DB_TLS_REJECT_UNAUTHORIZED=true
             rejectUnauthorized: process.env.DB_TLS_REJECT_UNAUTHORIZED !== 'false',
           }
         : {
-            // Development: allow self-signed certificates for local development
             rejectUnauthorized: false,
           },
   });
@@ -144,20 +141,17 @@ export function createAdapterFromConfig(config: DBConfig): IDatabaseAdapter {
 export function createPostgresAdapter(connectionString: string): IDatabaseAdapter {
   const pool = new Pool({
     connectionString,
-    // In production, require proper TLS configuration
+    // TLS configuration:
+    //   Production: Validates server certificates by default (rejectUnauthorized=true).
+    //     - DB_TLS_REJECT_UNAUTHORIZED: Set to 'false' to disable cert validation (NOT recommended).
+    //     - For custom CA/mTLS, extend ssl config with ca/key/cert from env-provided file paths.
+    //   Development: Self-signed certificates are accepted.
     ssl:
       process.env.NODE_ENV === 'production'
         ? {
-            // Production: require valid TLS certificates
-            // SECURITY TODO: Configure proper TLS certificates
-            // Options:
-            // 1. Use CA certificate: Set DB_TLS_CA_CERT env var with path to cert file
-            // 2. Use key file: Set DB_TLS_KEY env var with path to key file
-            // 3. Use system CA store: Set DB_TLS_REJECT_UNAUTHORIZED=true
             rejectUnauthorized: process.env.DB_TLS_REJECT_UNAUTHORIZED !== 'false',
           }
         : {
-            // Development: allow self-signed certificates for local development
             rejectUnauthorized: false,
           },
   });

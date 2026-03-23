@@ -10,6 +10,7 @@ import {
   SharedReportRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { getFeedbackMetrics } from '../lib/metrics.js';
 import { getRequestClientIp } from '../lib/request-context.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import { trackAlert, trackReport } from '../middleware/error-tracking.js';
@@ -336,6 +337,11 @@ alertRoutes.post('/:id/acknowledge', requireWritePermission, async (c) => {
       severity: alert.severity,
     });
 
+    const timeToAckMs = existing.createdAt
+      ? Date.now() - new Date(existing.createdAt).getTime()
+      : 0;
+    getFeedbackMetrics().alerts.acknowledged({ tenantId, alertId, timeToAckMs });
+
     return c.json({ alert });
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('Invalid alert transition')) {
@@ -388,6 +394,16 @@ alertRoutes.post('/:id/resolve', requireWritePermission, async (c) => {
       severity: alert.severity,
     });
 
+    const timeToResolveMs = existing.createdAt
+      ? Date.now() - new Date(existing.createdAt).getTime()
+      : 0;
+    getFeedbackMetrics().alerts.resolved({
+      tenantId,
+      alertId,
+      timeToResolveMs,
+      resolution: 'manual',
+    });
+
     return c.json({ alert });
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('Invalid alert transition')) {
@@ -436,6 +452,8 @@ alertRoutes.post('/:id/suppress', requireWritePermission, async (c) => {
       action: 'dismiss',
       severity: alert.severity,
     });
+
+    getFeedbackMetrics().alerts.suppressed({ tenantId, alertId });
 
     return c.json({ alert });
   } catch (error) {

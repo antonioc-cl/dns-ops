@@ -185,7 +185,7 @@ export class DNSCollector {
     // Calculate result state
     const resultState = this.calculateResultState(allResults, errors);
 
-    // Store results (placeholder - will integrate with DB)
+    // Store results to database via domain/snapshot/observation repositories
     const snapshotId = await this.storeResults(allResults, resultState, delegationData);
 
     return {

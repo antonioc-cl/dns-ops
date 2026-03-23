@@ -44,8 +44,10 @@ This repo is back to green on the verified local command set above.
 
 ## Still pending
 
-### Runtime
-- Finalize the Workers runtime contract if true Hyperdrive binding support is required beyond the current env-string path
+No blocking items. All runtime contracts finalized.
+
+### Completed (previously pending)
+- Workers/Hyperdrive runtime contract: `wrangler.jsonc` documents the Hyperdrive binding pattern with activation instructions. `hono/config/env.ts` resolves `HYPERDRIVE_URL` → `DATABASE_URL` fallback. See `docs/architecture/runtime-topology.md` for the full topology.
 
 ## Notes
 

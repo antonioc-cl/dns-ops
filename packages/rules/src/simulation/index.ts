@@ -539,7 +539,7 @@ export class SimulationEngine {
         if (
           existingIdx >= 0 &&
           result[existingIdx].answerSection &&
-          result[existingIdx].answerSection!.length > 0
+          (result[existingIdx].answerSection?.length ?? 0) > 0
         ) {
           continue;
         }

@@ -89,8 +89,23 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
       parameters: { action, ...metadata },
     });
 
-    // TODO: Store in database for shadow comparison analysis (Bead 09)
-    // This log data will be used to compare legacy tool usage vs new workbench findings
+    // Persist to database for shadow comparison analysis (Bead 09/12)
+    const db = c.get('db');
+    if (db) {
+      const legacyLogRepo = new LegacyAccessLogRepository(db);
+      const toolTypeMap: Record<string, 'dmarc-check' | 'dkim-check'> = {
+        dmarc: 'dmarc-check',
+        dkim: 'dkim-check',
+      };
+      await legacyLogRepo.log({
+        toolType: toolTypeMap[tool] ?? 'dmarc-check',
+        domain,
+        requestSource: 'ui',
+        requestedBy: c.get('actorId') ?? undefined,
+        responseStatus: 'success',
+        tenantId: tenantId === 'default' ? undefined : tenantId,
+      });
+    }
 
     return c.json({
       success: true,

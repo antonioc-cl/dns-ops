@@ -7,6 +7,7 @@
 import { AuditEventRepository, RemediationRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
 import { getRequestEnvConfig } from '../config/env.js';
+import { getFeedbackMetrics } from '../lib/metrics.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import { trackMailCheck } from '../middleware/error-tracking.js';
 import {
@@ -201,6 +202,13 @@ export const mailRoutes = new Hono<Env>()
       userAgent: c.req.header('user-agent'),
     });
 
+    getFeedbackMetrics().remediation.created({
+      tenantId,
+      domainId: domain,
+      type: issues?.join(',') ?? 'unknown',
+      priority: remediation.priority,
+    });
+
     return c.json({ remediation }, 201);
   })
   .get('/remediation', requireAuth, async (c) => {
@@ -334,6 +342,28 @@ export const mailRoutes = new Hono<Env>()
       ipAddress: c.req.header('x-forwarded-for') || c.req.header('x-real-ip'),
       userAgent: c.req.header('user-agent'),
     });
+
+    // Emit metric for status transitions
+    if (remediation.status !== existing.status) {
+      const metricsStatus = remediation.status as string;
+      if (metricsStatus === 'resolved' || metricsStatus === 'closed') {
+        const durationMs = existing.createdAt
+          ? Date.now() - new Date(existing.createdAt).getTime()
+          : 0;
+        getFeedbackMetrics().remediation.completed({
+          tenantId,
+          domainId: existing.domain,
+          type: (existing.issues as string[])?.join(',') ?? 'unknown',
+          durationMs,
+        });
+      } else if (metricsStatus === 'in-progress') {
+        getFeedbackMetrics().remediation.started({
+          tenantId,
+          domainId: existing.domain,
+          type: (existing.issues as string[])?.join(',') ?? 'unknown',
+        });
+      }
+    }
 
     return c.json({ remediation });
   });

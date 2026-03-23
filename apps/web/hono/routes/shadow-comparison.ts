@@ -25,6 +25,7 @@ import { findings as findingsTable } from '@dns-ops/db/schema';
 import { type LegacyToolOutput, shadowComparator } from '@dns-ops/rules';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { getFeedbackMetrics } from '../lib/metrics.js';
 import { requireAdminAccess, requireAuth } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 
@@ -121,6 +122,17 @@ shadowComparisonRoutes.post('/compare', async (c) => {
       metrics: result.metrics,
       summary: result.summary,
       legacyOutput: validatedLegacy.data as DBLegacyToolOutput,
+    });
+
+    getFeedbackMetrics().shadow.comparisonRun({
+      domain: snapshot.domainName,
+      hadMismatch: result.status !== 'match',
+      mismatchTypes:
+        result.status !== 'match'
+          ? (result.comparisons as Array<{ field: string; status: string }>)
+              .filter((fc) => fc.status === 'mismatch')
+              .map((fc) => fc.field)
+          : undefined,
     });
 
     return c.json({
@@ -592,6 +604,20 @@ shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => 
     if (!updated) {
       return c.json({ error: 'Comparison not found' }, 404);
     }
+
+    // Note: 'both-wrong' and 'acceptable-difference' both map to 'investigate'
+    // because ShadowMetrics.verdict only supports 3 values. The raw adjudication
+    // is preserved in the DB comparison record for full fidelity.
+    getFeedbackMetrics().shadow.adjudicated({
+      comparisonId: id,
+      verdict:
+        adjudication === 'new-correct'
+          ? 'accept-new'
+          : adjudication === 'legacy-correct'
+            ? 'keep-legacy'
+            : 'investigate',
+      reason: notes,
+    });
 
     return c.json({
       message: 'Adjudication recorded and persisted',

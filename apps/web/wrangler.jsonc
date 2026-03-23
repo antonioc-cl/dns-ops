@@ -5,17 +5,34 @@
   "compatibility_date": "2024-01-01",
   "compatibility_flags": ["nodejs_compat"]
 
-  // Runtime contract for the current code:
-  // - PostgreSQL only
-  // - Workers read connection config from env/bindings, not D1
-  // - Required vars:
-  //   - COLLECTOR_URL
-  //   - INTERNAL_SECRET
-  //   - DATABASE_URL or HYPERDRIVE_URL
+  // ── Hyperdrive (PostgreSQL connection pooling) ──
+  // Uncomment and set "id" once the Hyperdrive config is created:
+  //   npx wrangler hyperdrive create dns-ops-db --connection-string="postgres://..."
   //
-  // Example local .dev.vars:
+  // The returned ID goes here. The binding exposes a connection string at
+  // runtime via env.HYPERDRIVE.connectionString which the app reads as
+  // HYPERDRIVE_URL (see hono/config/env.ts).
+  //
+  // "hyperdrive": [
+  //   {
+  //     "binding": "HYPERDRIVE",
+  //     "id": "<your-hyperdrive-config-id>"
+  //   }
+  // ],
+
+  // ── Runtime variables ──
+  // Set via `wrangler pages secret put` or dashboard:
+  //   COLLECTOR_URL        — collector service URL (required)
+  //   INTERNAL_SECRET      — web → collector auth secret (required in production)
+  //   API_KEY_SECRET       — service-to-service API key secret (optional)
+  //   DATABASE_URL         — direct PostgreSQL URL (fallback when Hyperdrive is not configured)
+  //
+  // When Hyperdrive is active, DATABASE_URL is not needed — the app
+  // reads HYPERDRIVE_URL first (see hono/config/env.ts readEnvValue).
+  //
+  // Local development uses .dev.vars:
   //   NODE_ENV=development
   //   COLLECTOR_URL=http://localhost:3001
-  //   INTERNAL_SECRET=replace-with-real-secret
+  //   INTERNAL_SECRET=dev-secret-minimum-16ch
   //   DATABASE_URL=postgres://user:pass@localhost:5432/dns_ops
 }

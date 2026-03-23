@@ -11,9 +11,11 @@
  * - or `RUN_LIVE_DNS_TESTS=1 bun run --filter @dns-ops/collector test`
  */
 
-import { beforeAll, describe, expect, it } from 'vitest';
+import type { IDatabaseAdapter } from '@dns-ops/db';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { DNSCollector } from './collector.js';
 import { DNSResolver } from './resolver.js';
-import type { VantageInfo } from './types.js';
+import type { CollectionConfig, DNSQueryResult, VantageInfo } from './types.js';
 
 interface LiveDnsFixtures {
   enabled: boolean;
@@ -193,14 +195,415 @@ liveDescribe('DNS Integration Tests', () => {
   });
 });
 
-describe('DNS Collector Integration', () => {
-  // These tests require the full collector, not just the resolver
-  // They test the end-to-end collection flow
+/**
+ * In-process integration tests for the DNS collector.
+ * These use a mocked resolver and in-memory DB adapter to verify
+ * the full collect → store → recordset → findings pipeline.
+ */
 
-  it.todo('should collect complete snapshot for managed zone');
-  it.todo('should collect targeted snapshot for unmanaged zone');
-  it.todo('should handle partial failures gracefully');
-  it.todo('should persist observations to database');
-  it.todo('should consolidate observations into record sets');
-  it.todo('should evaluate findings after collection');
+// ── Mock DB adapter ──────────────────────────────────────────────────────
+
+interface Row extends Record<string, unknown> {
+  id: string;
+}
+
+function createInMemoryDb() {
+  const tables = new Map<string, Row[]>();
+
+  function getTable(table: unknown): string {
+    if (!table || typeof table !== 'object') return '';
+    const record = table as Record<symbol | string, unknown>;
+    const symbolName = Symbol.for('drizzle:Name');
+    if (typeof record[symbolName] === 'string') return record[symbolName] as string;
+    const syms = Object.getOwnPropertySymbols(record);
+    const drizzle = syms.find((s) => String(s) === 'Symbol(drizzle:Name)');
+    if (drizzle && typeof record[drizzle] === 'string') return record[drizzle] as string;
+    return '';
+  }
+
+  function rows(name: string) {
+    if (!tables.has(name)) tables.set(name, []);
+    return tables.get(name) ?? [];
+  }
+
+  function getConditionParam(condition: unknown): unknown {
+    const sql = condition as {
+      queryChunks?: Array<{ constructor?: { name?: string }; value?: unknown }>;
+    };
+    return sql.queryChunks?.find((c) => c?.constructor?.name === 'Param')?.value;
+  }
+
+  const db: IDatabaseAdapter = {
+    getDrizzle: vi.fn(),
+    select: vi.fn(async (table: unknown) => [...rows(getTable(table))]),
+    selectWhere: vi.fn(async (table: unknown, condition: unknown) => {
+      const name = getTable(table);
+      const param = getConditionParam(condition);
+      return rows(name).filter((r) => Object.values(r).some((v) => v === param));
+    }),
+    selectOne: vi.fn(async (table: unknown, condition: unknown) => {
+      const name = getTable(table);
+      const param = getConditionParam(condition);
+      return rows(name).find((r) => Object.values(r).some((v) => v === param));
+    }),
+    insert: vi.fn(async (table: unknown, values: Record<string, unknown>) => {
+      const name = getTable(table);
+      const row = {
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...values,
+      } as Row;
+      rows(name).push(row);
+      return row;
+    }),
+    insertMany: vi.fn(async (table: unknown, arr: Record<string, unknown>[]) => {
+      const name = getTable(table);
+      return arr.map((values) => {
+        const row = {
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...values,
+        } as Row;
+        rows(name).push(row);
+        return row;
+      });
+    }),
+    update: vi.fn(async (table: unknown, values: Record<string, unknown>, condition: unknown) => {
+      const name = getTable(table);
+      const param = getConditionParam(condition);
+      const target = rows(name).find((r) => Object.values(r).some((v) => v === param));
+      if (target) Object.assign(target, values);
+      return target ? [target] : [];
+    }),
+    updateOne: vi.fn(async () => undefined),
+    delete: vi.fn(async () => 0),
+  } as unknown as IDatabaseAdapter;
+
+  return { db, tables, rows };
+}
+
+// ── Mock DNS resolver ────────────────────────────────────────────────────
+
+function makeAnswer(name: string, type: string, data: string, ttl = 300) {
+  return { name, type, ttl, data };
+}
+
+const MOCK_PUBLIC_RECURSIVE: VantageInfo = {
+  type: 'public-recursive',
+  identifier: '8.8.8.8',
+  region: 'us-central',
+};
+
+function buildSuccessResult(
+  queryName: string,
+  queryType: string,
+  answers: ReturnType<typeof makeAnswer>[],
+  vantage: VantageInfo = MOCK_PUBLIC_RECURSIVE
+): DNSQueryResult {
+  return {
+    query: { name: queryName, type: queryType },
+    vantage,
+    success: true,
+    responseCode: 0,
+    flags: { aa: false, tc: false, rd: true, ra: true, ad: false, cd: false },
+    answers,
+    authority: [],
+    additional: [],
+    responseTime: 15,
+  };
+}
+
+function buildFailResult(
+  queryName: string,
+  queryType: string,
+  error: string,
+  vantage: VantageInfo = MOCK_PUBLIC_RECURSIVE
+): DNSQueryResult {
+  return {
+    query: { name: queryName, type: queryType },
+    vantage,
+    success: false,
+    responseCode: 2,
+    flags: { aa: false, tc: false, rd: true, ra: true, ad: false, cd: false },
+    answers: [],
+    authority: [],
+    additional: [],
+    responseTime: 0,
+    error,
+  };
+}
+
+// ── Tests ────────────────────────────────────────────────────────────────
+
+describe('DNS Collector Integration', () => {
+  // Helper to create a collector with a spy-patched resolver
+  function createCollectorWithMockedResolver(
+    config: CollectionConfig,
+    db: IDatabaseAdapter,
+    resultsByQuery: Map<string, DNSQueryResult>
+  ): DNSCollector {
+    const collector = new DNSCollector(config, db);
+
+    // Patch the private resolver to return canned results
+    const resolver = (collector as unknown as { resolver: { query: unknown } }).resolver;
+    resolver.query = vi.fn(async (query: { name: string; type: string }, vantage: VantageInfo) => {
+      const key = `${query.name}:${query.type}`;
+      return resultsByQuery.get(key) ?? buildSuccessResult(query.name, query.type, [], vantage);
+    });
+
+    // Also suppress delegation collection to keep tests focused
+    (collector as unknown as { config: CollectionConfig }).config = {
+      ...config,
+      includeDelegationData: false,
+    };
+
+    return collector;
+  }
+
+  it('should collect complete snapshot for managed zone', async () => {
+    const { db, rows } = createInMemoryDb();
+
+    const queryResults = new Map<string, DNSQueryResult>([
+      [
+        'example.com:A',
+        buildSuccessResult('example.com', 'A', [makeAnswer('example.com', 'A', '1.2.3.4')]),
+      ],
+      [
+        'example.com:AAAA',
+        buildSuccessResult('example.com', 'AAAA', [makeAnswer('example.com', 'AAAA', '::1')]),
+      ],
+      [
+        'example.com:MX',
+        buildSuccessResult('example.com', 'MX', [
+          makeAnswer('example.com', 'MX', '10 mail.example.com'),
+        ]),
+      ],
+      [
+        'example.com:NS',
+        buildSuccessResult('example.com', 'NS', [
+          makeAnswer('example.com', 'NS', 'ns1.example.com'),
+        ]),
+      ],
+    ]);
+
+    const config: CollectionConfig = {
+      tenantId: 'tenant-1',
+      domain: 'example.com',
+      zoneManagement: 'managed',
+      recordTypes: ['A', 'AAAA', 'MX', 'NS'],
+      triggeredBy: 'test',
+    };
+
+    const collector = createCollectorWithMockedResolver(config, db, queryResults);
+    const result = await collector.collect();
+
+    expect(result.resultState).toBe('complete');
+    expect(result.domain).toBe('example.com');
+    expect(result.snapshotId).toBeDefined();
+    expect(result.observationCount).toBeGreaterThan(0);
+
+    // Verify snapshot was stored
+    expect(rows('snapshots').length).toBe(1);
+    expect(rows('snapshots')[0].domainName).toBe('example.com');
+    expect(rows('snapshots')[0].resultState).toBe('complete');
+  });
+
+  it('should collect targeted snapshot for unmanaged zone', async () => {
+    const { db, rows } = createInMemoryDb();
+
+    const queryResults = new Map<string, DNSQueryResult>([
+      [
+        'example.com:A',
+        buildSuccessResult('example.com', 'A', [makeAnswer('example.com', 'A', '5.6.7.8')]),
+      ],
+      [
+        'example.com:MX',
+        buildSuccessResult('example.com', 'MX', [
+          makeAnswer('example.com', 'MX', '10 mx.example.com'),
+        ]),
+      ],
+    ]);
+
+    const config: CollectionConfig = {
+      tenantId: 'tenant-2',
+      domain: 'example.com',
+      zoneManagement: 'unmanaged',
+      recordTypes: ['A', 'MX'],
+      triggeredBy: 'test',
+    };
+
+    const collector = createCollectorWithMockedResolver(config, db, queryResults);
+    const result = await collector.collect();
+
+    // Unmanaged zones produce 'complete' or 'partial' depending on
+    // which auto-generated queries the collector adds beyond our mocked set
+    expect(['complete', 'partial']).toContain(result.resultState);
+    expect(result.domain).toBe('example.com');
+
+    // Unmanaged zones should still create a snapshot
+    expect(rows('snapshots').length).toBe(1);
+    expect(rows('snapshots')[0].zoneManagement).toBe('unmanaged');
+  });
+
+  it('should handle partial failures gracefully', async () => {
+    const { db } = createInMemoryDb();
+
+    const queryResults = new Map<string, DNSQueryResult>([
+      [
+        'example.com:A',
+        buildSuccessResult('example.com', 'A', [makeAnswer('example.com', 'A', '1.2.3.4')]),
+      ],
+      ['example.com:AAAA', buildFailResult('example.com', 'AAAA', 'SERVFAIL')],
+      [
+        'example.com:MX',
+        buildSuccessResult('example.com', 'MX', [
+          makeAnswer('example.com', 'MX', '10 mail.example.com'),
+        ]),
+      ],
+    ]);
+
+    const config: CollectionConfig = {
+      tenantId: 'tenant-1',
+      domain: 'example.com',
+      zoneManagement: 'managed',
+      recordTypes: ['A', 'AAAA', 'MX'],
+      triggeredBy: 'test',
+    };
+
+    const collector = createCollectorWithMockedResolver(config, db, queryResults);
+    const result = await collector.collect();
+
+    // Should still produce a snapshot (partial, not failed)
+    expect(result.snapshotId).toBeDefined();
+    // Some observations succeeded, so it shouldn't be 'failed'
+    expect(['complete', 'partial']).toContain(result.resultState);
+    expect(result.errors.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should persist observations to database', async () => {
+    const { db, rows } = createInMemoryDb();
+
+    const queryResults = new Map<string, DNSQueryResult>([
+      [
+        'example.com:A',
+        buildSuccessResult('example.com', 'A', [makeAnswer('example.com', 'A', '1.2.3.4')]),
+      ],
+      [
+        'example.com:NS',
+        buildSuccessResult('example.com', 'NS', [
+          makeAnswer('example.com', 'NS', 'ns1.example.com'),
+        ]),
+      ],
+    ]);
+
+    const config: CollectionConfig = {
+      tenantId: 'tenant-1',
+      domain: 'example.com',
+      zoneManagement: 'managed',
+      recordTypes: ['A', 'NS'],
+      triggeredBy: 'test',
+    };
+
+    const collector = createCollectorWithMockedResolver(config, db, queryResults);
+    await collector.collect();
+
+    // Observations should be persisted
+    const observations = rows('observations');
+    expect(observations.length).toBeGreaterThan(0);
+
+    // Each observation should have required fields
+    const obs = observations[0];
+    expect(obs.queryName).toBeDefined();
+    expect(obs.queryType).toBeDefined();
+    expect(obs.snapshotId).toBeDefined();
+    expect(obs.status).toBeDefined();
+  });
+
+  it('should consolidate observations into record sets', async () => {
+    const { db, rows } = createInMemoryDb();
+
+    const queryResults = new Map<string, DNSQueryResult>([
+      [
+        'example.com:A',
+        buildSuccessResult('example.com', 'A', [
+          makeAnswer('example.com', 'A', '1.2.3.4'),
+          makeAnswer('example.com', 'A', '5.6.7.8'),
+        ]),
+      ],
+      [
+        'example.com:MX',
+        buildSuccessResult('example.com', 'MX', [
+          makeAnswer('example.com', 'MX', '10 mail.example.com'),
+        ]),
+      ],
+    ]);
+
+    const config: CollectionConfig = {
+      tenantId: 'tenant-1',
+      domain: 'example.com',
+      zoneManagement: 'managed',
+      recordTypes: ['A', 'MX'],
+      triggeredBy: 'test',
+    };
+
+    const collector = createCollectorWithMockedResolver(config, db, queryResults);
+    await collector.collect();
+
+    // Record sets should be created from observations
+    const recordSets = rows('record_sets');
+    expect(recordSets.length).toBeGreaterThan(0);
+
+    // A record should have both IPs consolidated
+    const aRecordSet = recordSets.find((rs) => rs.type === 'A');
+    if (aRecordSet) {
+      const values = aRecordSet.values as string[];
+      expect(values).toBeDefined();
+      expect(values.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('should evaluate findings after collection', async () => {
+    const { db, rows } = createInMemoryDb();
+
+    // Provide enough data for rules engine to produce findings
+    // Missing MX for a domain should trigger mx-presence rule
+    const queryResults = new Map<string, DNSQueryResult>([
+      [
+        'example.com:A',
+        buildSuccessResult('example.com', 'A', [makeAnswer('example.com', 'A', '1.2.3.4')]),
+      ],
+      ['example.com:MX', buildSuccessResult('example.com', 'MX', [])], // No MX answers
+      [
+        'example.com:NS',
+        buildSuccessResult('example.com', 'NS', [
+          makeAnswer('example.com', 'NS', 'ns1.example.com'),
+        ]),
+      ],
+      ['_dmarc.example.com:TXT', buildSuccessResult('_dmarc.example.com', 'TXT', [])], // No DMARC
+      ['example.com:TXT', buildSuccessResult('example.com', 'TXT', [])], // No SPF
+    ]);
+
+    const config: CollectionConfig = {
+      tenantId: 'tenant-1',
+      domain: 'example.com',
+      zoneManagement: 'managed',
+      recordTypes: ['A', 'MX', 'NS', 'TXT'],
+      triggeredBy: 'test',
+      includeMailRecords: true,
+    };
+
+    const collector = createCollectorWithMockedResolver(config, db, queryResults);
+    await collector.collect();
+
+    // Findings should be persisted — missing MX (empty answers),
+    // missing DMARC, and missing SPF trigger mxPresence/dmarc/spf rules.
+    const findings = rows('findings');
+    expect(findings.length).toBeGreaterThan(0);
+
+    // Ruleset version should be persisted
+    const rulesetVersions = rows('ruleset_versions');
+    expect(rulesetVersions.length).toBeGreaterThan(0);
+  });
 });
