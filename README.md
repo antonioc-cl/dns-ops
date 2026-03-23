@@ -1,48 +1,91 @@
 # DNS Ops Workbench
 
-DNS + mail operations platform. Split runtime:
-- `apps/web` — TanStack Start + Hono on Cloudflare Workers
-- `apps/collector` — Node.js service for collection, probes, jobs
-- `packages/db` — PostgreSQL/Drizzle schema + repos
+DNS + mail operations platform with deterministic rules engine, DNS change simulation, and multi-tenant operator workflows.
 
-## Current truth
+## Architecture
 
-- Authoritative datastore: **PostgreSQL only**
-- Web runtime: Workers + PostgreSQL connection config
-- Collector runtime: Node + direct PostgreSQL
-- Collector public health endpoints: `/health`, `/healthz`, `/readyz`
-- Collector `/api/*` endpoints require service auth
-- Domain 360 now exposes `Overview`, `DNS`, and `Mail`, with tenant-scoped notes and tags on the overview surface
-- `/portfolio` now exposes portfolio search, saved filters, monitoring, alerts, fleet reports, shared reports, template overrides, and the audit log
-- Tenant-scoped remediation APIs and persisted shared-report APIs are implemented
-- Monitoring, alert-state, and shared-report mutations now emit persisted audit events
+Split runtime:
+
+- **`apps/web`** — TanStack Start + Hono on Cloudflare Workers (UI + API)
+- **`apps/collector`** — Node.js service for DNS collection, probes, and background jobs
+- **`packages/db`** — PostgreSQL/Drizzle schema + repositories
+- **`packages/rules`** — Deterministic rules engine (DNS + mail rules, simulation engine)
+- **`packages/contracts`** — Shared TypeScript types, DTOs, enums
+- **`packages/parsing`** — DNS/mail/IDN parsing utilities
+- **`packages/logging`** — Structured logging + metrics
+- **`packages/testkit`** — Benchmark corpus and test fixtures
 
 ## Repo layout
 
 ```text
 dns-ops/
 ├── apps/
-│   ├── web/
-│   └── collector/
+│   ├── web/              # Workers-based web app + API
+│   └── collector/        # Node.js DNS collection service
 ├── packages/
-│   ├── contracts/
-│   ├── db/
-│   ├── parsing/
-│   ├── rules/
-│   ├── logging/
-│   └── testkit/
+│   ├── contracts/        # Shared types and DTOs
+│   ├── db/               # Drizzle ORM schema + repos
+│   ├── parsing/          # DNS/mail parsing
+│   ├── rules/            # Rules engine + simulation
+│   ├── logging/          # Structured logging
+│   └── testkit/          # Test fixtures
 ├── docs/
 └── beads/
 ```
 
+## Current product truth
+
+### Domain 360 (`/domain/:domain`)
+
+- **Overview** — stat cards, query scope, notes, tags, DNS change simulation panel
+- **DNS** — delegation, snapshots, findings, selectors, record diffs, shadow comparison
+- **Mail** — mail diagnostics, mail findings, remediation tracking
+
+### Portfolio (`/portfolio`)
+
+- Portfolio search with debounced filtering
+- Saved filters (create, load, share, metadata-only edit)
+- Monitored domains (CRUD, toggle, cross-links to Domain 360)
+- Alerts (acknowledge, resolve, suppress, cross-links to Domain 360)
+- Fleet reports (same-origin proxy to collector)
+- Shared reports (create, expire, token-based sharing)
+- Template overrides (provider-aligned override management)
+- Audit log (monitoring, alert, remediation, shared-report events)
+
+### DNS Change Simulation Engine
+
+The simulation engine closes the operational loop: **finding detected → fix proposed → dry-run verified → operator sees impact before acting**.
+
+- `POST /api/simulate` — takes a snapshot or finding, generates concrete DNS record mutations, dry-runs them through the rules engine
+- `GET /api/simulate/actionable-types` — returns fixable finding types
+- Provider-aware fixes for Google Workspace, Microsoft 365, Amazon SES, SendGrid, Mailgun
+- Supports 8 finding types: SPF, DMARC, MX, MTA-STS, TLS-RPT, DKIM, SPF malformed, CNAME conflicts
+- 100% deterministic — no AI/LLM, reuses existing rules engine + provider templates
+
+### Backend
+
+- Authoritative datastore: **PostgreSQL only**
+- Web runtime: Cloudflare Workers + PostgreSQL connection config
+- Collector runtime: Node.js + direct PostgreSQL + Redis (queue-backed jobs)
+- Collector public health: `/health`, `/healthz`, `/readyz`
+- Collector `/api/*` requires service auth
+- All write paths tenant-scoped with actor attribution
+- Monitoring, alert, remediation, shared-report mutations emit persisted audit events
+- `401` vs `403` properly distinguished across all operator surfaces
+
+### Test coverage
+
+- **782 tests** (40 test files) — 53% statement coverage
+- Well-covered: rules engine, auth, monitoring, alerts, portfolio, parsing
+- Runtime route tests follow mock-DB + `app.request()` pattern
+
 ## Setup
 
 Prereqs:
+
 - Bun 1.3.11+
 - PostgreSQL 15+
-- Redis 7+ for queue-backed collector jobs
-
-Install:
+- Redis 7+ (for queue-backed collector jobs)
 
 ```bash
 bun install
@@ -50,8 +93,6 @@ cp .env.example .env
 ```
 
 ## Database
-
-Use the DB package scripts from `packages/db`:
 
 ```bash
 cd packages/db
@@ -73,23 +114,27 @@ bun run --filter @dns-ops/collector dev
 ## Validation
 
 ```bash
+bun run lint
 bun run typecheck
 bun run test
 bun run build
-bun run lint
 bun run smoke-test
 ```
 
-Optional live-network DNS smoke (public live DNS by default, with optional controllable authoritative fixtures):
+E2E smoke (requires running dev server):
 
 ```bash
-bun run test:live-dns
+E2E_DEV_TENANT=test-tenant E2E_DEV_ACTOR=test-actor bun run --filter @dns-ops/web e2e
 ```
 
-`bun run test` is deterministic by default; the live DNS suite is now opt-in because it depends on public DNS infrastructure.
+Optional live-network DNS smoke (opt-in, not in default gate):
 
-Optional live DNS fixtures:
-- `RUN_LIVE_DNS_TESTS=1`
+```bash
+RUN_LIVE_DNS_TESTS=1 bun run test:live-dns
+```
+
+Live DNS fixture env vars:
+
 - `LIVE_DNS_RESOLVER_PRIMARY`
 - `LIVE_DNS_RESOLVER_SECONDARY`
 - `LIVE_DNS_DOMAIN`
@@ -97,21 +142,36 @@ Optional live DNS fixtures:
 - `LIVE_DNS_AUTHORITATIVE_DOMAIN`
 - `LIVE_DNS_AUTHORITATIVE_NS_IP`
 
+## API routes
+
+| Route group | Path prefix | Auth | Description |
+|---|---|---|---|
+| Snapshots | `/api/snapshots` | Tenant-scoped | DNS snapshot CRUD, latest, diff |
+| Findings | `/api/findings` | Tenant-scoped | Rule evaluation, acknowledge, false-positive |
+| Selectors | `/api/selectors` | Tenant-scoped | Persisted DNS selectors |
+| Simulation | `/api/simulate` | Tenant-scoped | DNS change simulation + dry-run |
+| Mail | `/api/mail` | Tenant-scoped | Mail diagnostics, remediation |
+| Monitoring | `/api/monitoring` | Tenant-scoped | Domain monitoring CRUD + toggle |
+| Alerts | `/api/alerts` | Tenant-scoped | Alert lifecycle (ack/resolve/suppress) |
+| Portfolio | `/api/portfolio` | Tenant-scoped | Search, filters, tags, reports, overrides, audit |
+| Fleet reports | `/api/fleet-report` | Tenant-scoped | Collector proxy for fleet reports |
+| Shadow comparison | `/api/shadow` | Tenant-scoped | Provider shadow comparison |
+| Legacy tools | `/api/legacy-tools` | Tenant-scoped | DMARC/DKIM deeplinks, shadow stats |
+| Delegation | `/api/delegation` | Public reads | NS delegation + DNSSEC evidence |
+| Domain reads | `/api/snapshots`, `/api/findings` | Public reads | Unscoped domain reads |
+
 ## Beads
 
-This repo uses `bd` for issue tracking:
+This repo uses `br` for issue tracking:
 
 ```bash
-bd ready --json
-bd show <id>
-bd update <id> --claim --json
-bd close <id> --reason "Done" --json
+br sync --flush-only
 ```
 
 ## Key docs
 
-- `IMPLEMENTATION_BEADS.md`
+- `STATUS_REPORT.md` — current validation truth
 - `docs/architecture/runtime-topology.md`
 - `docs/rules/query-scope.md`
 - `docs/rules/trust-boundary.md`
-- `STATUS_REPORT.md`
+- `packages/contracts/docs/API_REFERENCE.md`
