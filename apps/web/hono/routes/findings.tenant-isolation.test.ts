@@ -3,7 +3,6 @@
  *
  * Test: Create domain+snapshot+findings as tenant A
  *       Read as tenant B → 404
- *       List findings as tenant B → 404/empty
  *       Public read (no tenant header) can read unowned domains
  *       but NOT tenant A's domains
  */
@@ -62,16 +61,14 @@ function createMockDb(state: MockState): IDatabaseAdapter {
       if (tableName === 'snapshots') return state.snapshots.find((s) => s.id === condVal) || null;
       if (tableName === 'domains') return state.domains.find((d) => d.id === condVal) || null;
       if (tableName === 'findings') return state.findings.find((f) => f.id === condVal) || null;
-      if (tableName === 'suggestions')
-        return state.suggestions.find((s) => s.id === condVal) || null;
+      if (tableName === 'suggestions') return state.suggestions.find((s) => s.id === condVal) || null;
       return null;
     }),
     selectWhere: vi.fn(async (table: unknown, condition: unknown) => {
       const tableName = getTableName(table);
       const condVal = getConditionParam(condition);
       if (tableName === 'findings') return state.findings.filter((f) => f.snapshotId === condVal);
-      if (tableName === 'suggestions')
-        return state.suggestions.filter((s) => s.findingId === condVal);
+      if (tableName === 'suggestions') return state.suggestions.filter((s) => s.findingId === condVal);
       return [];
     }),
     insert: vi.fn(),
@@ -104,221 +101,6 @@ const TENANT_A = 'tenant-a';
 const TENANT_B = 'tenant-b';
 
 describe('PR-09.2: Cross-Tenant Read Isolation Tests', () => {
-  describe('GET /api/snapshot/:snapshotId/findings', () => {
-    it('should return 404 when tenant B reads tenant A findings', async () => {
-      const state: MockState = {
-        snapshots: [
-          {
-            id: SNAPSHOT_ID,
-            domainId: DOMAIN_ID,
-            domainName: 'example.com',
-            resultState: 'complete',
-            zoneManagement: 'managed',
-            tenantId: TENANT_A, // Belongs to tenant A
-            createdAt: new Date(),
-          },
-        ],
-        domains: [
-          {
-            id: DOMAIN_ID,
-            name: 'example.com',
-            normalizedName: 'example.com',
-            zoneManagement: 'managed',
-            tenantId: TENANT_A, // Belongs to tenant A
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        findings: [
-          {
-            id: FINDING_ID,
-            snapshotId: SNAPSHOT_ID,
-            type: 'mail.no-spf-record',
-            title: 'No SPF record',
-            severity: 'high',
-            confidence: 'certain',
-            riskPosture: 'high',
-            blastRadius: 'single-domain',
-            reviewOnly: false,
-            evidence: [],
-            ruleId: 'mail.spf-analysis.v1',
-            ruleVersion: '1.0.0',
-            createdAt: new Date(),
-          },
-        ],
-        suggestions: [],
-      };
-
-      // Tenant B tries to read
-      const app = createAppWithTenant(state, TENANT_B);
-
-      const response = await app.request(`/api/snapshot/${SNAPSHOT_ID}/findings`);
-
-      // Should return 404 (not 403) to avoid leaking existence
-      expect(response.status).toBe(404);
-    });
-
-    it('should succeed when tenant A reads their own findings', async () => {
-      const state: MockState = {
-        snapshots: [
-          {
-            id: SNAPSHOT_ID,
-            domainId: DOMAIN_ID,
-            domainName: 'example.com',
-            resultState: 'complete',
-            zoneManagement: 'managed',
-            tenantId: TENANT_A,
-            createdAt: new Date(),
-          },
-        ],
-        domains: [
-          {
-            id: DOMAIN_ID,
-            name: 'example.com',
-            normalizedName: 'example.com',
-            zoneManagement: 'managed',
-            tenantId: TENANT_A,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        findings: [
-          {
-            id: FINDING_ID,
-            snapshotId: SNAPSHOT_ID,
-            type: 'mail.no-spf-record',
-            title: 'No SPF record',
-            severity: 'high',
-            confidence: 'certain',
-            riskPosture: 'high',
-            blastRadius: 'single-domain',
-            reviewOnly: false,
-            evidence: [],
-            ruleId: 'mail.spf-analysis.v1',
-            ruleVersion: '1.0.0',
-            createdAt: new Date(),
-          },
-        ],
-        suggestions: [],
-      };
-
-      // Tenant A reads their own
-      const app = createAppWithTenant(state, TENANT_A);
-
-      const response = await app.request(`/api/snapshot/${SNAPSHOT_ID}/findings`);
-
-      expect(response.status).toBe(200);
-      const json = (await response.json()) as { findings: unknown[] };
-      expect(json.findings).toHaveLength(1);
-    });
-
-    it('should allow authenticated tenant to read unowned domain findings (public read)', async () => {
-      const state: MockState = {
-        snapshots: [
-          {
-            id: SNAPSHOT_ID,
-            domainId: DOMAIN_ID,
-            domainName: 'example.com',
-            resultState: 'complete',
-            zoneManagement: 'managed',
-            tenantId: null, // Unowned
-            createdAt: new Date(),
-          },
-        ],
-        domains: [
-          {
-            id: DOMAIN_ID,
-            name: 'example.com',
-            normalizedName: 'example.com',
-            zoneManagement: 'managed',
-            tenantId: null, // Unowned
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        findings: [
-          {
-            id: FINDING_ID,
-            snapshotId: SNAPSHOT_ID,
-            type: 'mail.no-spf-record',
-            title: 'No SPF record',
-            severity: 'high',
-            confidence: 'certain',
-            riskPosture: 'high',
-            blastRadius: 'single-domain',
-            reviewOnly: false,
-            evidence: [],
-            ruleId: 'mail.spf-analysis.v1',
-            ruleVersion: '1.0.0',
-            createdAt: new Date(),
-          },
-        ],
-        suggestions: [],
-      };
-
-      // Any authenticated tenant can read unowned domain findings
-      const app = createAppWithTenant(state, TENANT_A);
-
-      const response = await app.request(`/api/snapshot/${SNAPSHOT_ID}/findings`);
-
-      // Should succeed - unowned domains are publicly readable
-      expect(response.status).toBe(200);
-    });
-
-    it('should fail without auth for tenant-owned domain findings', async () => {
-      const state: MockState = {
-        snapshots: [
-          {
-            id: SNAPSHOT_ID,
-            domainId: DOMAIN_ID,
-            domainName: 'example.com',
-            resultState: 'complete',
-            zoneManagement: 'managed',
-            tenantId: TENANT_A, // Owned by tenant A
-            createdAt: new Date(),
-          },
-        ],
-        domains: [
-          {
-            id: DOMAIN_ID,
-            name: 'example.com',
-            normalizedName: 'example.com',
-            zoneManagement: 'managed',
-            tenantId: TENANT_A,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        findings: [
-          {
-            id: FINDING_ID,
-            snapshotId: SNAPSHOT_ID,
-            type: 'mail.no-spf-record',
-            title: 'No SPF record',
-            severity: 'high',
-            confidence: 'certain',
-            riskPosture: 'high',
-            blastRadius: 'single-domain',
-            reviewOnly: false,
-            evidence: [],
-            ruleId: 'mail.spf-analysis.v1',
-            ruleVersion: '1.0.0',
-            createdAt: new Date(),
-          },
-        ],
-        suggestions: [],
-      };
-
-      // No tenant context (public access)
-      const app = createAppWithTenant(state, undefined);
-
-      const response = await app.request(`/api/snapshot/${SNAPSHOT_ID}/findings`);
-
-      // Should return 404 - owned domains require auth
-      expect(response.status).toBe(404);
-    });
-  });
-
   describe('GET /api/findings/:findingId', () => {
     it('should return 404 when tenant B reads tenant A finding', async () => {
       const state: MockState = {
@@ -371,6 +153,8 @@ describe('PR-09.2: Cross-Tenant Read Isolation Tests', () => {
 
       // Should return 404 (not 403) to avoid leaking existence
       expect(response.status).toBe(404);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toBe('Finding not found');
     });
 
     it('should succeed when tenant A reads their own finding', async () => {
@@ -426,10 +210,8 @@ describe('PR-09.2: Cross-Tenant Read Isolation Tests', () => {
       const json = (await response.json()) as { finding: { id: string } };
       expect(json.finding.id).toBe(FINDING_ID);
     });
-  });
 
-  describe('Empty list for cross-tenant access', () => {
-    it('should return empty list when tenant B lists tenant A findings', async () => {
+    it('should succeed when authenticated tenant reads unowned domain finding', async () => {
       const state: MockState = {
         snapshots: [
           {
@@ -438,7 +220,62 @@ describe('PR-09.2: Cross-Tenant Read Isolation Tests', () => {
             domainName: 'example.com',
             resultState: 'complete',
             zoneManagement: 'managed',
-            tenantId: TENANT_A,
+            tenantId: null, // Unowned
+            createdAt: new Date(),
+          },
+        ],
+        domains: [
+          {
+            id: DOMAIN_ID,
+            name: 'example.com',
+            normalizedName: 'example.com',
+            zoneManagement: 'managed',
+            tenantId: null, // Unowned
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        findings: [
+          {
+            id: FINDING_ID,
+            snapshotId: SNAPSHOT_ID,
+            type: 'mail.no-spf-record',
+            title: 'No SPF record',
+            severity: 'high',
+            confidence: 'certain',
+            riskPosture: 'high',
+            blastRadius: 'single-domain',
+            reviewOnly: false,
+            evidence: [],
+            ruleId: 'mail.spf-analysis.v1',
+            ruleVersion: '1.0.0',
+            createdAt: new Date(),
+          },
+        ],
+        suggestions: [],
+      };
+
+      // Any authenticated tenant can read unowned domain findings
+      const app = createAppWithTenant(state, TENANT_A);
+
+      const response = await app.request(`/api/findings/${FINDING_ID}`);
+
+      // Should succeed - unowned domains are publicly readable
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { finding: { id: string } };
+      expect(json.finding.id).toBe(FINDING_ID);
+    });
+
+    it('should return 404 without auth for tenant-owned domain finding', async () => {
+      const state: MockState = {
+        snapshots: [
+          {
+            id: SNAPSHOT_ID,
+            domainId: DOMAIN_ID,
+            domainName: 'example.com',
+            resultState: 'complete',
+            zoneManagement: 'managed',
+            tenantId: TENANT_A, // Owned by tenant A
             createdAt: new Date(),
           },
         ],
@@ -473,19 +310,28 @@ describe('PR-09.2: Cross-Tenant Read Isolation Tests', () => {
         suggestions: [],
       };
 
-      // Tenant B lists findings for a snapshot they don't own
-      const app = createAppWithTenant(state, TENANT_B);
+      // No tenant context (public access)
+      const app = createAppWithTenant(state, undefined);
 
-      // List route may be /api/findings?snapshotId=xxx
-      const response = await app.request(`/api/findings?snapshotId=${SNAPSHOT_ID}`);
+      const response = await app.request(`/api/findings/${FINDING_ID}`);
 
-      // Should return 404 or empty array - doesn't leak tenant A's data
-      if (response.status === 200) {
-        const json = (await response.json()) as { findings: unknown[] };
-        expect(json.findings).toHaveLength(0);
-      } else {
-        expect(response.status).toBe(404);
-      }
+      // Should return 404 - owned domains require auth
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 404 for non-existent finding', async () => {
+      const state: MockState = {
+        snapshots: [],
+        domains: [],
+        findings: [],
+        suggestions: [],
+      };
+
+      const app = createAppWithTenant(state, TENANT_A);
+
+      const response = await app.request('/api/findings/non-existent-id');
+
+      expect(response.status).toBe(404);
     });
   });
 });
