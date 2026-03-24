@@ -11,7 +11,6 @@ import { describe, expect, it } from 'vitest';
 const TENANT_A = 'tenant-a';
 const TENANT_B = 'tenant-b';
 const ALERT_ID = 'alert-tenant-a';
-const AUDIT_EVENT_ID = 'audit-tenant-a';
 
 describe('PR-09.4: Cross-Tenant Alert and Audit Isolation', () => {
   describe('Alert acknowledge isolation', () => {
