@@ -69,3 +69,4 @@ export {
   type ShadowMetrics,
 } from './metrics.js';
 export { createLoggingMiddleware, type LoggingMiddlewareOptions } from './middleware.js';
+export { createErrorReporter, type ErrorReporter } from './error-reporting.js';
