@@ -6,8 +6,8 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { proxyToCollector } from '../lib/collector-proxy.js';
-import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import { collectorCircuit } from '../lib/collector-proxy.js';
+import { requireAdminAccess, requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
 import { delegationRoutes } from './delegation.js';
@@ -24,6 +24,9 @@ import { shadowComparisonRoutes } from './shadow-comparison.js';
 import { simulationRoutes } from './simulation.js';
 import { snapshotRoutes } from './snapshots.js';
 import { suggestionsRoutes } from './suggestions.js';
+
+// Track process start time for uptime calculation
+const processStartTime = Date.now();
 
 export const apiRoutes = new Hono<Env>();
 
@@ -61,6 +64,67 @@ apiRoutes.get('/health', (c) => {
     status: 'healthy',
     service: 'dns-ops-web',
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Detailed health check with admin access (PR-10.3)
+apiRoutes.get('/health/detailed', requireAdminAccess, async (c) => {
+  const db = c.get('db');
+
+  // Check DB connectivity
+  let dbStatus: 'connected' | 'error' = 'error';
+  let dbLatencyMs: number | null = null;
+  if (db) {
+    try {
+      const dbStart = Date.now();
+      // Use select with no results - just verify connection works
+      await db.select(domains);
+      dbLatencyMs = Date.now() - dbStart;
+      dbStatus = 'connected';
+    } catch (error) {
+      console.error('DB health check failed:', error);
+      dbStatus = 'error';
+    }
+  }
+
+  // Get circuit breaker state
+  const circuitInfo = collectorCircuit.getInfo();
+
+  // Calculate uptime
+  const uptimeMs = Date.now() - processStartTime;
+  const uptimeSeconds = Math.floor(uptimeMs / 1000);
+  const uptimeMinutes = Math.floor(uptimeSeconds / 60);
+  const uptimeHours = Math.floor(uptimeMinutes / 60);
+  const uptimeFormatted =
+    uptimeHours > 0
+      ? `${uptimeHours}h ${uptimeMinutes % 60}m ${uptimeSeconds % 60}s`
+      : uptimeMinutes > 0
+        ? `${uptimeMinutes}m ${uptimeSeconds % 60}s`
+        : `${uptimeSeconds}s`;
+
+  return c.json({
+    status: dbStatus === 'connected' ? 'healthy' : 'degraded',
+    service: 'dns-ops-web',
+    version: process.env.npm_package_version || '1.0.0',
+    uptime: {
+      startedAt: new Date(processStartTime).toISOString(),
+      seconds: uptimeSeconds,
+      formatted: uptimeFormatted,
+    },
+    timestamp: new Date().toISOString(),
+    checks: {
+      database: {
+        status: dbStatus,
+        latencyMs: dbLatencyMs,
+      },
+      circuitBreaker: {
+        state: circuitInfo.state,
+        consecutiveFailures: circuitInfo.consecutiveFailures,
+        lastFailureAt: circuitInfo.lastFailureAt
+          ? new Date(circuitInfo.lastFailureAt).toISOString()
+          : null,
+      },
+    },
   });
 });
 

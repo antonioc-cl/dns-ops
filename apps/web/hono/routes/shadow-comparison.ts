@@ -27,6 +27,7 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getFeedbackMetrics } from '../lib/metrics.js';
 import { requireAdminAccess, requireAuth } from '../middleware/authorization.js';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const shadowComparisonRoutes = new Hono<Env>();

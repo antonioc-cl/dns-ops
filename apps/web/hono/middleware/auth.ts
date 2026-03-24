@@ -14,6 +14,7 @@
 
 import { getTenantUUID } from '@dns-ops/contracts';
 import { createMiddleware } from 'hono/factory';
+import { getWebLogger } from './error-tracking.js';
 import type { Env } from '../types.js';
 
 /**
@@ -197,7 +198,8 @@ export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
   const authContext = extractCloudflareAccess(c) || extractApiKey(c) || extractDevBypass(c);
 
   if (!authContext) {
-    console.warn('[Auth] Rejected unauthenticated request', {
+    const logger = getWebLogger();
+    logger.warn('[Auth] Rejected unauthenticated request', {
       method: c.req.method,
       path: c.req.path,
       hasApiKey: !!c.req.header('X-API-Key'),

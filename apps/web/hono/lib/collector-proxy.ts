@@ -9,6 +9,7 @@
 
 import type { Context } from 'hono';
 import { getEnvConfig } from '../config/env.js';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 // =============================================================================
@@ -193,8 +194,11 @@ export async function proxyToCollector(
   // 1. Check circuit breaker
   if (!collectorCircuit.allowRequest()) {
     const info = collectorCircuit.getInfo();
-    console.warn('[CollectorProxy] Circuit open — rejecting request', {
+    const logger = getWebLogger();
+    logger.warn('[CollectorProxy] Circuit open — rejecting request', {
       path: request.path,
+      requestId: c.req.header('X-Request-ID') || crypto.randomUUID(),
+      tenantId: c.get('tenantId'),
       ...info,
     });
     return c.json(
@@ -262,9 +266,14 @@ export async function proxyToCollector(
     // Network error — collector unreachable
     collectorCircuit.recordFailure();
     const info = collectorCircuit.getInfo();
-    console.error('[CollectorProxy] Network error:', error, {
+    const logger = getWebLogger();
+    logger.error('[CollectorProxy] Network error: collector unreachable', error instanceof Error ? error : new Error(String(error)), {
       path: request.path,
-      ...info,
+      method: request.method,
+      requestId: c.req.header('X-Request-ID') || crypto.randomUUID(),
+      tenantId: c.get('tenantId'),
+      circuitState: info.state,
+      consecutiveFailures: info.consecutiveFailures,
     });
     return c.json(
       {
