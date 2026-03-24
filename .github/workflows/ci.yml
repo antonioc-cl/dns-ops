@@ -72,11 +72,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('apps/web/package.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      - name: Install Playwright
+      - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps chromium
         working-directory: apps/web
@@ -103,3 +103,24 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: E2E Tests
+        if: always()
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dns_ops_ci
+          COLLECTOR_URL: http://localhost:3001
+          NODE_ENV: development
+          E2E_DEV_TENANT: dns-ops-e2e
+          E2E_DEV_ACTOR: e2e-bot
+          PLAYWRIGHT_HTML_REPORT_OPEN: never
+        run: bun run --filter @dns-ops/web e2e
+        continue-on-error: true
+        working-directory: apps/web
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/test-results/
+          retention-days: 7
