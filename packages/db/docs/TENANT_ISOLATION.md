@@ -65,9 +65,10 @@ These tables are tenant-isolated through their parent relationships:
 
 | Table | Reason |
 |-------|--------|
-| `vantage_points` | Shared infrastructure |
 | `ruleset_versions` | Shared rule definitions |
 | `remediation_requests` | Cross-tenant support workflow (isolated by domain) |
+
+> **Note:** `vantage_points` table was de-scoped in PR-12.3 (migration 0006).
 
 ---
 
@@ -140,73 +141,36 @@ Cloudflare D1 doesn't support RLS. For D1 deployments:
 
 ---
 
-## Domain Uniqueness Limitation
+## Domain Uniqueness (Multi-Tenant)
 
-### Current Implementation
+### Implementation
 
-**Issue:** The `domains` table uses `normalized_name` alone for uniqueness.
+**Solution:** The `domains` table uses a composite unique index on `(normalized_name, tenant_id)`.
 
 ```sql
 -- Current index (from schema)
-UNIQUE INDEX domain_name_idx ON domains (normalized_name)
+CREATE UNIQUE INDEX domain_name_tenant_idx ON domains (normalized_name, tenant_id);
 ```
 
-**Problem:** This prevents two tenants from owning the same domain name, even if they shouldn't have isolation conflicts (e.g., test vs production tenants).
+**Behavior:**
+- Same domain name can be registered by different tenants (e.g., `example.com` for tenant A and tenant B)
+- `tenant_id = NULL` is allowed for system/unowned domains
+- PostgreSQL treats NULL values as distinct in unique constraints
 
-### Impact
+### Benefits
 
-1. **Cross-tenant conflicts**: Tenant A cannot create `example.com` if Tenant B already has it
-2. **Import/transfer issues**: Domain ownership transfer between tenants requires data migration
-3. **Multi-domain deployments**: Single-tenant mode still requires unique domain names
+1. **Multi-tenant isolation**: Each tenant can manage their own copy of any domain
+2. **Import/transfer flexibility**: Domain ownership can be transferred between tenants
+3. **Development flexibility**: Test and production tenants can have overlapping domain names
 
-### Migration Path
+### Migration History
 
-To support true multi-tenant domain isolation, change the unique index to include `tenant_id`:
-
-```sql
--- Migration: Change from single-column to composite unique index
-BEGIN;
-
--- 1. Drop current unique constraint
-DROP INDEX domain_name_idx;
-
--- 2. Create composite unique index (allows same domain for different tenants)
-CREATE UNIQUE INDEX domain_tenant_name_idx ON domains (tenant_id, normalized_name)
-  WHERE tenant_id IS NOT NULL;
-
--- 3. Allow NULL tenant_id for unowned/public domains (maintains public read)
--- NULL values are not equal in PostgreSQL unique constraints
-
-COMMIT;
-```
-
-### Backfill Requirements
-
-If there are existing duplicate domain names:
-
-```sql
--- 1. Find duplicates
-SELECT normalized_name, COUNT(*) as count
-FROM domains
-WHERE tenant_id IS NOT NULL
-GROUP BY normalized_name
-HAVING COUNT(*) > 1;
-
--- 2. For each duplicate, decide:
---    a. Transfer domain to primary tenant, archive others
---    b. Merge duplicate records (if data is identical)
---    c. Contact support for resolution
-
--- 3. After resolution, verify no duplicates
-SELECT COUNT(*) FROM domains
-WHERE tenant_id IS NOT NULL
-GROUP BY tenant_id, normalized_name
-HAVING COUNT(*) > 1;
-```
+- **Migration 0007**: Changed from single-column to composite unique index
+- **Migration script**: `packages/db/src/migrations/0007_tenant_domain_uniqueness.sql`
 
 ### Schema Link
 
-See `packages/db/src/schema/domain.ts` for the current `domains` table definition.
+See `packages/db/src/schema/index.ts` for the `domains` table definition.
 
 ---
 
@@ -224,57 +188,5 @@ When adding new tenant-aware features:
 
 ---
 
-## Domain Uniqueness Limitation
-
-### Current Implementation
-
-The `domains` table currently uses `normalized_name` alone for uniqueness:
-
-```sql
-CREATE UNIQUE INDEX domains_normalized_name_unique ON domains (normalized_name);
-```
-
-**This means the same domain name cannot be registered twice, even by different tenants.**
-
-### Limitation
-
-If two different tenants need to manage the same domain (e.g., `example.com`), this is currently not possible because:
-- Each domain must have a unique `normalized_name`
-- Tenant ID is not part of the uniqueness constraint
-
-### Migration Path
-
-To support tenant-scoped domain uniqueness:
-
-1. **Create composite unique index**:
-   ```sql
-   CREATE UNIQUE INDEX domains_tenant_domain_unique 
-     ON domains (normalized_name, tenant_id);
-   ```
-
-2. **Backfill existing data**:
-   - Set `tenant_id = 'system'` or a dedicated "unowned" tenant for domains without owner
-   - This maintains backward compatibility
-
-3. **Update application code**:
-   - Modify domain registration to accept `tenant_id`
-   - Update uniqueness checks to include `tenant_id`
-
-4. **Update schema** (see `packages/db/src/schema/domains.ts`):
-   - The `normalizedName` field is currently unique
-   - After migration, it should be unique within `tenantId`
-
-### Breaking Change Notice
-
-**Current behavior**: Same domain cannot be registered twice across all tenants
-**After migration**: Same domain can be registered once per tenant
-
-This is a **breaking change** that requires:
-- Database migration
-- Application code updates
-- Careful handling of existing "unowned" domains
-
----
-
-**Decision Date:** 2026-03-20
+**Document Updated:** 2026-03-24
 **Decision Owner:** dns-ops-1j4.4.4
