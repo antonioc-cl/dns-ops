@@ -258,7 +258,7 @@ describe('alertRoutes shared reports', () => {
     // Create a report that expired yesterday
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     const state: MockState = {
       alerts: [],
       monitoredDomains: [],
@@ -273,7 +273,9 @@ describe('alertRoutes shared reports', () => {
           shareToken: 'yesterday-token',
           expiresAt: yesterday,
           summary: { totalMonitored: 1, activeAlerts: 1, bySeverity: { high: 1 } },
-          alertSummary: [{ title: 'Test alert', severity: 'high', status: 'pending', createdAt: new Date() }],
+          alertSummary: [
+            { title: 'Test alert', severity: 'high', status: 'pending', createdAt: new Date() },
+          ],
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -291,7 +293,7 @@ describe('alertRoutes shared reports', () => {
     // Create a report that expires tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const state: MockState = {
       alerts: [],
       monitoredDomains: [],
@@ -307,7 +309,12 @@ describe('alertRoutes shared reports', () => {
           expiresAt: tomorrow,
           summary: { totalMonitored: 2, activeAlerts: 2, bySeverity: { critical: 1, high: 1 } },
           alertSummary: [
-            { title: 'Critical alert', severity: 'critical', status: 'pending', createdAt: new Date() },
+            {
+              title: 'Critical alert',
+              severity: 'critical',
+              status: 'pending',
+              createdAt: new Date(),
+            },
             { title: 'High alert', severity: 'high', status: 'pending', createdAt: new Date() },
           ],
           createdAt: new Date(),

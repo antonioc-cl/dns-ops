@@ -1,6 +1,7 @@
 import type { Observation, Snapshot } from '@dns-ops/db/schema';
 import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
+import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DNSViews } from '../../components/DNSViews.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
@@ -8,7 +9,7 @@ import { SimulationPanel } from '../../components/SimulationPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
 import { TagsPanel } from '../../components/TagsPanel.js';
 
-type DomainTabId = 'overview' | 'dns' | 'mail';
+type DomainTabId = 'overview' | 'dns' | 'mail' | 'delegation';
 
 /**
  * Loader error types for differentiated error handling
@@ -31,7 +32,7 @@ interface DomainSearchParams {
   tab?: DomainTabId;
 }
 
-const VALID_TABS: DomainTabId[] = ['overview', 'dns', 'mail'];
+const VALID_TABS: DomainTabId[] = ['overview', 'dns', 'mail', 'delegation'];
 
 export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
@@ -98,6 +99,7 @@ const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'dns', label: 'DNS' },
   { id: 'mail', label: 'Mail' },
+  { id: 'delegation', label: 'Delegation' },
 ];
 
 function Domain360Page() {
@@ -326,6 +328,17 @@ function Domain360Page() {
         >
           {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id} />}
         </div>
+
+        <div
+          role="tabpanel"
+          id={getPanelId('delegation')}
+          aria-labelledby={getTabId('delegation')}
+          hidden={activeTab !== 'delegation'}
+        >
+          {activeTab === 'delegation' && (
+            <DelegationTab domain={domain} snapshotId={snapshot?.id} />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -480,6 +493,20 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId?: string }
         </p>
       </div>
       <MailDiagnostics domain={domain} snapshotId={snapshotId} />
+    </div>
+  );
+}
+
+function DelegationTab({ domain, snapshotId }: { domain: string; snapshotId?: string }) {
+  return (
+    <div>
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-900">Delegation Analysis</h3>
+        <p className="text-sm text-gray-500">
+          View delegation status, name server configuration, and glue records for {domain}.
+        </p>
+      </div>
+      <DelegationPanel snapshotId={snapshotId ?? null} />
     </div>
   );
 }

@@ -1248,8 +1248,6 @@ describe('Portfolio Routes', () => {
       });
 
       expect(createRes.status).toBe(201);
-      const createBody = (await createRes.json()) as JsonBody;
-      const filterId = (createBody.filter as JsonBody).id as string;
 
       // Apply filter to search
       const searchRes = await app.request('/api/portfolio/search', {
@@ -1639,7 +1637,9 @@ describe('Portfolio Routes', () => {
 
         expect(res.status).toBe(200);
 
-        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_note&entityId=note-1');
+        const auditRes = await app.request(
+          '/api/portfolio/audit?entityType=domain_note&entityId=note-1'
+        );
         expect(auditRes.status).toBe(200);
         const auditBody = (await auditRes.json()) as JsonBody;
         const events = auditBody.events as Array<JsonBody>;
@@ -1665,7 +1665,9 @@ describe('Portfolio Routes', () => {
 
         expect(res.status).toBe(200);
 
-        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_note&entityId=note-2');
+        const auditRes = await app.request(
+          '/api/portfolio/audit?entityType=domain_note&entityId=note-2'
+        );
         expect(auditRes.status).toBe(200);
         const auditBody = (await auditRes.json()) as JsonBody;
         const events = auditBody.events as Array<JsonBody>;
@@ -1701,7 +1703,7 @@ describe('Portfolio Routes', () => {
       });
 
       it('should produce audit event when removing a tag', async () => {
-        mockData.tags = [
+        mockData.domainTags = [
           {
             id: 'tag-1',
             domainId: 'domain-2',
@@ -1718,7 +1720,9 @@ describe('Portfolio Routes', () => {
 
         expect(res.status).toBe(200);
 
-        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_tag&entityId=tag-1');
+        const auditRes = await app.request(
+          '/api/portfolio/audit?entityType=domain_tag&entityId=tag-1'
+        );
         expect(auditRes.status).toBe(200);
         const auditBody = (await auditRes.json()) as JsonBody;
         const events = auditBody.events as Array<JsonBody>;
@@ -1740,7 +1744,7 @@ describe('Portfolio Routes', () => {
 
         expect(createRes.status).toBe(201);
         const createBody = (await createRes.json()) as JsonBody;
-        const filterId = createBody.filter?.id as string;
+        const filterId = (createBody.filter as { id?: string })?.id as string;
 
         // Verify create audit event
         const createAuditRes = await app.request(
@@ -1759,7 +1763,9 @@ describe('Portfolio Routes', () => {
         expect(deleteRes.status).toBe(200);
 
         // Verify delete audit event
-        const deleteAuditRes = await app.request(`/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`);
+        const deleteAuditRes = await app.request(
+          `/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`
+        );
         expect(deleteAuditRes.status).toBe(200);
         const deleteAuditBody = (await deleteAuditRes.json()) as JsonBody;
         const deleteEvents = deleteAuditBody.events as Array<JsonBody>;
@@ -1781,7 +1787,7 @@ describe('Portfolio Routes', () => {
 
         expect(res.status).toBe(201);
         const body = (await res.json()) as JsonBody;
-        const overrideId = body.override?.id as string;
+        const overrideId = (body.override as { id?: string })?.id as string;
 
         const auditRes = await app.request(
           `/api/portfolio/audit?entityType=template_override&entityId=${overrideId}`
