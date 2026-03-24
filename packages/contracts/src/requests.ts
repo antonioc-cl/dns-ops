@@ -76,8 +76,59 @@ export interface LookupDomainRequest {
 }
 
 /**
- * Response for domain lookup
+ * Request to collect mail-related DNS records for a domain
  */
+export interface CollectMailRequest {
+  /** Domain name to collect */
+  domain: string;
+
+  /** Optional snapshot ID for persisted mode */
+  snapshotId?: string;
+
+  /** Preferred mail provider (auto-detected if not provided) */
+  preferredProvider?: string;
+
+  /** Explicit DKIM selectors to check */
+  explicitSelectors?: string[];
+
+  /** Include SPF, DMARC records (default: true) */
+  includeSpfDmarc?: boolean;
+
+  /** Include MTA-STS, TLS-RPT records (default: true) */
+  includeMtaSts?: boolean;
+}
+
+/**
+ * Response for mail collection
+ */
+export interface CollectMailResponse {
+  success: boolean;
+  domain: string;
+  persisted: boolean;
+  observationCount?: number;
+  selectorCount?: number;
+  result: {
+    mx?: Array<{ preference: number; exchange: string }>;
+    spf?: string;
+    dmarc?: string;
+    mxValid: boolean;
+    hasNullMx: boolean;
+    nullMxPolicy?: string;
+    dkim?: Record<string, { status: string; publicKey?: string; selector?: string }>;
+    mtaSts?: {
+      version: string;
+      mx: string;
+      mode: string;
+      maxAge: number;
+    };
+    tlsRpt?: {
+      rua: string;
+    };
+  };
+  duration: number;
+  error?: string;
+}
+
 export interface LookupDomainResponse {
   domain: {
     id: string;
@@ -347,6 +398,15 @@ export function validateCollectDomainRequest(req: unknown): req is CollectDomain
  * Validate a LookupDomainRequest
  */
 export function validateLookupDomainRequest(req: unknown): req is LookupDomainRequest {
+  if (!req || typeof req !== 'object') return false;
+  const r = req as Record<string, unknown>;
+  return typeof r.domain === 'string' && r.domain.length > 0;
+}
+
+/**
+ * Validate a CollectMailRequest
+ */
+export function validateCollectMailRequest(req: unknown): req is CollectMailRequest {
   if (!req || typeof req !== 'object') return false;
   const r = req as Record<string, unknown>;
   return typeof r.domain === 'string' && r.domain.length > 0;

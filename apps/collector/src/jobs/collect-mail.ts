@@ -35,9 +35,12 @@ import {
   ObservationRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { isValidDomain } from '@dns-ops/parsing';
+import { type CollectMailRequest, validateCollectMailRequest } from '@dns-ops/contracts';
 import { type MailCheckResult, performMailCheck } from '../mail/checker.js';
+import type { Env } from '../types.js';
 
-export const collectMailRoutes = new Hono();
+export const collectMailRoutes = new Hono<Env>();
 
 /**
  * POST /api/collect/mail
@@ -46,18 +49,21 @@ export const collectMailRoutes = new Hono();
 collectMailRoutes.post('/mail', async (c) => {
   try {
     const body = await c.req.json();
-    const { domain, snapshotId, preferredProvider, explicitSelectors } = body;
 
-    if (!domain || typeof domain !== 'string') {
-      return c.json({ error: 'Domain is required' }, 400);
+    // Validate request using shared validation
+    if (!validateCollectMailRequest(body)) {
+      return c.json({ error: 'Invalid request', message: 'Domain is required' }, 400);
     }
+
+    const req = body as CollectMailRequest;
+    const { domain, snapshotId, preferredProvider, explicitSelectors } = req;
 
     // Normalize domain
     const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
 
-    // Validate domain format
+    // Validate domain format using shared validation
     if (!isValidDomain(normalizedDomain)) {
-      return c.json({ error: 'Invalid domain format' }, 400);
+      return c.json({ error: 'Invalid domain format', message: `"${domain}" is not a valid domain name` }, 400);
     }
 
     // Perform mail check
@@ -398,21 +404,6 @@ async function storeMailObservations(
   await repo.createMany(observations);
 
   return observations.length;
-}
-
-function isValidDomain(domain: string): boolean {
-  if (!domain || domain.length > 253) return false;
-
-  const labelRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
-  const labels = domain.split('.');
-
-  for (const label of labels) {
-    if (!label || label.length > 63) return false;
-    if (!labelRegex.test(label)) return false;
-    if (label.startsWith('-') || label.endsWith('-')) return false;
-  }
-
-  return true;
 }
 
 /**
