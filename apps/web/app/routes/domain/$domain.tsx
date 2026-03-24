@@ -10,6 +10,23 @@ import { TagsPanel } from '../../components/TagsPanel.js';
 
 type DomainTabId = 'overview' | 'dns' | 'mail';
 
+/**
+ * Loader error types for differentiated error handling
+ */
+export type LoaderErrorType = 'api_unreachable' | 'fetch_error';
+
+export interface LoaderError {
+  type: LoaderErrorType;
+  message: string;
+}
+
+export interface DomainLoaderData {
+  domain: string;
+  snapshot: Snapshot | null;
+  observations: Observation[];
+  error?: LoaderError;
+}
+
 interface DomainSearchParams {
   tab?: DomainTabId;
 }
@@ -24,28 +41,55 @@ export const Route = createFileRoute('/domain/$domain')({
       tab: tab && VALID_TABS.includes(tab as DomainTabId) ? (tab as DomainTabId) : undefined,
     };
   },
-  loader: async ({ params }) => {
+  loader: async ({ params }): Promise<DomainLoaderData> => {
     if (typeof window === 'undefined') {
       return { domain: params.domain, snapshot: null, observations: [] };
     }
 
     try {
       const snapshotResponse = await fetch(`/api/domain/${params.domain}/latest`);
-      const snapshot = snapshotResponse.ok
-        ? ((await snapshotResponse.json()) as { id: string } & Snapshot)
-        : null;
+
+      if (!snapshotResponse.ok) {
+        if (snapshotResponse.status === 404) {
+          // 404 is a valid "no data yet" state, not an error
+          return { domain: params.domain, snapshot: null, observations: [] };
+        }
+        // Other non-ok statuses - treat as fetch error
+        return {
+          domain: params.domain,
+          snapshot: null,
+          observations: [],
+          error: {
+            type: 'fetch_error',
+            message: `Failed to load domain data: ${snapshotResponse.status} ${snapshotResponse.statusText}`,
+          },
+        };
+      }
+
+      const snapshot = (await snapshotResponse.json()) as { id: string } & Snapshot;
 
       let observations: Observation[] = [];
-      if (snapshot) {
+      try {
         const observationResponse = await fetch(`/api/snapshot/${snapshot.id}/observations`);
         if (observationResponse.ok) {
           observations = (await observationResponse.json()) as Observation[];
         }
+      } catch {
+        // Observation fetch failed but we still have snapshot - not critical
       }
 
       return { domain: params.domain, snapshot, observations };
-    } catch {
-      return { domain: params.domain, snapshot: null, observations: [] };
+    } catch (err) {
+      // Network error or other unexpected failure
+      return {
+        domain: params.domain,
+        snapshot: null,
+        observations: [],
+        error: {
+          type: 'api_unreachable',
+          message: err instanceof Error ? err.message : 'Unable to reach the API server',
+        },
+      };
     }
   },
 });
@@ -57,11 +101,8 @@ const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
 ];
 
 function Domain360Page() {
-  const { domain, snapshot, observations } = Route.useLoaderData() as {
-    domain: string;
-    snapshot: Snapshot | null;
-    observations: Observation[];
-  };
+  const loaderData = Route.useLoaderData() as DomainLoaderData;
+  const { domain, snapshot, observations, error: loaderError } = loaderData;
   const { tab: urlTab } = Route.useSearch();
   const navigate = useNavigate();
   const router = useRouter();
@@ -193,6 +234,23 @@ function Domain360Page() {
             <span className="text-sm text-gray-500 tabular-nums">
               Last updated: {new Date(snapshot.createdAt).toLocaleString()}
             </span>
+          </div>
+        ) : loaderError ? (
+          <div
+            className={`mt-4 p-4 rounded-lg border ${
+              loaderError.type === 'api_unreachable'
+                ? 'bg-red-50 border-red-200'
+                : 'bg-orange-50 border-orange-200'
+            }`}
+            data-testid="loader-error-banner"
+          >
+            <p
+              className={
+                loaderError.type === 'api_unreachable' ? 'text-red-800' : 'text-orange-800'
+              }
+            >
+              {loaderError.message}
+            </p>
           </div>
         ) : (
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

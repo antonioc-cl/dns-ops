@@ -6,6 +6,7 @@
  */
 
 import punycode from 'punycode/';
+
 const { toASCII, toUnicode } = punycode;
 
 const PREFIX = 'xn--';
