@@ -94,6 +94,7 @@ export const domains = pgTable(
   },
   (table) => ({
     // NOTE (V1): Unique on normalizedName alone. Two tenants cannot own the same domain.
+    // See: packages/db/docs/TENANT_ISOLATION.md#domain-uniqueness-limitation
     // When multi-tenancy is fully activated, migrate this to:
     //   uniqueIndex('domain_name_tenant_idx').on(table.normalizedName, table.tenantId)
     nameIdx: uniqueIndex('domain_name_idx').on(table.normalizedName),

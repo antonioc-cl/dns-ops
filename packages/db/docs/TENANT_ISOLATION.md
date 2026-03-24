@@ -224,5 +224,57 @@ When adding new tenant-aware features:
 
 ---
 
+## Domain Uniqueness Limitation
+
+### Current Implementation
+
+The `domains` table currently uses `normalized_name` alone for uniqueness:
+
+```sql
+CREATE UNIQUE INDEX domains_normalized_name_unique ON domains (normalized_name);
+```
+
+**This means the same domain name cannot be registered twice, even by different tenants.**
+
+### Limitation
+
+If two different tenants need to manage the same domain (e.g., `example.com`), this is currently not possible because:
+- Each domain must have a unique `normalized_name`
+- Tenant ID is not part of the uniqueness constraint
+
+### Migration Path
+
+To support tenant-scoped domain uniqueness:
+
+1. **Create composite unique index**:
+   ```sql
+   CREATE UNIQUE INDEX domains_tenant_domain_unique 
+     ON domains (normalized_name, tenant_id);
+   ```
+
+2. **Backfill existing data**:
+   - Set `tenant_id = 'system'` or a dedicated "unowned" tenant for domains without owner
+   - This maintains backward compatibility
+
+3. **Update application code**:
+   - Modify domain registration to accept `tenant_id`
+   - Update uniqueness checks to include `tenant_id`
+
+4. **Update schema** (see `packages/db/src/schema/domains.ts`):
+   - The `normalizedName` field is currently unique
+   - After migration, it should be unique within `tenantId`
+
+### Breaking Change Notice
+
+**Current behavior**: Same domain cannot be registered twice across all tenants
+**After migration**: Same domain can be registered once per tenant
+
+This is a **breaking change** that requires:
+- Database migration
+- Application code updates
+- Careful handling of existing "unowned" domains
+
+---
+
 **Decision Date:** 2026-03-20
 **Decision Owner:** dns-ops-1j4.4.4
