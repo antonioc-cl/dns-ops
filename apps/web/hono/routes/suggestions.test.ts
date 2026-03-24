@@ -111,26 +111,38 @@ function createMockData(): MockData {
   };
 }
 
+// Helper to extract ID from drizzle-orm eq() condition
+function getConditionParam(condition: unknown): string | undefined {
+  const sql = condition as {
+    queryChunks?: Array<{ constructor?: { name?: string }; value?: unknown }>;
+  };
+  return sql.queryChunks?.find((chunk) => chunk?.constructor?.name === 'Param')?.value as
+    | string
+    | undefined;
+}
+
 function createMockDb(data: MockData) {
   return {
     selectOne: vi.fn(async (_table: unknown, condition: unknown) => {
-      // Extract ID from condition
-      const cond = condition as { right: { value: string } };
-      const id = cond?.right?.value;
-      return data.suggestions.find((s) => s.id === id);
+      const id = getConditionParam(condition);
+      if (id) {
+        return data.suggestions.find((s: MockSuggestion) => s.id === id);
+      }
+      return undefined;
     }),
-    update: vi.fn(async (_table: unknown, data: Partial<MockSuggestion>, condition: unknown) => {
-      const cond = condition as { right: { value: string } };
-      const id = cond?.right?.value;
-      const suggestion = data.suggestions.find((s) => s.id === id);
-      if (suggestion) {
-        Object.assign(suggestion, data);
-        return suggestion;
+    update: vi.fn(async (_table: unknown, updates: Partial<MockSuggestion>, condition: unknown) => {
+      const id = getConditionParam(condition);
+      if (id) {
+        const suggestion = data.suggestions.find((s: MockSuggestion) => s.id === id);
+        if (suggestion) {
+          Object.assign(suggestion, updates);
+          return suggestion;
+        }
       }
       return null;
     }),
-    insert: vi.fn(async (_table: unknown, data: unknown) => data),
-    insertMany: vi.fn(async (_table: unknown, data: unknown[]) => data),
+    insert: vi.fn(async (_table: unknown, insertData: unknown) => insertData),
+    insertMany: vi.fn(async (_table: unknown, insertData: unknown[]) => insertData),
     delete: vi.fn(async () => null),
     selectWhere: vi.fn(async () => []),
     select: vi.fn(async () => []),

@@ -142,10 +142,7 @@ suggestionsRoutes.patch('/:suggestionId/apply', async (c) => {
  * Request: { reason?: string }
  * Response: { success: true, suggestion: Suggestion }
  */
-suggestionsRoutes.patch(
-  '/:suggestionId/dismiss',
-  auditMiddleware('suggestion:dismiss'),
-  async (c) => {
+suggestionsRoutes.patch('/:suggestionId/dismiss', async (c) => {
     const db = c.get('db');
     if (!db) {
       return c.json({ error: 'Database not available' }, 503);
