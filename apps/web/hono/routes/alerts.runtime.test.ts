@@ -223,6 +223,163 @@ describe('alertRoutes shared reports', () => {
     expect(json.report.title).toBe('Public report');
     expect(json.report.summary).toBeDefined();
   });
+
+  it('returns 404 for expired shared report', async () => {
+    const pastDate = new Date('2020-01-01'); // Expired in the past
+    const state: MockState = {
+      alerts: [],
+      monitoredDomains: [],
+      sharedReports: [
+        {
+          id: 'report-expired',
+          tenantId: 'tenant-1',
+          createdBy: 'actor-1',
+          title: 'Expired report',
+          visibility: 'shared',
+          status: 'ready',
+          shareToken: 'expired-token',
+          expiresAt: pastDate,
+          summary: { totalMonitored: 0, activeAlerts: 0, bySeverity: {} },
+          alertSummary: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      auditEvents: [],
+    };
+    const app = createApp(state, false);
+
+    const response = await app.request('/api/alerts/reports/shared/expired-token');
+
+    expect(response.status).toBe(404);
+  });
+
+  it('returns 404 for report past expiresAt timestamp', async () => {
+    // Create a report that expired yesterday
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const state: MockState = {
+      alerts: [],
+      monitoredDomains: [],
+      sharedReports: [
+        {
+          id: 'report-yesterday',
+          tenantId: 'tenant-1',
+          createdBy: 'actor-1',
+          title: 'Yesterday report',
+          visibility: 'shared',
+          status: 'ready',
+          shareToken: 'yesterday-token',
+          expiresAt: yesterday,
+          summary: { totalMonitored: 1, activeAlerts: 1, bySeverity: { high: 1 } },
+          alertSummary: [{ title: 'Test alert', severity: 'high', status: 'pending', createdAt: new Date() }],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      auditEvents: [],
+    };
+    const app = createApp(state, false);
+
+    const response = await app.request('/api/alerts/reports/shared/yesterday-token');
+
+    expect(response.status).toBe(404);
+  });
+
+  it('allows access to shared report within valid expiresAt window', async () => {
+    // Create a report that expires tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const state: MockState = {
+      alerts: [],
+      monitoredDomains: [],
+      sharedReports: [
+        {
+          id: 'report-valid',
+          tenantId: 'tenant-1',
+          createdBy: 'actor-1',
+          title: 'Valid report',
+          visibility: 'shared',
+          status: 'ready',
+          shareToken: 'valid-token',
+          expiresAt: tomorrow,
+          summary: { totalMonitored: 2, activeAlerts: 2, bySeverity: { critical: 1, high: 1 } },
+          alertSummary: [
+            { title: 'Critical alert', severity: 'critical', status: 'pending', createdAt: new Date() },
+            { title: 'High alert', severity: 'high', status: 'pending', createdAt: new Date() },
+          ],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      auditEvents: [],
+    };
+    const app = createApp(state, false);
+
+    const response = await app.request('/api/alerts/reports/shared/valid-token');
+
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { report: Record<string, unknown> };
+    expect(json.report.title).toBe('Valid report');
+    expect(json.report.expiresAt).toBeDefined();
+  });
+
+  it('returns 404 for non-existent token', async () => {
+    const state: MockState = {
+      alerts: [],
+      monitoredDomains: [],
+      sharedReports: [],
+      auditEvents: [],
+    };
+    const app = createApp(state, false);
+
+    const response = await app.request('/api/alerts/reports/shared/nonexistent-token');
+
+    expect(response.status).toBe(404);
+  });
+
+  it('expires shared report and verifies subsequent access fails', async () => {
+    const state: MockState = {
+      alerts: [],
+      monitoredDomains: [],
+      sharedReports: [
+        {
+          id: 'report-to-expire',
+          tenantId: 'tenant-1',
+          createdBy: 'actor-1',
+          title: 'Report to expire',
+          visibility: 'shared',
+          status: 'ready',
+          shareToken: 'expire-token',
+          summary: { totalMonitored: 1, activeAlerts: 0, bySeverity: {} },
+          alertSummary: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      auditEvents: [],
+    };
+    const app = createApp(state);
+
+    // Verify report is accessible before expiring
+    const beforeResponse = await app.request('/api/alerts/reports/shared/expire-token');
+    expect(beforeResponse.status).toBe(200);
+
+    // Expire the report
+    const expireResponse = await app.request('/api/alerts/reports/report-to-expire/expire', {
+      method: 'POST',
+    });
+    expect(expireResponse.status).toBe(200);
+
+    // Verify report is no longer accessible
+    const afterResponse = await app.request('/api/alerts/reports/shared/expire-token');
+    expect(afterResponse.status).toBe(404);
+
+    // Verify audit event was created
+    expect(state.auditEvents.some((e) => e.action === 'shared_report_expired')).toBe(true);
+  });
 });
 
 describe('alertRoutes mutations', () => {
