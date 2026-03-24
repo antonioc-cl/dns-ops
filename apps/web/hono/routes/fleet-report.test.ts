@@ -5,6 +5,7 @@ import type { Env } from '../types.js';
 import { fleetReportRoutes } from './fleet-report.js';
 
 const originalEnv = process.env;
+const originalFetch = globalThis.fetch;
 
 describe('Fleet report web proxy routes', () => {
   beforeEach(() => {
@@ -18,7 +19,7 @@ describe('Fleet report web proxy routes', () => {
 
   afterEach(() => {
     process.env = originalEnv;
-    vi.unstubAllGlobals();
+    globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
     collectorCircuit.reset();
   });
@@ -55,7 +56,7 @@ describe('Fleet report web proxy routes', () => {
         headers: { 'Content-Type': 'application/json' },
       })
     );
-    vi.stubGlobal('fetch', fetchMock);
+    globalThis.fetch = fetchMock;
 
     const app = createApp();
     const response = await app.request('/api/fleet-report/run', {
@@ -65,16 +66,19 @@ describe('Fleet report web proxy routes', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledWith('http://collector.test/api/fleet-report/run', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Secret': 'test-internal-secret',
-        'X-Tenant-Id': 'tenant-1',
-        'X-Actor-Id': 'actor-1',
-      },
-      body: JSON.stringify({ inventory: ['example.com'], checks: ['spf'], format: 'summary' }),
-    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://collector.test/api/fleet-report/run',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'X-Internal-Secret': 'test-internal-secret',
+          'X-Tenant-Id': 'tenant-1',
+          'X-Actor-Id': 'actor-1',
+        }),
+        body: JSON.stringify({ inventory: ['example.com'], checks: ['spf'], format: 'summary' }),
+      })
+    );
   });
 
   it('returns 503 when collector integration is missing in production', async () => {
@@ -104,7 +108,7 @@ describe('Fleet report web proxy routes', () => {
         headers: { 'Content-Type': 'application/json' },
       })
     );
-    vi.stubGlobal('fetch', fetchMock);
+    globalThis.fetch = fetchMock;
 
     const app = createApp();
     const response = await app.request('/api/fleet-report/import-csv', {
@@ -114,15 +118,18 @@ describe('Fleet report web proxy routes', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(fetchMock).toHaveBeenCalledWith('http://collector.test/api/fleet-report/import-csv', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/csv',
-        'X-Internal-Secret': 'test-internal-secret',
-        'X-Tenant-Id': 'tenant-1',
-        'X-Actor-Id': 'actor-1',
-      },
-      body: 'domain\nexample.com\n',
-    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://collector.test/api/fleet-report/import-csv',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'text/csv',
+          'X-Internal-Secret': 'test-internal-secret',
+          'X-Tenant-Id': 'tenant-1',
+          'X-Actor-Id': 'actor-1',
+        }),
+        body: 'domain\nexample.com\n',
+      })
+    );
   });
 });

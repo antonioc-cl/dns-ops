@@ -5,9 +5,16 @@
  */
 
 import { AlertRepository, DomainRepository, MonitoredDomainRepository } from '@dns-ops/db';
+import { createLogger } from '@dns-ops/logging';
 import { Hono } from 'hono';
 import { buildWebhookPayload, sendAlertWebhook } from '../notifications/webhook.js';
 import type { Env } from '../types.js';
+
+const monitoringLogger = createLogger({
+  service: 'dns-ops-collector',
+  version: '1.0.0',
+  minLevel: 'info',
+});
 
 // Alert type for type annotations
 type Alert = Awaited<ReturnType<AlertRepository['findPending']>>[number];
@@ -62,7 +69,7 @@ monitoringRoutes.post('/check', async (c) => {
       // Look up domain name
       const domain = await domainRepo.findById(monitored.domainId);
       if (!domain) {
-        console.error(`Domain not found for monitored domain: ${monitored.domainId}`);
+        monitoringLogger.error(`Domain not found for monitored domain: ${monitored.domainId}`);
         continue;
       }
 
@@ -79,7 +86,7 @@ monitoringRoutes.post('/check', async (c) => {
 
       if (!response.ok) {
         if (!monitored.tenantId) {
-          console.error(`Monitored domain missing tenant ownership: ${monitored.id}`);
+          monitoringLogger.error(`Monitored domain missing tenant ownership: ${monitored.id}`);
           continue;
         }
 
@@ -116,23 +123,32 @@ monitoringRoutes.post('/check', async (c) => {
               try {
                 const host = new URL(webhookUrl).hostname;
                 if (result.success) {
-                  console.log(
-                    `[AlertNotification] alertId=${alert.id} webhookHost=${host} status=success`
-                  );
+                  monitoringLogger.info('Alert notification sent', {
+                    alertId: alert.id,
+                    webhookHost: host,
+                    status: 'success',
+                  });
                 } else {
-                  console.log(
-                    `[AlertNotification] alertId=${alert.id} webhookHost=${host} status=failed error=${result.error}`
-                  );
+                  monitoringLogger.warn('Alert notification failed', {
+                    alertId: alert.id,
+                    webhookHost: host,
+                    status: 'failed',
+                    error: result.error,
+                  });
                 }
               } catch {
-                console.log(
-                  `[AlertNotification] alertId=${alert.id} webhookHost=invalid status=failed`
-                );
+                monitoringLogger.warn('Alert notification failed - invalid webhook URL', {
+                  alertId: alert.id,
+                  webhookHost: 'invalid',
+                  status: 'failed',
+                });
               }
             })
             .catch((err) => {
-              console.error(
-                `[AlertNotification] alertId=${alert.id} error=${err instanceof Error ? err.message : 'unknown'}`
+              monitoringLogger.error(
+                'Alert notification error',
+                err instanceof Error ? err : new Error(String(err)),
+                { alertId: alert.id }
               );
             });
         }
@@ -148,7 +164,10 @@ monitoringRoutes.post('/check', async (c) => {
       results,
     });
   } catch (error) {
-    console.error('Monitoring check error:', error);
+    monitoringLogger.error(
+      'Monitoring check error',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return c.json({ error: 'Monitoring check failed' }, 500);
   }
 });
@@ -324,7 +343,10 @@ monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
 
     return c.json({ monitored }, 201);
   } catch (error) {
-    console.error('Failed to start monitoring:', error);
+    monitoringLogger.error(
+      'Failed to start monitoring',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return c.json({ error: 'Failed to start monitoring' }, 500);
   }
 });

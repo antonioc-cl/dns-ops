@@ -7,7 +7,14 @@
  * - Tracks schedule state for observability
  */
 
+import { createLogger } from '@dns-ops/logging';
 import { getMonitoringQueue, scheduleMonitoringJob } from './queue.js';
+
+const schedulerLogger = createLogger({
+  service: 'dns-ops-collector',
+  version: '1.0.0',
+  minLevel: 'info',
+});
 
 // =============================================================================
 // TYPES
@@ -164,7 +171,7 @@ export async function removeSchedule(schedule: ScheduleType): Promise<boolean> {
     activeSchedules.delete(key);
     return true;
   } catch (error) {
-    console.error(`[Scheduler] Failed to remove schedule ${schedule}:`, error);
+    schedulerLogger.error(`Failed to remove schedule ${schedule}`, error as Error);
     return false;
   }
 }
@@ -278,7 +285,10 @@ export async function scheduleMonitoredDomainRefreshes(
         failed++;
       }
     } catch (error) {
-      console.error(`[Scheduler] Failed to queue refresh for ${domain.domainName}:`, error);
+      schedulerLogger.error(
+        `Failed to queue refresh for ${domain.domainName}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
       failed++;
     }
   }
@@ -295,7 +305,7 @@ export async function scheduleMonitoredDomainRefreshes(
  * Call this on worker startup
  */
 export async function initializeSchedules(): Promise<void> {
-  console.log('[Scheduler] Initializing monitoring schedules...');
+  schedulerLogger.info('Initializing monitoring schedules...');
 
   const scheduleTypes: ScheduleType[] = ['hourly', 'daily', 'weekly'];
 
@@ -303,16 +313,19 @@ export async function initializeSchedules(): Promise<void> {
     try {
       const result = await setupSchedule(schedule);
       if (result.created) {
-        console.log(`[Scheduler] Created ${schedule} schedule`);
+        schedulerLogger.info(`Created ${schedule} schedule`);
       } else {
-        console.log(`[Scheduler] ${schedule} schedule already exists`);
+        schedulerLogger.info(`${schedule} schedule already exists`);
       }
     } catch (error) {
-      console.error(`[Scheduler] Failed to initialize ${schedule} schedule:`, error);
+      schedulerLogger.error(
+        `Failed to initialize ${schedule} schedule`,
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 
-  console.log('[Scheduler] Initialization complete');
+  schedulerLogger.info('Initialization complete');
 }
 
 /**
@@ -320,7 +333,7 @@ export async function initializeSchedules(): Promise<void> {
  * Call this on graceful shutdown
  */
 export async function cleanupSchedules(): Promise<void> {
-  console.log('[Scheduler] Cleaning up schedules...');
+  schedulerLogger.info('Cleaning up schedules...');
 
   const scheduleTypes: ScheduleType[] = ['hourly', 'daily', 'weekly'];
 
@@ -329,7 +342,7 @@ export async function cleanupSchedules(): Promise<void> {
   }
 
   activeSchedules.clear();
-  console.log('[Scheduler] Cleanup complete');
+  schedulerLogger.info('Cleanup complete');
 }
 
 // =============================================================================

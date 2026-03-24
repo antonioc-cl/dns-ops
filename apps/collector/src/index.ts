@@ -135,32 +135,34 @@ const server = serve(
     port,
   },
   async (info) => {
-    console.log(`🚀 DNS Ops Collector running on port ${info.port}`);
-    console.log(`📊 Liveness: http://localhost:${info.port}/healthz`);
-    console.log(`📊 Readiness: http://localhost:${info.port}/readyz`);
+    collectorLogger.info('DNS Ops Collector started', {
+      port: info.port,
+      livenessUrl: `http://localhost:${info.port}/healthz`,
+      readinessUrl: `http://localhost:${info.port}/readyz`,
+    });
 
     if (process.env.WORKER_ENABLED === 'true') {
-      console.log('[Collector] Starting job queue workers...');
+      collectorLogger.info('Starting job queue workers...');
       await startWorkers();
     }
   }
 );
 
 async function shutdown(signal: string): Promise<void> {
-  console.log(`\n[Collector] Received ${signal}, shutting down...`);
+  collectorLogger.info('Received shutdown signal', { signal });
 
   if (workersRunning()) {
-    console.log('[Collector] Stopping workers...');
+    collectorLogger.info('Stopping workers...');
     await stopWorkers();
   }
 
-  console.log('[Collector] Closing queue connections...');
+  collectorLogger.info('Closing queue connections...');
   await closeQueues();
 
-  console.log('[Collector] Closing HTTP server...');
+  collectorLogger.info('Closing HTTP server...');
   server.close();
 
-  console.log('[Collector] Shutdown complete');
+  collectorLogger.info('Shutdown complete');
   process.exit(0);
 }
 
