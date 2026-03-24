@@ -55,7 +55,9 @@ describe('Mail Checker', () => {
 
   describe('checkDMARC', () => {
     it('should detect valid DMARC record', async () => {
-      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=DMARC1; p=reject; rua=mailto:dmarc@example.com']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue([
+        'v=DMARC1; p=reject; rua=mailto:dmarc@example.com',
+      ]);
 
       const result = await checkDMARC('example.com');
 
@@ -166,7 +168,9 @@ describe('Mail Checker', () => {
     });
 
     it('should validate DKIM record format', async () => {
-      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['invalid record without proper format']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue([
+        'invalid record without proper format',
+      ]);
 
       const result = await checkDKIM('example.com');
 
@@ -177,7 +181,9 @@ describe('Mail Checker', () => {
 
   describe('checkSPF', () => {
     it('should detect valid SPF record', async () => {
-      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=spf1 include:_spf.google.com ~all']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue([
+        'v=spf1 include:_spf.google.com ~all',
+      ]);
 
       const result = await checkSPF('example.com');
 
@@ -187,7 +193,10 @@ describe('Mail Checker', () => {
     });
 
     it('should handle missing SPF record', async () => {
-      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['some other txt record', 'another record']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue([
+        'some other txt record',
+        'another record',
+      ]);
 
       const result = await checkSPF('example.com');
 
