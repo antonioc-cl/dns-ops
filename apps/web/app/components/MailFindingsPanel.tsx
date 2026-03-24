@@ -176,6 +176,7 @@ export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
                 <MailFindingCard
                   key={finding.id}
                   finding={finding}
+                  domain={data.domain}
                   suggestions={suggestions.filter((s) => s.findingId === finding.id)}
                 />
               ))}
@@ -248,9 +249,11 @@ function ConfigStatusCard({
 
 function MailFindingCard({
   finding,
+  domain,
   suggestions,
 }: {
   finding: Finding;
+  domain: string;
   suggestions: Suggestion[];
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -337,7 +340,7 @@ function MailFindingCard({
                 <MailSuggestionCard
                   key={suggestion.id}
                   suggestion={suggestion}
-                  domain={finding.domain}
+                  domain={domain}
                 />
               ))}
             </div>
@@ -395,172 +398,7 @@ function MailSuggestionCard({ suggestion, domain }: MailSuggestionCardProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        if (response.status === 403 && error.code === 'REQUIRES_CONFIRMATION') {
-          console.warn('[MailFindingsPanel] Review-only suggestion applied without confirmation flag');
-        }
-        throw new Error(error.error || 'Failed to apply suggestion');
-      }
-
-      // Log warning for review-only applications
-      if (suggestion.reviewOnly) {
-        console.warn(
-          `[MailFindingsPanel] Review-only suggestion applied for ${domain}:`,
-          suggestion.id
-        );
-      }
-
-      // Refresh page to show updated state
-      window.location.reload();
-    } catch (err) {
-      console.error('Failed to apply suggestion:', err);
-      setIsApplying(false);
-      setShowConfirm(false);
-    }
-  };
-
-  const handleDismiss = async () => {
-    setIsDismissing(true);
-    try {
-      const response = await fetch(`/api/suggestions/${suggestion.id}/dismiss`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Dismissed by user' }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to dismiss suggestion');
-      }
-
-      // Refresh page to show updated state
-      window.location.reload();
-    } catch (err) {
-      console.error('Failed to dismiss suggestion:', err);
-      setIsDismissing(false);
-    }
-  };
-
-  return (
-    <>
-      <div
-        className={`p-3 rounded-lg ${
-          suggestion.reviewOnly
-            ? 'bg-amber-100/50 border border-amber-200'
-            : 'bg-blue-50 border border-blue-200'
-        }`}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h6 className="font-medium text-gray-900">{suggestion.title}</h6>
-              {suggestion.reviewOnly && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-200 text-amber-800">
-                  ⚠️ Review Required
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600 mt-1">{suggestion.description}</p>
-            <div className="mt-2 p-2 bg-white/50 rounded text-sm font-mono text-gray-700 whitespace-pre-wrap">
-              {suggestion.action}
-            </div>
-          </div>
-        </div>
-
-        {isPending && (
-          <div className="mt-3 flex items-center gap-2 pt-2 border-t border-gray-200/50">
-            <button
-              type="button"
-              onClick={handleApply}
-              disabled={isApplying || isDismissing}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              {isApplying ? 'Applying...' : 'Apply'}
-            </button>
-            <button
-              type="button"
-              onClick={handleDismiss}
-              disabled={isApplying || isDismissing}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              {isDismissing ? 'Dismissing...' : 'Dismiss'}
-            </button>
-          </div>
-        )}
-
-        {suggestion.appliedAt && (
-          <div className="mt-2 pt-2 border-t border-gray-200/50 text-xs text-green-600">
-            ✓ Applied {suggestion.appliedBy ? `by ${suggestion.appliedBy}` : ''}
-          </div>
-        )}
-
-        {suggestion.dismissedAt && (
-          <div className="mt-2 pt-2 border-t border-gray-200/50 text-xs text-gray-500">
-            Dismissed {suggestion.dismissedBy ? `by ${suggestion.dismissedBy}` : ''}
-          </div>
-        )}
-      </div>
-
-      {/* Confirmation Dialog for Review-Only Suggestions */}
-      <ConfirmDialog
-        isOpen={showConfirm}
-        title="Apply Review-Only Suggestion?"
-        message={
-          <div className="space-y-3">
-            <p>
-              This suggestion is marked as <strong>review-required</strong> because it may have
-              significant impact:
-            </p>
-            <ul className="list-disc list-inside text-sm text-gray-600">
-              <li>Risk posture: {suggestion.riskPosture}</li>
-              <li>Blast radius: {suggestion.blastRadius.replace(/-/g, ' ')}</li>
-            </ul>
-            <p className="text-amber-700 font-medium">
-              This change may affect mail delivery for {domain}. Proceed with caution.
-            </p>
-          </div>
-        }
-        confirmLabel="Apply Anyway"
-        cancelLabel="Cancel"
-        variant="warning"
-        onConfirm={handleApply}
-        onCancel={() => setShowConfirm(false)}
-      />
-    </>
-  );
-}
-
-// =============================================================================
-// Mail Suggestion Card Component (PR-02.6.2)
-// =============================================================================
-
-interface MailSuggestionCardProps {
-  suggestion: Suggestion;
-  domain: string;
-}
-
-function MailSuggestionCard({ suggestion, domain }: MailSuggestionCardProps) {
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
-  const [isDismissing, setIsDismissing] = useState(false);
-
-  const isPending = !suggestion.appliedAt && !suggestion.dismissedAt;
-
-  const handleApply = async () => {
-    if (suggestion.reviewOnly && !showConfirm) {
-      setShowConfirm(true);
-      return;
-    }
-
-    setIsApplying(true);
-    try {
-      const response = await fetch(`/api/suggestions/${suggestion.id}/apply`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmApply: suggestion.reviewOnly ? true : undefined }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as { error?: string; code?: string };
         if (response.status === 403 && error.code === 'REQUIRES_CONFIRMATION') {
           console.warn('[MailFindingsPanel] Review-only suggestion applied without confirmation flag');
         }

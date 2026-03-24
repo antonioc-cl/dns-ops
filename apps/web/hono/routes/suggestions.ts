@@ -18,6 +18,7 @@ export const suggestionsRoutes = new Hono<Env>();
 
 interface ApplySuggestionBody {
   confirmApply?: boolean;
+  [key: string]: unknown;
 }
 
 const ApplySuggestionSchema = {
