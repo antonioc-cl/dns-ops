@@ -9,9 +9,9 @@
  */
 
 import type { Observation, RecordSet } from '@dns-ops/db';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RulesEngine } from '../engine/index.js';
 import { mailRules } from './rules.js';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // =============================================================================
 // Test Helpers
@@ -98,7 +98,12 @@ describe('Mail Collection → Findings Integration', () => {
           queryType: 'TXT',
           queryName: 'example.com',
           answerSection: [
-            { name: 'example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' },
+            {
+              name: 'example.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=spf1 include:_spf.google.com ~all',
+            },
           ],
         }),
         // DMARC TXT record
@@ -106,7 +111,12 @@ describe('Mail Collection → Findings Integration', () => {
           queryType: 'TXT',
           queryName: '_dmarc.example.com',
           answerSection: [
-            { name: '_dmarc.example.com', type: 'TXT', ttl: 300, data: 'v=DMARC1; p=reject; rua=mailto:dmarc@example.com' },
+            {
+              name: '_dmarc.example.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=DMARC1; p=reject; rua=mailto:dmarc@example.com',
+            },
           ],
         }),
         // DKIM selector
@@ -135,7 +145,12 @@ describe('Mail Collection → Findings Integration', () => {
           queryType: 'TXT',
           queryName: '_smtp._tls.example.com',
           answerSection: [
-            { name: '_smtp._tls.example.com', type: 'TXT', ttl: 300, data: 'v=TLSRPTv1; rua=mailto:tls-rpt@example.com' },
+            {
+              name: '_smtp._tls.example.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=TLSRPTv1; rua=mailto:tls-rpt@example.com',
+            },
           ],
         }),
       ];
@@ -274,9 +289,7 @@ describe('Mail Collection → Findings Integration', () => {
         createMockObservation({
           queryType: 'MX',
           queryName: 'nomail.example.com',
-          answerSection: [
-            { name: 'nomail.example.com', type: 'MX', ttl: 300, data: '0 .' },
-          ],
+          answerSection: [{ name: 'nomail.example.com', type: 'MX', ttl: 300, data: '0 .' }],
         }),
       ];
 
