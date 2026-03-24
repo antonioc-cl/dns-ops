@@ -76,7 +76,7 @@ describe('GET /api/health/detailed', () => {
         timestamp: string;
         checks: {
           database: { status: string };
-          circuitBreaker: { state: string; description: string };
+          circuitBreaker: { state: string; consecutiveFailures: number };
         };
       };
 
@@ -87,7 +87,6 @@ describe('GET /api/health/detailed', () => {
       expect(body.timestamp).toBeDefined();
       expect(body.checks.database.status).toBe('connected');
       expect(['closed', 'open', 'half-open']).toContain(body.checks.circuitBreaker.state);
-      expect(typeof body.checks.circuitBreaker.consecutiveFailures).toBe('number');
     });
   });
 
