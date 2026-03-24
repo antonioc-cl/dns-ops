@@ -5,7 +5,6 @@
  * - Domain: DNS domains being monitored
  * - Snapshot: A point-in-time collection of DNS data
  * - Observation: Raw DNS query results (immutable)
- * - VantagePoint: Where queries originate from
  * - RecordSet: Normalized DNS records
  * - Finding: Analysis results from rules engine
  * - Suggestion: Recommended actions
@@ -199,42 +198,6 @@ export const snapshots = pgTable(
 );
 
 // =============================================================================
-// VANTAGE POINT TABLE (DE-SCOPED)
-//
-// This table is retained for schema integrity (observations.vantageId FK)
-// but is not actively used by V1. No VantagePointRepository exists.
-// Future: remove table and FK via migration when vantage tracking is redesigned.
-// =============================================================================
-
-export const vantagePoints = pgTable(
-  'vantage_points',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    name: varchar('name', { length: 100 }).notNull(),
-    type: vantageTypeEnum('type').notNull(),
-    description: text('description'),
-
-    // Configuration for this vantage
-    config: jsonb('config').notNull(),
-
-    // For authoritative vantages: NS hostnames
-    // For recursive vantages: resolver addresses
-    endpoints: jsonb('endpoints').notNull().$type<string[]>(),
-
-    region: varchar('region', { length: 50 }),
-    network: varchar('network', { length: 50 }),
-
-    isActive: boolean('is_active').notNull().default(true),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => ({
-    typeIdx: index('vantage_type_idx').on(table.type),
-    activeIdx: index('vantage_active_idx').on(table.isActive),
-  })
-);
-
-// =============================================================================
 // OBSERVATION TABLE (Immutable)
 // =============================================================================
 
@@ -250,10 +213,10 @@ export const observations = pgTable(
     queryName: varchar('query_name', { length: 253 }).notNull(),
     queryType: varchar('query_type', { length: 10 }).notNull(),
 
-    // Vantage point used
-    vantageId: uuid('vantage_id').references(() => vantagePoints.id),
+    // Vantage type used (public-recursive, authoritative, etc.)
     vantageType: vantageTypeEnum('vantage_type').notNull(),
-    vantageIdentifier: varchar('vantage_identifier', { length: 100 }), // Specific NS IP or resolver
+    // Specific identifier for this vantage (NS IP, resolver IP, etc.)
+    vantageIdentifier: varchar('vantage_identifier', { length: 100 }),
 
     // Collection status
     status: collectionStatusEnum('status').notNull(),
@@ -281,7 +244,6 @@ export const observations = pgTable(
   (table) => ({
     snapshotIdx: index('observation_snapshot_idx').on(table.snapshotId),
     queryIdx: index('observation_query_idx').on(table.queryName, table.queryType),
-    vantageIdx: index('observation_vantage_idx').on(table.vantageId),
     statusIdx: index('observation_status_idx').on(table.status),
   })
 );
@@ -455,9 +417,6 @@ export type NewRulesetVersion = typeof rulesetVersions.$inferInsert;
 
 export type Snapshot = typeof snapshots.$inferSelect;
 export type NewSnapshot = typeof snapshots.$inferInsert;
-
-export type VantagePoint = typeof vantagePoints.$inferSelect;
-export type NewVantagePoint = typeof vantagePoints.$inferInsert;
 
 export type Observation = typeof observations.$inferSelect;
 export type NewObservation = typeof observations.$inferInsert;

@@ -43,6 +43,13 @@
       "when": 1774216569802,
       "tag": "0005_right_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1774248600000,
+      "tag": "0006_de_scope_vantage_points",
+      "breakpoints": true
     }
   ]
 }

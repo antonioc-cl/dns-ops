@@ -8,18 +8,18 @@ import { SnapshotRepository } from './snapshot.js';
 // Mock the database adapter
 function createMockDb(snapshots: any[] = []) {
   return {
-    selectOne: vi.fn(async (table: any, condition: any) => {
+    selectOne: vi.fn(async () => {
       return snapshots[0] || null;
     }),
-    selectWhere: vi.fn(async (table: any, condition: any) => {
+    selectWhere: vi.fn(async () => {
       return snapshots;
     }),
-    insert: vi.fn(async (table: any, data: any) => ({
+    insert: vi.fn(async (_table: any, data: any) => ({
       ...data,
       id: 'snapshot-new',
       createdAt: new Date(),
     })),
-    updateOne: vi.fn(async (table: any, data: any, condition: any) => ({
+    updateOne: vi.fn(async (_table: any, data: any, _condition: any) => ({
       ...snapshots[0],
       ...data,
     })),
