@@ -187,7 +187,13 @@ apiRoutes.get('/domain/:domain/latest', async (c) => {
 
     return c.json(snapshot);
   } catch (error) {
-    console.error('Error fetching latest snapshot:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching latest snapshot', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:domain/latest',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
@@ -211,7 +217,13 @@ apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
     const observations = await observationRepo.findBySnapshotId(accessibleSnapshot.snapshot.id);
     return c.json(observations);
   } catch (error) {
-    console.error('Error fetching observations:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching observations', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:snapshotId/observations',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
