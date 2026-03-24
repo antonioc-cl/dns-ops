@@ -12,7 +12,7 @@ import { findings, recordSets } from '@dns-ops/db/schema';
 import { compareSnapshots } from '@dns-ops/parsing';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { trackDiff } from '../middleware/error-tracking.js';
+import { getWebLogger, trackDiff } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const snapshotRoutes = new Hono<Env>();
@@ -57,12 +57,16 @@ snapshotRoutes.get('/:domain', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Snapshot list error:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshots',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Snapshot list error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to fetch snapshots',
@@ -113,12 +117,16 @@ snapshotRoutes.get('/:domain/latest', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Latest snapshot error:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshots/latest',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Latest snapshot error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots/latest',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to fetch latest snapshot',
@@ -160,12 +168,16 @@ snapshotRoutes.get('/:domain/:id', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Snapshot detail error:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshots/:id',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Snapshot detail error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots/:id',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to fetch snapshot',

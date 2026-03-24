@@ -298,12 +298,16 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error evaluating findings:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshots/:snapshotId/findings',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error evaluating findings:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots/:snapshotId/findings',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to evaluate findings',
@@ -426,12 +430,16 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error evaluating mail findings:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/mail/findings',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error evaluating mail findings:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/mail/findings',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to evaluate mail findings',
@@ -493,12 +501,16 @@ findingsRoutes.post('/snapshot/:snapshotId/evaluate', requireAuth, async (c) => 
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error re-evaluating findings:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshots/:snapshotId/findings/re-evaluate',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error re-evaluating findings:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots/:snapshotId/findings/re-evaluate',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to re-evaluate findings',
@@ -530,12 +542,16 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/summary', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error getting findings summary:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error getting findings summary:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/unknown',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get findings summary',
@@ -570,12 +586,16 @@ findingsRoutes.patch(
       return c.json({ success: true, finding: updated });
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error acknowledging finding:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error acknowledging finding:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/unknown',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to acknowledge finding',
@@ -630,12 +650,16 @@ findingsRoutes.get('/findings/:findingId', async (c) => {
     return c.json({ finding });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error fetching finding:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error fetching finding:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/unknown',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to fetch finding',
@@ -670,12 +694,16 @@ findingsRoutes.patch(
       return c.json({ success: true, finding: updated });
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error marking finding as false positive:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error marking finding as false positive:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/unknown',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to mark finding as false positive',
@@ -909,12 +937,16 @@ findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error in findings backfill:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error in findings backfill:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/unknown',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to backfill findings',
@@ -961,12 +993,16 @@ findingsRoutes.get('/findings/backfill/status', requireAuth, async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error getting backfill status:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error getting backfill status:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/unknown',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get backfill status',

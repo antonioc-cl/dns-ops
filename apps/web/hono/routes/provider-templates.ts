@@ -49,12 +49,16 @@ providerTemplateRoutes.get('/providers', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Provider list error:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/provider-templates',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Provider list error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/provider-templates',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to list provider templates',
@@ -197,12 +201,16 @@ providerTemplateRoutes.post('/compare-to-provider', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Provider comparison error:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/provider-templates/compare',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Provider comparison error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/provider-templates/compare',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to compare to provider template',
@@ -249,12 +257,16 @@ providerTemplateRoutes.post('/detect-provider', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Provider detection error:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/provider-templates/detect',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Provider detection error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/provider-templates/detect',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to detect provider',

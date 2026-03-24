@@ -89,10 +89,14 @@ apiRoutes.get('/health/detailed', requireAdminAccess, async (c) => {
       dbStatus = 'connected';
     } catch (error) {
       const logger = getWebLogger();
-      logger.error('DB health check failed', error instanceof Error ? error : new Error(String(error)), {
-        path: '/api/health/detailed',
-        method: 'GET',
-      });
+      logger.error(
+        'DB health check failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          path: '/api/health/detailed',
+          method: 'GET',
+        }
+      );
       dbStatus = 'error';
     }
   }
@@ -188,12 +192,16 @@ apiRoutes.get('/domain/:domain/latest', async (c) => {
     return c.json(snapshot);
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error fetching latest snapshot', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshot/:domain/latest',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error fetching latest snapshot',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshot/:domain/latest',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
@@ -218,12 +226,16 @@ apiRoutes.get('/snapshot/:snapshotId/observations', async (c) => {
     return c.json(observations);
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error fetching observations', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshot/:snapshotId/observations',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error fetching observations',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshot/:snapshotId/observations',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
@@ -248,12 +260,16 @@ apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
     return c.json(recordSets);
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error fetching record sets', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/snapshot/:snapshotId/recordsets',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error fetching record sets',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshot/:snapshotId/recordsets',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json({ error: 'Internal server error' }, 500);
   }
 });

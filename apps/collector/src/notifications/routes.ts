@@ -4,8 +4,8 @@
  * API endpoints for webhook notifications.
  */
 
-import { getCollectorLogger } from '../middleware/error-tracking.js';
 import { Hono } from 'hono';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 import { buildWebhookPayload, sendAlertWebhook } from './webhook.js';
 
@@ -96,12 +96,16 @@ notificationRoutes.post('/webhook', async (c) => {
     );
   } catch (error) {
     const logger = getCollectorLogger();
-    logger.error('Webhook notification error', error instanceof Error ? error : new Error(String(error)), {
-      path: '/api/notify/webhook',
-      method: 'POST',
-      requestId: c.req.header('X-Request-ID'),
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Webhook notification error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        path: '/api/notify/webhook',
+        method: 'POST',
+        requestId: c.req.header('X-Request-ID'),
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Internal Server Error',

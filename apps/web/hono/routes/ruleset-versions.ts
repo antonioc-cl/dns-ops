@@ -43,12 +43,16 @@ export const rulesetVersionRoutes = new Hono<Env>()
       });
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error listing ruleset versions:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/ruleset-versions',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error listing ruleset versions:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/ruleset-versions',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to list ruleset versions',
@@ -80,12 +84,16 @@ export const rulesetVersionRoutes = new Hono<Env>()
       return c.json(active);
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error fetching active ruleset version:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/ruleset-versions/active',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error fetching active ruleset version:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/ruleset-versions/active',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to fetch active ruleset version',
@@ -117,12 +125,16 @@ export const rulesetVersionRoutes = new Hono<Env>()
       return c.json(latest);
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error fetching latest ruleset version:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/ruleset-versions/latest',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error fetching latest ruleset version:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/ruleset-versions/latest',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to fetch latest ruleset version',
@@ -156,12 +168,16 @@ export const rulesetVersionRoutes = new Hono<Env>()
       return c.json(rulesetVersion);
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error fetching ruleset version:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/ruleset-versions/:id',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error fetching ruleset version:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/ruleset-versions/:id',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to fetch ruleset version',
@@ -199,12 +215,16 @@ export const rulesetVersionRoutes = new Hono<Env>()
       return c.json(rulesetVersion);
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error fetching ruleset version:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/ruleset-versions/:id',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error fetching ruleset version:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/ruleset-versions/:id',
+          method: 'GET',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to fetch ruleset version',
@@ -247,12 +267,16 @@ export const rulesetVersionRoutes = new Hono<Env>()
       });
     } catch (error) {
       const logger = getWebLogger();
-    logger.error('Error activating ruleset version:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/ruleset-versions/:id/activate',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+      logger.error(
+        'Error activating ruleset version:',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/ruleset-versions/:id/activate',
+          method: 'POST',
+          tenantId: c.get('tenantId'),
+        }
+      );
       return c.json(
         {
           error: 'Failed to activate ruleset version',

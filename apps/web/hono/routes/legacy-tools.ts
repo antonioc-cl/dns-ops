@@ -240,12 +240,16 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Error logging legacy tool access:', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/unknown',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Error logging legacy tool access:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/unknown',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     // Return 200 to not break the UI, but signal that persistence failed
     return c.json(
       {

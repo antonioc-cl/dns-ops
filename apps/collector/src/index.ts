@@ -9,6 +9,7 @@
  * Requires REDIS_URL for job queue connectivity.
  */
 
+import { createLogger } from '@dns-ops/logging';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -105,8 +106,18 @@ app.route('/api/notify', notificationRoutes);
 
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
 
+const collectorLogger = createLogger({
+  service: 'dns-ops-collector',
+  version: '1.0.0',
+  minLevel: 'info',
+});
+
 app.onError((err, c) => {
-  console.error('Collector error:', err);
+  collectorLogger.error('Collector error', err, {
+    requestId: c.req.header('X-Request-ID'),
+    path: c.req.path,
+    method: c.req.method,
+  });
   return c.json(
     {
       error: 'Internal Server Error',

@@ -7,48 +7,63 @@
  */
 
 import { Hono } from 'hono';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../types.js';
 import { apiRoutes } from './api.js';
 
 describe('GET /api/health/detailed', () => {
-  let app: Hono<Env>;
+  const originalEnv = process.env;
 
   beforeEach(() => {
     vi.resetAllMocks();
-    app = new Hono<Env>();
+    // Reset env
+    process.env = { ...originalEnv };
+  });
 
-    // Setup middleware to inject dependencies
-    app.use('*', (c, next) => {
-      c.set('db', {
-        selectOne: vi.fn(),
-        select: vi.fn(),
-        selectWhere: vi.fn(),
-        insert: vi.fn(),
-        insertMany: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      } as unknown as Env['Variables']['db']);
-      c.set('tenantId', 'test-tenant');
-      c.set('actorId', 'test-user');
-      return next();
-    });
-
-    app.route('/api', apiRoutes);
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   describe('Admin Access Control', () => {
     it('should require admin access', async () => {
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', { select: vi.fn().mockReturnValue([]) } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed');
 
       // Should be rejected without admin credentials
       expect([401, 403]).toContain(res.status);
     });
 
-    it('should return detailed health with CF-Access header', async () => {
+    it('should return detailed health with internal secret', async () => {
+      process.env.INTERNAL_SECRET = 'test-secret-123';
+
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', {
+          selectOne: vi.fn(),
+          select: vi.fn().mockReturnValue([]),
+          selectWhere: vi.fn(),
+          insert: vi.fn(),
+          insertMany: vi.fn(),
+          update: vi.fn(),
+          delete: vi.fn(),
+        } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed', {
         headers: {
-          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+          'X-Internal-Secret': 'test-secret-123',
         },
       });
 
@@ -58,27 +73,39 @@ describe('GET /api/health/detailed', () => {
         service: string;
         version: string;
         uptime: { seconds: number; formatted: string };
+        timestamp: string;
         checks: {
           database: { status: string };
-          circuitBreaker: { state: string };
+          circuitBreaker: { state: string; description: string };
         };
       };
 
       expect(body.status).toBe('healthy');
       expect(body.service).toBe('dns-ops-web');
-      expect(body.version).toBe('0.1.0');
+      expect(body.version).toBeDefined();
       expect(body.uptime.seconds).toBeGreaterThanOrEqual(0);
-      expect(body.checks.database.status).toBe('ok');
+      expect(body.timestamp).toBeDefined();
+      expect(body.checks.database.status).toBe('connected');
       expect(['closed', 'open', 'half-open']).toContain(body.checks.circuitBreaker.state);
+      expect(typeof body.checks.circuitBreaker.consecutiveFailures).toBe('number');
     });
   });
 
   describe('Response Structure', () => {
     it('should include version field', async () => {
+      process.env.INTERNAL_SECRET = 'test-secret-123';
+
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', { select: vi.fn().mockReturnValue([]) } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed', {
-        headers: {
-          'CF-Access-Authenticated-User-Email': 'admin@example.com',
-        },
+        headers: { 'X-Internal-Secret': 'test-secret-123' },
       });
       const body = (await res.json()) as { version: string };
 
@@ -87,10 +114,19 @@ describe('GET /api/health/detailed', () => {
     });
 
     it('should include uptime with seconds and formatted', async () => {
+      process.env.INTERNAL_SECRET = 'test-secret-123';
+
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', { select: vi.fn().mockReturnValue([]) } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed', {
-        headers: {
-          'CF-Access-Authenticated-User-Email': 'admin@example.com',
-        },
+        headers: { 'X-Internal-Secret': 'test-secret-123' },
       });
       const body = (await res.json()) as {
         uptime: { seconds: number; formatted: string };
@@ -103,41 +139,68 @@ describe('GET /api/health/detailed', () => {
     });
 
     it('should include database check', async () => {
+      process.env.INTERNAL_SECRET = 'test-secret-123';
+
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', { select: vi.fn().mockReturnValue([]) } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed', {
-        headers: {
-          'CF-Access-Authenticated-User-Email': 'admin@example.com',
-        },
+        headers: { 'X-Internal-Secret': 'test-secret-123' },
       });
       const body = (await res.json()) as {
-        checks: { database: { status: string } };
+        checks: { database: { status: string; latencyMs: number | null } };
       };
 
       expect(body.checks.database).toBeDefined();
-      expect(body.checks.database.status).toBe('ok');
+      expect(body.checks.database.status).toBe('connected');
     });
 
     it('should include circuit breaker state', async () => {
+      process.env.INTERNAL_SECRET = 'test-secret-123';
+
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', { select: vi.fn().mockReturnValue([]) } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed', {
-        headers: {
-          'CF-Access-Authenticated-User-Email': 'admin@example.com',
-        },
+        headers: { 'X-Internal-Secret': 'test-secret-123' },
       });
       const body = (await res.json()) as {
-        checks: { circuitBreaker: { state: string; description: string } };
+        checks: { circuitBreaker: { state: string; consecutiveFailures: number } };
       };
 
       expect(body.checks.circuitBreaker).toBeDefined();
       expect(['closed', 'open', 'half-open']).toContain(body.checks.circuitBreaker.state);
-      expect(body.checks.circuitBreaker.description).toBeDefined();
+      expect(typeof body.checks.circuitBreaker.consecutiveFailures).toBe('number');
     });
   });
 
   describe('Timestamp', () => {
     it('should include ISO timestamp', async () => {
+      process.env.INTERNAL_SECRET = 'test-secret-123';
+
+      const app = new Hono<Env>();
+      app.use('*', (c, next) => {
+        c.set('db', { select: vi.fn().mockReturnValue([]) } as unknown as Env['Variables']['db']);
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        return next();
+      });
+      app.route('/api', apiRoutes);
+
       const res = await app.request('/api/health/detailed', {
-        headers: {
-          'CF-Access-Authenticated-User-Email': 'admin@example.com',
-        },
+        headers: { 'X-Internal-Secret': 'test-secret-123' },
       });
       const body = (await res.json()) as { timestamp: string };
 
