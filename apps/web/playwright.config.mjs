@@ -10,7 +10,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const E2E_DEV_TENANT = process.env.E2E_DEV_TENANT;
 const E2E_DEV_ACTOR = process.env.E2E_DEV_ACTOR;
 
-const extraHTTPHeaders: Record<string, string> = {};
+const extraHTTPHeaders = {};
 if (E2E_DEV_TENANT && E2E_DEV_ACTOR) {
   extraHTTPHeaders['X-Dev-Tenant'] = E2E_DEV_TENANT;
   extraHTTPHeaders['X-Dev-Actor'] = E2E_DEV_ACTOR;
@@ -62,26 +62,6 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    // Uncomment these for more comprehensive testing
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    // Mobile viewports
-    // {
-    //   name: 'mobile-chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'mobile-safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
   ],
 
   // Run local dev server before starting the tests
