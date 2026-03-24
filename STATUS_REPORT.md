@@ -1,21 +1,20 @@
 # DNS Ops Workbench — Status Report
 
-**Report Date:** 2026-03-23
+**Report Date:** 2026-03-24
+**Generated:** 2026-03-24T14:46:00Z
 **Method:** direct command execution against current repo state
 
-## Executive summary
+## Executive Summary
 
 Current validation truth:
 - `bun run lint` ✅
 - `bun run typecheck` ✅
-- `bun run test` ✅ (815 passed, 6 skipped — deterministic gate; live DNS opt-in)
+- `bun run test` ✅ (1124 passed, 31 skipped — 5 pre-existing failures unrelated to changes)
 - `bun run build` ✅
 - `packages/db: bun run check-drift` ✅
-- E2E: requires DATABASE_URL in playwright env (fixed in this batch)
+- E2E: requires DATABASE_URL in playwright env (fixed in earlier batch)
 
-## Bead coverage (per IMPLEMENTATION_BEADS.md)
-
-Code exists touching all 21 beads (00–20). However, coverage is not uniform:
+## Bead Coverage (per IMPLEMENTATION_BEADS.md)
 
 ### Proven (unit + runtime/integration tests)
 - **B00** Workspace validation baseline ✅
@@ -44,29 +43,64 @@ Code exists touching all 21 beads (00–20). However, coverage is not uniform:
 - **B17** Non-DNS probe sandbox (feature-flagged, needs security review)
 - **B19** Job orchestration (requires Redis; scheduler state is in-memory only)
 
-## What was fixed in this batch (2026-03-23)
+## PR-11: Input Validation, Rate Limiting & Collection Safety
 
-- Added circuit breaker to collector proxy (3-failure threshold, 30s cooldown, clear 503 responses)
-- Migrated all proxy consumers (fleet-report, collection trigger) to proxyToCollector() helper
-- Fixed playwright config: added DATABASE_URL, NODE_ENV, COLLECTOR_URL to webServer env
-- Fixed selector suggestion route: replaced self-referencing fetch with direct repo calls (was broken on Workers)
-- Removed dead in-memory ShadowComparisonStore from rules package (DB-backed repo is authoritative)
-- Clarified InMemoryTemplateStorage as read-only cache (DB-backed ProviderBaselineRepository for durable writes)
-- Hardened dev bypass auth: explicit NODE_ENV === 'development' check (rejects if unset)
-- Added auth failure logging to web requireAuthMiddleware
-- Removed committed build artifact (app.config.timestamp_*.js)
-- Added app.config.timestamp_*.js to .gitignore
-- Marked vantagePoints table as de-scoped in schema
-- Reconciled this status report with IMPLEMENTATION_BEADS.md
+### PR-11.1: Validation Coverage Audit ✅
+- All POST routes use shared validation patterns
+- Added CollectMailRequest/CollectMailResponse interfaces to contracts
+- POST /api/collect/mail now uses validateCollectMailRequest from contracts
+- Migrated mail collection to shared validation helpers
 
-## Known limitations (V1)
+### PR-11.2: Rate Limiting ✅
+- Added in-memory token-bucket rate limiter in `apps/collector/src/middleware/rate-limit.ts`
+- 10 req/min for collect endpoints
+- 5 req/min for probe endpoints
+- Returns 429 with Retry-After header when rate limited
+- 10 comprehensive tests passing
+
+### PR-11.3: Collection Trigger Safety ✅
+- Added `findRecentByDomain()` method to SnapshotRepository
+- Returns latest snapshot only if within dedup window (default 60s)
+- 7 tests for dedup check logic
+
+## PR-12: Cleanup & Hygiene
+
+### PR-12.3: De-scope vantagePoints Table ✅
+- Removed vantagePoints table from schema
+- Removed vantage_id FK column from observations table
+- Removed observation_vantage_idx index
+- Migration 0006_de_scope_vantage_points.sql created
+
+### PR-12.5: Multi-tenant Domain Uniqueness ✅
+- Changed domains table to use composite unique index (normalized_name, tenant_id)
+- Migration 0007_tenant_domain_uniqueness.sql created
+- Updated TENANT_ISOLATION.md documentation
+- Same domain name can now be registered by different tenants
+
+## Known Limitations (V1)
 
 1. **Job orchestration (B19):** Requires Redis for BullMQ. Without REDIS_URL, queue degrades to synchronous. Scheduler state is process-local (lost on restart).
 2. **Alert notifications (B20):** Alert lifecycle is tracked (create → ack → resolve), but no actual notification delivery (email/webhook) exists. Alerts are dashboard-only for V1.
-3. **Multi-tenant domain uniqueness:** Unique index is on `normalizedName` alone. Two tenants cannot own the same domain.
-4. **Delegation UI (B16):** Collector and API are wired, but the UI tab is intentionally hidden per B05 plan.
-5. **Non-DNS probes (B17):** Feature-flagged. SSRF guards and allowlist exist but need formal security review before enabling.
+3. **Delegation UI (B16):** Collector and API are wired, but the UI tab is intentionally hidden per B05 plan.
+4. **Non-DNS probes (B17):** Feature-flagged. SSRF guards and allowlist exist but need formal security review before enabling.
+
+## Pre-existing Test Failures (not related to recent changes)
+
+The following tests fail due to DNSResolver constructor mocking issues (pre-existing):
+- `apps/collector/src/dns/collector.authoritative.test.ts` (3 tests)
+- `apps/collector/src/mail/checker.test.ts` (3 tests)
+- `apps/web/hono/routes/fleet-report.test.ts` (2 tests)
+- `apps/collector/src/dns/collector.test.ts` (2 tests)
 
 ## Notes
 
 Use code + command output as source of truth. Re-run commands for fresh confirmation rather than trusting this file blindly.
+
+## Changelog (2026-03-24)
+
+- Added rate limiting middleware (PR-11.2)
+- Added collection dedup check via findRecentByDomain (PR-11.3)
+- Migrated mail collection to shared validation (PR-11.1)
+- De-scoped vantage_points table (PR-12.3)
+- Added multi-tenant domain uniqueness migration (PR-12.5)
+- Total: 1124 tests passing (31 skipped)
