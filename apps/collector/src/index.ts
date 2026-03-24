@@ -18,6 +18,7 @@ import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
 import { fleetReportRoutes } from './jobs/fleet-report.js';
 import { monitoringRoutes } from './jobs/monitoring.js';
+import { notificationRoutes } from './notifications/routes.js';
 import { probeRoutes } from './jobs/probe-routes.js';
 import { closeQueues, getQueueHealth } from './jobs/queue.js';
 import { startWorkers, stopWorkers, workersRunning } from './jobs/worker.js';
@@ -100,6 +101,7 @@ app.route('/api/collect', collectMailRoutes);
 app.route('/api/probe', probeRoutes);
 app.route('/api/fleet-report', fleetReportRoutes);
 app.route('/api/monitoring', monitoringRoutes);
+app.route('/api/notify', notificationRoutes);
 
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
 
