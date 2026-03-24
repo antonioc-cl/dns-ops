@@ -194,6 +194,35 @@ function validateConfig(config: RuntimeConfig): void {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Collection Patterns
+
+### Synchronous vs Asynchronous Collection
+
+The collector supports two patterns for DNS collection:
+
+| Pattern | Endpoint | Use Case | Redis Required |
+|---------|----------|----------|----------------|
+| Synchronous | `POST /api/collect/domain` | Ad-hoc single domain checks | No |
+| Asynchronous | Job Queue | Scheduled monitoring, fleet reports | Yes |
+
+#### Synchronous Single-Domain Collection
+
+Single-domain collection runs synchronously by design. This decision provides:
+
+1. **Immediate Feedback**: Users get instant results without polling or websockets
+2. **No Redis Dependency**: Works without infrastructure overhead for basic usage
+3. **Simpler Error Handling**: Errors returned directly in HTTP response
+4. **Request-Response Semantics**: DNS collection is fast enough (<5s typically)
+
+The job queue (BullMQ) exists but is intentionally NOT used for single-domain ad-hoc
+collection. See `apps/collector/src/jobs/collect-domain.ts` for implementation details.
+
+#### When to Use the Job Queue
+
+- Scheduled monitoring refreshes (`scheduleMonitoringJob`)
+- Fleet report generation (`getReportsQueue`)
+- Bulk domain processing (future: batch collection endpoint)
+
 ## Related Documents
 
 - [Query Scope](../rules/query-scope.md) - DNS query policies

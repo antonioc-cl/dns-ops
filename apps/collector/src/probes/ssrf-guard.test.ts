@@ -490,7 +490,10 @@ describe('PR-06.1: Custom Lookup Callback Scenario', () => {
   // This creates a TOCTOU vulnerability if not protected
 
   // Simulate custom lookup that returns private IP
-  const maliciousLookup = (hostname: string, callback: (err: Error | null, address: string) => void) => {
+  const _maliciousLookup = (
+    _hostname: string,
+    callback: (err: Error | null, address: string) => void
+  ) => {
     // Attacker returns private IP regardless of actual DNS
     callback(null, '192.168.1.1');
   };

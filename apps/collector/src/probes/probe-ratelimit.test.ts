@@ -4,7 +4,7 @@
  * Tests for probes.concurrency and probes.timeoutMs enforcement.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getEnvConfig } from '../config/env.js';
 
 // Mock environment for testing
@@ -35,10 +35,10 @@ describe('PR-06.2: Rate Limiting and Concurrency Enforcement', () => {
     it('should reject invalid PROBE_TIMEOUT_MS', () => {
       // Values that should be rejected
       const invalidConfigs = [
-        { PROBE_TIMEOUT_MS: '0' },      // Below minimum
-        { PROBE_TIMEOUT_MS: '500' },   // Below minimum
+        { PROBE_TIMEOUT_MS: '0' }, // Below minimum
+        { PROBE_TIMEOUT_MS: '500' }, // Below minimum
         { PROBE_TIMEOUT_MS: '200000' }, // Above maximum
-        { PROBE_TIMEOUT_MS: 'abc' },   // Invalid
+        { PROBE_TIMEOUT_MS: 'abc' }, // Invalid
       ];
 
       for (const env of invalidConfigs) {
@@ -62,9 +62,9 @@ describe('PR-06.2: Rate Limiting and Concurrency Enforcement', () => {
 
     it('should reject invalid PROBE_CONCURRENCY', () => {
       const invalidConfigs = [
-        { PROBE_CONCURRENCY: '0' },    // Below minimum
-        { PROBE_CONCURRENCY: '25' },    // Above maximum
-        { PROBE_CONCURRENCY: '-1' },   // Negative
+        { PROBE_CONCURRENCY: '0' }, // Below minimum
+        { PROBE_CONCURRENCY: '25' }, // Above maximum
+        { PROBE_CONCURRENCY: '-1' }, // Negative
         { PROBE_CONCURRENCY: 'abc' }, // Invalid
       ];
 
@@ -97,7 +97,7 @@ describe('PR-06.2: Rate Limiting and Concurrency Enforcement', () => {
       const startTimes: number[] = [];
       const endTimes: number[] = [];
 
-      const runProbe = async (id: number) => {
+      const runProbe = async (_id: number) => {
         currentConcurrent++;
         maxConcurrent = Math.max(maxConcurrent, currentConcurrent);
         startTimes.push(Date.now());
@@ -108,7 +108,9 @@ describe('PR-06.2: Rate Limiting and Concurrency Enforcement', () => {
 
       // Simulate batched concurrency
       for (let i = 0; i < count; i += concurrency) {
-        const batch = Array.from({ length: Math.min(concurrency, count - i) }, (_, j) => runProbe(i + j));
+        const batch = Array.from({ length: Math.min(concurrency, count - i) }, (_, j) =>
+          runProbe(i + j)
+        );
         await Promise.all(batch);
       }
 
@@ -295,12 +297,12 @@ describe('PR-06.2: Rate Limiting and Concurrency Enforcement', () => {
 
     it('should timeout partial responses', async () => {
       const timeoutMs = 50;
-      let receivedData = false;
+      let _receivedData = false;
 
       // Simulate partial response that stalls
-      const slowResponse = new Promise<void>((resolve) => {
+      const slowResponse = new Promise<void>((_resolve) => {
         setTimeout(() => {
-          receivedData = true;
+          _receivedData = true;
           // Never completes fully
         }, 100);
       });

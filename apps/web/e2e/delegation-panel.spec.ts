@@ -81,7 +81,9 @@ test.describe('DelegationPanel Component', () => {
       await expect(page.locator('text=/Divergence.*none/i')).toBeVisible();
 
       // No issues should be shown
-      const issueCards = page.locator('[class*="rounded-lg border"]').filter({ has: page.locator('[class*="rounded-full"]') });
+      const issueCards = page
+        .locator('[class*="rounded-lg border"]')
+        .filter({ has: page.locator('[class*="rounded-full"]') });
       await expect(issueCards).toHaveCount(0);
     });
 
@@ -124,8 +126,20 @@ test.describe('DelegationPanel Component', () => {
                 description: 'NS records differ between delegation and authoritative response',
                 details: { expected: ['ns1.provider.com'], actual: ['ns1.other.com'] },
                 evidence: [
-                  { queryName: TEST_DOMAIN, queryType: 'NS', source: 'delegation', status: 'success', data: { records: ['ns1.provider.com'] } },
-                  { queryName: TEST_DOMAIN, queryType: 'NS', source: 'authoritative', status: 'success', data: { records: ['ns1.other.com'] } },
+                  {
+                    queryName: TEST_DOMAIN,
+                    queryType: 'NS',
+                    source: 'delegation',
+                    status: 'success',
+                    data: { records: ['ns1.provider.com'] },
+                  },
+                  {
+                    queryName: TEST_DOMAIN,
+                    queryType: 'NS',
+                    source: 'authoritative',
+                    status: 'success',
+                    data: { records: ['ns1.other.com'] },
+                  },
                 ],
               },
             ],
@@ -160,12 +174,8 @@ test.describe('DelegationPanel Component', () => {
             delegation: {
               domain: TEST_DOMAIN,
               parentZone: 'com.',
-              nameServers: [
-                { name: 'ns.lame-delegation.com', source: 'delegation' },
-              ],
-              glue: [
-                { name: 'ns.lame-delegation.com', type: 'A', address: '192.0.2.1' },
-              ],
+              nameServers: [{ name: 'ns.lame-delegation.com', source: 'delegation' }],
+              glue: [{ name: 'ns.lame-delegation.com', type: 'A', address: '192.0.2.1' }],
               hasDivergence: true,
               hasDnssec: false,
             },
@@ -263,12 +273,8 @@ test.describe('DelegationPanel Component', () => {
             delegation: {
               domain: TEST_DOMAIN,
               parentZone: 'com.',
-              nameServers: [
-                { name: 'ns1.dnssec-absent.com', source: 'delegation' },
-              ],
-              glue: [
-                { name: 'ns1.dnssec-absent.com', type: 'A', address: '192.0.2.1' },
-              ],
+              nameServers: [{ name: 'ns1.dnssec-absent.com', source: 'delegation' }],
+              glue: [{ name: 'ns1.dnssec-absent.com', type: 'A', address: '192.0.2.1' }],
               hasDivergence: false,
               hasDnssec: false, // DNSSEC absent
             },
@@ -326,7 +332,9 @@ test.describe('DelegationPanel Component', () => {
 
       // Should show empty state
       await expect(page.locator('text=/No delegation data available/i')).toBeVisible();
-      await expect(page.locator('text=/Delegation collection may not have been enabled/i')).toBeVisible();
+      await expect(
+        page.locator('text=/Delegation collection may not have been enabled/i')
+      ).toBeVisible();
     });
   });
 
@@ -472,7 +480,13 @@ test.describe('DelegationPanel Component', () => {
                 description: 'Name servers differ',
                 details: {},
                 evidence: [
-                  { queryName: TEST_DOMAIN, queryType: 'NS', source: 'delegation', status: 'success', data: { records: ['ns1.com'] } },
+                  {
+                    queryName: TEST_DOMAIN,
+                    queryType: 'NS',
+                    source: 'delegation',
+                    status: 'success',
+                    data: { records: ['ns1.com'] },
+                  },
                 ],
               },
             ],
@@ -521,7 +535,13 @@ test.describe('DelegationPanel Component', () => {
                 description: 'Name servers differ',
                 details: {},
                 evidence: [
-                  { queryName: TEST_DOMAIN, queryType: 'NS', source: 'delegation', status: 'success', data: { raw: 'ns1.com' } },
+                  {
+                    queryName: TEST_DOMAIN,
+                    queryType: 'NS',
+                    source: 'delegation',
+                    status: 'success',
+                    data: { raw: 'ns1.com' },
+                  },
                 ],
               },
             ],

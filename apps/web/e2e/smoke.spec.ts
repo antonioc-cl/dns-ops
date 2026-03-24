@@ -53,7 +53,9 @@ test.describe('DNS Domain Flow', () => {
 
     // Should show delegation panel (may be empty state or have content)
     // Verify either delegation data or empty state is visible
-    const delegationContent = page.locator('text=/Parent Zone Delegation|No delegation data available/i');
+    const delegationContent = page.locator(
+      'text=/Parent Zone Delegation|No delegation data available/i'
+    );
     await expect(delegationContent.first()).toBeVisible();
   });
 
