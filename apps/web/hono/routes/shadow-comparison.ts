@@ -144,7 +144,13 @@ shadowComparisonRoutes.post('/compare', async (c) => {
       persisted: true, // Indicates durable storage
     });
   } catch (error) {
-    console.error('Shadow comparison error:', error);
+    const logger = getWebLogger();
+    logger.error('Shadow comparison error', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/shadow-comparison/compare',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to perform shadow comparison',
@@ -180,7 +186,13 @@ shadowComparisonRoutes.get('/stats', async (c) => {
       durable: true, // Indicates data is persisted
     });
   } catch (error) {
-    console.error('Shadow stats error:', error);
+    const logger = getWebLogger();
+    logger.error('Shadow stats error', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/shadow-comparison/stats',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get shadow comparison statistics',
@@ -215,7 +227,13 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
       })),
     });
   } catch (error) {
-    console.error('Shadow domain lookup error:', error);
+    const logger = getWebLogger();
+    logger.error('Shadow domain lookup error', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/shadow-comparison/domain/:domain',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get domain comparisons',

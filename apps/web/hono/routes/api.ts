@@ -5,8 +5,9 @@ import {
   RecordSetRepository,
   SnapshotRepository,
 } from '@dns-ops/db';
+import { domains } from '@dns-ops/db/schema';
 import { Hono } from 'hono';
-import { collectorCircuit } from '../lib/collector-proxy.js';
+import { collectorCircuit, proxyToCollector } from '../lib/collector-proxy.js';
 import { requireAdminAccess, requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
