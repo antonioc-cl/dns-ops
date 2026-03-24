@@ -42,6 +42,31 @@ export class SnapshotRepository {
   }
 
   /**
+   * Check if the latest snapshot for a domain was created within the dedup window
+   * @param domainId The domain ID
+   * @param windowMs Minimum time since last snapshot in milliseconds (default: 60 seconds)
+   * @returns The latest snapshot if within window, undefined if no recent snapshot
+   */
+  async findRecentByDomain(
+    domainId: string,
+    windowMs: number = 60_000
+  ): Promise<Snapshot | undefined> {
+    const latest = await this.findLatestByDomain(domainId);
+    if (!latest) {
+      return undefined;
+    }
+
+    const now = Date.now();
+    const snapshotAge = now - new Date(latest.createdAt).getTime();
+
+    if (snapshotAge < windowMs) {
+      return latest;
+    }
+
+    return undefined;
+  }
+
+  /**
    * Get snapshots by result state
    */
   async findByState(
