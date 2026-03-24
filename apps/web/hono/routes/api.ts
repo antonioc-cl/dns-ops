@@ -247,7 +247,13 @@ apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
     const recordSets = await recordSetRepo.findBySnapshotId(accessibleSnapshot.snapshot.id);
     return c.json(recordSets);
   } catch (error) {
-    console.error('Error fetching record sets:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching record sets', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:snapshotId/recordsets',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json({ error: 'Internal server error' }, 500);
   }
 });

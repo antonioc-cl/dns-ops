@@ -45,28 +45,12 @@ describe('GET /api/health/detailed', () => {
       expect([401, 403]).toContain(res.status);
     });
 
-    it('should return detailed health with admin credentials', async () => {
-      // Create app with admin credentials
-      const adminApp = new Hono<Env>();
-      adminApp.use('*', (c, next) => {
-        c.set('db', {
-          selectOne: vi.fn(),
-          select: vi.fn(),
-          selectWhere: vi.fn(),
-          insert: vi.fn(),
-          insertMany: vi.fn(),
-          update: vi.fn(),
-          delete: vi.fn(),
-        } as unknown as Env['Variables']['db']);
-        c.set('tenantId', 'test-tenant');
-        c.set('actorId', 'test-user');
-        // Set admin context
-        c.set('isAdmin', true);
-        return next();
+    it('should return detailed health with CF-Access header', async () => {
+      const res = await app.request('/api/health/detailed', {
+        headers: {
+          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+        },
       });
-      adminApp.route('/api', apiRoutes);
-
-      const res = await adminApp.request('/api/health/detailed');
 
       expect(res.status).toBe(200);
       const body = (await res.json()) as {
@@ -91,17 +75,11 @@ describe('GET /api/health/detailed', () => {
 
   describe('Response Structure', () => {
     it('should include version field', async () => {
-      const adminApp = new Hono<Env>();
-      adminApp.use('*', (c, next) => {
-        c.set('db', {} as unknown as Env['Variables']['db']);
-        c.set('tenantId', 'test-tenant');
-        c.set('actorId', 'test-user');
-        c.set('isAdmin', true);
-        return next();
+      const res = await app.request('/api/health/detailed', {
+        headers: {
+          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+        },
       });
-      adminApp.route('/api', apiRoutes);
-
-      const res = await adminApp.request('/api/health/detailed');
       const body = (await res.json()) as { version: string };
 
       expect(body.version).toBeDefined();
@@ -109,17 +87,11 @@ describe('GET /api/health/detailed', () => {
     });
 
     it('should include uptime with seconds and formatted', async () => {
-      const adminApp = new Hono<Env>();
-      adminApp.use('*', (c, next) => {
-        c.set('db', {} as unknown as Env['Variables']['db']);
-        c.set('tenantId', 'test-tenant');
-        c.set('actorId', 'test-user');
-        c.set('isAdmin', true);
-        return next();
+      const res = await app.request('/api/health/detailed', {
+        headers: {
+          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+        },
       });
-      adminApp.route('/api', apiRoutes);
-
-      const res = await adminApp.request('/api/health/detailed');
       const body = (await res.json()) as {
         uptime: { seconds: number; formatted: string };
       };
@@ -131,17 +103,11 @@ describe('GET /api/health/detailed', () => {
     });
 
     it('should include database check', async () => {
-      const adminApp = new Hono<Env>();
-      adminApp.use('*', (c, next) => {
-        c.set('db', {} as unknown as Env['Variables']['db']);
-        c.set('tenantId', 'test-tenant');
-        c.set('actorId', 'test-user');
-        c.set('isAdmin', true);
-        return next();
+      const res = await app.request('/api/health/detailed', {
+        headers: {
+          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+        },
       });
-      adminApp.route('/api', apiRoutes);
-
-      const res = await adminApp.request('/api/health/detailed');
       const body = (await res.json()) as {
         checks: { database: { status: string } };
       };
@@ -151,17 +117,11 @@ describe('GET /api/health/detailed', () => {
     });
 
     it('should include circuit breaker state', async () => {
-      const adminApp = new Hono<Env>();
-      adminApp.use('*', (c, next) => {
-        c.set('db', {} as unknown as Env['Variables']['db']);
-        c.set('tenantId', 'test-tenant');
-        c.set('actorId', 'test-user');
-        c.set('isAdmin', true);
-        return next();
+      const res = await app.request('/api/health/detailed', {
+        headers: {
+          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+        },
       });
-      adminApp.route('/api', apiRoutes);
-
-      const res = await adminApp.request('/api/health/detailed');
       const body = (await res.json()) as {
         checks: { circuitBreaker: { state: string; description: string } };
       };
@@ -174,17 +134,11 @@ describe('GET /api/health/detailed', () => {
 
   describe('Timestamp', () => {
     it('should include ISO timestamp', async () => {
-      const adminApp = new Hono<Env>();
-      adminApp.use('*', (c, next) => {
-        c.set('db', {} as unknown as Env['Variables']['db']);
-        c.set('tenantId', 'test-tenant');
-        c.set('actorId', 'test-user');
-        c.set('isAdmin', true);
-        return next();
+      const res = await app.request('/api/health/detailed', {
+        headers: {
+          'CF-Access-Authenticated-User-Email': 'admin@example.com',
+        },
       });
-      adminApp.route('/api', apiRoutes);
-
-      const res = await adminApp.request('/api/health/detailed');
       const body = (await res.json()) as { timestamp: string };
 
       expect(body.timestamp).toBeDefined();
