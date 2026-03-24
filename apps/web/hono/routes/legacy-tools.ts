@@ -239,7 +239,13 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error logging legacy tool access:', error);
+    const logger = getWebLogger();
+    logger.error('Error logging legacy tool access:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     // Return 200 to not break the UI, but signal that persistence failed
     return c.json(
       {
@@ -590,7 +596,13 @@ legacyToolsRoutes.get('/shadow-stats', requireAuth, async (c) => {
       durable: true, // Indicates data is persisted to database
     });
   } catch (error) {
-    console.error('Shadow stats error:', error);
+    const logger = getWebLogger();
+    logger.error('Shadow stats error:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get shadow comparison statistics',

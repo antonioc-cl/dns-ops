@@ -6,6 +6,7 @@
 
 import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const delegationRoutes = new Hono<Env>();
@@ -91,7 +92,14 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation', async (c) => {
       delegation,
     });
   } catch (error) {
-    console.error('Error fetching delegation:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching delegation', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:snapshotId/delegation',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+      snapshotId: c.req.param('snapshotId'),
+    });
     return c.json(
       {
         error: 'Failed to fetch delegation data',
@@ -133,7 +141,13 @@ delegationRoutes.get('/domain/:domain/delegation/latest', async (c) => {
     // Redirect to the snapshot-specific endpoint
     return c.redirect(`/api/snapshot/${snapshotWithDelegation.id}/delegation`);
   } catch (error) {
-    console.error('Error fetching latest delegation:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching latest delegation:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:snapshotId/delegation/latest',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to fetch delegation data',
@@ -230,7 +244,13 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', async (c) => {
       issueCount: issues.length,
     });
   } catch (error) {
-    console.error('Error fetching delegation issues:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching delegation issues:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:snapshotId/delegation',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to fetch delegation issues',
@@ -385,7 +405,13 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/dnssec', async (c) => {
       dnssec,
     });
   } catch (error) {
-    console.error('Error fetching DNSSEC evidence:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching DNSSEC evidence:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshots/:snapshotId/delegation/dnssec',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to fetch DNSSEC evidence',
@@ -543,7 +569,13 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
       evidence,
     });
   } catch (error) {
-    console.error('Error fetching delegation evidence:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching delegation evidence:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshot/:snapshotId/delegation',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to fetch delegation evidence',
