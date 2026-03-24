@@ -1586,6 +1586,241 @@ describe('Portfolio Routes', () => {
   });
 
   // ===========================================================================
+  // AUDIT LOG COMPLETENESS TESTS - PR-04.3
+  // ===========================================================================
+
+  describe('Audit Log Completeness (PR-04.3)', () => {
+    describe('Note CRUD Audit Trail', () => {
+      it('should produce audit event when creating a note', async () => {
+        mockData.domains.push({
+          id: 'domain-1',
+          name: 'example.com',
+          normalizedName: 'example.com',
+          tenantId: 'tenant-1',
+          zoneManagement: 'unmanaged',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        const res = await app.request('/api/portfolio/domains/domain-1/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: 'Test note content' }),
+        });
+
+        expect(res.status).toBe(201);
+
+        // Verify audit event was created
+        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_note');
+        expect(auditRes.status).toBe(200);
+        const auditBody = (await auditRes.json()) as JsonBody;
+        const events = auditBody.events as Array<JsonBody>;
+        expect(events.some((e) => e.action === 'domain_note_created')).toBe(true);
+      });
+
+      it('should produce audit event when updating a note', async () => {
+        mockData.domainNotes = [
+          {
+            id: 'note-1',
+            domainId: 'domain-1',
+            content: 'Original content',
+            createdBy: 'user-123',
+            tenantId: 'tenant-1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+
+        const res = await app.request('/api/portfolio/notes/note-1', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: 'Updated content' }),
+        });
+
+        expect(res.status).toBe(200);
+
+        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_note&entityId=note-1');
+        expect(auditRes.status).toBe(200);
+        const auditBody = (await auditRes.json()) as JsonBody;
+        const events = auditBody.events as Array<JsonBody>;
+        expect(events.some((e) => e.action === 'domain_note_updated')).toBe(true);
+      });
+
+      it('should produce audit event when deleting a note', async () => {
+        mockData.domainNotes = [
+          {
+            id: 'note-2',
+            domainId: 'domain-1',
+            content: 'To be deleted',
+            createdBy: 'user-123',
+            tenantId: 'tenant-1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+
+        const res = await app.request('/api/portfolio/notes/note-2', {
+          method: 'DELETE',
+        });
+
+        expect(res.status).toBe(200);
+
+        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_note&entityId=note-2');
+        expect(auditRes.status).toBe(200);
+        const auditBody = (await auditRes.json()) as JsonBody;
+        const events = auditBody.events as Array<JsonBody>;
+        expect(events.some((e) => e.action === 'domain_note_deleted')).toBe(true);
+      });
+    });
+
+    describe('Tag CRUD Audit Trail', () => {
+      it('should produce audit event when adding a tag', async () => {
+        mockData.domains.push({
+          id: 'domain-2',
+          name: 'test.com',
+          normalizedName: 'test.com',
+          tenantId: 'tenant-1',
+          zoneManagement: 'unmanaged',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        const res = await app.request('/api/portfolio/domains/domain-2/tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: 'production' }),
+        });
+
+        expect(res.status).toBe(201);
+
+        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_tag');
+        expect(auditRes.status).toBe(200);
+        const auditBody = (await auditRes.json()) as JsonBody;
+        const events = auditBody.events as Array<JsonBody>;
+        expect(events.some((e) => e.action === 'domain_tag_added')).toBe(true);
+      });
+
+      it('should produce audit event when removing a tag', async () => {
+        mockData.tags = [
+          {
+            id: 'tag-1',
+            domainId: 'domain-2',
+            tag: 'production',
+            createdBy: 'user-123',
+            tenantId: 'tenant-1',
+            createdAt: new Date(),
+          },
+        ];
+
+        const res = await app.request('/api/portfolio/domains/domain-2/tags/production', {
+          method: 'DELETE',
+        });
+
+        expect(res.status).toBe(200);
+
+        const auditRes = await app.request('/api/portfolio/audit?entityType=domain_tag&entityId=tag-1');
+        expect(auditRes.status).toBe(200);
+        const auditBody = (await auditRes.json()) as JsonBody;
+        const events = auditBody.events as Array<JsonBody>;
+        expect(events.some((e) => e.action === 'domain_tag_removed')).toBe(true);
+      });
+    });
+
+    describe('Saved Filter CRUD Audit Trail', () => {
+      it('should produce audit events for filter creation and deletion', async () => {
+        // Create filter
+        const createRes = await app.request('/api/portfolio/filters', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'High Severity Filter',
+            criteria: { severities: ['high', 'critical'] },
+          }),
+        });
+
+        expect(createRes.status).toBe(201);
+        const createBody = (await createRes.json()) as JsonBody;
+        const filterId = createBody.filter?.id as string;
+
+        // Verify create audit event
+        const createAuditRes = await app.request(
+          `/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`
+        );
+        expect(createAuditRes.status).toBe(200);
+        const createAuditBody = (await createAuditRes.json()) as JsonBody;
+        const createEvents = createAuditBody.events as Array<JsonBody>;
+        expect(createEvents.some((e) => e.action === 'filter_created')).toBe(true);
+
+        // Delete filter
+        const deleteRes = await app.request(`/api/portfolio/filters/${filterId}`, {
+          method: 'DELETE',
+        });
+
+        expect(deleteRes.status).toBe(200);
+
+        // Verify delete audit event
+        const deleteAuditRes = await app.request(`/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`);
+        expect(deleteAuditRes.status).toBe(200);
+        const deleteAuditBody = (await deleteAuditRes.json()) as JsonBody;
+        const deleteEvents = deleteAuditBody.events as Array<JsonBody>;
+        expect(deleteEvents.some((e) => e.action === 'filter_deleted')).toBe(true);
+      });
+    });
+
+    describe('Template Override Audit Trail', () => {
+      it('should produce audit event when creating an override', async () => {
+        const res = await app.request('/api/portfolio/templates/overrides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            providerKey: 'google-workspace',
+            templateKey: 'dkim',
+            overrideData: { dkimSelectors: ['custom'] },
+          }),
+        });
+
+        expect(res.status).toBe(201);
+        const body = (await res.json()) as JsonBody;
+        const overrideId = body.override?.id as string;
+
+        const auditRes = await app.request(
+          `/api/portfolio/audit?entityType=template_override&entityId=${overrideId}`
+        );
+        expect(auditRes.status).toBe(200);
+        const auditBody = (await auditRes.json()) as JsonBody;
+        const events = auditBody.events as Array<JsonBody>;
+        expect(events.some((e) => e.action === 'template_override_created')).toBe(true);
+      });
+    });
+
+    describe('Tenant Scoping in Audit Trail', () => {
+      it('should not expose audit events across tenant boundaries', async () => {
+        // Create event for tenant-1
+        mockData.auditEvents.push({
+          id: 'event-cross-tenant-1',
+          action: 'domain_note_created',
+          entityType: 'domain_note',
+          entityId: 'cross-tenant-note',
+          newValue: { content: 'Cross tenant test' },
+          actorId: 'user-other',
+          tenantId: 'tenant-2', // Different tenant
+          createdAt: new Date(),
+        });
+
+        // Query audit as tenant-1
+        const res = await app.request('/api/portfolio/audit');
+
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as JsonBody;
+        const events = body.events as Array<JsonBody>;
+
+        // Should not include tenant-2 events
+        expect(events.every((e) => (e.tenantId as string) === 'tenant-1')).toBe(true);
+      });
+    });
+  });
+
+  // ===========================================================================
   // FINDINGS EVALUATED STATE TESTS
   // ===========================================================================
 
