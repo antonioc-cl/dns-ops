@@ -9,6 +9,85 @@ import { expect, test } from '@playwright/test';
 
 const TEST_DOMAIN = 'google.com';
 
+test.describe('PR-02.5: Mail Findings Preview Label', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  test.beforeEach(async ({ page }) => {
+    // Navigate to domain page with mail tab
+    await page.goto(`/domain/${TEST_DOMAIN}?tab=mail`);
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('should display preview badge in mail findings section', async ({ page }) => {
+    // Intercept mail check API to return results
+    await page.route('**/api/mail/check/**', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          dmarc: { present: true, valid: true, errors: [] },
+          dkim: { present: true, valid: true, errors: [], selector: 'google', selectorProvenance: 'provider-heuristic' },
+          spf: { present: true, valid: true, errors: [] },
+        }),
+      });
+    });
+
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+
+    // Check preview badge is visible
+    const previewBadge = page.getByTestId('mail-preview-badge');
+    await expect(previewBadge).toBeVisible();
+    await expect(previewBadge).toHaveText('Preview');
+  });
+
+  test('should display preview disclaimer referencing legacy tools', async ({ page }) => {
+    await page.route('**/api/mail/check/**', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          dmarc: { present: true, valid: true, errors: [] },
+          dkim: { present: true, valid: true, errors: [] },
+          spf: { present: true, valid: true, errors: [] },
+        }),
+      });
+    });
+
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+
+    // Check preview disclaimer is visible
+    const disclaimer = page.getByTestId('mail-preview-disclaimer');
+    await expect(disclaimer).toBeVisible();
+    await expect(disclaimer).toContainText('Preview');
+    await expect(disclaimer).toContainText('authoritative results');
+    await expect(disclaimer).toContainText('legacy');
+  });
+
+  test('should show preview badge styling', async ({ page }) => {
+    await page.route('**/api/mail/check/**', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          dmarc: { present: true, valid: true, errors: [] },
+          dkim: { present: true, valid: true, errors: [] },
+          spf: { present: true, valid: true, errors: [] },
+        }),
+      });
+    });
+
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+
+    const previewBadge = page.getByTestId('mail-preview-badge');
+    const classes = await previewBadge.getAttribute('class');
+    // Badge should have purple styling to indicate preview/experimental
+    expect(classes).toContain('purple');
+  });
+});
+
 test.describe('DiscoveredSelectors Component', () => {
   test.describe.configure({ mode: 'serial' });
 
