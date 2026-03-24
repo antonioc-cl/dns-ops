@@ -157,7 +157,8 @@ describe('PR-09.2: Cross-Tenant Read Isolation Requirements', () => {
       };
 
       // Should return 404 (not authorized)
-      const shouldReturn404 = crossTenantAccess.resourceTenantId !== crossTenantAccess.requesterTenantId;
+      const shouldReturn404 =
+        crossTenantAccess.resourceTenantId !== crossTenantAccess.requesterTenantId;
       expect(shouldReturn404).toBe(true);
     });
   });
