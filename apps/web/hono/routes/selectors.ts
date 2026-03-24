@@ -12,6 +12,7 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const selectorRoutes = new Hono<Env>();
@@ -105,7 +106,18 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
       source: 'inferred', // Indicates data was inferred from observations
     });
   } catch (error) {
-    console.error('Error fetching selectors:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Error fetching selectors',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshot/:snapshotId/selectors',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+        snapshotId: c.req.param('snapshotId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to fetch selectors',

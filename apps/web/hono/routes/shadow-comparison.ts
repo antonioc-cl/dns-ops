@@ -145,12 +145,16 @@ shadowComparisonRoutes.post('/compare', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Shadow comparison error', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/shadow-comparison/compare',
-      method: 'POST',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Shadow comparison error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/compare',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to perform shadow comparison',
@@ -228,12 +232,16 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
     });
   } catch (error) {
     const logger = getWebLogger();
-    logger.error('Shadow domain lookup error', error instanceof Error ? error : new Error(String(error)), {
-      requestId: c.req.header('X-Request-ID'),
-      path: '/api/shadow-comparison/domain/:domain',
-      method: 'GET',
-      tenantId: c.get('tenantId'),
-    });
+    logger.error(
+      'Shadow domain lookup error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/domain/:domain',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get domain comparisons',
@@ -269,7 +277,13 @@ shadowComparisonRoutes.get('/legacy-logs', async (c) => {
       stats,
     });
   } catch (error) {
-    console.error('Legacy logs error:', error);
+    const logger = getWebLogger();
+    logger.error('Legacy logs error', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/shadow-comparison/legacy-logs',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get legacy access logs',
@@ -374,7 +388,17 @@ shadowComparisonRoutes.get('/provider-baselines', async (c) => {
       overridesActive: baselinesWithOverrides.some((b) => b.overridesApplied.length > 0),
     });
   } catch (error) {
-    console.error('Provider baselines error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Provider baselines error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/provider-baselines',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get provider baselines',
@@ -418,7 +442,17 @@ shadowComparisonRoutes.get('/provider-baselines/:providerKey', async (c) => {
       overridesApplied: withOverrides.overridesApplied,
     });
   } catch (error) {
-    console.error('Provider baseline error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Provider baseline error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/provider-baselines/:providerKey',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get provider baseline',
@@ -466,7 +500,17 @@ shadowComparisonRoutes.post('/mismatch-report', requireAdminAccess, async (c) =>
         : 'Domain does not meet cutover threshold',
     });
   } catch (error) {
-    console.error('Mismatch report error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Mismatch report error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/mismatch-report',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to generate mismatch report',
@@ -511,7 +555,17 @@ shadowComparisonRoutes.get('/mismatch-reports/:domain', async (c) => {
         : null,
     });
   } catch (error) {
-    console.error('Mismatch reports error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Mismatch reports error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/mismatch-reports/:domain',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get mismatch reports',
@@ -541,7 +595,17 @@ shadowComparisonRoutes.post('/seed-baselines', requireAdminAccess, async (c) => 
       providers: baselines.map((b) => b.providerKey),
     });
   } catch (error) {
-    console.error('Seed baselines error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Seed baselines error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/seed-baselines',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to seed provider baselines',
@@ -574,7 +638,17 @@ shadowComparisonRoutes.get('/:id', async (c) => {
 
     return c.json({ comparison });
   } catch (error) {
-    console.error('Shadow comparison get error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Shadow comparison get error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/:id',
+        method: 'GET',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to get shadow comparison',
@@ -643,7 +717,17 @@ shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => 
       comparison: updated,
     });
   } catch (error) {
-    console.error('Shadow adjudication error:', error);
+    const logger = getWebLogger();
+    logger.error(
+      'Shadow adjudication error',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/shadow-comparison/:id/adjudicate',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to adjudicate shadow comparison',

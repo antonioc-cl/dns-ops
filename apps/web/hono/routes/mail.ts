@@ -9,7 +9,7 @@ import { Hono } from 'hono';
 import { getRequestEnvConfig } from '../config/env.js';
 import { getFeedbackMetrics } from '../lib/metrics.js';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
-import { trackMailCheck } from '../middleware/error-tracking.js';
+import { getWebLogger, trackMailCheck } from '../middleware/error-tracking.js';
 import {
   domainName,
   email,
@@ -112,7 +112,18 @@ export const mailRoutes = new Hono<Env>()
         checkType: 'all',
         success: false,
       });
-      console.error('Collector connection error:', error);
+      const logger = getWebLogger();
+      logger.error(
+        'Collector connection error',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestId: c.req.header('X-Request-ID'),
+          path: '/api/mail/collect/mail',
+          method: 'POST',
+          tenantId,
+          domain: data.domain,
+        }
+      );
       return c.json({ error: 'Failed to connect to collector service' }, 503);
     }
   })
