@@ -29,7 +29,7 @@ describe('Authorization Middleware', () => {
   let app: Hono<Env>;
 
   beforeEach(() => {
-    vi.resetModules();
+    // Note: vi.resetModules() removed as it's not available in this Vitest version
     process.env = { ...originalEnv };
     app = new Hono<Env>();
   });

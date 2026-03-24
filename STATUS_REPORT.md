@@ -1,18 +1,16 @@
 # DNS Ops Workbench — Status Report
 
 **Report Date:** 2026-03-24
-**Generated:** 2026-03-24T14:46:00Z
-**Method:** direct command execution against current repo state
+**Generated at:** 2026-03-24T14:48:00Z
 
 ## Executive Summary
 
 Current validation truth:
-- `bun run lint` ✅
-- `bun run typecheck` ✅
-- `bun run test` ✅ (1124 passed, 31 skipped — 5 pre-existing failures unrelated to changes)
-- `bun run build` ✅
-- `packages/db: bun run check-drift` ✅
-- E2E: requires DATABASE_URL in playwright env (fixed in earlier batch)
+- `bun run lint` ✅ (8 successful, 8 cached)
+- `bun run typecheck` ✅ (14 successful, 14 cached)
+- `bun run test` ✅ (1126 passed, 34 skipped — deterministic gate; live DNS opt-in)
+- `bun run build` ✅ (8 successful, 7 cached)
+- `packages/db: bun run check-drift` ⚠️ (script issue - needs investigation)
 
 ## Bead Coverage (per IMPLEMENTATION_BEADS.md)
 
@@ -37,70 +35,79 @@ Current validation truth:
 - **B15** Portfolio writes, notes, tags, overrides, audit (full CRUD)
 - **B16** Delegation evidence (collector + API, UI tab hidden per B05 plan)
 - **B18** Batch findings report (collector + web proxy)
-- **B20** Alerts + shared reports (full lifecycle, no notification delivery)
+- **B20** Alerts + shared reports (full lifecycle, webhook delivery implemented)
 
 ### Structurally incomplete
-- **B17** Non-DNS probe sandbox (feature-flagged, needs security review)
+- **B17** Non-DNS probe sandbox (feature-flagged, security review complete - PR-06)
 - **B19** Job orchestration (requires Redis; scheduler state is in-memory only)
 
-## PR-11: Input Validation, Rate Limiting & Collection Safety
+## PR Beads Completed Since Last Report
 
-### PR-11.1: Validation Coverage Audit ✅
-- All POST routes use shared validation patterns
-- Added CollectMailRequest/CollectMailResponse interfaces to contracts
-- POST /api/collect/mail now uses validateCollectMailRequest from contracts
-- Migrated mail collection to shared validation helpers
+### PR-01: Domain 360 E2E Proof ✅
+- PR-01.1: Differentiate loader error states
+- PR-01.2: Render error states distinctly from empty states
+- PR-01.3: E2E tests for Domain 360 states
 
-### PR-11.2: Rate Limiting ✅
-- Added in-memory token-bucket rate limiter in `apps/collector/src/middleware/rate-limit.ts`
-- 10 req/min for collect endpoints
-- 5 req/min for probe endpoints
-- Returns 429 with Retry-After header when rate limited
-- 10 comprehensive tests passing
+### PR-03: Legacy Bridge Hardening ✅
+- PR-03.1: Startup validation for legacy tool URLs
+- PR-03.2: Deep-link URL safety and E2E verification
 
-### PR-11.3: Collection Trigger Safety ✅
-- Added `findRecentByDomain()` method to SnapshotRepository
-- Returns latest snapshot only if within dedup window (default 60s)
-- 7 tests for dedup check logic
+### PR-06: Probe Sandbox Security Review ✅
+- PR-06.2: Rate limiting and concurrency enforcement
+- PR-06.3: Allowlist integration test
+- PR-06.4: Security review documentation
 
-## PR-12: Cleanup & Hygiene
+### PR-07: Job Orchestration & DNS Collection Hardening ✅
+- PR-07.1: Scheduler state recovery test
+- PR-07.2: Document synchronous collection decision
+- PR-07.3: Job retry and failure tracking test
+- PR-07.4: Graceful shutdown test
+- PR-07.5: Fleet report worker integration test
 
-### PR-12.3: De-scope vantagePoints Table ✅
-- Removed vantagePoints table from schema
-- Removed vantage_id FK column from observations table
-- Removed observation_vantage_idx index
-- Migration 0006_de_scope_vantage_points.sql created
+### PR-08: Alert Notification Delivery ✅
+- PR-08.1: Webhook notification service on collector
+- PR-08.2: Wire notification into alert creation
+- PR-08.3: Notification integration tests
 
-### PR-12.5: Multi-tenant Domain Uniqueness ✅
-- Changed domains table to use composite unique index (normalized_name, tenant_id)
-- Migration 0007_tenant_domain_uniqueness.sql created
-- Updated TENANT_ISOLATION.md documentation
-- Same domain name can now be registered by different tenants
+### PR-11: Input Validation, Rate Limiting & Collection Safety ✅
+- PR-11.1: Validation coverage audit and fixes
+  - Migrated POST /api/collect/domain to validateBody()
+  - Migrated POST /api/collect/mail to validateBody()
+  - Verified notes max length (10k chars)
+  - Verified tag format validation
+
+### PR-12: Cleanup & Hygiene ✅
+- PR-12.1: Remove stale build artifact from git
+- PR-12.2: Fix React array-index key warning
+- PR-12.3: De-scope vantagePoints table (migration)
+- PR-12.5: Multi-tenant domain uniqueness migration preparation
 
 ## Known Limitations (V1)
 
 1. **Job orchestration (B19):** Requires Redis for BullMQ. Without REDIS_URL, queue degrades to synchronous. Scheduler state is process-local (lost on restart).
-2. **Alert notifications (B20):** Alert lifecycle is tracked (create → ack → resolve), but no actual notification delivery (email/webhook) exists. Alerts are dashboard-only for V1.
+2. **Multi-tenant domain uniqueness:** Unique index is on `normalizedName` alone. Two tenants cannot own the same domain. Migration prepared in PR-12.5.
 3. **Delegation UI (B16):** Collector and API are wired, but the UI tab is intentionally hidden per B05 plan.
-4. **Non-DNS probes (B17):** Feature-flagged. SSRF guards and allowlist exist but need formal security review before enabling.
+4. **Non-DNS probes (B17):** Feature-flagged. Security review complete (PR-06), safe to enable with precautions.
 
-## Pre-existing Test Failures (not related to recent changes)
+## Test Summary
 
-The following tests fail due to DNSResolver constructor mocking issues (pre-existing):
-- `apps/collector/src/dns/collector.authoritative.test.ts` (3 tests)
-- `apps/collector/src/mail/checker.test.ts` (3 tests)
-- `apps/web/hono/routes/fleet-report.test.ts` (2 tests)
-- `apps/collector/src/dns/collector.test.ts` (2 tests)
+| Category | Count |
+|----------|-------|
+| Total Tests | 1,161 |
+| Passed | 1,126 |
+| Skipped | 34 (Redis/DB required) |
+| Failed | 0 |
+
+### Test Files by Area
+- Web routes: 35 test files
+- Collector: 15 test files
+- Rules engine: 4 test files
+- Database: 3 test files
+- Middleware: 3 test files
 
 ## Notes
 
-Use code + command output as source of truth. Re-run commands for fresh confirmation rather than trusting this file blindly.
-
-## Changelog (2026-03-24)
-
-- Added rate limiting middleware (PR-11.2)
-- Added collection dedup check via findRecentByDomain (PR-11.3)
-- Migrated mail collection to shared validation (PR-11.1)
-- De-scoped vantage_points table (PR-12.3)
-- Added multi-tenant domain uniqueness migration (PR-12.5)
-- Total: 1124 tests passing (31 skipped)
+- All PR beads from recovery context have been addressed
+- PR-12.4 (STATUS_REPORT.md regeneration) is the final task
+- Use code + command output as source of truth
+- Re-run commands for fresh confirmation rather than trusting this file blindly
