@@ -162,6 +162,194 @@ function emptyState(): MockState {
 }
 
 describe('shadowComparisonRoutes runtime', () => {
+  // ===========================================================================
+  // TEMPLATE OVERRIDE SCOPING TESTS (Bead 57pa.2)
+  // ===========================================================================
+
+  describe('Template Override Scoping', () => {
+    it('should apply override to specific domain when appliesToDomains contains that domain', async () => {
+      const state = emptyState();
+      state.templateOverrides = [
+        {
+          id: 'override-specific',
+          providerKey: 'google-workspace',
+          templateKey: 'dkim',
+          overrideData: { dkimSelectors: ['custom-selector'] },
+          appliesToDomains: ['specific.example.com'],
+          tenantId: 'tenant-1',
+          createdBy: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      state.providerBaselines = [
+        {
+          id: 'pb-1',
+          providerKey: 'google-workspace',
+          providerName: 'Google Workspace',
+          baseline: {},
+          dkimSelectors: ['default-google'],
+          mxPatterns: ['*.google.com'],
+          spfIncludes: ['_spf.google.com'],
+          version: '1.0.0',
+        },
+      ];
+      const app = createApp(state);
+
+      // Request with the specific domain - should apply override
+      const response = await app.request(
+        '/api/shadow-comparison/provider-baselines/google-workspace?domainName=specific.example.com'
+      );
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as {
+        baseline: { dkimSelectors: string[]; overridesApplied: string[] };
+      };
+      expect(json.baseline.overridesApplied).toContain('override-specific');
+      expect(json.baseline.dkimSelectors).toContain('custom-selector');
+    });
+
+    it('should NOT apply override to different domain when appliesToDomains contains other domain', async () => {
+      const state = emptyState();
+      state.templateOverrides = [
+        {
+          id: 'override-specific',
+          providerKey: 'google-workspace',
+          templateKey: 'dkim',
+          overrideData: { dkimSelectors: ['custom-selector'] },
+          appliesToDomains: ['specific.example.com'],
+          tenantId: 'tenant-1',
+          createdBy: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      state.providerBaselines = [
+        {
+          id: 'pb-1',
+          providerKey: 'google-workspace',
+          providerName: 'Google Workspace',
+          baseline: {},
+          dkimSelectors: ['default-google'],
+          mxPatterns: ['*.google.com'],
+          spfIncludes: ['_spf.google.com'],
+          version: '1.0.0',
+        },
+      ];
+      const app = createApp(state);
+
+      // Request with a different domain - should NOT apply override
+      const response = await app.request(
+        '/api/shadow-comparison/provider-baselines/google-workspace?domainName=other.example.com'
+      );
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as {
+        baseline: { dkimSelectors: string[]; overridesApplied: string[] };
+      };
+      expect(json.baseline.overridesApplied).not.toContain('override-specific');
+      expect(json.baseline.dkimSelectors).toContain('default-google');
+    });
+
+    it('should apply global override (empty appliesToDomains) to all domains', async () => {
+      const state = emptyState();
+      state.templateOverrides = [
+        {
+          id: 'override-global',
+          providerKey: 'google-workspace',
+          templateKey: 'dkim',
+          overrideData: { dkimSelectors: ['global-custom'] },
+          appliesToDomains: [], // Empty = global override
+          tenantId: 'tenant-1',
+          createdBy: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      state.providerBaselines = [
+        {
+          id: 'pb-1',
+          providerKey: 'google-workspace',
+          providerName: 'Google Workspace',
+          baseline: {},
+          dkimSelectors: ['default-google'],
+          mxPatterns: ['*.google.com'],
+          spfIncludes: ['_spf.google.com'],
+          version: '1.0.0',
+        },
+      ];
+      const app = createApp(state);
+
+      // Request with any domain - should apply global override
+      const response = await app.request(
+        '/api/shadow-comparison/provider-baselines/google-workspace?domainName=any-domain.com'
+      );
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as {
+        baseline: { dkimSelectors: string[]; overridesApplied: string[] };
+      };
+      expect(json.baseline.overridesApplied).toContain('override-global');
+      expect(json.baseline.dkimSelectors).toContain('global-custom');
+    });
+
+    it('should apply both global and domain-specific overrides when matching', async () => {
+      const state = emptyState();
+      state.templateOverrides = [
+        {
+          id: 'override-global',
+          providerKey: 'google-workspace',
+          templateKey: 'dkim',
+          overrideData: { dkimSelectors: ['global-selector'] },
+          appliesToDomains: [], // Global
+          tenantId: 'tenant-1',
+          createdBy: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'override-specific',
+          providerKey: 'google-workspace',
+          templateKey: 'dkim',
+          overrideData: { dkimSelectors: ['specific-selector'] },
+          appliesToDomains: ['priority.example.com'], // Domain-specific
+          tenantId: 'tenant-1',
+          createdBy: 'user-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      state.providerBaselines = [
+        {
+          id: 'pb-1',
+          providerKey: 'google-workspace',
+          providerName: 'Google Workspace',
+          baseline: {},
+          dkimSelectors: ['default-google'],
+          mxPatterns: ['*.google.com'],
+          spfIncludes: ['_spf.google.com'],
+          version: '1.0.0',
+        },
+      ];
+      const app = createApp(state);
+
+      // Request with the specific domain - both overrides should be applied
+      const response = await app.request(
+        '/api/shadow-comparison/provider-baselines/google-workspace?domainName=priority.example.com'
+      );
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as {
+        baseline: { dkimSelectors: string[]; overridesApplied: string[] };
+      };
+      // Both overrides should be in the applied list
+      expect(json.baseline.overridesApplied).toContain('override-global');
+      expect(json.baseline.overridesApplied).toContain('override-specific');
+      // Specific selector should be in the list (last applied wins for same field)
+      expect(json.baseline.dkimSelectors).toContain('specific-selector');
+    });
+  });
+
   describe('GET /stats', () => {
     it('returns aggregate shadow stats', async () => {
       const state = emptyState();
