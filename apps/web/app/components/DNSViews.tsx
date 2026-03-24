@@ -224,7 +224,7 @@ function ParsedView({ observations }: { observations: Observation[] }) {
                   <tr key={`${record.name}-${record.type}-${record.values.join(',')}`}>
                     <td className="px-4 py-2 text-sm font-mono text-gray-900">{record.name}</td>
                     <td className="px-4 py-2 text-sm text-gray-600 tabular-nums">
-                      {record.ttl != null ? `${record.ttl}s` : '—'}
+                      {record.ttl !== null && record.ttl !== undefined ? `${record.ttl}s` : '—'}
                     </td>
                     <td className="px-4 py-2 text-sm">
                       <div className="space-y-1">
