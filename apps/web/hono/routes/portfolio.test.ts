@@ -1151,6 +1151,251 @@ describe('Portfolio Routes', () => {
 
       expect(res.status).toBe(404);
     });
+
+    // =======================================================================
+    // PR-04.1: Saved Filter Round-Trip Integration Tests
+    // =======================================================================
+
+    it('PR-04.1: should create filter with complex criteria and verify round-trip', async () => {
+      // Complex filter criteria matching the bead description
+      const complexCriteria = {
+        severities: ['critical', 'high'],
+        tags: ['production', 'critical-infra'],
+        zoneManagement: ['managed'],
+        query: 'example.com',
+      };
+
+      // Step 1: Create the filter
+      const createRes = await app.request('/api/portfolio/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Critical Production Filters',
+          description: 'Find critical issues in production managed domains',
+          criteria: complexCriteria,
+          isShared: true,
+        }),
+      });
+
+      expect(createRes.status).toBe(201);
+      const createBody = (await createRes.json()) as JsonBody;
+      const filterId = (createBody.filter as JsonBody).id as string;
+      expect(filterId).toBeDefined();
+
+      // Step 2: Load the filter via GET and verify exact JSON round-trip
+      const getRes = await app.request(`/api/portfolio/filters/${filterId}`);
+      expect(getRes.status).toBe(200);
+      const getBody = (await getRes.json()) as JsonBody;
+      const loadedFilter = getBody.filter as JsonBody;
+
+      // Verify exact criteria match
+      expect(loadedFilter.name).toBe('Critical Production Filters');
+      expect(loadedFilter.description).toBe('Find critical issues in production managed domains');
+      expect(loadedFilter.criteria).toEqual(complexCriteria);
+      expect(loadedFilter.isShared).toBe(true);
+      expect(loadedFilter.createdBy).toBe('user-123');
+      expect(loadedFilter.tenantId).toBe('tenant-1');
+    });
+
+    it('PR-04.1: should apply saved filter criteria to portfolio search', async () => {
+      // Create domain with tags
+      mockData.domains.push({
+        id: 'domain-with-tag',
+        name: 'critical.example.com',
+        normalizedName: 'critical.example.com',
+        tenantId: 'tenant-1',
+        zoneManagement: 'managed',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockData.domainTags.push({
+        id: 'tag-1',
+        domainId: 'domain-with-tag',
+        tag: 'production',
+        createdBy: 'user-123',
+        tenantId: 'tenant-1',
+        createdAt: new Date(),
+      });
+
+      // Create snapshot with critical finding
+      mockData.snapshots.push({
+        id: 'snap-critical',
+        domainId: 'domain-with-tag',
+        createdAt: new Date(),
+        resultState: 'success',
+        rulesetVersionId: '1.0.0',
+      });
+      mockData.findings.push({
+        id: 'finding-critical',
+        snapshotId: 'snap-critical',
+        ruleId: 'mail.spf-analysis.v1',
+        severity: 'critical',
+        summary: 'Critical SPF issue',
+      });
+
+      // Create filter with tag criteria
+      const createRes = await app.request('/api/portfolio/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Tag Filter',
+          criteria: { tags: ['production'] },
+        }),
+      });
+
+      expect(createRes.status).toBe(201);
+      const createBody = (await createRes.json()) as JsonBody;
+      const filterId = (createBody.filter as JsonBody).id as string;
+
+      // Apply filter to search
+      const searchRes = await app.request('/api/portfolio/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tags: ['production'],
+          severities: ['critical'],
+        }),
+      });
+
+      expect(searchRes.status).toBe(200);
+      const searchBody = (await searchRes.json()) as JsonBody;
+      expect(searchBody.domains).toBeDefined();
+      expect(Array.isArray(searchBody.domains)).toBe(true);
+    });
+
+    it('PR-04.1: should delete saved filter and verify it is gone', async () => {
+      // Create a filter first
+      const createRes = await app.request('/api/portfolio/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Filter To Delete',
+          criteria: { query: 'temp.example.com' },
+        }),
+      });
+
+      expect(createRes.status).toBe(201);
+      const createBody = (await createRes.json()) as JsonBody;
+      const filterId = (createBody.filter as JsonBody).id as string;
+
+      // Delete the filter
+      const deleteRes = await app.request(`/api/portfolio/filters/${filterId}`, {
+        method: 'DELETE',
+      });
+
+      expect(deleteRes.status).toBe(200);
+
+      // Verify filter is gone
+      const getRes = await app.request(`/api/portfolio/filters/${filterId}`);
+      expect(getRes.status).toBe(404);
+    });
+
+    it('PR-04.1: should produce audit events for filter operations', async () => {
+      // Step 1: Create filter and verify audit event
+      const createRes = await app.request('/api/portfolio/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Audited Filter',
+          criteria: { severities: ['high'] },
+        }),
+      });
+
+      expect(createRes.status).toBe(201);
+      const createBody = (await createRes.json()) as JsonBody;
+      const filterId = (createBody.filter as JsonBody).id as string;
+
+      // Check audit events for filter creation
+      const createAuditRes = await app.request(
+        `/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`
+      );
+      expect(createAuditRes.status).toBe(200);
+      const createAuditBody = (await createAuditRes.json()) as JsonBody;
+      const createAuditEvents = createAuditBody.events as Array<JsonBody>;
+      expect(createAuditEvents.some((e) => e.action === 'filter_created')).toBe(true);
+
+      // Step 2: Update filter and verify audit event
+      const updateRes = await app.request(`/api/portfolio/filters/${filterId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Updated Audited Filter' }),
+      });
+      expect(updateRes.status).toBe(200);
+
+      // Check audit events for filter update
+      const updateAuditRes = await app.request(
+        `/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`
+      );
+      expect(updateAuditRes.status).toBe(200);
+      const updateAuditBody = (await updateAuditRes.json()) as JsonBody;
+      const updateAuditEvents = updateAuditBody.events as Array<JsonBody>;
+      expect(updateAuditEvents.some((e) => e.action === 'filter_updated')).toBe(true);
+
+      // Step 3: Delete filter and verify audit event
+      const deleteRes = await app.request(`/api/portfolio/filters/${filterId}`, {
+        method: 'DELETE',
+      });
+      expect(deleteRes.status).toBe(200);
+
+      // Check audit events for filter deletion
+      const deleteAuditRes = await app.request(
+        `/api/portfolio/audit?entityType=saved_filter&entityId=${filterId}`
+      );
+      expect(deleteAuditRes.status).toBe(200);
+      const deleteAuditBody = (await deleteAuditRes.json()) as JsonBody;
+      const deleteAuditEvents = deleteAuditBody.events as Array<JsonBody>;
+      expect(deleteAuditEvents.some((e) => e.action === 'filter_deleted')).toBe(true);
+    });
+
+    it('PR-04.1: should handle multiple filter operations in sequence', async () => {
+      // Create multiple filters
+      const filter1Res = await app.request('/api/portfolio/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Filter 1',
+          criteria: { severities: ['high'] },
+        }),
+      });
+      expect(filter1Res.status).toBe(201);
+
+      const filter2Res = await app.request('/api/portfolio/filters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Filter 2',
+          criteria: { severities: ['medium'] },
+        }),
+      });
+      expect(filter2Res.status).toBe(201);
+
+      // List all filters
+      const listRes = await app.request('/api/portfolio/filters');
+      expect(listRes.status).toBe(200);
+      const listBody = (await listRes.json()) as JsonBody;
+      const filters = listBody.filters as Array<JsonBody>;
+
+      // Verify both filters exist
+      expect(filters.length).toBeGreaterThanOrEqual(2);
+      const filterNames = filters.map((f) => f.name as string);
+      expect(filterNames).toContain('Filter 1');
+      expect(filterNames).toContain('Filter 2');
+
+      // Delete first filter
+      const filter1Id = (await filter1Res.clone().json()).filter.id as string;
+      const deleteRes = await app.request(`/api/portfolio/filters/${filter1Id}`, {
+        method: 'DELETE',
+      });
+      expect(deleteRes.status).toBe(200);
+
+      // Verify first filter is deleted but second still exists
+      const finalListRes = await app.request('/api/portfolio/filters');
+      const finalListBody = (await finalListRes.json()) as JsonBody;
+      const finalFilters = finalListBody.filters as Array<JsonBody>;
+      const finalFilterNames = finalFilters.map((f) => f.name as string);
+      expect(finalFilterNames).not.toContain('Filter 1');
+      expect(finalFilterNames).toContain('Filter 2');
+    });
   });
 
   // ===========================================================================

@@ -26,7 +26,13 @@ test.describe('PR-02.5: Mail Findings Preview Label', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           dmarc: { present: true, valid: true, errors: [] },
-          dkim: { present: true, valid: true, errors: [], selector: 'google', selectorProvenance: 'provider-heuristic' },
+          dkim: {
+            present: true,
+            valid: true,
+            errors: [],
+            selector: 'google',
+            selectorProvenance: 'provider-heuristic',
+          },
           spf: { present: true, valid: true, errors: [] },
         }),
       });
@@ -123,7 +129,7 @@ test.describe('DiscoveredSelectors Component', () => {
       // Check that the certain badge is visible
       const certainBadge = page.locator('text=/certain/i');
       await expect(certainBadge).toBeVisible();
-      
+
       // The badge should have green styling (check parent contains green)
       const badgeElement = certainBadge.locator('..');
       const classes = await badgeElement.getAttribute('class');
@@ -153,7 +159,7 @@ test.describe('DiscoveredSelectors Component', () => {
 
       const highBadge = page.locator('text=/high/i');
       await expect(highBadge).toBeVisible();
-      
+
       const badgeElement = highBadge.locator('..');
       const classes = await badgeElement.getAttribute('class');
       expect(classes).toContain('blue');
@@ -183,7 +189,7 @@ test.describe('DiscoveredSelectors Component', () => {
 
       const mediumBadge = page.locator('text=/medium/i');
       await expect(mediumBadge).toBeVisible();
-      
+
       const badgeElement = mediumBadge.locator('..');
       const classes = await badgeElement.getAttribute('class');
       expect(classes).toContain('yellow');
@@ -212,7 +218,7 @@ test.describe('DiscoveredSelectors Component', () => {
 
       const lowBadge = page.locator('text=/low/i');
       await expect(lowBadge).toBeVisible();
-      
+
       const badgeElement = lowBadge.locator('..');
       const classes = await badgeElement.getAttribute('class');
       expect(classes).toContain('orange');
@@ -241,7 +247,7 @@ test.describe('DiscoveredSelectors Component', () => {
 
       const heuristicBadge = page.locator('text=/heuristic/i');
       await expect(heuristicBadge).toBeVisible();
-      
+
       const badgeElement = heuristicBadge.locator('..');
       const classes = await badgeElement.getAttribute('class');
       expect(classes).toContain('gray');

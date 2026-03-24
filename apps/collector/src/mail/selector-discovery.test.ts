@@ -271,7 +271,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
           query: { name: 'google-example.com', type: 'MX' },
           answers: [
             { name: 'google-example.com', type: 'MX', ttl: 300, data: '10 aspmx.l.google.com' },
-            { name: 'google-example.com', type: 'MX', ttl: 300, data: '20 alt1.aspmx.l.google.com' },
+            {
+              name: 'google-example.com',
+              type: 'MX',
+              ttl: 300,
+              data: '20 alt1.aspmx.l.google.com',
+            },
           ],
         }),
       ];
@@ -292,7 +297,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'google-example.com', type: 'TXT' },
           answers: [
-            { name: 'google-example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' },
+            {
+              name: 'google-example.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=spf1 include:_spf.google.com ~all',
+            },
           ],
         }),
       ];
@@ -308,7 +318,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'microsoft-example.com', type: 'MX' },
           answers: [
-            { name: 'microsoft-example.com', type: 'MX', ttl: 300, data: '10 microsoft-example-com.mail.protection.outlook.com' },
+            {
+              name: 'microsoft-example.com',
+              type: 'MX',
+              ttl: 300,
+              data: '10 microsoft-example-com.mail.protection.outlook.com',
+            },
           ],
         }),
       ];
@@ -329,7 +344,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'microsoft-example.com', type: 'TXT' },
           answers: [
-            { name: 'microsoft-example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:spf.protection.outlook.com ~all' },
+            {
+              name: 'microsoft-example.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=spf1 include:spf.protection.outlook.com ~all',
+            },
           ],
         }),
       ];
@@ -345,7 +365,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'ses-example.com', type: 'MX' },
           answers: [
-            { name: 'ses-example.com', type: 'MX', ttl: 300, data: '10 feedback-smtp.us-east-1.amazonses.com' },
+            {
+              name: 'ses-example.com',
+              type: 'MX',
+              ttl: 300,
+              data: '10 feedback-smtp.us-east-1.amazonses.com',
+            },
           ],
         }),
       ];
@@ -365,7 +390,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'ses-example.com', type: 'TXT' },
           answers: [
-            { name: 'ses-example.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:amazonses.com ~all' },
+            {
+              name: 'ses-example.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=spf1 include:amazonses.com ~all',
+            },
           ],
         }),
       ];
@@ -423,9 +453,7 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
     it('should return multiple provider selectors when detected', async () => {
       const mxResult = createMockDNSResult({
         query: { name: 'example.com', type: 'MX' },
-        answers: [
-          { name: 'example.com', type: 'MX', ttl: 300, data: '10 aspmx.l.google.com' },
-        ],
+        answers: [{ name: 'example.com', type: 'MX', ttl: 300, data: '10 aspmx.l.google.com' }],
       });
 
       const result = await discoverSelectors('example.com', [mxResult], {
@@ -444,7 +472,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'unknown-example.com', type: 'MX' },
           answers: [
-            { name: 'unknown-example.com', type: 'MX', ttl: 300, data: '10 mail.unknownprovider.com' },
+            {
+              name: 'unknown-example.com',
+              type: 'MX',
+              ttl: 300,
+              data: '10 mail.unknownprovider.com',
+            },
           ],
         }),
       ];
@@ -458,7 +491,12 @@ describe('PR-02.3: DKIM Provider Detection Golden Tests', () => {
         createMockDNSResult({
           query: { name: 'unknown-example.com', type: 'MX' },
           answers: [
-            { name: 'unknown-example.com', type: 'MX', ttl: 300, data: '10 mail.unknownprovider.com' },
+            {
+              name: 'unknown-example.com',
+              type: 'MX',
+              ttl: 300,
+              data: '10 mail.unknownprovider.com',
+            },
           ],
         }),
       ];

@@ -23,8 +23,8 @@ export function MailCheckResults({ result }: MailCheckResultsProps) {
         data-testid="mail-preview-disclaimer"
       >
         <p>
-          <strong>Preview:</strong> These mail security findings are generated from DNS observations. For
-          authoritative results, use the legacy DMARC/DKIM tools linked below.
+          <strong>Preview:</strong> These mail security findings are generated from DNS
+          observations. For authoritative results, use the legacy DMARC/DKIM tools linked below.
         </p>
       </div>
 
