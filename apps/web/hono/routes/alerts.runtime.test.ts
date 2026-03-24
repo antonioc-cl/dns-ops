@@ -382,6 +382,164 @@ describe('alertRoutes shared reports', () => {
   });
 });
 
+// ===========================================================================
+// ALERT DEDUP AND NOISE BUDGET TESTS - PR-04.5
+// ===========================================================================
+
+describe('Alert Dedup and Noise Budget (PR-04.5)', () => {
+  it('should show suppressed alerts with suppression metadata', async () => {
+    const state: MockState = {
+      alerts: [
+        {
+          id: 'alert-suppressed',
+          monitoredDomainId: 'mon-1',
+          tenantId: 'tenant-1',
+          title: 'Suppressed alert',
+          severity: 'medium',
+          status: 'suppressed',
+          suppressionReason: 'noise_budget_exceeded',
+          suppressionCount: 1,
+          createdAt: new Date(),
+        },
+      ],
+      monitoredDomains: [
+        {
+          id: 'mon-1',
+          tenantId: 'tenant-1',
+          maxAlertsPerDay: 5,
+        },
+      ],
+      sharedReports: [],
+      auditEvents: [],
+    };
+    const app = createApp(state);
+
+    const response = await app.request('/api/alerts');
+
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { alerts: Array<Record<string, unknown>> };
+    const suppressedAlert = json.alerts.find((a) => a.id === 'alert-suppressed');
+    expect(suppressedAlert).toBeDefined();
+    expect(suppressedAlert?.status).toBe('suppressed');
+    expect(suppressedAlert?.suppressionReason).toBeDefined();
+    expect(suppressedAlert?.suppressionCount).toBeDefined();
+  });
+
+  it('should support suppress endpoint for alert deduplication', async () => {
+    const state: MockState = {
+      alerts: [
+        {
+          id: 'alert-to-suppress',
+          monitoredDomainId: 'mon-1',
+          tenantId: 'tenant-1',
+          title: 'Alert to suppress',
+          severity: 'low',
+          status: 'pending',
+          createdAt: new Date(),
+        },
+      ],
+      monitoredDomains: [
+        {
+          id: 'mon-1',
+          tenantId: 'tenant-1',
+        },
+      ],
+      sharedReports: [],
+      auditEvents: [],
+    };
+    const app = createApp(state);
+
+    // Suppress the alert
+    const response = await app.request('/api/alerts/alert-to-suppress/suppress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'noise_budget_exceeded' }),
+    });
+
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { alert?: Record<string, unknown> };
+    expect(json.alert?.status).toBe('suppressed');
+    expect(state.auditEvents.some((e) => e.action === 'alert_suppressed')).toBe(true);
+  });
+
+  it('should audit alert suppression with reason', async () => {
+    const state: MockState = {
+      alerts: [
+        {
+          id: 'alert-reason',
+          monitoredDomainId: 'mon-1',
+          tenantId: 'tenant-1',
+          title: 'Alert with reason',
+          severity: 'medium',
+          status: 'pending',
+          createdAt: new Date(),
+        },
+      ],
+      monitoredDomains: [
+        {
+          id: 'mon-1',
+          tenantId: 'tenant-1',
+        },
+      ],
+      sharedReports: [],
+      auditEvents: [],
+    };
+    const app = createApp(state);
+
+    await app.request('/api/alerts/alert-reason/suppress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'test_suppression' }),
+    });
+
+    expect(state.auditEvents).toHaveLength(1);
+    expect(state.auditEvents[0]?.action).toBe('alert_suppressed');
+  });
+
+  it('should filter alerts by status including suppressed', async () => {
+    const state: MockState = {
+      alerts: [
+        {
+          id: 'alert-pending',
+          monitoredDomainId: 'mon-1',
+          tenantId: 'tenant-1',
+          title: 'Pending alert',
+          severity: 'high',
+          status: 'pending',
+          createdAt: new Date(),
+        },
+        {
+          id: 'alert-suppressed',
+          monitoredDomainId: 'mon-1',
+          tenantId: 'tenant-1',
+          title: 'Suppressed alert',
+          severity: 'low',
+          status: 'suppressed',
+          suppressionReason: 'dedup',
+          createdAt: new Date(),
+        },
+      ],
+      monitoredDomains: [
+        {
+          id: 'mon-1',
+          tenantId: 'tenant-1',
+        },
+      ],
+      sharedReports: [],
+      auditEvents: [],
+    };
+    const app = createApp(state);
+
+    // Filter for suppressed alerts
+    const response = await app.request('/api/alerts?status=suppressed');
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { alerts: Array<Record<string, unknown>> };
+    expect(json.alerts).toHaveLength(1);
+    expect(json.alerts[0]?.id).toBe('alert-suppressed');
+    expect(json.alerts[0]?.suppressionReason).toBe('dedup');
+  });
+});
+
 describe('alertRoutes mutations', () => {
   it('audits alert acknowledgement', async () => {
     const state: MockState = {
