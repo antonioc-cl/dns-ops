@@ -410,15 +410,15 @@ function ChangeCard({ change }: { change: ProposedChange }) {
 function FindingsList({ findings }: { findings: SimFinding[] }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-      {findings.map((f, idx) => (
+      {findings.map((f) => (
         <div
-          key={`${f.type}-${idx}`}
+          key={`${f.type}-${f.severity}`}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.375rem 0.75rem',
-            backgroundColor: '#f8fafc',
+            backgroundColor: '#f8f8f8',
             borderRadius: '6px',
             fontSize: '0.8125rem',
           }}
