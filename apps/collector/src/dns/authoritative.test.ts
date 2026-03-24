@@ -10,7 +10,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DNSQueryResult, VantageInfo } from './types.js';
 import { DelegationCollector } from '../delegation/collector.js';
 
 // Mock DNSResolver
@@ -43,9 +42,12 @@ describe('Authoritative Collection - PR-07.6', () => {
       });
 
       // Access private method via any cast for testing
-      const nsServers = await (collector as unknown as {
-        discoverNSFromParent: () => Promise<string[]>;
-      }).discoverNSFromParent?.() ?? [];
+      const nsServers =
+        (await (
+          collector as unknown as {
+            discoverNSFromParent: () => Promise<string[]>;
+          }
+        ).discoverNSFromParent?.()) ?? [];
 
       // The NS records should be discovered (stripping trailing dot)
       if (nsServers.length > 0) {
@@ -65,9 +67,12 @@ describe('Authoritative Collection - PR-07.6', () => {
         error: 'NXDOMAIN',
       });
 
-      const nsServers = await (collector as unknown as {
-        discoverNSFromParent: () => Promise<string[]>;
-      }).discoverNSFromParent?.() ?? [];
+      const nsServers =
+        (await (
+          collector as unknown as {
+            discoverNSFromParent: () => Promise<string[]>;
+          }
+        ).discoverNSFromParent?.()) ?? [];
 
       expect(nsServers).toHaveLength(0);
     });

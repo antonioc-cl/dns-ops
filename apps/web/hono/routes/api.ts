@@ -23,6 +23,7 @@ import { selectorRoutes } from './selectors.js';
 import { shadowComparisonRoutes } from './shadow-comparison.js';
 import { simulationRoutes } from './simulation.js';
 import { snapshotRoutes } from './snapshots.js';
+import { suggestionsRoutes } from './suggestions.js';
 
 export const apiRoutes = new Hono<Env>();
 
@@ -77,6 +78,7 @@ apiRoutes.route('/monitoring', monitoringRoutes);
 apiRoutes.route('/alerts', alertRoutes);
 apiRoutes.route('/fleet-report', fleetReportRoutes);
 apiRoutes.route('/simulate', simulationRoutes);
+apiRoutes.route('/suggestions', suggestionsRoutes);
 
 apiRoutes.get('/domain/:domain/latest', async (c) => {
   const tenantId = c.get('tenantId');
