@@ -13,6 +13,7 @@ import {
   requireAuth,
   requireWritePermission,
 } from '../middleware/authorization.js';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
 import { delegationRoutes } from './delegation.js';
@@ -87,7 +88,11 @@ apiRoutes.get('/health/detailed', requireAdminAccess, async (c) => {
       dbLatencyMs = Date.now() - dbStart;
       dbStatus = 'connected';
     } catch (error) {
-      console.error('DB health check failed:', error);
+      const logger = getWebLogger();
+      logger.error('DB health check failed', error instanceof Error ? error : new Error(String(error)), {
+        path: '/api/health/detailed',
+        method: 'GET',
+      });
       dbStatus = 'error';
     }
   }
