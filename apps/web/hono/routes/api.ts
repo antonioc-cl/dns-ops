@@ -14,6 +14,12 @@ import {
   requireWritePermission,
 } from '../middleware/authorization.js';
 import { getWebLogger } from '../middleware/error-tracking.js';
+import {
+  domainName,
+  enumValue,
+  validateBody,
+  validationErrorResponse,
+} from '../middleware/validation.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
 import { delegationRoutes } from './delegation.js';
@@ -275,19 +281,20 @@ apiRoutes.get('/snapshot/:snapshotId/recordsets', async (c) => {
 });
 
 apiRoutes.post('/collect/domain', requireAuth, requireWritePermission, async (c) => {
-  let body: { domain?: string; zoneManagement?: string };
+  const validation = await validateBody(c, {
+    domain: domainName('domain'),
+    zoneManagement: enumValue(
+      'zoneManagement',
+      ['managed', 'unmanaged', 'unknown'] as const,
+      false
+    ),
+  });
 
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: 'Invalid JSON in request body' }, 400);
+  if (!validation.success) {
+    return validationErrorResponse(c, validation.error);
   }
 
-  const { domain, zoneManagement = 'unmanaged' } = body;
-  if (!domain) {
-    return c.json({ error: 'Domain is required' }, 400);
-  }
-
+  const { domain, zoneManagement = 'unmanaged' } = validation.data;
   const actorId = c.get('actorId');
 
   const result = await proxyToCollector(c, {

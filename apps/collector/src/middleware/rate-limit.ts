@@ -96,10 +96,7 @@ export interface RateLimitResult {
   remaining: number;
 }
 
-export function checkRateLimit(
-  type: RateLimitKey,
-  tenantId: string | undefined
-): RateLimitResult {
+export function checkRateLimit(type: RateLimitKey, tenantId: string | undefined): RateLimitResult {
   const config = RATE_LIMITS[type];
 
   if (!tenantId) {

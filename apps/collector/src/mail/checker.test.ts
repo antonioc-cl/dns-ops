@@ -14,23 +14,20 @@ import {
 } from './checker.js';
 
 // Mock DNS resolution
-vi.mock('./dns', () => ({
+vi.mock('./dns.js', () => ({
   resolveTXT: vi.fn(),
 }));
 
 import { resolveTXT } from './dns.js';
 
-const mockedResolveTXT = vi.mocked(resolveTXT);
-
 describe('Mail Checker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedResolveTXT.mockReset();
   });
 
   describe('performMailCheck', () => {
     it('should perform all three checks in parallel', async () => {
-      mockedResolveTXT
+      (resolveTXT as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(['v=DMARC1; p=reject']) // DMARC
         .mockResolvedValueOnce(['v=DKIM1; k=rsa; p=xxx']) // DKIM
         .mockResolvedValueOnce(['v=spf1 include:_spf.google.com ~all']); // SPF
@@ -45,7 +42,7 @@ describe('Mail Checker', () => {
     });
 
     it('should handle all checks failing', async () => {
-      mockedResolveTXT.mockRejectedValue(new Error('NXDOMAIN'));
+      (resolveTXT as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('NXDOMAIN'));
 
       const result = await performMailCheck('example.com');
 
@@ -58,7 +55,7 @@ describe('Mail Checker', () => {
 
   describe('checkDMARC', () => {
     it('should detect valid DMARC record', async () => {
-      mockedResolveTXT.mockResolvedValue(['v=DMARC1; p=reject; rua=mailto:dmarc@example.com']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=DMARC1; p=reject; rua=mailto:dmarc@example.com']);
 
       const result = await checkDMARC('example.com');
 
@@ -68,7 +65,7 @@ describe('Mail Checker', () => {
     });
 
     it('should handle missing DMARC record', async () => {
-      mockedResolveTXT.mockRejectedValue(new Error('NXDOMAIN'));
+      (resolveTXT as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('NXDOMAIN'));
 
       const result = await checkDMARC('example.com');
 
@@ -78,7 +75,7 @@ describe('Mail Checker', () => {
     });
 
     it('should handle TXT records without DMARC', async () => {
-      mockedResolveTXT.mockResolvedValue([
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue([
         'v=spf1 include:_spf.example.com ~all',
         'some other txt',
       ]);
@@ -92,7 +89,7 @@ describe('Mail Checker', () => {
 
     it('should store raw record content', async () => {
       const dmarcRecord = 'v=DMARC1; p=quarantine; pct=50; rua=mailto:reports@example.com';
-      mockedResolveTXT.mockResolvedValue([dmarcRecord]);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue([dmarcRecord]);
 
       const result = await checkDMARC('example.com');
 
@@ -102,7 +99,7 @@ describe('Mail Checker', () => {
 
   describe('checkDKIM', () => {
     it('should use explicit selectors when provided', async () => {
-      mockedResolveTXT
+      (resolveTXT as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('NXDOMAIN'))
         .mockResolvedValueOnce(['v=DKIM1; k=rsa; p=xxx']); // Second selector works
 
@@ -117,7 +114,7 @@ describe('Mail Checker', () => {
     });
 
     it('should use provider heuristic for Google', async () => {
-      mockedResolveTXT.mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
 
       const result = await checkDKIM('example.com', {
         preferredProvider: 'google',
@@ -127,11 +124,11 @@ describe('Mail Checker', () => {
       expect(result.selector).toBe('google');
       expect(result.selectorProvenance).toBe('provider');
       expect(result.provider).toBe('google');
-      expect(mockedResolveTXT).toHaveBeenCalledWith('google._domainkey.example.com');
+      expect(resolveTXT).toHaveBeenCalledWith('google._domainkey.example.com');
     });
 
     it('should use provider heuristic for Microsoft', async () => {
-      mockedResolveTXT.mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
 
       const result = await checkDKIM('example.com', {
         preferredProvider: 'microsoft',
@@ -139,11 +136,11 @@ describe('Mail Checker', () => {
 
       expect(result.present).toBe(true);
       expect(result.selector).toBe('selector1');
-      expect(mockedResolveTXT).toHaveBeenCalledWith('selector1._domainkey.example.com');
+      expect(resolveTXT).toHaveBeenCalledWith('selector1._domainkey.example.com');
     });
 
     it('should fall back to common selectors when provider heuristic fails', async () => {
-      mockedResolveTXT
+      (resolveTXT as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(new Error('NXDOMAIN')) // 'default' fails
         .mockRejectedValueOnce(new Error('NXDOMAIN')) // 'dkim' fails
         .mockRejectedValueOnce(new Error('NXDOMAIN')) // 'mail' fails
@@ -159,7 +156,7 @@ describe('Mail Checker', () => {
     });
 
     it('should report all tried selectors when none work', async () => {
-      mockedResolveTXT.mockRejectedValue(new Error('NXDOMAIN'));
+      (resolveTXT as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('NXDOMAIN'));
 
       const result = await checkDKIM('example.com');
 
@@ -169,7 +166,7 @@ describe('Mail Checker', () => {
     });
 
     it('should validate DKIM record format', async () => {
-      mockedResolveTXT.mockResolvedValue(['invalid record without proper format']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['invalid record without proper format']);
 
       const result = await checkDKIM('example.com');
 
@@ -180,7 +177,7 @@ describe('Mail Checker', () => {
 
   describe('checkSPF', () => {
     it('should detect valid SPF record', async () => {
-      mockedResolveTXT.mockResolvedValue(['v=spf1 include:_spf.google.com ~all']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=spf1 include:_spf.google.com ~all']);
 
       const result = await checkSPF('example.com');
 
@@ -190,7 +187,7 @@ describe('Mail Checker', () => {
     });
 
     it('should handle missing SPF record', async () => {
-      mockedResolveTXT.mockResolvedValue(['some other txt record', 'another record']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['some other txt record', 'another record']);
 
       const result = await checkSPF('example.com');
 
@@ -200,7 +197,7 @@ describe('Mail Checker', () => {
     });
 
     it('should handle DNS errors', async () => {
-      mockedResolveTXT.mockRejectedValue(new Error('SERVFAIL'));
+      (resolveTXT as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('SERVFAIL'));
 
       const result = await checkSPF('example.com');
 
@@ -224,10 +221,14 @@ describe('Mail Checker', () => {
 });
 
 describe('BDD Scenarios', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('Scenario: Complete mail security check passes', () => {
     it('should report all records present and valid', async () => {
       // Given example.com has proper mail configuration
-      mockedResolveTXT
+      (resolveTXT as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(['v=DMARC1; p=reject; rua=mailto:dmarc@example.com'])
         .mockResolvedValueOnce([
           'v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY/neDgaL2oqQE8T5illKqCgDtFHc8eHVAU+nlcaGmrKmDMw9dbgiGk1ocgZ56NR4ycfUHwQhvQPMUZw0cveel/8EAGoi/UyPmqfcPibytH81NFtTMAxUeM4Op8A6iHkvAMj5qLf4YRNsTkKAKW3OkwPQIDAQAB',
@@ -247,7 +248,7 @@ describe('BDD Scenarios', () => {
   describe('Scenario: Missing all mail records', () => {
     it('should report all records missing with errors', async () => {
       // Given example.com has no mail configuration
-      mockedResolveTXT.mockRejectedValue(new Error('NXDOMAIN'));
+      (resolveTXT as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('NXDOMAIN'));
 
       // When the mail check is performed
       const result = await performMailCheck('example.com');
@@ -265,7 +266,7 @@ describe('BDD Scenarios', () => {
   describe('Scenario: Provider-specific DKIM discovery', () => {
     it('should discover Google Workspace DKIM using provider hint', async () => {
       // Given a domain using Google Workspace
-      mockedResolveTXT.mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
+      (resolveTXT as ReturnType<typeof vi.fn>).mockResolvedValue(['v=DKIM1; k=rsa; p=xxx']);
 
       // When checking with Google provider hint
       const result = await checkDKIM('example.com', { preferredProvider: 'google' });

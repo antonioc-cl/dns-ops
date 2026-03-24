@@ -86,17 +86,15 @@ export const domains = pgTable(
     normalizedName: varchar('normalized_name', { length: 253 }).notNull(),
     punycodeName: varchar('punycode_name', { length: 253 }),
     zoneManagement: zoneManagementEnum('zone_management').notNull().default('unknown'),
-    tenantId: uuid('tenant_id'), // Reserved for future multi-tenancy
+    tenantId: uuid('tenant_id'), // Multi-tenant isolation: NULL = system/unowned domain
     metadata: jsonb('metadata'), // Flexible metadata storage
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    // NOTE (V1): Unique on normalizedName alone. Two tenants cannot own the same domain.
-    // See: packages/db/docs/TENANT_ISOLATION.md#domain-uniqueness-limitation
-    // When multi-tenancy is fully activated, migrate this to:
-    //   uniqueIndex('domain_name_tenant_idx').on(table.normalizedName, table.tenantId)
-    nameIdx: uniqueIndex('domain_name_idx').on(table.normalizedName),
+    // Composite unique index: allows same domain name per tenant
+    // NULL tenant_id is allowed (system domains) - PostgreSQL treats NULLs as distinct
+    nameTenantIdx: uniqueIndex('domain_name_tenant_idx').on(table.normalizedName, table.tenantId),
     tenantIdx: index('domain_tenant_idx').on(table.tenantId),
     zoneMgmtIdx: index('domain_zone_management_idx').on(table.zoneManagement),
   })

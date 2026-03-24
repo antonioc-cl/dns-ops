@@ -22,43 +22,34 @@ import {
 } from '../middleware/validation.js';
 import type { Env } from '../types.js';
 
-interface CollectMailRequest {
-  domain?: string;
-  preferredProvider?: 'google' | 'microsoft' | 'zoho' | 'other';
-  explicitSelectors?: string[];
-}
-
 const REMEDIATION_STATUSES = ['open', 'in-progress', 'resolved', 'closed'] as const;
 const REMEDIATION_PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 
-function validateCollectMail(data: CollectMailRequest): string | null {
-  if (!data.domain || data.domain.length > 253) return 'Domain is required';
-  if (
-    data.preferredProvider &&
-    !['google', 'microsoft', 'zoho', 'other'].includes(data.preferredProvider)
-  ) {
-    return 'Invalid preferredProvider';
-  }
-  if (data.explicitSelectors && !Array.isArray(data.explicitSelectors)) {
-    return 'explicitSelectors must be an array';
-  }
-  return null;
-}
-
 export const mailRoutes = new Hono<Env>()
   .post('/collect/mail', requireAuth, requireWritePermission, async (c) => {
-    let data: CollectMailRequest;
-    try {
-      data = (await c.req.json()) as CollectMailRequest;
-    } catch {
-      return c.json({ error: 'Invalid JSON body' }, 400);
+    const validation = await validateBody(c, {
+      domain: domainName('domain'),
+      preferredProvider: enumValue(
+        'preferredProvider',
+        ['google', 'microsoft', 'zoho', 'other'] as const,
+        false
+      ),
+      explicitSelectors: optionalArray<string>('explicitSelectors', (value, index) => {
+        if (typeof value !== 'string' || value.length === 0) {
+          throw new Error(`explicitSelectors[${index}] must be a non-empty string`);
+        }
+        if (value.length > 63) {
+          throw new Error(`explicitSelectors[${index}] must be at most 63 characters`);
+        }
+        return value;
+      }),
+    });
+
+    if (!validation.success) {
+      return validationErrorResponse(c, validation.error);
     }
 
-    const validationError = validateCollectMail(data);
-    if (validationError) {
-      return c.json({ error: validationError }, 400);
-    }
-
+    const data = validation.data;
     const { collectorUrl, internalSecret } = getRequestEnvConfig(c.env);
     const tenantId = c.get('tenantId');
     const actorId = c.get('actorId');

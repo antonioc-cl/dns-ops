@@ -25,6 +25,7 @@
  * 2. Full collection as part of a snapshot workflow
  */
 
+import { type CollectMailRequest, validateCollectMailRequest } from '@dns-ops/contracts';
 import {
   createPostgresAdapter,
   DkimSelectorRepository,
@@ -34,9 +35,8 @@ import {
   type NewObservation,
   ObservationRepository,
 } from '@dns-ops/db';
-import { Hono } from 'hono';
 import { isValidDomain } from '@dns-ops/parsing';
-import { type CollectMailRequest, validateCollectMailRequest } from '@dns-ops/contracts';
+import { Hono } from 'hono';
 import { type MailCheckResult, performMailCheck } from '../mail/checker.js';
 import type { Env } from '../types.js';
 
@@ -63,7 +63,10 @@ collectMailRoutes.post('/mail', async (c) => {
 
     // Validate domain format using shared validation
     if (!isValidDomain(normalizedDomain)) {
-      return c.json({ error: 'Invalid domain format', message: `"${domain}" is not a valid domain name` }, 400);
+      return c.json(
+        { error: 'Invalid domain format', message: `"${domain}" is not a valid domain name` },
+        400
+      );
     }
 
     // Perform mail check

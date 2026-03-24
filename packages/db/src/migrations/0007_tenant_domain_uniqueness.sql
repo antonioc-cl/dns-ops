@@ -1,0 +1,32 @@
+-- Migration: Add composite unique index for multi-tenant domain uniqueness
+-- 
+-- PR-12.5: Multi-tenant domain uniqueness migration preparation
+-- 
+-- This migration changes the unique constraint on domains from:
+--   (normalized_name) - single column
+-- To:
+--   (normalized_name, tenant_id) - composite
+--
+-- This allows the same domain name to be registered by different tenants.
+-- NULL tenant_id is allowed for system/unowned domains (PostgreSQL treats NULLs as distinct).
+--
+-- IMPORTANT: This is a stub migration that MUST be reviewed before running:
+-- 
+-- 1. Verify no duplicate (normalized_name, tenant_id) pairs exist
+-- 2. Decide how to handle domains without tenant_id (NULL -> '00000000-0000-0000-0000-000000000000')
+-- 3. Run during maintenance window (table lock may be needed for index creation)
+-- 4. Test on staging first
+--
+-- To check for duplicates before running:
+--   SELECT normalized_name, tenant_id, COUNT(*) 
+--   FROM domains 
+--   GROUP BY normalized_name, tenant_id 
+--   HAVING COUNT(*) > 1;
+
+--> statement-breakpoint
+-- Drop the old single-column unique index
+DROP INDEX IF EXISTS "domain_name_idx";--> statement-breakpoint
+-- Create new composite unique index (normalized_name, tenant_id)
+-- NULL tenant_id values are treated as distinct in PostgreSQL unique constraints
+-- This allows multiple NULL (unowned) domains with the same name
+CREATE UNIQUE INDEX "domain_name_tenant_idx" ON "domains" ("normalized_name", "tenant_id");
