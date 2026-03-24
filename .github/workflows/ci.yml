@@ -104,6 +104,10 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Push DB schema
+        run: bunx drizzle-kit push --force
+        working-directory: packages/db
+
       - name: E2E Tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/dns_ops_ci
