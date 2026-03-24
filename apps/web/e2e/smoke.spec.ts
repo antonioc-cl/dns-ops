@@ -35,11 +35,26 @@ test.describe('DNS Domain Flow', () => {
     await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /^dns$/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /mail/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /delegation/i })).toHaveCount(0);
+    // PR-05.3: Delegation tab is now visible (was previously hidden)
+    await expect(page.getByRole('tab', { name: /delegation/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /history/i })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: /notes/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /tags/i })).toBeVisible();
     // Simulation panel is present but may show empty state without a snapshot
+  });
+
+  test('PR-05.3: delegation tab renders panel on click', async ({ page }) => {
+    await page.goto(`/domain/${TEST_DOMAIN}`);
+    await page.waitForLoadState('networkidle');
+
+    // Click delegation tab
+    const delegationTab = page.getByRole('tab', { name: /delegation/i });
+    await delegationTab.click();
+
+    // Should show delegation panel (may be empty state or have content)
+    // Verify either delegation data or empty state is visible
+    const delegationContent = page.locator('text=/Parent Zone Delegation|No delegation data available/i');
+    await expect(delegationContent.first()).toBeVisible();
   });
 
   test('refresh control is reachable', async ({ page }) => {
