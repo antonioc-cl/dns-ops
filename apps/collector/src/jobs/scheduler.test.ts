@@ -7,7 +7,7 @@
  * - Cron pattern validation
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getScheduleKey, SCHEDULE_DESCRIPTIONS, SCHEDULE_PATTERNS } from './scheduler.js';
 
 // =============================================================================
@@ -143,6 +143,184 @@ describe('Job Scheduler', () => {
       for (const [_key, description] of Object.entries(SCHEDULE_DESCRIPTIONS)) {
         expect(description.length).toBeGreaterThan(0);
       }
+    });
+  });
+});
+
+// =============================================================================
+// INTEGRATION TESTS (Redis required)
+// =============================================================================
+
+/**
+ * PR-07.1: Scheduler State Recovery Test
+ *
+ * These tests verify that schedule state can be recovered after a process restart.
+ * They require a real Redis connection and will be skipped if REDIS_URL is not set.
+ *
+ * To run these tests:
+ *   REDIS_URL=redis://localhost:6379 bun test scheduler.test.ts
+ */
+describe('Scheduler State Recovery (Integration)', () => {
+  const hasRedis = process.env.REDIS_URL !== undefined;
+
+  // Skip all tests in this describe block if Redis is not available
+  beforeAll(() => {
+    if (!hasRedis) {
+      console.log('Skipping scheduler recovery tests - REDIS_URL not set');
+    }
+  });
+
+  describe('Schedule Recovery After Restart', () => {
+    // These tests would require:
+    // 1. Real Redis connection
+    // 2. Ability to clear activeSchedules Map
+    // 3. Re-initialize and verify repopulation
+    //
+    // Since the scheduler module has internal state (activeSchedules Map),
+    // we need to test the recovery scenario:
+    // - Initialize schedules (creates BullMQ repeatable jobs)
+    // - Clear the in-memory activeSchedules Map (simulate restart)
+    // - Call initializeSchedules again
+    // - Verify schedules are recovered without duplication
+
+    it.skipIf(!hasRedis)('should recover schedules after in-memory state loss', async () => {
+      // Dynamic import to get actual module with state
+      const scheduler = await import('./scheduler.js');
+      const {
+        initializeSchedules,
+        getActiveSchedules,
+        _clearScheduleStateForTesting,
+        _getActiveScheduleCount,
+        cleanupSchedules,
+      } = scheduler;
+
+      // Clean up any existing schedules first
+      await cleanupSchedules();
+
+      // Step 1: Initialize schedules
+      await initializeSchedules();
+      const countBefore = _getActiveScheduleCount();
+      expect(countBefore).toBe(3); // hourly, daily, weekly
+
+      // Step 2: Clear in-memory state (simulate process restart)
+      _clearScheduleStateForTesting();
+      expect(_getActiveScheduleCount()).toBe(0);
+
+      // Step 3: Re-initialize (recovery)
+      await initializeSchedules();
+
+      // Step 4: Verify recovery
+      const countAfter = _getActiveScheduleCount();
+      expect(countAfter).toBe(3);
+
+      const schedules = getActiveSchedules();
+      const scheduleTypes = schedules.map((s) => s.schedule).sort();
+      expect(scheduleTypes).toEqual(['daily', 'hourly', 'weekly']);
+
+      // Clean up
+      await cleanupSchedules();
+    });
+
+    it.skipIf(!hasRedis)('should not create duplicate BullMQ repeatable jobs', async () => {
+      const scheduler = await import('./scheduler.js');
+      const { initializeSchedules, cleanupSchedules, getMonitoringQueue } = scheduler;
+
+      // Clean up first
+      await cleanupSchedules();
+
+      // Initialize multiple times
+      await initializeSchedules();
+      await initializeSchedules();
+      await initializeSchedules();
+
+      // Check BullMQ repeatable jobs
+      const queue = getMonitoringQueue();
+      if (queue) {
+        const repeatableJobs = await queue.getRepeatableJobs();
+        const scheduledRefreshJobs = repeatableJobs.filter((j: { key?: string }) =>
+          j.key?.includes('scheduled-refresh')
+        );
+
+        // Should have exactly 3 jobs (hourly, daily, weekly), not 9
+        expect(scheduledRefreshJobs.length).toBeLessThanOrEqual(3);
+      }
+
+      // Clean up
+      await cleanupSchedules();
+    });
+
+    it.skipIf(!hasRedis)('should verify all three schedule types are present', async () => {
+      const scheduler = await import('./scheduler.js');
+      const { initializeSchedules, getActiveSchedules, cleanupSchedules } = scheduler;
+
+      await cleanupSchedules();
+      await initializeSchedules();
+
+      const schedules = getActiveSchedules();
+      expect(schedules.length).toBe(3);
+
+      const scheduleTypes = schedules.map((s) => s.schedule);
+      expect(scheduleTypes).toContain('hourly');
+      expect(scheduleTypes).toContain('daily');
+      expect(scheduleTypes).toContain('weekly');
+
+      // All should be active
+      for (const schedule of schedules) {
+        expect(schedule.status).toBe('active');
+      }
+
+      await cleanupSchedules();
+    });
+  });
+
+  describe('BullMQ Repeatable Jobs Verification', () => {
+    it.skipIf(!hasRedis)('should show expected repeatable jobs in BullMQ', async () => {
+      const scheduler = await import('./scheduler.js');
+      const { initializeSchedules, cleanupSchedules, getMonitoringQueue } = scheduler;
+
+      await cleanupSchedules();
+      await initializeSchedules();
+
+      const queue = getMonitoringQueue();
+      if (queue) {
+        const repeatableJobs = await queue.getRepeatableJobs();
+
+        // Should have 3 scheduled-refresh jobs
+        const scheduledJobs = repeatableJobs.filter((j: { key?: string }) =>
+          j.key?.includes('scheduled-refresh')
+        );
+        expect(scheduledJobs.length).toBe(3);
+      }
+
+      await cleanupSchedules();
+    });
+
+    it.skipIf(!hasRedis)('should have correct cron patterns for each schedule', async () => {
+      const scheduler = await import('./scheduler.js');
+      const { initializeSchedules, cleanupSchedules, getMonitoringQueue } = scheduler;
+
+      await cleanupSchedules();
+      await initializeSchedules();
+
+      const queue = getMonitoringQueue();
+      if (queue) {
+        const repeatableJobs = await queue.getRepeatableJobs();
+
+        for (const job of repeatableJobs) {
+          const typedJob = job as { key?: string; pattern?: string };
+          if (typedJob.key?.includes('hourly')) {
+            expect(typedJob.pattern).toBe('0 * * * *');
+          }
+          if (typedJob.key?.includes('daily')) {
+            expect(typedJob.pattern).toBe('0 6 * * *');
+          }
+          if (typedJob.key?.includes('weekly')) {
+            expect(typedJob.pattern).toBe('0 6 * * 1');
+          }
+        }
+      }
+
+      await cleanupSchedules();
     });
   });
 });

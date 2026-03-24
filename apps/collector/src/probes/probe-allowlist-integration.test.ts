@@ -96,7 +96,12 @@ describe('PR-06.3: Allowlist Integration Tests', () => {
           vantage: { type: 'public-recursive', identifier: 'google-dns' },
           success: true,
           answers: [
-            { name: 'custom-domain.com', type: 'MX', ttl: 300, data: '10 em2347.x.domain.example.net.' },
+            {
+              name: 'custom-domain.com',
+              type: 'MX',
+              ttl: 300,
+              data: '10 em2347.x.domain.example.net.',
+            },
           ],
           authority: [],
           additional: [],
@@ -242,7 +247,14 @@ describe('PR-06.3: Allowlist Integration Tests', () => {
           query: { name: 'company.com', type: 'TXT' },
           vantage: { type: 'public-recursive', identifier: 'google-dns' },
           success: true,
-          answers: [{ name: 'company.com', type: 'TXT', ttl: 300, data: 'v=spf1 include:_spf.google.com ~all' }],
+          answers: [
+            {
+              name: 'company.com',
+              type: 'TXT',
+              ttl: 300,
+              data: 'v=spf1 include:_spf.google.com ~all',
+            },
+          ],
           authority: [],
           additional: [],
           responseTime: 50,

@@ -331,3 +331,23 @@ export async function cleanupSchedules(): Promise<void> {
   activeSchedules.clear();
   console.log('[Scheduler] Cleanup complete');
 }
+
+// =============================================================================
+// TEST HELPERS
+// =============================================================================
+
+/**
+ * Clear in-memory schedule state (for testing recovery scenarios)
+ * @internal
+ */
+export function _clearScheduleStateForTesting(): void {
+  activeSchedules.clear();
+}
+
+/**
+ * Get the count of active schedules (for testing)
+ * @internal
+ */
+export function _getActiveScheduleCount(): number {
+  return activeSchedules.size;
+}
