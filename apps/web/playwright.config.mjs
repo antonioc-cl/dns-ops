@@ -65,17 +65,17 @@ export default defineConfig({
   ],
 
   // Run local dev server before starting the tests
-  webServer: {
-    command: 'bunx vinxi dev',
-    url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes to start
-    env: {
-      ...process.env,
-      NODE_ENV: 'development',
-      DATABASE_URL:
-        process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/dns_ops',
-      COLLECTOR_URL: process.env.COLLECTOR_URL || 'http://localhost:3001',
-    },
-  },
+  // webServer: {
+  //   command: 'bunx vinxi dev',
+  //   url: BASE_URL,
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 120 * 1000, // 2 minutes to start
+  //   env: {
+  //     ...process.env,
+  //     NODE_ENV: 'development',
+  //     DATABASE_URL:
+  //       process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/dns_ops',
+  //     COLLECTOR_URL: process.env.COLLECTOR_URL || 'http://localhost:3001',
+  //   },
+  // },
 });

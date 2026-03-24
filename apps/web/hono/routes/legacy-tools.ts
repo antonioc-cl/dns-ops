@@ -18,10 +18,10 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/authorization.js';
 import {
+  type ApiErrorEnvelope,
   ErrorCode,
   getWebLogger,
   trackLegacyOpen,
-  type ApiErrorEnvelope,
 } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
