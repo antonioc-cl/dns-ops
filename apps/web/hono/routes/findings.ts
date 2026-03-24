@@ -744,16 +744,16 @@ findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
             status: 'error',
             error: 'Domain not found',
           });
-
-    // Tenant isolation: reject if domain belongs to a different tenant
-    const tenantId = c.get('tenantId');
-    if (domain.tenantId && domain.tenantId !== tenantId) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
-    if (!tenantId && domain.tenantId) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
           continue;
+        }
+
+        // Tenant isolation: reject if domain belongs to a different tenant
+        const tenantId = c.get('tenantId');
+        if (domain.tenantId && domain.tenantId !== tenantId) {
+          return c.json({ error: 'Findings summary not available' }, 404);
+        }
+        if (!tenantId && domain.tenantId) {
+          return c.json({ error: 'Findings summary not available' }, 404);
         }
 
         // Fetch observations and record sets

@@ -6,8 +6,8 @@
 
 import type { Finding, Suggestion } from '@dns-ops/db/schema';
 import { useEffect, useState } from 'react';
-import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 import { ConfirmDialog } from './ui/ConfirmDialog.js';
+import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface FindingsPanelProps {
   snapshotId: string | null;
@@ -117,7 +117,15 @@ export function FindingsPanel({ snapshotId }: FindingsPanelProps) {
   );
 }
 
-function FindingCard({ finding, domain, suggestions }: { finding: Finding; domain: string; suggestions: Suggestion[] }) {
+function FindingCard({
+  finding,
+  domain,
+  suggestions,
+}: {
+  finding: Finding;
+  domain: string;
+  suggestions: Suggestion[];
+}) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -192,11 +200,7 @@ function FindingCard({ finding, domain, suggestions }: { finding: Finding; domai
                 Suggestions
               </h6>
               {suggestions.map((suggestion) => (
-                <SuggestionCard
-                  key={suggestion.id}
-                  suggestion={suggestion}
-                  domain={domain}
-                />
+                <SuggestionCard key={suggestion.id} suggestion={suggestion} domain={domain} />
               ))}
             </div>
           )}
@@ -291,7 +295,7 @@ function SuggestionCard({ suggestion, domain }: SuggestionCardProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json() as { error?: string; code?: string };
+        const error = (await response.json()) as { error?: string; code?: string };
         if (response.status === 403 && error.code === 'REQUIRES_CONFIRMATION') {
           // Shouldn't happen if UI is correct, but handle it
           console.warn('[FindingsPanel] Review-only suggestion applied without confirmation flag');

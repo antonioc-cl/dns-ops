@@ -66,8 +66,10 @@ function createMockDb(state: MockState): IDatabaseAdapter {
     selectWhere: vi.fn(async (table: unknown, condition: unknown) => {
       const tableName = getTableName(table);
       const condVal = getConditionParam(condition);
-      if (tableName === 'observations') return state.observations.filter((o) => o.snapshotId === condVal);
-      if (tableName === 'record_sets') return state.recordSets.filter((r) => r.snapshotId === condVal);
+      if (tableName === 'observations')
+        return state.observations.filter((o) => o.snapshotId === condVal);
+      if (tableName === 'record_sets')
+        return state.recordSets.filter((r) => r.snapshotId === condVal);
       if (tableName === 'findings') return state.findings.filter((f) => f.snapshotId === condVal);
       return [];
     }),

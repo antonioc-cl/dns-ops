@@ -62,14 +62,16 @@ function createMockDb(state: MockState): IDatabaseAdapter {
       if (tableName === 'snapshots') return state.snapshots.find((s) => s.id === condVal) || null;
       if (tableName === 'domains') return state.domains.find((d) => d.id === condVal) || null;
       if (tableName === 'findings') return state.findings.find((f) => f.id === condVal) || null;
-      if (tableName === 'suggestions') return state.suggestions.find((s) => s.id === condVal) || null;
+      if (tableName === 'suggestions')
+        return state.suggestions.find((s) => s.id === condVal) || null;
       return null;
     }),
     selectWhere: vi.fn(async (table: unknown, condition: unknown) => {
       const tableName = getTableName(table);
       const condVal = getConditionParam(condition);
       if (tableName === 'findings') return state.findings.filter((f) => f.snapshotId === condVal);
-      if (tableName === 'suggestions') return state.suggestions.filter((s) => s.findingId === condVal);
+      if (tableName === 'suggestions')
+        return state.suggestions.filter((s) => s.findingId === condVal);
       return [];
     }),
     insert: vi.fn(),

@@ -7,8 +7,8 @@
 
 import type { Finding, Suggestion } from '@dns-ops/db/schema';
 import { useEffect, useState } from 'react';
-import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 import { ConfirmDialog } from './ui/ConfirmDialog.js';
+import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface MailFindingsPanelProps {
   snapshotId: string | null;
@@ -337,11 +337,7 @@ function MailFindingCard({
                 Suggestions
               </h6>
               {suggestions.map((suggestion) => (
-                <MailSuggestionCard
-                  key={suggestion.id}
-                  suggestion={suggestion}
-                  domain={domain}
-                />
+                <MailSuggestionCard key={suggestion.id} suggestion={suggestion} domain={domain} />
               ))}
             </div>
           )}
@@ -398,9 +394,11 @@ function MailSuggestionCard({ suggestion, domain }: MailSuggestionCardProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json() as { error?: string; code?: string };
+        const error = (await response.json()) as { error?: string; code?: string };
         if (response.status === 403 && error.code === 'REQUIRES_CONFIRMATION') {
-          console.warn('[MailFindingsPanel] Review-only suggestion applied without confirmation flag');
+          console.warn(
+            '[MailFindingsPanel] Review-only suggestion applied without confirmation flag'
+          );
         }
         throw new Error(error.error || 'Failed to apply suggestion');
       }
