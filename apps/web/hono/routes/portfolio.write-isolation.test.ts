@@ -177,11 +177,13 @@ describe('PR-09.3: Cross-Tenant Write Isolation', () => {
       };
 
       // Should return 404
-      const shouldReturn404 = crossTenantWrite.resourceTenantId !== crossTenantWrite.requesterTenantId;
+      const shouldReturn404 =
+        crossTenantWrite.resourceTenantId !== crossTenantWrite.requesterTenantId;
       expect(shouldReturn404).toBe(true);
 
       // NOT 403 (which would leak that the resource exists)
-      const wouldLeakExistence = crossTenantWrite.resourceTenantId !== crossTenantWrite.requesterTenantId;
+      const wouldLeakExistence =
+        crossTenantWrite.resourceTenantId !== crossTenantWrite.requesterTenantId;
       expect(wouldLeakExistence).toBe(true);
     });
   });

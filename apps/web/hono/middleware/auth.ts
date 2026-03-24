@@ -14,8 +14,8 @@
 
 import { getTenantUUID } from '@dns-ops/contracts';
 import { createMiddleware } from 'hono/factory';
-import { getWebLogger } from './error-tracking.js';
 import type { Env } from '../types.js';
+import { getWebLogger } from './error-tracking.js';
 
 /**
  * Auth context from verified identity
