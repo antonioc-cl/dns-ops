@@ -6,6 +6,7 @@
 
 import { AlertRepository, DomainRepository, MonitoredDomainRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { buildWebhookPayload, sendAlertWebhook } from '../notifications/webhook.js';
 import type { Env } from '../types.js';
 
 // Alert type for type annotations
@@ -83,7 +84,7 @@ monitoringRoutes.post('/check', async (c) => {
         }
 
         // Create alert for collection failure
-        await alertRepo.create({
+        const alert = await alertRepo.create({
           monitoredDomainId: monitored.id,
           title: 'Collection Failed',
           description: `Failed to collect DNS data: ${await response.text()}`,
@@ -92,6 +93,49 @@ monitoringRoutes.post('/check', async (c) => {
           dedupKey: `collection-fail-${monitored.domainId}`,
           tenantId: monitored.tenantId,
         });
+
+        // PR-08.2: Fire-and-forget webhook notification
+        const webhookUrl = monitored.alertChannels?.webhook;
+        if (webhookUrl && alert) {
+          // Don't await - fire and forget
+          const payload = buildWebhookPayload(
+            {
+              id: alert.id,
+              title: alert.title,
+              description: alert.description,
+              severity: alert.severity,
+              domain: domain.name,
+              tenantId: alert.tenantId,
+            },
+            process.env.WEB_APP_URL
+          );
+
+          sendAlertWebhook(webhookUrl, payload)
+            .then((result) => {
+              // Log delivery attempt with alertId and webhook host (not full URL)
+              try {
+                const host = new URL(webhookUrl).hostname;
+                if (result.success) {
+                  console.log(
+                    `[AlertNotification] alertId=${alert.id} webhookHost=${host} status=success`
+                  );
+                } else {
+                  console.log(
+                    `[AlertNotification] alertId=${alert.id} webhookHost=${host} status=failed error=${result.error}`
+                  );
+                }
+              } catch {
+                console.log(
+                  `[AlertNotification] alertId=${alert.id} webhookHost=invalid status=failed`
+                );
+              }
+            })
+            .catch((err) => {
+              console.error(
+                `[AlertNotification] alertId=${alert.id} error=${err instanceof Error ? err.message : 'unknown'}`
+              );
+            });
+        }
       }
 
       await monitoredRepo.updateLastCheck(monitored.id);

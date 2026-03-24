@@ -142,6 +142,15 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
+    // Tenant isolation: reject if domain belongs to a different tenant
+    const tenantId = c.get('tenantId');
+    if (domain.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+    if (!tenantId && domain.tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
     // Get current ruleset and ensure version exists
     const ruleset = createCombinedRuleset();
     const actorId = c.req.header('X-Actor-Id') || 'system';
@@ -325,6 +334,15 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
     const domain = await domainRepo.findById(snapshot.domainId);
     if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
+    }
+
+    // Tenant isolation: reject if domain belongs to a different tenant
+    const tenantId = c.get('tenantId');
+    if (domain.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+    if (!tenantId && domain.tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
     }
 
     // Fetch mail evidence and DKIM selectors in parallel
@@ -539,6 +557,59 @@ findingsRoutes.patch(
 );
 
 /**
+ * GET /api/findings/:findingId
+ * Get a single finding by ID with tenant isolation
+ */
+findingsRoutes.get('/findings/:findingId', async (c) => {
+  const findingId = c.req.param('findingId');
+  const db = c.get('db');
+
+  try {
+    const findingRepo = new FindingRepository(db);
+    const snapshotRepo = new SnapshotRepository(db);
+    const domainRepo = new DomainRepository(db);
+
+    // Fetch finding
+    const finding = await findingRepo.findById(findingId);
+    if (!finding) {
+      return c.json({ error: 'Finding not found' }, 404);
+    }
+
+    // Fetch snapshot for tenant isolation
+    const snapshot = await snapshotRepo.findById(finding.snapshotId);
+    if (!snapshot) {
+      return c.json({ error: 'Finding not found' }, 404);
+    }
+
+    // Fetch domain for tenant check
+    const domain = await domainRepo.findById(snapshot.domainId);
+    if (!domain) {
+      return c.json({ error: 'Finding not found' }, 404);
+    }
+
+    // Tenant isolation: reject if domain belongs to a different tenant
+    const tenantId = c.get('tenantId');
+    if (domain.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Finding not found' }, 404);
+    }
+    if (!tenantId && domain.tenantId) {
+      return c.json({ error: 'Finding not found' }, 404);
+    }
+
+    return c.json({ finding });
+  } catch (error) {
+    console.error('Error fetching finding:', error);
+    return c.json(
+      {
+        error: 'Failed to fetch finding',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+/**
  * PATCH /api/findings/:findingId/false-positive
  * Mark a finding as false positive
  */
@@ -673,6 +744,15 @@ findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
             status: 'error',
             error: 'Domain not found',
           });
+
+    // Tenant isolation: reject if domain belongs to a different tenant
+    const tenantId = c.get('tenantId');
+    if (domain.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+    if (!tenantId && domain.tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
           continue;
         }
 

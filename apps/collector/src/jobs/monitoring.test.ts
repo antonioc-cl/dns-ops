@@ -562,19 +562,16 @@ describe('Webhook Notification Integration', () => {
 
       const { sendAlertWebhook } = await import('../notifications/webhook.js');
 
-      const result = await sendAlertWebhook(
-        'https://webhook.example.com/alerts',
-        {
-          alertId: 'alert-123',
-          title: 'Test Alert',
-          description: 'Test description',
-          severity: 'high',
-          domain: 'example.com',
-          tenantId: 'tenant-1',
-          timestamp: new Date().toISOString(),
-          domain360Link: 'https://app.example.com/domain/example.com',
-        }
-      );
+      const result = await sendAlertWebhook('https://webhook.example.com/alerts', {
+        alertId: 'alert-123',
+        title: 'Test Alert',
+        description: 'Test description',
+        severity: 'high',
+        domain: 'example.com',
+        tenantId: 'tenant-1',
+        timestamp: new Date().toISOString(),
+        domain360Link: 'https://app.example.com/domain/example.com',
+      });
 
       expect(result.success).toBe(true);
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -583,19 +580,16 @@ describe('Webhook Notification Integration', () => {
     it('sendAlertWebhook returns SSRF_BLOCKED for private URLs', async () => {
       const { sendAlertWebhook } = await import('../notifications/webhook.js');
 
-      const result = await sendAlertWebhook(
-        'http://10.0.0.1/webhook',
-        {
-          alertId: 'alert-123',
-          title: 'Test Alert',
-          description: 'Test description',
-          severity: 'high',
-          domain: 'example.com',
-          tenantId: 'tenant-1',
-          timestamp: new Date().toISOString(),
-          domain360Link: 'https://app.example.com/domain/example.com',
-        }
-      );
+      const result = await sendAlertWebhook('http://10.0.0.1/webhook', {
+        alertId: 'alert-123',
+        title: 'Test Alert',
+        description: 'Test description',
+        severity: 'high',
+        domain: 'example.com',
+        tenantId: 'tenant-1',
+        timestamp: new Date().toISOString(),
+        domain360Link: 'https://app.example.com/domain/example.com',
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('SSRF_BLOCKED');
@@ -607,19 +601,16 @@ describe('Webhook Notification Integration', () => {
 
       const { sendAlertWebhook } = await import('../notifications/webhook.js');
 
-      const result = await sendAlertWebhook(
-        'https://nonexistent.example.com/webhook',
-        {
-          alertId: 'alert-123',
-          title: 'Test Alert',
-          description: 'Test description',
-          severity: 'high',
-          domain: 'example.com',
-          tenantId: 'tenant-1',
-          timestamp: new Date().toISOString(),
-          domain360Link: 'https://app.example.com/domain/example.com',
-        }
-      );
+      const result = await sendAlertWebhook('https://nonexistent.example.com/webhook', {
+        alertId: 'alert-123',
+        title: 'Test Alert',
+        description: 'Test description',
+        severity: 'high',
+        domain: 'example.com',
+        tenantId: 'tenant-1',
+        timestamp: new Date().toISOString(),
+        domain360Link: 'https://app.example.com/domain/example.com',
+      });
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('ENOTFOUND');
@@ -631,19 +622,16 @@ describe('Webhook Notification Integration', () => {
 
       const { sendAlertWebhook } = await import('../notifications/webhook.js');
 
-      const result = await sendAlertWebhook(
-        'https://webhook.example.com/alerts',
-        {
-          alertId: 'alert-123',
-          title: 'Test Alert',
-          description: 'Test description',
-          severity: 'high',
-          domain: 'example.com',
-          tenantId: 'tenant-1',
-          timestamp: new Date().toISOString(),
-          domain360Link: 'https://app.example.com/domain/example.com',
-        }
-      );
+      const result = await sendAlertWebhook('https://webhook.example.com/alerts', {
+        alertId: 'alert-123',
+        title: 'Test Alert',
+        description: 'Test description',
+        severity: 'high',
+        domain: 'example.com',
+        tenantId: 'tenant-1',
+        timestamp: new Date().toISOString(),
+        domain360Link: 'https://app.example.com/domain/example.com',
+      });
 
       expect(result.success).toBe(false);
       expect(result.statusCode).toBe(500);
