@@ -514,18 +514,14 @@ describe('legacyToolsRoutes runtime', () => {
       it('rejects domain with unicode characters', async () => {
         const app = createApp(emptyState);
         // Greek alpha unicode character
-        const response = await app.request(
-          '/api/legacy-tools/dmarc/deeplink?domain=α example.com'
-        );
+        const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=α example.com');
         expect(response.status).toBe(400);
       });
 
       it('rejects domain with mixed scripts (IDN homograph)', async () => {
         const app = createApp(emptyState);
         // Cyrillic 'а' (U+0430) vs Latin 'a' (U+0061) - looks identical
-        const response = await app.request(
-          '/api/legacy-tools/dmarc/deeplink?domain=exаmple.com'
-        );
+        const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=exаmple.com');
         expect(response.status).toBe(400);
       });
 
@@ -639,17 +635,13 @@ describe('legacyToolsRoutes runtime', () => {
 
       it('does not allow IP address as domain', async () => {
         const app = createApp(emptyState);
-        const response = await app.request(
-          '/api/legacy-tools/dmarc/deeplink?domain=127.0.0.1'
-        );
+        const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=127.0.0.1');
         expect(response.status).toBe(400);
       });
 
       it('does not allow localhost as domain', async () => {
         const app = createApp(emptyState);
-        const response = await app.request(
-          '/api/legacy-tools/dmarc/deeplink?domain=localhost'
-        );
+        const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=localhost');
         expect(response.status).toBe(400);
       });
     });
