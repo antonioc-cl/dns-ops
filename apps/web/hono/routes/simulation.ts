@@ -14,6 +14,7 @@ import {
 } from '@dns-ops/db';
 import { type RuleContext, SimulationEngine } from '@dns-ops/rules';
 import { Hono } from 'hono';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 import { createCombinedRuleset } from './findings.js';
 
@@ -114,7 +115,13 @@ simulationRoutes.post('/', async (c) => {
 
     return c.json(result);
   } catch (error) {
-    console.error('Simulation error:', error);
+    const logger = getWebLogger();
+    logger.error('Simulation error', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/simulate',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Simulation failed',

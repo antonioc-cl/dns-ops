@@ -8,7 +8,11 @@ import {
 import { domains } from '@dns-ops/db/schema';
 import { Hono } from 'hono';
 import { collectorCircuit, proxyToCollector } from '../lib/collector-proxy.js';
-import { requireAdminAccess, requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import {
+  requireAdminAccess,
+  requireAuth,
+  requireWritePermission,
+} from '../middleware/authorization.js';
 import type { Env } from '../types.js';
 import { alertRoutes } from './alerts.js';
 import { delegationRoutes } from './delegation.js';

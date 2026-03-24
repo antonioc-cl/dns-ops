@@ -267,14 +267,18 @@ export async function proxyToCollector(
     collectorCircuit.recordFailure();
     const info = collectorCircuit.getInfo();
     const logger = getWebLogger();
-    logger.error('[CollectorProxy] Network error: collector unreachable', error instanceof Error ? error : new Error(String(error)), {
-      path: request.path,
-      method: request.method,
-      requestId: c.req.header('X-Request-ID') || crypto.randomUUID(),
-      tenantId: c.get('tenantId'),
-      circuitState: info.state,
-      consecutiveFailures: info.consecutiveFailures,
-    });
+    logger.error(
+      '[CollectorProxy] Network error: collector unreachable',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        path: request.path,
+        method: request.method,
+        requestId: c.req.header('X-Request-ID') || crypto.randomUUID(),
+        tenantId: c.get('tenantId'),
+        circuitState: info.state,
+        consecutiveFailures: info.consecutiveFailures,
+      }
+    );
     return c.json(
       {
         error: 'Failed to connect to collector service',

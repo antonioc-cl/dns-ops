@@ -37,6 +37,7 @@ import {
 } from '@dns-ops/rules';
 import { Hono } from 'hono';
 import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const findingsRoutes = new Hono<Env>();
@@ -296,7 +297,13 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
       },
     });
   } catch (error) {
-    console.error('Error evaluating findings:', error);
+    const logger = getWebLogger();
+    logger.error('Error evaluating findings:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshots/:snapshotId/findings',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to evaluate findings',
@@ -418,7 +425,13 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
       suggestions: allSuggestions,
     });
   } catch (error) {
-    console.error('Error evaluating mail findings:', error);
+    const logger = getWebLogger();
+    logger.error('Error evaluating mail findings:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/mail/findings',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to evaluate mail findings',
@@ -479,7 +492,13 @@ findingsRoutes.post('/snapshot/:snapshotId/evaluate', requireAuth, async (c) => 
       ...(typeof result === 'object' && result !== null ? result : {}),
     });
   } catch (error) {
-    console.error('Error re-evaluating findings:', error);
+    const logger = getWebLogger();
+    logger.error('Error re-evaluating findings:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/snapshots/:snapshotId/findings/re-evaluate',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to re-evaluate findings',
@@ -510,7 +529,13 @@ findingsRoutes.get('/snapshot/:snapshotId/findings/summary', async (c) => {
       total: Object.values(severityCounts).reduce((a, b) => a + b, 0),
     });
   } catch (error) {
-    console.error('Error getting findings summary:', error);
+    const logger = getWebLogger();
+    logger.error('Error getting findings summary:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get findings summary',
@@ -544,7 +569,13 @@ findingsRoutes.patch(
 
       return c.json({ success: true, finding: updated });
     } catch (error) {
-      console.error('Error acknowledging finding:', error);
+      const logger = getWebLogger();
+    logger.error('Error acknowledging finding:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
       return c.json(
         {
           error: 'Failed to acknowledge finding',
@@ -598,7 +629,13 @@ findingsRoutes.get('/findings/:findingId', async (c) => {
 
     return c.json({ finding });
   } catch (error) {
-    console.error('Error fetching finding:', error);
+    const logger = getWebLogger();
+    logger.error('Error fetching finding:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to fetch finding',
@@ -632,7 +669,13 @@ findingsRoutes.patch(
 
       return c.json({ success: true, finding: updated });
     } catch (error) {
-      console.error('Error marking finding as false positive:', error);
+      const logger = getWebLogger();
+    logger.error('Error marking finding as false positive:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
       return c.json(
         {
           error: 'Failed to mark finding as false positive',
@@ -865,7 +908,13 @@ findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
       results,
     });
   } catch (error) {
-    console.error('Error in findings backfill:', error);
+    const logger = getWebLogger();
+    logger.error('Error in findings backfill:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to backfill findings',
@@ -911,7 +960,13 @@ findingsRoutes.get('/findings/backfill/status', requireAuth, async (c) => {
           : 100,
     });
   } catch (error) {
-    console.error('Error getting backfill status:', error);
+    const logger = getWebLogger();
+    logger.error('Error getting backfill status:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/unknown',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get backfill status',

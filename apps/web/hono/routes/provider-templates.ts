@@ -15,6 +15,7 @@ import {
 } from '@dns-ops/rules';
 import { Hono } from 'hono';
 import { requireAdminAccess, requireAuth } from '../middleware/authorization.js';
+import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const providerTemplateRoutes = new Hono<Env>();
@@ -47,7 +48,13 @@ providerTemplateRoutes.get('/providers', async (c) => {
       })),
     });
   } catch (error) {
-    console.error('Provider list error:', error);
+    const logger = getWebLogger();
+    logger.error('Provider list error:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/provider-templates',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to list provider templates',
@@ -93,7 +100,13 @@ providerTemplateRoutes.get('/providers/:provider', async (c) => {
       },
     });
   } catch (error) {
-    console.error('Provider get error:', error);
+    const logger = getWebLogger();
+    logger.error('Provider get error:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/provider-templates/:provider',
+      method: 'GET',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to get provider template',
@@ -183,7 +196,13 @@ providerTemplateRoutes.post('/compare-to-provider', async (c) => {
       },
     });
   } catch (error) {
-    console.error('Provider comparison error:', error);
+    const logger = getWebLogger();
+    logger.error('Provider comparison error:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/provider-templates/compare',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to compare to provider template',
@@ -229,7 +248,13 @@ providerTemplateRoutes.post('/detect-provider', async (c) => {
           : null,
     });
   } catch (error) {
-    console.error('Provider detection error:', error);
+    const logger = getWebLogger();
+    logger.error('Provider detection error:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/provider-templates/detect',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to detect provider',
@@ -272,7 +297,13 @@ providerTemplateRoutes.post('/providers/:provider/selectors', requireAdminAccess
       knownSelectors: templateStorage.getTemplate(provider)?.knownSelectors,
     });
   } catch (error) {
-    console.error('Add selector error:', error);
+    const logger = getWebLogger();
+    logger.error('Add selector error:', error instanceof Error ? error : new Error(String(error)), {
+      requestId: c.req.header('X-Request-ID'),
+      path: '/api/provider-templates/:provider/selectors',
+      method: 'POST',
+      tenantId: c.get('tenantId'),
+    });
     return c.json(
       {
         error: 'Failed to add selector',
