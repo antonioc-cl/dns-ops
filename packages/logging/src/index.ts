@@ -48,6 +48,7 @@ export {
   runWithContext,
   toLogContext,
 } from './context.js';
+export { createErrorReporter, type ErrorReporter } from './error-reporting.js';
 export {
   createLogger,
   type LogContext,
@@ -69,4 +70,3 @@ export {
   type ShadowMetrics,
 } from './metrics.js';
 export { createLoggingMiddleware, type LoggingMiddlewareOptions } from './middleware.js';
-export { createErrorReporter, type ErrorReporter } from './error-reporting.js';
