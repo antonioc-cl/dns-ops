@@ -138,6 +138,78 @@ Cloudflare D1 doesn't support RLS. For D1 deployments:
 
 ---
 
+---
+
+## Domain Uniqueness Limitation
+
+### Current Implementation
+
+**Issue:** The `domains` table uses `normalized_name` alone for uniqueness.
+
+```sql
+-- Current index (from schema)
+UNIQUE INDEX domain_name_idx ON domains (normalized_name)
+```
+
+**Problem:** This prevents two tenants from owning the same domain name, even if they shouldn't have isolation conflicts (e.g., test vs production tenants).
+
+### Impact
+
+1. **Cross-tenant conflicts**: Tenant A cannot create `example.com` if Tenant B already has it
+2. **Import/transfer issues**: Domain ownership transfer between tenants requires data migration
+3. **Multi-domain deployments**: Single-tenant mode still requires unique domain names
+
+### Migration Path
+
+To support true multi-tenant domain isolation, change the unique index to include `tenant_id`:
+
+```sql
+-- Migration: Change from single-column to composite unique index
+BEGIN;
+
+-- 1. Drop current unique constraint
+DROP INDEX domain_name_idx;
+
+-- 2. Create composite unique index (allows same domain for different tenants)
+CREATE UNIQUE INDEX domain_tenant_name_idx ON domains (tenant_id, normalized_name)
+  WHERE tenant_id IS NOT NULL;
+
+-- 3. Allow NULL tenant_id for unowned/public domains (maintains public read)
+-- NULL values are not equal in PostgreSQL unique constraints
+
+COMMIT;
+```
+
+### Backfill Requirements
+
+If there are existing duplicate domain names:
+
+```sql
+-- 1. Find duplicates
+SELECT normalized_name, COUNT(*) as count
+FROM domains
+WHERE tenant_id IS NOT NULL
+GROUP BY normalized_name
+HAVING COUNT(*) > 1;
+
+-- 2. For each duplicate, decide:
+--    a. Transfer domain to primary tenant, archive others
+--    b. Merge duplicate records (if data is identical)
+--    c. Contact support for resolution
+
+-- 3. After resolution, verify no duplicates
+SELECT COUNT(*) FROM domains
+WHERE tenant_id IS NOT NULL
+GROUP BY tenant_id, normalized_name
+HAVING COUNT(*) > 1;
+```
+
+### Schema Link
+
+See `packages/db/src/schema/domain.ts` for the current `domains` table definition.
+
+---
+
 ## Security Checklist
 
 When adding new tenant-aware features:
