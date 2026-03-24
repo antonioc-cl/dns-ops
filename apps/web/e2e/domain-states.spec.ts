@@ -20,9 +20,7 @@ test.describe('Empty DB State', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show yellow "no snapshot" warning, not an error
-    const noSnapshotWarning = page.getByText(
-      /no dns snapshot is available for/i
-    );
+    const noSnapshotWarning = page.getByText(/no dns snapshot is available for/i);
     await expect(noSnapshotWarning).toBeVisible();
 
     // The warning should be yellow-ish (has yellow background)
@@ -55,7 +53,7 @@ test.describe('Refresh Button Behavior', () => {
     await expect(refreshButton).toBeEnabled();
   });
 
-  test('refresh button shows aria-busy during refresh', async ({ page, request }) => {
+  test('refresh button shows aria-busy during refresh', async ({ page }) => {
     await page.goto(`/domain/${TEST_DOMAIN}`);
     await page.waitForLoadState('networkidle');
 
