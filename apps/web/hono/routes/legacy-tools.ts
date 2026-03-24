@@ -6,6 +6,10 @@
  * IMPORTANT: These deep-links are provided for backward compatibility only.
  * No parity claims are made between legacy tool outputs and new workbench findings.
  * Users should treat legacy tool results as informational, not authoritative.
+ *
+ * PR-03.1: Startup validation for legacy tool URLs
+ * - Logs warning on first access if URLs not configured
+ * - Returns HTTP 503 with INFRA_CONFIG_MISSING code for unconfigured tools
  */
 
 import { LegacyAccessLogRepository, ShadowComparisonRepository } from '@dns-ops/db';
@@ -13,21 +17,140 @@ import { findings as findingsTable, snapshots as snapshotsTable } from '@dns-ops
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/authorization.js';
-import { trackLegacyOpen } from '../middleware/error-tracking.js';
+import {
+  ErrorCode,
+  getWebLogger,
+  trackLegacyOpen,
+  type ApiErrorEnvelope,
+} from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
+
+// =============================================================================
+// PR-03.1: Startup Validation for Legacy Tool URLs
+// =============================================================================
+
+/**
+ * Tracks whether we've logged the startup warning for unconfigured tools.
+ * We log once per process lifetime, not on every request.
+ */
+let hasLoggedConfigWarning = false;
+
+/**
+ * Check if legacy tool URLs are configured and log warning on first access.
+ * Returns an object indicating which tools are available.
+ */
+function checkLegacyToolsConfig(): {
+  dmarcAvailable: boolean;
+  dkimAvailable: boolean;
+} {
+  const dmarcUrl = process.env.VITE_DMARC_TOOL_URL;
+  const dkimUrl = process.env.VITE_DKIM_TOOL_URL;
+
+  const dmarcAvailable = !!dmarcUrl && dmarcUrl.length > 0;
+  const dkimAvailable = !!dkimUrl && dkimUrl.length > 0;
+
+  // Log warning on first access if any tool is unconfigured
+  if (!hasLoggedConfigWarning && (!dmarcAvailable || !dkimAvailable)) {
+    hasLoggedConfigWarning = true;
+    const logger = getWebLogger();
+    const missing: string[] = [];
+    if (!dmarcAvailable) missing.push('VITE_DMARC_TOOL_URL');
+    if (!dkimAvailable) missing.push('VITE_DKIM_TOOL_URL');
+
+    logger.warn('Legacy tools configuration incomplete', {
+      missingConfig: missing,
+      message: `Legacy tool URLs not configured: ${missing.join(', ')}. Deep-links will return 503.`,
+    });
+  }
+
+  return { dmarcAvailable, dkimAvailable };
+}
+
+/**
+ * Build a 503 response for unconfigured legacy tool.
+ * Uses standardized error envelope with INFRA_CONFIG_MISSING code.
+ */
+function configMissingResponse(c: import('hono').Context<Env>, toolName: string): Response {
+  const requestId = c.req.header('X-Request-ID') || `req_${Date.now().toString(36)}`;
+
+  // Map tool name to environment variable name
+  const envVarMap: Record<string, string> = {
+    DMARC: 'VITE_DMARC_TOOL_URL',
+    DKIM: 'VITE_DKIM_TOOL_URL',
+  };
+
+  const envVar = envVarMap[toolName] ?? `${toolName.toUpperCase()}_TOOL_URL`;
+
+  const envelope: ApiErrorEnvelope = {
+    ok: false,
+    code: ErrorCode.INFRA_CONFIG_MISSING,
+    error: `${toolName} tool not configured`,
+    requestId,
+    details: {
+      tool: toolName.toLowerCase(),
+      hint: `Set the ${envVar} environment variable to enable this feature.`,
+    },
+  };
+
+  return c.json(envelope, 503);
+}
 
 // Domain validation regex (basic ASCII domain format)
 const DOMAIN_RE =
   /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+// IP address pattern (IPv4)
+const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+// Blocklist for dangerous/special domains
+const BLOCKED_DOMAINS = new Set([
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  '::1',
+  'localhost.localdomain',
+]);
 
 // DKIM selector validation (alphanumeric, hyphens, underscores)
 const SELECTOR_RE = /^[a-zA-Z0-9_-]{1,63}$/;
 
 /**
  * Validate and sanitize domain input
+ *
+ * Security checks:
+ * - Rejects XSS patterns (script tags, javascript: URLs, event handlers)
+ * - Rejects IDN/punycode domains (xn-- prefix)
+ * - Rejects IP addresses (IPv4 and IPv6)
+ * - Rejects special hostnames (localhost, etc.)
+ * - Rejects URL schemes in domain field
+ * - Rejects injection characters (#, \n, \0)
  */
 function isValidDomain(domain: string): boolean {
   if (!domain || domain.length > 253) return false;
+
+  // Reject URL schemes
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(domain)) return false;
+
+  // Reject punycode/IDN domains
+  if (domain.startsWith('xn--')) return false;
+
+  // Reject IPv4 addresses
+  if (IPV4_RE.test(domain)) return false;
+
+  // Reject IPv6 addresses (simplified check)
+  if (domain.includes(':') && domain.startsWith('[')) return false;
+
+  // Reject blocked hostnames (case-insensitive)
+  const lowerDomain = domain.toLowerCase();
+  if (BLOCKED_DOMAINS.has(lowerDomain)) return false;
+
+  // Reject localhost patterns
+  if (/^localhost/.test(lowerDomain)) return false;
+
+  // Reject injection characters (URL fragments, newlines, null bytes)
+  if (/[#\n\r\0]/.test(domain)) return false;
+
+  // Standard domain format check
   return DOMAIN_RE.test(domain);
 }
 
@@ -133,17 +256,19 @@ legacyToolsRoutes.post('/log', requireAuth, async (c) => {
 /**
  * GET /api/legacy-tools/config
  * Get legacy tools configuration
+ *
+ * PR-03.1: Logs warning on first access if URLs not configured.
  */
 legacyToolsRoutes.get('/config', (c) => {
-  const dmarcUrl = process.env.VITE_DMARC_TOOL_URL;
-  const dkimUrl = process.env.VITE_DKIM_TOOL_URL;
+  // PR-03.1: Check config and log warning if needed
+  const { dmarcAvailable, dkimAvailable } = checkLegacyToolsConfig();
 
   // Return sanitized configuration (no sensitive URLs in production)
   const config = {
     dmarc: {
       name: 'DMARC Analyzer',
-      available: !!dmarcUrl,
-      supportDeepLink: !!dmarcUrl,
+      available: dmarcAvailable,
+      supportDeepLink: dmarcAvailable,
       supportEmbed: false,
       authRequired: true,
       disclaimer:
@@ -151,8 +276,8 @@ legacyToolsRoutes.get('/config', (c) => {
     },
     dkim: {
       name: 'DKIM Validator',
-      available: !!dkimUrl,
-      supportDeepLink: !!dkimUrl,
+      available: dkimAvailable,
+      supportDeepLink: dkimAvailable,
       supportEmbed: false,
       authRequired: true,
       disclaimer:
@@ -173,19 +298,16 @@ legacyToolsRoutes.get('/config', (c) => {
  * Returns:
  *   - url: The deep-link URL
  *   - disclaimer: Warning that this is a legacy tool
+ *
+ * PR-03.1: Returns 503 with INFRA_CONFIG_MISSING if tool not configured.
  */
 legacyToolsRoutes.get('/dmarc/deeplink', requireAuth, (c) => {
   const domain = c.req.query('domain');
   const dmarcUrl = process.env.VITE_DMARC_TOOL_URL;
 
+  // PR-03.1: Return 503 with INFRA_CONFIG_MISSING code for unconfigured tool
   if (!dmarcUrl) {
-    return c.json(
-      {
-        error: 'DMARC tool not configured',
-        message: 'Legacy DMARC analyzer is not available in this environment.',
-      },
-      503
-    );
+    return configMissingResponse(c, 'DMARC');
   }
 
   if (!domain) {
@@ -223,20 +345,17 @@ legacyToolsRoutes.get('/dmarc/deeplink', requireAuth, (c) => {
  * Returns:
  *   - url: The deep-link URL
  *   - disclaimer: Warning that this is a legacy tool
+ *
+ * PR-03.1: Returns 503 with INFRA_CONFIG_MISSING if tool not configured.
  */
 legacyToolsRoutes.get('/dkim/deeplink', requireAuth, (c) => {
   const domain = c.req.query('domain');
   const selector = c.req.query('selector');
   const dkimUrl = process.env.VITE_DKIM_TOOL_URL;
 
+  // PR-03.1: Return 503 with INFRA_CONFIG_MISSING code for unconfigured tool
   if (!dkimUrl) {
-    return c.json(
-      {
-        error: 'DKIM tool not configured',
-        message: 'Legacy DKIM validator is not available in this environment.',
-      },
-      503
-    );
+    return configMissingResponse(c, 'DKIM');
   }
 
   if (!domain) {
@@ -280,6 +399,8 @@ legacyToolsRoutes.get('/dkim/deeplink', requireAuth, (c) => {
  *   - requests: Array of { tool: 'dmarc'|'dkim', domain: string, selector?: string }
  *
  * Returns array of deep-link results
+ *
+ * PR-03.1: Returns per-item errors with config info for unconfigured tools.
  */
 legacyToolsRoutes.post('/bulk-deeplinks', requireAuth, async (c) => {
   const dmarcUrl = process.env.VITE_DMARC_TOOL_URL;
@@ -313,16 +434,26 @@ legacyToolsRoutes.post('/bulk-deeplinks', requireAuth, async (c) => {
     }
 
     if (tool === 'dmarc') {
+      // PR-03.1: Include INFRA_CONFIG_MISSING code in error for unconfigured tool
       if (!dmarcUrl) {
-        return { index, error: 'DMARC tool not configured' };
+        return {
+          index,
+          error: 'DMARC tool not configured',
+          code: ErrorCode.INFRA_CONFIG_MISSING,
+        };
       }
       const url = buildDeepLink(dmarcUrl, { domain });
       return url ? { index, tool, domain, url } : { index, error: 'Failed to build URL' };
     }
 
     if (tool === 'dkim') {
+      // PR-03.1: Include INFRA_CONFIG_MISSING code in error for unconfigured tool
       if (!dkimUrl) {
-        return { index, error: 'DKIM tool not configured' };
+        return {
+          index,
+          error: 'DKIM tool not configured',
+          code: ErrorCode.INFRA_CONFIG_MISSING,
+        };
       }
       if (!selector || !isValidSelector(selector)) {
         return { index, error: 'Invalid selector' };

@@ -1,5 +1,7 @@
 /**
  * Legacy tools route runtime tests
+ *
+ * PR-03.1: Tests for startup validation and INFRA_CONFIG_MISSING error codes
  */
 
 import type { IDatabaseAdapter } from '@dns-ops/db';
@@ -184,6 +186,30 @@ describe('legacyToolsRoutes runtime', () => {
       const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=example.com');
       expect(response.status).toBe(503);
     });
+
+    it('returns INFRA_CONFIG_MISSING code when tool not configured (PR-03.1)', async () => {
+      process.env.VITE_DMARC_TOOL_URL = '';
+      const app = createApp(emptyState);
+      const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=example.com');
+
+      expect(response.status).toBe(503);
+      const json = (await response.json()) as {
+        ok: boolean;
+        code: string;
+        error: string;
+        requestId: string;
+        details?: { tool: string; hint: string };
+      };
+
+      // PR-03.1: Verify standardized error envelope
+      expect(json.ok).toBe(false);
+      expect(json.code).toBe('INFRA_CONFIG_MISSING');
+      expect(json.error).toContain('DMARC');
+      expect(json.error).toContain('not configured');
+      expect(json.requestId).toBeDefined();
+      expect(json.details?.tool).toBe('dmarc');
+      expect(json.details?.hint).toContain('VITE_DMARC_TOOL_URL');
+    });
   });
 
   describe('GET /dkim/deeplink', () => {
@@ -218,6 +244,54 @@ describe('legacyToolsRoutes runtime', () => {
         '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=bad selector!'
       );
       expect(response.status).toBe(400);
+    });
+
+    it('returns 503 when tool not configured', async () => {
+      process.env.VITE_DKIM_TOOL_URL = '';
+      const app = createApp(emptyState);
+      const response = await app.request(
+        '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=google'
+      );
+      expect(response.status).toBe(503);
+    });
+
+    it('returns INFRA_CONFIG_MISSING code when tool not configured (PR-03.1)', async () => {
+      process.env.VITE_DKIM_TOOL_URL = '';
+      const app = createApp(emptyState);
+      const response = await app.request(
+        '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=google'
+      );
+
+      expect(response.status).toBe(503);
+      const json = (await response.json()) as {
+        ok: boolean;
+        code: string;
+        error: string;
+        requestId: string;
+        details?: { tool: string; hint: string };
+      };
+
+      // PR-03.1: Verify standardized error envelope
+      expect(json.ok).toBe(false);
+      expect(json.code).toBe('INFRA_CONFIG_MISSING');
+      expect(json.error).toContain('DKIM');
+      expect(json.error).toContain('not configured');
+      expect(json.requestId).toBeDefined();
+      expect(json.details?.tool).toBe('dkim');
+      expect(json.details?.hint).toContain('DKIM_TOOL_URL');
+    });
+
+    it('returns 503 with INFRA_CONFIG_MISSING when DKIM tool not configured', async () => {
+      process.env.VITE_DKIM_TOOL_URL = '';
+      const app = createApp(emptyState);
+      const response = await app.request(
+        '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=google'
+      );
+      expect(response.status).toBe(503);
+      const json = (await response.json()) as { ok: boolean; code: string; error: string };
+      expect(json.ok).toBe(false);
+      expect(json.code).toBe('INFRA_CONFIG_MISSING');
+      expect(json.error).toContain('DKIM');
     });
   });
 
@@ -325,6 +399,34 @@ describe('legacyToolsRoutes runtime', () => {
       expect(json.results[0]?.error).toBe('Invalid domain');
       expect(json.results[1]?.error).toBe('Invalid selector');
     });
+
+    it('returns INFRA_CONFIG_MISSING code in per-item errors (PR-03.1)', async () => {
+      process.env.VITE_DMARC_TOOL_URL = '';
+      process.env.VITE_DKIM_TOOL_URL = '';
+      const app = createApp(emptyState);
+
+      const response = await app.request('/api/legacy-tools/bulk-deeplinks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [
+            { tool: 'dmarc', domain: 'example.com' },
+            { tool: 'dkim', domain: 'example.com', selector: 'google' },
+          ],
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as {
+        results: Array<{ error?: string; code?: string }>;
+      };
+
+      // PR-03.1: Verify INFRA_CONFIG_MISSING code in per-item errors
+      expect(json.results[0]?.error).toBe('DMARC tool not configured');
+      expect(json.results[0]?.code).toBe('INFRA_CONFIG_MISSING');
+      expect(json.results[1]?.error).toBe('DKIM tool not configured');
+      expect(json.results[1]?.code).toBe('INFRA_CONFIG_MISSING');
+    });
   });
 
   describe('GET /shadow-stats', () => {
@@ -360,6 +462,196 @@ describe('legacyToolsRoutes runtime', () => {
       };
       expect(json.domain).toBe('all');
       expect(json.durable).toBe(true);
+    });
+  });
+
+  // PR-03.2: Security tests for deep-link URL safety
+  describe('PR-03.2: URL Safety', () => {
+    describe('XSS prevention in domain parameter', () => {
+      it('rejects domain with script tag', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=<script>alert(1)</script>'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects domain with javascript: URL', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=javascript:alert(1)'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects domain with onload event', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=example.com"onload="alert(1)'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects domain with expression injection', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=example.com style="expression:alert(1)"'
+        );
+        expect(response.status).toBe(400);
+      });
+    });
+
+    describe('IDN (punycode) handling', () => {
+      it('rejects punycode domain (xn--) ', async () => {
+        const app = createApp(emptyState);
+        // xn-- is the punycode prefix
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=xn--ls8h.example.com'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects domain with unicode characters', async () => {
+        const app = createApp(emptyState);
+        // Greek alpha unicode character
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=α example.com'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects domain with mixed scripts (IDN homograph)', async () => {
+        const app = createApp(emptyState);
+        // Cyrillic 'а' (U+0430) vs Latin 'a' (U+0061) - looks identical
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=exаmple.com'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects emoji in domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=🚨.com');
+        expect(response.status).toBe(400);
+      });
+    });
+
+    describe('Query parameter injection prevention', () => {
+      it('escapes ampersands in domain value', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=example.com&extra=malicious'
+        );
+        // The extra param should be ignored (not part of domain query)
+        expect(response.status).toBe(200);
+        const json = (await response.json()) as { url: string };
+        // Verify the extra param is not in the resulting URL
+        expect(json.url).not.toContain('extra=malicious');
+      });
+
+      it('sanitizes domain with hash fragment', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=example.com#steal=cookie'
+        );
+        // Hash fragment is invalid in domain - should be rejected
+        expect(response.status).toBe(400);
+      });
+
+      it('prevents domain query param override', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=evil.com&domain=target.com'
+        );
+        // Should only use first domain value
+        const json = (await response.json()) as { domain: string };
+        expect(json.domain).toBe('evil.com');
+      });
+
+      it('rejects newline characters in domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=example.com%0aalert(1)'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects null bytes in domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=example.com%00malicious'
+        );
+        expect(response.status).toBe(400);
+      });
+    });
+
+    describe('DKIM selector injection prevention', () => {
+      it('rejects selector with newline', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=google%0aalert(1)'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects selector with null byte', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=google%00malicious'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('rejects selector exceeding max length', async () => {
+        const app = createApp(emptyState);
+        const longSelector = 'a'.repeat(64);
+        const response = await app.request(
+          `/api/legacy-tools/dkim/deeplink?domain=example.com&selector=${longSelector}`
+        );
+        expect(response.status).toBe(400);
+      });
+    });
+
+    describe('Deep-link URL construction safety', () => {
+      it('does not allow URL scheme override in domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=https://evil.com'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('does not allow FTP scheme in domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=ftp://example.com'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('does not allow file scheme in domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=file:///etc/passwd'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('does not allow IP address as domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=127.0.0.1'
+        );
+        expect(response.status).toBe(400);
+      });
+
+      it('does not allow localhost as domain', async () => {
+        const app = createApp(emptyState);
+        const response = await app.request(
+          '/api/legacy-tools/dmarc/deeplink?domain=localhost'
+        );
+        expect(response.status).toBe(400);
+      });
     });
   });
 });
