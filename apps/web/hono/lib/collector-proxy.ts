@@ -218,9 +218,14 @@ export async function proxyToCollector(
 
   // 3. Execute request
   const url = `${proxyConfig.collectorUrl}${request.path}`;
+
+  // Get request ID for tracing
+  const requestId = c.req.header('X-Request-ID') || crypto.randomUUID();
+
   try {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'X-Request-ID': requestId,
       ...proxyConfig.headers,
       ...request.headers,
     };
