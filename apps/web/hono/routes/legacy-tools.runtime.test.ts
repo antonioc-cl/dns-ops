@@ -278,7 +278,7 @@ describe('legacyToolsRoutes runtime', () => {
       expect(json.error).toContain('not configured');
       expect(json.requestId).toBeDefined();
       expect(json.details?.tool).toBe('dkim');
-      expect(json.details?.hint).toContain('DKIM_TOOL_URL');
+      expect(json.details?.hint).toContain('VITE_DKIM_TOOL_URL');
     });
 
     it('returns 503 with INFRA_CONFIG_MISSING when DKIM tool not configured', async () => {
