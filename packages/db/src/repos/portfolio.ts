@@ -312,12 +312,13 @@ export class MonitoredDomainRepository {
     });
   }
 
-  async findByDomainId(domainId: string): Promise<MonitoredDomain | undefined> {
+  async findByDomainId(domainId: string, tenantId?: string): Promise<MonitoredDomain | undefined> {
     const results = await this.db.selectWhere(
       monitoredDomains,
       eq(monitoredDomains.domainId, domainId)
     );
-    return results[0];
+    const filtered = tenantId ? results.filter((r) => r.tenantId === tenantId) : results;
+    return filtered[0];
   }
 
   async create(data: NewMonitoredDomain): Promise<MonitoredDomain> {

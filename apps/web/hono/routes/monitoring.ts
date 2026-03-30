@@ -164,7 +164,7 @@ monitoringRoutes.post('/domains', requireWritePermission, async (c) => {
     );
   }
 
-  const globalExisting = await repo.findByDomainId(domainId);
+  const globalExisting = await repo.findByDomainId(domainId, tenantId);
   if (globalExisting) {
     return c.json({ error: 'Domain is already being monitored' }, 409);
   }

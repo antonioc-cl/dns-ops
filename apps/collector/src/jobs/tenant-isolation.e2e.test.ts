@@ -11,6 +11,7 @@
  * 4. DomainTagRepository.findByDomainId missing tenant isolation → cross-tenant tag access
  * 5. DomainTagRepository.deleteByDomainAndTag missing tenant isolation → cross-tenant tag deletion
  * 6. MonitoredDomain tenantId nullable → /check creating alerts without tenant ownership
+ * 7. MonitoredDomainRepository.findByDomainId missing tenant isolation → cross-tenant monitoring check
  *
  * TEST STRATEGY: Use a seeded in-memory mock DB that stores real data.
  * Tests verify the repository correctly filters by tenantId.
@@ -23,6 +24,7 @@ import type { IDatabaseAdapter } from '@dns-ops/db';
 import {
   DomainNoteRepository,
   DomainTagRepository,
+  MonitoredDomainRepository,
   SavedFilterRepository,
   TemplateOverrideRepository,
 } from '@dns-ops/db';
@@ -65,6 +67,7 @@ class InMemoryMockDb implements IDatabaseAdapter {
   savedFilters: Map<string, MockSavedFilter> = new Map();
   templateOverrides: Map<string, MockTemplateOverride> = new Map();
   domainTags: Map<string, MockDomainTag> = new Map();
+  monitoredDomains: Map<string, MockMonitoredDomain> = new Map();
 
   // For selectWhere (Drizzle eq() conditions)
   // We store arrays keyed by table name for selectWhere
@@ -73,6 +76,7 @@ class InMemoryMockDb implements IDatabaseAdapter {
     savedFilters?: MockSavedFilter[];
     templateOverrides?: MockTemplateOverride[];
     domainTags?: MockDomainTag[];
+    monitoredDomains?: MockMonitoredDomain[];
   } = {};
 
   constructor(seed?: {
@@ -80,17 +84,20 @@ class InMemoryMockDb implements IDatabaseAdapter {
     savedFilters?: MockSavedFilter[];
     templateOverrides?: MockTemplateOverride[];
     domainTags?: MockDomainTag[];
+    monitoredDomains?: MockMonitoredDomain[];
   }) {
     if (seed?.domainNotes) seed.domainNotes.forEach((n) => this.domainNotes.set(n.id, n));
     if (seed?.savedFilters) seed.savedFilters.forEach((f) => this.savedFilters.set(f.id, f));
     if (seed?.templateOverrides) seed.templateOverrides.forEach((o) => this.templateOverrides.set(o.id, o));
     if (seed?.domainTags) seed.domainTags.forEach((t) => this.domainTags.set(t.id, t));
+    if (seed?.monitoredDomains) seed.monitoredDomains.forEach((m) => this.monitoredDomains.set(m.id, m));
 
     this.whereData = {
       domainNotes: seed?.domainNotes,
       savedFilters: seed?.savedFilters,
       templateOverrides: seed?.templateOverrides,
       domainTags: seed?.domainTags,
+      monitoredDomains: seed?.monitoredDomains,
     };
   }
 
@@ -105,6 +112,15 @@ class InMemoryMockDb implements IDatabaseAdapter {
     if (tableName === 'saved_filters') return Promise.resolve(this.whereData.savedFilters || []);
     if (tableName === 'template_overrides') return Promise.resolve(this.whereData.templateOverrides || []);
     if (tableName === 'domain_tags') return Promise.resolve(this.whereData.domainTags || []);
+    if (tableName === 'monitored_domains') {
+      // Extract domainId from eq() condition for findByDomainId
+      const domainId = this._extractId(_condition);
+      if (domainId) {
+        const filtered = (this.whereData.monitoredDomains || []).filter((m) => m.domainId === domainId);
+        return Promise.resolve(filtered);
+      }
+      return Promise.resolve(this.whereData.monitoredDomains || []);
+    }
     return Promise.resolve([]);
   }
 
@@ -323,6 +339,25 @@ function makeDomainTag(overrides: Partial<MockDomainTag> = {}): MockDomainTag {
     tenantId: TENANT_A,
     createdBy: 'user-a',
     createdAt: new Date('2024-01-01'),
+    ...overrides,
+  };
+}
+
+function makeMonitoredDomain(overrides: Partial<MockMonitoredDomain> & { tenantId?: string | null } = {}): MockMonitoredDomain {
+  return {
+    id: 'mon-1',
+    domainId: 'dom-1',
+    tenantId: TENANT_A,
+    schedule: 'daily',
+    isActive: true,
+    lastAlertAt: null,
+    suppressionWindowMinutes: 60,
+    maxAlertsPerDay: 5,
+    alertChannels: {},
+    createdBy: 'system',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    lastCheckAt: null,
     ...overrides,
   };
 }
@@ -557,6 +592,71 @@ describe('Repository Tenant Isolation', () => {
     });
   });
 
+  /**
+   * CATEGORY: MonitoredDomainRepository.findByDomainId tenant isolation
+   *
+   * BUG: findByDomainId had no tenantId parameter, returning any tenant's monitored domain.
+   * Without tenant filtering, DB returns all matches; app layer checks tenant afterward.
+   * This leaks information about other tenants' monitoring activity.
+   *
+   * FIX: Added optional tenantId param. When provided, filtering happens in DB query.
+   *
+   * SCENARIO: Tenant B monitors 'dom-other'. Tenant A queries for 'dom-other'.
+   * Without fix: DB returns Tenant B's record, app checks tenant → returns undefined.
+   * WITH fix: DB filters by tenantId, returns empty → undefined immediately.
+   * Both return undefined, but the fix prevents the DB from returning cross-tenant data.
+   */
+  describe('MonitoredDomainRepository.findByDomainId enforces tenant isolation', () => {
+    it('cross-tenant: returns undefined when querying domain owned by another tenant', async () => {
+      // Tenant A has domain 'dom-a'. Tenant B has domain 'dom-b'.
+      // Tenant A queries for 'dom-b' — should return undefined.
+      const monA = makeMonitoredDomain({ id: 'mon-a1', domainId: 'dom-a', tenantId: TENANT_A });
+      const monB = makeMonitoredDomain({ id: 'mon-b1', domainId: 'dom-b', tenantId: TENANT_B });
+
+      const db = new InMemoryMockDb({ monitoredDomains: [monA, monB] });
+      const repo = new MonitoredDomainRepository(db);
+
+      // Tenant A queries for 'dom-b' — but Tenant B owns it
+      const result = await repo.findByDomainId('dom-b', TENANT_A);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('same-tenant: returns monitored domain when querying own tenant', async () => {
+      const monA = makeMonitoredDomain({ id: 'mon-a1', domainId: 'dom-a', tenantId: TENANT_A });
+
+      const db = new InMemoryMockDb({ monitoredDomains: [monA] });
+      const repo = new MonitoredDomainRepository(db);
+
+      const result = await repo.findByDomainId('dom-a', TENANT_A);
+
+      expect(result).toBeDefined();
+      expect(result?.id).toBe('mon-a1');
+    });
+
+    it('non-existent: returns undefined for unknown domainId', async () => {
+      const monA = makeMonitoredDomain({ id: 'mon-a1', domainId: 'dom-a', tenantId: TENANT_A });
+
+      const db = new InMemoryMockDb({ monitoredDomains: [monA] });
+      const repo = new MonitoredDomainRepository(db);
+
+      const result = await repo.findByDomainId('nonexistent', TENANT_A);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('backward-compat: returns first match when called without tenantId', async () => {
+      const monA = makeMonitoredDomain({ id: 'mon-a1', domainId: 'dom-a', tenantId: TENANT_A });
+
+      const db = new InMemoryMockDb({ monitoredDomains: [monA] });
+      const repo = new MonitoredDomainRepository(db);
+
+      // Without tenantId, returns first match (backward compat)
+      const result = await repo.findByDomainId('dom-a');
+      expect(result).toBeDefined();
+    });
+  });
+
 function extractIdFromCondition(condition: unknown): string | null {
   if (!condition) return null;
   if (typeof condition === 'string') return condition;
@@ -663,25 +763,6 @@ describe('Monitoring Routes: Null TenantId Handling', () => {
     } as unknown as IDatabaseAdapter;
 
     return db;
-  }
-
-  function makeMonitoredDomain(overrides: Partial<MockMonitoredDomain> & { tenantId?: string | null } = {}): MockMonitoredDomain {
-    return {
-      id: 'mon-1',
-      domainId: 'dom-1',
-      tenantId: TENANT_A,
-      schedule: 'daily',
-      isActive: true,
-      lastAlertAt: null,
-      suppressionWindowMinutes: 60,
-      maxAlertsPerDay: 5,
-      alertChannels: {},
-      createdBy: 'system',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      lastCheckAt: null,
-      ...overrides,
-    };
   }
 
   it('/check: skips monitored domain with null tenantId (orphan) and does NOT create alert', async () => {
