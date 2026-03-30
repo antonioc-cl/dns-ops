@@ -53,12 +53,15 @@ export function isValidDomain(name: string): boolean {
     return false;
   }
 
-  if (name.length > 253) {
+  // Trim whitespace — must match normalizeDomain's behavior
+  const trimmed = name.trim();
+
+  if (trimmed.length > 253) {
     return false;
   }
 
   // Remove trailing dot for validation
-  const clean = name.replace(/\.$/, '');
+  const clean = trimmed.replace(/\.$/, '');
 
   if (clean.length === 0) {
     return false;

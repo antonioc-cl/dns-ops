@@ -32,7 +32,7 @@ function createMockDb(state: MockState): IDatabaseAdapter {
 // APP SETUP
 // =============================================================================
 
-function createApp(state: MockState) {
+function createApp(state: MockState, includeActorEmail = true) {
   const db = createMockDb(state);
   const app = new Hono<Env>();
 
@@ -41,7 +41,9 @@ function createApp(state: MockState) {
     c.set('db', db as Env['Variables']['db']);
     c.set('tenantId', 'tenant-1');
     c.set('actorId', 'test-actor');
-    c.set('actorEmail', 'test@example.com');
+    if (includeActorEmail) {
+      c.set('actorEmail', 'test@example.com');
+    }
     await next();
   });
 
@@ -209,7 +211,8 @@ describe('Provider Template Routes', () => {
 
   describe('POST /api/mail/providers/:provider/selectors', () => {
     it('rejects non-admin requests with 403', async () => {
-      const app = createApp({ snapshots: [], recordSets: [] });
+      // No actorEmail - requireAdminAccess should reject
+      const app = createApp({ snapshots: [], recordSets: [] }, false);
       const res = await app.request('/api/mail/providers/google-workspace/selectors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

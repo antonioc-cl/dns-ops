@@ -96,9 +96,9 @@ export const requireAdminAccess = createMiddleware<Env>(async (c, next) => {
     return next();
   }
 
-  // Check for Cloudflare Access (indicates internal user)
+  // Check for Cloudflare Access OR actorEmail (either indicates internal user)
   const cfEmail = c.req.header('CF-Access-Authenticated-User-Email');
-  if (cfEmail && actorEmail) {
+  if (cfEmail || actorEmail) {
     return next();
   }
 

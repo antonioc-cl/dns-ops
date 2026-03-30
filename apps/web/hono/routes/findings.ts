@@ -116,7 +116,7 @@ async function ensureRulesetVersion(
  * - If no findings exist, evaluate and persist
  * - If refresh=true, delete existing findings for current ruleset version and re-evaluate
  */
-findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
+findingsRoutes.get('/snapshot/:snapshotId/findings', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const forceRefresh = c.req.query('refresh') === 'true';
   const db = c.get('db');
@@ -322,7 +322,7 @@ findingsRoutes.get('/snapshot/:snapshotId/findings', async (c) => {
  * GET /api/snapshot/:snapshotId/findings/mail
  * Get mail-specific findings with mail evidence and DKIM selectors
  */
-findingsRoutes.get('/snapshot/:snapshotId/findings/mail', async (c) => {
+findingsRoutes.get('/snapshot/:snapshotId/findings/mail', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
 
@@ -638,7 +638,7 @@ findingsRoutes.patch(
  * GET /api/findings/:findingId
  * Get a single finding by ID with tenant isolation
  */
-findingsRoutes.get('/findings/:findingId', async (c) => {
+findingsRoutes.get('/findings/:findingId', requireAuth, async (c) => {
   const findingId = c.req.param('findingId');
   const db = c.get('db');
 
@@ -854,13 +854,29 @@ findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
           continue;
         }
 
-        // Tenant isolation: reject if domain belongs to a different tenant
+        // Tenant isolation: skip domains that don't belong to this tenant
         const tenantId = c.get('tenantId');
         if (domain.tenantId && domain.tenantId !== tenantId) {
-          return c.json({ error: 'Findings summary not available' }, 404);
+          results.push({
+            snapshotId: snapshot.id,
+            domainName: snapshot.domainName,
+            findingsCount: 0,
+            suggestionsCount: 0,
+            status: 'error',
+            error: 'Cross-tenant access denied',
+          });
+          continue;
         }
         if (!tenantId && domain.tenantId) {
-          return c.json({ error: 'Findings summary not available' }, 404);
+          results.push({
+            snapshotId: snapshot.id,
+            domainName: snapshot.domainName,
+            findingsCount: 0,
+            suggestionsCount: 0,
+            status: 'error',
+            error: 'Cross-tenant access denied',
+          });
+          continue;
         }
 
         // Fetch observations and record sets

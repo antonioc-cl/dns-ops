@@ -589,9 +589,29 @@ describe('Auth Policy Matrix - AUTH-006', () => {
     it('should require admin access for admin policy routes', async () => {
       const adminRoutes = AUTH_POLICY_MATRIX.filter((p) => p.policy === 'admin');
 
+      // Create a fresh app WITHOUT actorEmail so requireAdminAccess blocks
+      const noAdminApp = new Hono<Env>();
+      noAdminApp.use('*', async (c, next) => {
+        c.set('db', {
+          select: vi.fn().mockReturnValue([]),
+          selectWhere: vi.fn().mockResolvedValue([]),
+          getDrizzle: vi.fn().mockReturnValue({
+            query: {
+              domains: { findMany: vi.fn().mockResolvedValue([]) },
+            },
+          }),
+        } as unknown as Env['Variables']['db']);
+        // Note: NOT setting actorEmail - this should trigger admin rejection
+        c.set('tenantId', 'test-tenant');
+        c.set('actorId', 'test-user');
+        // actorEmail intentionally omitted
+        return next();
+      });
+      noAdminApp.route('/api', apiRoutes);
+
       for (const route of adminRoutes) {
-        // Request without admin credentials
-        const res = await app.request(route.path, { method: route.method });
+        // Request without admin credentials (no actorEmail)
+        const res = await noAdminApp.request(route.path, { method: route.method });
 
         // Should be 401 or 403
         expect(

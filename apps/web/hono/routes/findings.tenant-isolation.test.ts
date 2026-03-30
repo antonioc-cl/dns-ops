@@ -317,8 +317,8 @@ describe('PR-09.2: Cross-Tenant Read Isolation Tests', () => {
 
       const response = await app.request(`/api/findings/${FINDING_ID}`);
 
-      // Should return 404 - owned domains require auth
-      expect(response.status).toBe(404);
+      // Should return 401 - requireAuth now enforces auth before tenant check
+      expect(response.status).toBe(401);
     });
 
     it('should return 404 for non-existent finding', async () => {

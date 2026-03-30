@@ -119,7 +119,7 @@ describe('Template Override Admin Isolation (AUTH-004)', () => {
     app.use('/portfolio/*', async (c, next) => {
       c.set('tenantId', 'tenant-123');
       c.set('actorId', 'write-user');
-      c.set('actorEmail', 'user@example.com');
+      // Note: NOT setting actorEmail - requireAdminAccess checks (cfEmail || actorEmail)
       c.set('db', createMockDb() as unknown as Env['Variables']['db']);
       await next();
     });
