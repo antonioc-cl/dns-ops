@@ -7,6 +7,7 @@
 import { AlertRepository, DomainRepository, MonitoredDomainRepository } from '@dns-ops/db';
 import { createLogger } from '@dns-ops/logging';
 import { Hono } from 'hono';
+import { internalOnlyMiddleware, requireServiceAuthMiddleware } from '../middleware/auth.js';
 import { buildWebhookPayload, sendAlertWebhook } from '../notifications/webhook.js';
 import type { Env } from '../types.js';
 
@@ -25,7 +26,7 @@ export const monitoringRoutes = new Hono<Env>();
  * POST /api/monitoring/check
  * Run checks for monitored domains
  */
-monitoringRoutes.post('/check', async (c) => {
+monitoringRoutes.post('/check', internalOnlyMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
@@ -176,7 +177,7 @@ monitoringRoutes.post('/check', async (c) => {
  * GET /api/monitoring/alerts/pending
  * Get pending alerts for processing
  */
-monitoringRoutes.get('/alerts/pending', async (c) => {
+monitoringRoutes.get('/alerts/pending', internalOnlyMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
@@ -197,7 +198,7 @@ monitoringRoutes.get('/alerts/pending', async (c) => {
  * POST /api/monitoring/alerts/:alertId/acknowledge
  * Acknowledge an alert
  */
-monitoringRoutes.post('/alerts/:alertId/acknowledge', async (c) => {
+monitoringRoutes.post('/alerts/:alertId/acknowledge', internalOnlyMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
@@ -224,7 +225,7 @@ monitoringRoutes.post('/alerts/:alertId/acknowledge', async (c) => {
  * POST /api/monitoring/alerts/:alertId/resolve
  * Resolve an alert
  */
-monitoringRoutes.post('/alerts/:alertId/resolve', async (c) => {
+monitoringRoutes.post('/alerts/:alertId/resolve', internalOnlyMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
@@ -252,7 +253,7 @@ monitoringRoutes.post('/alerts/:alertId/resolve', async (c) => {
  * GET /api/monitoring/reports/shared
  * Get shared read-only reports
  */
-monitoringRoutes.get('/reports/shared', async (c) => {
+monitoringRoutes.get('/reports/shared', requireServiceAuthMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
@@ -300,7 +301,7 @@ monitoringRoutes.get('/reports/shared', async (c) => {
  * POST /api/monitoring/domains/:domainId/monitor
  * Start monitoring a domain
  */
-monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
+monitoringRoutes.post('/domains/:domainId/monitor', internalOnlyMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
@@ -355,7 +356,7 @@ monitoringRoutes.post('/domains/:domainId/monitor', async (c) => {
  * DELETE /api/monitoring/domains/:domainId/monitor
  * Stop monitoring a domain
  */
-monitoringRoutes.delete('/domains/:domainId/monitor', async (c) => {
+monitoringRoutes.delete('/domains/:domainId/monitor', internalOnlyMiddleware, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);

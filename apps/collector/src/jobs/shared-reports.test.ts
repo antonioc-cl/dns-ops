@@ -18,6 +18,9 @@ import { requireServiceAuthMiddleware } from '../middleware/index.js';
 import type { Env } from '../types.js';
 import { monitoringRoutes } from './monitoring.js';
 
+// Normalized tenant UUID for 'test-tenant' (deterministic via UUID v5)
+const NORMALIZED_TENANT_ID = '197364d6-0eda-54c5-bcda-3702507a5221';
+
 // =============================================================================
 // Authentication Tests
 // =============================================================================
@@ -102,6 +105,9 @@ describe('Shared Reports Authentication - Bead 12.7', () => {
 // =============================================================================
 
 describe('Shared Reports Redaction - Bead 12.7', () => {
+  beforeEach(() => {
+    process.env.INTERNAL_SECRET = 'test-internal-secret';
+  });
   it('should NOT include domain names in shared report', async () => {
     const app = new Hono<Env>();
 
@@ -116,12 +122,12 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
           alerts: [createMockAlert({ monitoredDomainId: 'mon-1', title: 'Alert 1' })],
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -148,12 +154,12 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
           ],
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -180,12 +186,12 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
           ],
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -218,12 +224,12 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
           ],
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -253,6 +259,9 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
 // =============================================================================
 
 describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
+  beforeEach(() => {
+    process.env.INTERNAL_SECRET = 'test-internal-secret';
+  });
   it('should only return data for the requesting tenant', async () => {
     const app = new Hono<Env>();
 
@@ -272,7 +281,7 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -297,7 +306,7 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -324,12 +333,12 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
           ],
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -346,6 +355,9 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
 // =============================================================================
 
 describe('Shared Reports Alert Limits - Bead 12.7', () => {
+  beforeEach(() => {
+    process.env.INTERNAL_SECRET = 'test-internal-secret';
+  });
   it('should limit alertSummary to 10 items', async () => {
     const app = new Hono<Env>();
 
@@ -362,12 +374,12 @@ describe('Shared Reports Alert Limits - Bead 12.7', () => {
           alerts,
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -394,12 +406,12 @@ describe('Shared Reports Alert Limits - Bead 12.7', () => {
           ],
         })
       );
-      c.set('tenantId', 'test-tenant');
+      c.set('tenantId', NORMALIZED_TENANT_ID);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared');
+    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -455,7 +467,7 @@ function createMockMonitoredDomain(
   return {
     id: 'mon-1',
     domainId: 'dom-1',
-    tenantId: 'test-tenant', // Must match the tenantId set in middleware
+    tenantId: NORMALIZED_TENANT_ID, // Must match the normalized tenantId set by auth middleware
     schedule: 'daily',
     isActive: true,
     lastAlertAt: null,
@@ -474,7 +486,7 @@ function createMockAlert(overrides: Partial<MockAlert> = {}): MockAlert {
   return {
     id: 'alert-1',
     monitoredDomainId: 'mon-1',
-    tenantId: 'test-tenant', // Must match the tenantId set in middleware
+    tenantId: NORMALIZED_TENANT_ID, // Must match the normalized tenantId set by auth middleware
     title: 'Test Alert',
     severity: 'high',
     status: 'pending',

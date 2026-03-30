@@ -7,13 +7,22 @@
  */
 
 import { Hono } from 'hono';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../types.js';
 import { monitoringRoutes } from './monitoring.js';
 
 // Mock fetch for webhook tests
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
+
+// Set internal secret for tests
+const originalEnv = process.env;
+beforeEach(() => {
+  process.env = { ...originalEnv, INTERNAL_SECRET: 'test-internal-secret' };
+});
+afterEach(() => {
+  process.env = originalEnv;
+});
 
 describe('Monitoring Routes', () => {
   describe('Database availability checks', () => {
@@ -28,7 +37,7 @@ describe('Monitoring Routes', () => {
     it('POST /check should return 503 if database is not available', async () => {
       const res = await appWithoutDb.request('/api/monitoring/check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ schedule: 'daily' }),
       });
 
@@ -38,7 +47,7 @@ describe('Monitoring Routes', () => {
     });
 
     it('GET /alerts/pending should return 503 if database is not available', async () => {
-      const res = await appWithoutDb.request('/api/monitoring/alerts/pending');
+      const res = await appWithoutDb.request('/api/monitoring/alerts/pending', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
       expect(res.status).toBe(503);
       const json = await res.json();
@@ -48,6 +57,7 @@ describe('Monitoring Routes', () => {
     it('POST /alerts/:alertId/acknowledge should return 503 if database is not available', async () => {
       const res = await appWithoutDb.request('/api/monitoring/alerts/test-alert-id/acknowledge', {
         method: 'POST',
+        headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
       });
 
       expect(res.status).toBe(503);
@@ -58,7 +68,7 @@ describe('Monitoring Routes', () => {
     it('POST /alerts/:alertId/resolve should return 503 if database is not available', async () => {
       const res = await appWithoutDb.request('/api/monitoring/alerts/test-alert-id/resolve', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ resolutionNote: 'Fixed' }),
       });
 
@@ -68,7 +78,7 @@ describe('Monitoring Routes', () => {
     });
 
     it('GET /reports/shared should return 503 if database is not available', async () => {
-      const res = await appWithoutDb.request('/api/monitoring/reports/shared');
+      const res = await appWithoutDb.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
 
       expect(res.status).toBe(503);
       const json = await res.json();
@@ -78,7 +88,7 @@ describe('Monitoring Routes', () => {
     it('POST /domains/:domainId/monitor should return 503 if database is not available', async () => {
       const res = await appWithoutDb.request('/api/monitoring/domains/test-domain-id/monitor', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ schedule: 'daily' }),
       });
 
@@ -90,6 +100,7 @@ describe('Monitoring Routes', () => {
     it('DELETE /domains/:domainId/monitor should return 503 if database is not available', async () => {
       const res = await appWithoutDb.request('/api/monitoring/domains/test-domain-id/monitor', {
         method: 'DELETE',
+        headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
       });
 
       expect(res.status).toBe(503);
@@ -131,7 +142,7 @@ describe('Monitoring Routes', () => {
 
       const res = await app.request('/api/monitoring/check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ schedule: 'hourly' }),
       });
 
@@ -159,7 +170,7 @@ describe('Monitoring Routes', () => {
 
       const res = await app.request('/api/monitoring/check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({}),
       });
 
@@ -188,7 +199,7 @@ describe('Monitoring Routes', () => {
 
       const res = await app.request('/api/monitoring/check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ schedule: 'weekly' }),
       });
 
@@ -227,7 +238,7 @@ describe('Monitoring Routes', () => {
 
       const res = await app.request('/api/monitoring/check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ schedule: 'daily' }),
       });
 
@@ -307,7 +318,7 @@ describe('Monitoring Routes', () => {
 
       const res = await app.request('/api/monitoring/check', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' },
         body: JSON.stringify({ schedule: 'daily' }),
       });
 
