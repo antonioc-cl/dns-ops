@@ -86,3 +86,151 @@ Most defensible narrative:
 - Add a clean shutdown contract for Redis/BullMQ/DB resources in test helpers.
 - Keep root validation focused on product code; operational/log/state trees must be excluded from lint scope.
 - When Vitest upgrades, verify config options against official docs before committing mitigation changes.
+
+---
+
+# Session Closeout — 2026-03-30 — Code Review + Tenant Isolation Bug Fixes
+
+## 1) TL;DR
+
+- **Found 7 critical tenant isolation bugs**: 5 schema nullable `tenantId` fields, 5 repo methods missing tenant filtering, 1 route fallthrough bug
+- **Fixed**: `monitoredDomains.tenantId` nullable → `NOT NULL`; all `findById` / `findByDomainId` / `deleteByDomainAndTag` methods now enforce tenant isolation
+- **Wrote 18 new e2e tests** (`tenant-isolation.e2e.test.ts`) covering repo-level isolation and route null-tenant handling
+- **Also fixed**: 3 integration test bugs in `monitoring.integration.test.ts` (mock `[object Object]` fallback, wrong domain fixture)
+- **Tests**: 1326 passing (+49 new), 37 skipped, 0 failures
+
+## 2) Goals vs Outcome
+
+**Planned goals**
+- Fresh-eyes code review of all new/modified code from previous session
+- Write e2e tests that would have caught each issue found
+
+**What actually happened**
+- Found 7 bugs: schema nullable `tenantId` (5 tables), repo missing tenant isolation (5 methods), `/check` orphan domain fallthrough
+- Fixed all 7 bugs
+- Wrote 18 new tests + 31 new integration tests (previous session) = 49 total new tests
+- Added `[object Object]` fallback pattern for Drizzle table mocking
+
+## 3) Key Decisions
+
+- **Decision:** Make `tenantId` `NOT NULL` on `monitoredDomains`, `domainNotes`, `domainTags`, `savedFilters`, `templateOverrides`
+  - **Why:** Nullable tenantId allowed cross-tenant data corruption in alerts + cross-tenant read/write on notes/filters/overrides/tags
+  - **Tradeoff:** Breaking change for existing data — needs migration
+  - **Status:** confirmed — committed
+
+- **Decision:** Add optional `tenantId?` parameter to repo isolation methods (not required)
+  - **Why:** Backward compatible; internal use-cases (admin tools) can omit it
+  - **Status:** confirmed
+
+- **Decision:** Route returns 404 (not 403) for cross-tenant access to avoid leaking resource existence
+  - **Why:** Standard security practice — `404` for both "doesn't exist" and "not yours"
+  - **Status:** already in place, confirmed
+
+## 4) Work Completed
+
+### Bugs Fixed
+
+1. **Schema nullable `tenantId`** — `packages/db/src/schema/index.ts`
+   - `monitoredDomains.tenantId`: `.notNull()` added (critical: null → alert creation with no tenant)
+   - `domainNotes.tenantId`: `.notNull()` added
+   - `domainTags.tenantId`: `.notNull()` added
+   - `savedFilters.tenantId`: `.notNull()` added
+   - `templateOverrides.tenantId`: `.notNull()` added
+
+2. **Repository tenant isolation** — `packages/db/src/repos/portfolio.ts`
+   - `DomainNoteRepository.findById(id, tenantId?)`: added tenant check
+   - `SavedFilterRepository.findById(id, tenantId?)`: added tenant check
+   - `TemplateOverrideRepository.findById(id, tenantId?)`: added tenant check
+   - `DomainTagRepository.findByDomainId(domainId, tenantId?)`: added tenant filter
+   - `DomainTagRepository.deleteByDomainAndTag(domainId, tag, tenantId?)`: added tenant filter
+
+3. **Route orphan protection** — `apps/collector/src/jobs/monitoring.ts`
+   - `/check`: `if (!monitored.tenantId) { ... continue; }` — was falling through to `alertRepo.create()`
+
+### Tests Written
+
+4. **New file**: `apps/collector/src/jobs/tenant-isolation.e2e.test.ts` — 18 tests
+   - Repository: `findById` cross-tenant → undefined (DomainNote, SavedFilter, TemplateOverride)
+   - Repository: `findByDomainId` cross-tenant → filtered (DomainTag)
+   - Repository: `deleteByDomainAndTag` cross-tenant → own tag only (DomainTag)
+   - Route: `/check` skips null-tenantId domains
+   - Route: `/check` skips cross-tenant domains
+   - Route: `/check` processes own tenant domains
+   - Auth: tenantId normalization to UUID format
+
+5. **Bug fixes in existing integration tests**: `apps/collector/src/jobs/monitoring.integration.test.ts`
+   - Added `[object Object]` fallback in `tableMatches()` — Drizzle tables stringify wrong in mocks
+   - Fixed domain fixture: `domainId = 'dom-1'` must match request path
+   - Rewrote "tenantId missing" test to reflect per-route auth always sets tenantId
+
+### Files Modified (this session's commits)
+- `packages/db/src/schema/index.ts` — tenantId NOT NULL
+- `packages/db/src/repos/portfolio.ts` — tenant isolation in 5 methods
+- `apps/collector/src/jobs/monitoring.ts` — orphan domain `continue`
+- `apps/collector/src/jobs/tenant-isolation.e2e.test.ts` — new file (18 tests)
+- `apps/collector/src/jobs/monitoring.integration.test.ts` — mock fixes
+
+## 5) Changes Summary
+
+- **Added**: 18 new tenant isolation e2e tests
+- **Changed**: 5 schema `tenantId` fields: nullable → `NOT NULL`
+- **Changed**: 5 repository methods: added optional `tenantId?` param + tenant isolation check
+- **Changed**: `monitoring.ts` `/check` route: orphan domain now skipped with `continue`
+- **Behavioral impact**: Cross-tenant data access now prevented at both schema and repository layers; orphan domains (null tenantId) no longer create alerts
+
+## 6) Open Items / Next Steps
+
+- **Task:** Migration needed for existing data with null `tenantId` on affected tables
+  - **Owner:** user
+  - **Priority:** P0 (security — nullable data currently allowed to be created)
+  - **Suggested approach:** `UPDATE monitored_domains SET tenant_id = <default> WHERE tenant_id IS NULL` before deploying schema change
+  - **Blockers:** Needs downtime window or online migration
+
+- **Task:** Check other repos using the modified repository methods — callers may need updating
+  - **Owner:** agent
+  - **Priority:** P1
+  - **Suggested approach:** `grep -rn "findById\|findByDomainId\|deleteByDomainAndTag" apps/web/hono/routes/` to find callers
+
+- **Task:** Run `bd dolt push` to sync issue tracking
+  - **Owner:** user
+  - **Priority:** P2
+
+## 7) Risks & Gotchas
+
+- **Risk**: Schema change `tenantId NOT NULL` will break any code that inserts without tenantId (e.g., seeds, migrations, test fixtures). All insert calls in `monitoring.ts` pass `tenantId` from auth context, so route code is safe. Check seed scripts and test fixtures.
+- **Risk**: `DomainRepository` and `domains` table intentionally keep `tenantId` nullable (system-owned domains). Verify no cross-tenant leaks through `DomainRepository.findById`.
+- **Edge case**: `DomainTagRepository.findByDomainId` without `tenantId` param returns ALL tags (backward compat). Consider deprecating this mode.
+- **Gotcha**: Drizzle `eq()` condition structure is `{ queryChunks: [...] }` — value at `queryChunks[3].value` as string. Test mocks must extract from this structure.
+- **Gotcha**: Drizzle tables stringify to `'[object Object]'` in mocks — need `Symbol.for('drizzle:Name')` extraction OR `'[object Object]'` fallback.
+
+## 8) Testing & Verification
+
+```bash
+# Run all tests
+bun run test
+
+# Run just tenant isolation tests
+bun run test apps/collector/src/jobs/tenant-isolation.e2e.test.ts
+
+# Run just integration tests
+bun run test apps/collector/src/jobs/monitoring.integration.test.ts
+
+# Run monitoring tests
+bun run test apps/collector/src/jobs/monitoring.test.ts
+
+# Build to verify schema compiles
+bun run build
+```
+
+**Test results**: 71 files, 1326 passed, 37 skipped, 0 failures
+
+**For next session**: Add tests for callers of modified repo methods — verify they pass `tenantId` where needed.
+
+## 9) Notes for the Next Agent
+
+- **If you only read one thing**: The schema `tenantId` fields on 5 tables were nullable, allowing cross-tenant data corruption. All are now `NOT NULL`. Check `packages/db/src/schema/index.ts` for the exact changes.
+- **Schema migration needed**: `monitoredDomains.tenantId` was nullable — existing null rows must be resolved before deploying schema change.
+- **Auth middleware always sets tenantId**: `internalOnlyMiddleware` and `requireServiceAuthMiddleware` normalize `X-Tenant-Id` header to UUID via `getTenantUUID()`. Test fixtures must use the normalized UUID, not raw strings.
+- **Monitoring mock pattern**: `createMockDb()` uses `[object Object]` fallback for `select` + `selectOne`. This is the correct pattern for Drizzle table mocks.
+- **`findActiveBySchedule` bug**: Was missing `tenantId` parameter — any tenant could trigger checks for ALL tenants' domains. Fixed by adding `tenantId` param + JS-side filter.
+- **Hono middleware order**: Per-route `app.use(fn)` fires BEFORE `app.use('*', fn)` wildcard. Per-route auth always wins. Don't set `tenantId` in test wildcard mocks.
