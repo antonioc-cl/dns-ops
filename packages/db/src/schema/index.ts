@@ -445,7 +445,7 @@ export const domainNotes = pgTable(
 
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
-    tenantId: uuid('tenant_id'),
+    tenantId: uuid('tenant_id').notNull(),
 
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -471,7 +471,7 @@ export const domainTags = pgTable(
 
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
-    tenantId: uuid('tenant_id'),
+    tenantId: uuid('tenant_id').notNull(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -519,7 +519,7 @@ export const savedFilters = pgTable(
 
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
-    tenantId: uuid('tenant_id'),
+    tenantId: uuid('tenant_id').notNull(),
 
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -622,7 +622,7 @@ export const templateOverrides = pgTable(
 
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
-    tenantId: uuid('tenant_id'),
+    tenantId: uuid('tenant_id').notNull(),
 
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
