@@ -234,3 +234,22 @@ bun run build
 - **Monitoring mock pattern**: `createMockDb()` uses `[object Object]` fallback for `select` + `selectOne`. This is the correct pattern for Drizzle table mocks.
 - **`findActiveBySchedule` bug**: Was missing `tenantId` parameter — any tenant could trigger checks for ALL tenants' domains. Fixed by adding `tenantId` param + JS-side filter.
 - **Hono middleware order**: Per-route `app.use(fn)` fires BEFORE `app.use('*', fn)` wildcard. Per-route auth always wins. Don't set `tenantId` in test wildcard mocks.
+
+---
+
+## Session Closeout Update — 2026-03-30 — Code Review + P0 Migration
+
+### P0 — Migration completed
+- Migration 0006: `packages/db/src/migrations/0006_enforce_tenant_not_null.sql`
+  - Deletes orphan rows (NULL tenantId) from domainNotes, domainTags, savedFilters, templateOverrides
+  - Sets NOT NULL on all 4 tables
+  - `audit_events.tenant_id` intentionally kept nullable (system-generated events)
+  - `domains.tenantId` intentionally nullable (system-owned domains)
+- Schema updated to match: 4 tables now `.notNull()`
+- Deployment order: run migration BEFORE deploying code
+
+### P1 — Caller audit completed
+- web app `monitoring.ts` POST had cross-tenant leak (findByDomainId without tenantId) — FIXED
+- All other callers already check tenantId after calls — SAFE
+
+Tests: 1330 passing
