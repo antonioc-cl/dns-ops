@@ -4,30 +4,52 @@
  * Endpoints for delegation analysis and visualization.
  */
 
-import { ObservationRepository, SnapshotRepository } from '@dns-ops/db';
+import { DomainRepository, ObservationRepository, SnapshotRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { requireAuth } from '../middleware/authorization.js';
 import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const delegationRoutes = new Hono<Env>();
 
+// Helper to enforce tenant isolation: returns null on error (caller returns 404)
+async function enforceSnapshotTenantIsolation(
+  snapshotId: string,
+  db: Env['Variables']['db'],
+  tenantId: string | undefined
+) {
+  const snapshotRepo = new SnapshotRepository(db);
+  const domainRepo = new DomainRepository(db);
+
+  const snapshot = await snapshotRepo.findById(snapshotId);
+  if (!snapshot) return null;
+
+  const domain = await domainRepo.findById(snapshot.domainId);
+  if (!domain) return null;
+
+  // Tenant isolation: cross-tenant access returns 404 (not 403, to avoid leaking existence)
+  if (tenantId && domain.tenantId && domain.tenantId !== tenantId) return null;
+
+  return { snapshot, domain };
+}
+
 /**
  * GET /api/snapshot/:snapshotId/delegation
  * Get delegation analysis for a snapshot
  */
-delegationRoutes.get('/snapshot/:snapshotId/delegation', async (c) => {
+delegationRoutes.get('/snapshot/:snapshotId/delegation', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+
+  const isolation = await enforceSnapshotTenantIsolation(snapshotId, db, tenantId);
+  if (!isolation) {
+    return c.json({ error: 'Snapshot not found' }, 404);
+  }
+  const { snapshot } = isolation;
 
   try {
-    const snapshotRepo = new SnapshotRepository(db);
     const observationRepo = new ObservationRepository(db);
-
-    // Fetch snapshot
-    const snapshot = await snapshotRepo.findById(snapshotId);
-    if (!snapshot) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
 
     // Check if snapshot has delegation metadata
     const hasDelegationData = (
@@ -118,15 +140,27 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation', async (c) => {
  * GET /api/domain/:domain/delegation/latest
  * Get latest delegation analysis for a domain
  */
-delegationRoutes.get('/domain/:domain/delegation/latest', async (c) => {
+delegationRoutes.get('/domain/:domain/delegation/latest', requireAuth, async (c) => {
   const domain = c.req.param('domain');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
 
   try {
+    const domainRepo = new DomainRepository(db);
     const snapshotRepo = new SnapshotRepository(db);
 
+    // Tenant isolation: check domain ownership
+    const domainRecord = await domainRepo.findByName(domain);
+    if (!domainRecord) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+    // Cross-tenant access returns 404 (not 403, to avoid leaking existence)
+    if (tenantId && domainRecord.tenantId && domainRecord.tenantId !== tenantId) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
     // Find latest snapshot with delegation data
-    const snapshots = await snapshotRepo.findByDomain(domain);
+    const snapshots = await snapshotRepo.findByDomain(domainRecord.id);
     const snapshotWithDelegation = snapshots.find(
       (s) =>
         (s as unknown as { metadata?: { hasDelegationData?: boolean } }).metadata?.hasDelegationData
@@ -170,18 +204,19 @@ delegationRoutes.get('/domain/:domain/delegation/latest', async (c) => {
  * GET /api/snapshot/:snapshotId/delegation/issues
  * Get delegation issues (divergence, lame, missing glue)
  */
-delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', async (c) => {
+delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+
+  const isolation = await enforceSnapshotTenantIsolation(snapshotId, db, tenantId);
+  if (!isolation) {
+    return c.json({ error: 'Snapshot not found' }, 404);
+  }
+  const { snapshot } = isolation;
 
   try {
-    const snapshotRepo = new SnapshotRepository(db);
     const observationRepo = new ObservationRepository(db);
-
-    const snapshot = await snapshotRepo.findById(snapshotId);
-    if (!snapshot) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
 
     const observations = await observationRepo.findBySnapshotId(snapshotId);
 
@@ -277,18 +312,19 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/issues', async (c) => {
  * GET /api/snapshot/:snapshotId/delegation/dnssec
  * Get DNSSEC evidence and chain validation details
  */
-delegationRoutes.get('/snapshot/:snapshotId/delegation/dnssec', async (c) => {
+delegationRoutes.get('/snapshot/:snapshotId/delegation/dnssec', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+
+  const isolation = await enforceSnapshotTenantIsolation(snapshotId, db, tenantId);
+  if (!isolation) {
+    return c.json({ error: 'Snapshot not found' }, 404);
+  }
+  const { snapshot } = isolation;
 
   try {
-    const snapshotRepo = new SnapshotRepository(db);
     const observationRepo = new ObservationRepository(db);
-
-    const snapshot = await snapshotRepo.findById(snapshotId);
-    if (!snapshot) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
 
     const observations = await observationRepo.findBySnapshotId(snapshotId);
 
@@ -442,18 +478,19 @@ delegationRoutes.get('/snapshot/:snapshotId/delegation/dnssec', async (c) => {
  * GET /api/snapshot/:snapshotId/delegation/evidence
  * Get detailed delegation evidence with per-nameserver responses
  */
-delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', async (c) => {
+delegationRoutes.get('/snapshot/:snapshotId/delegation/evidence', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+
+  const isolation = await enforceSnapshotTenantIsolation(snapshotId, db, tenantId);
+  if (!isolation) {
+    return c.json({ error: 'Snapshot not found' }, 404);
+  }
+  const { snapshot } = isolation;
 
   try {
-    const snapshotRepo = new SnapshotRepository(db);
     const observationRepo = new ObservationRepository(db);
-
-    const snapshot = await snapshotRepo.findById(snapshotId);
-    if (!snapshot) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
 
     const observations = await observationRepo.findBySnapshotId(snapshotId);
 

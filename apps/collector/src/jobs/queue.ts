@@ -247,8 +247,15 @@ export async function getQueueHealth(): Promise<{
     { waiting: number; active: number; completed: number; failed: number }
   > = {};
 
-  for (const [name, queueName] of Object.entries(QUEUE_NAMES)) {
-    const queue = createQueue(queueName);
+  // Use existing singleton queues to avoid connection leaks
+  // getJobCounts() doesn't use the queue's generic type parameter, so we only need the base Queue type
+  const singletonQueues: Array<{ name: string; queue: Queue | null }> = [
+    { name: 'COLLECTION', queue: getCollectionQueue() },
+    { name: 'MONITORING', queue: getMonitoringQueue() },
+    { name: 'REPORTS', queue: getReportsQueue() },
+  ];
+
+  for (const { name, queue } of singletonQueues) {
     if (queue) {
       const counts = await queue.getJobCounts();
       queues[name] = {

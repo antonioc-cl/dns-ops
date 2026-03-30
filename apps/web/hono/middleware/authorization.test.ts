@@ -9,7 +9,7 @@
  */
 
 import { Hono } from 'hono';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { Env } from '../types.js';
 
 // Helper to type json response bodies

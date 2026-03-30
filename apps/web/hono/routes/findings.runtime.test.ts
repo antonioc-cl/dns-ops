@@ -384,6 +384,70 @@ describe('findingsRoutes runtime', () => {
       expect(json.hasFindings).toBe(false);
       expect(json.total).toBe(0);
     });
+
+    it('returns 401 when unauthenticated', async () => {
+      const state = makeState();
+      const app = createApp(state, false); // No auth
+
+      const response = await app.request('/api/snapshot/snap-1/findings/summary');
+
+      expect(response.status).toBe(401);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toBe('Unauthorized');
+    });
+
+    it('returns 200 for own tenant snapshot', async () => {
+      const state = makeState({
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1', // Same as auth tenant
+            zoneManagement: 'managed',
+          },
+        ],
+      });
+      const app = createApp(state, true);
+
+      const response = await app.request('/api/snapshot/snap-1/findings/summary');
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { snapshotId: string };
+      expect(json.snapshotId).toBe('snap-1');
+    });
+
+    it('returns 404 for other tenant snapshot', async () => {
+      const state = makeState({
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-other', // Different from auth tenant
+            zoneManagement: 'managed',
+          },
+        ],
+      });
+      const app = createApp(state, true);
+
+      const response = await app.request('/api/snapshot/snap-1/findings/summary');
+
+      expect(response.status).toBe(404);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toBe('Snapshot not found');
+    });
+
+    it('returns 404 when snapshot not found', async () => {
+      const state = makeState({ snapshots: [] });
+      const app = createApp(state);
+
+      const response = await app.request('/api/snapshot/nonexistent/findings/summary');
+
+      expect(response.status).toBe(404);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toBe('Snapshot not found');
+    });
   });
 
   describe('PATCH /findings/:findingId/acknowledge', () => {

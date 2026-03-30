@@ -13,47 +13,47 @@ import type { CollectionConfig, DNSQueryResult, VantageInfo } from './types.js';
 
 // Mock dependencies
 vi.mock('./resolver.js', () => ({
-  DNSResolver: vi.fn().mockImplementation(() => ({
-    query: vi.fn(),
-  })),
+  DNSResolver: vi.fn().mockImplementation(function () {
+    this.query = vi.fn();
+  }),
 }));
 
 vi.mock('@dns-ops/db', () => ({
-  DomainRepository: vi.fn().mockImplementation(() => ({
-    findByName: vi.fn().mockResolvedValue(null),
-    create: vi
+  DomainRepository: vi.fn().mockImplementation(function () {
+    this.findByName = vi.fn().mockResolvedValue(null);
+    this.create = vi
       .fn()
-      .mockResolvedValue({ id: 'domain-1', name: 'example.com', tenantId: 'tenant-1' }),
-    update: vi
+      .mockResolvedValue({ id: 'domain-1', name: 'example.com', tenantId: 'tenant-1' });
+    this.update = vi
       .fn()
-      .mockResolvedValue({ id: 'domain-1', name: 'example.com', tenantId: 'tenant-1' }),
-  })),
-  SnapshotRepository: vi.fn().mockImplementation(() => ({
-    create: vi.fn().mockResolvedValue({ id: 'snapshot-1' }),
-    updateRulesetVersion: vi.fn().mockResolvedValue(undefined),
-  })),
-  ObservationRepository: vi.fn().mockImplementation(() => ({
-    createMany: vi.fn().mockResolvedValue([]),
-  })),
-  RecordSetRepository: vi.fn().mockImplementation(() => ({
-    createMany: vi.fn().mockResolvedValue([]),
-  })),
-  FindingRepository: vi.fn().mockImplementation(() => ({
-    createMany: vi.fn().mockResolvedValue([]),
-  })),
-  SuggestionRepository: vi.fn().mockImplementation(() => ({
-    createMany: vi.fn().mockResolvedValue(undefined),
-  })),
-  RulesetVersionRepository: vi.fn().mockImplementation(() => ({
-    findByVersion: vi.fn().mockResolvedValue(null),
-    create: vi.fn().mockResolvedValue({ id: 'ruleset-1' }),
-  })),
+      .mockResolvedValue({ id: 'domain-1', name: 'example.com', tenantId: 'tenant-1' });
+  }),
+  SnapshotRepository: vi.fn().mockImplementation(function () {
+    this.create = vi.fn().mockResolvedValue({ id: 'snapshot-1' });
+    this.updateRulesetVersion = vi.fn().mockResolvedValue(undefined);
+  }),
+  ObservationRepository: vi.fn().mockImplementation(function () {
+    this.createMany = vi.fn().mockResolvedValue([]);
+  }),
+  RecordSetRepository: vi.fn().mockImplementation(function () {
+    this.createMany = vi.fn().mockResolvedValue([]);
+  }),
+  FindingRepository: vi.fn().mockImplementation(function () {
+    this.createMany = vi.fn().mockResolvedValue([]);
+  }),
+  SuggestionRepository: vi.fn().mockImplementation(function () {
+    this.createMany = vi.fn().mockResolvedValue(undefined);
+  }),
+  RulesetVersionRepository: vi.fn().mockImplementation(function () {
+    this.findByVersion = vi.fn().mockResolvedValue(null);
+    this.create = vi.fn().mockResolvedValue({ id: 'ruleset-1' });
+  }),
 }));
 
 vi.mock('@dns-ops/rules', () => ({
-  RulesEngine: vi.fn().mockImplementation(() => ({
-    evaluate: vi.fn().mockReturnValue({ findings: [], suggestions: [] }),
-  })),
+  RulesEngine: vi.fn().mockImplementation(function () {
+    this.evaluate = vi.fn().mockReturnValue({ findings: [], suggestions: [] });
+  }),
   authoritativeFailureRule: {
     id: 'auth-failure',
     name: 'Authoritative Failure',
@@ -89,9 +89,9 @@ vi.mock('@dns-ops/rules', () => ({
 }));
 
 vi.mock('../delegation/collector.js', () => ({
-  DelegationCollector: vi.fn().mockImplementation(() => ({
-    collectDelegationSummary: vi.fn().mockResolvedValue(null),
-  })),
+  DelegationCollector: vi.fn().mockImplementation(function () {
+    this.collectDelegationSummary = vi.fn().mockResolvedValue(null);
+  }),
 }));
 
 vi.mock('../mail/collector.js', () => ({

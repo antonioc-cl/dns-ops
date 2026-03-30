@@ -161,7 +161,7 @@ describe('Job Scheduler', () => {
  *   REDIS_URL=redis://localhost:6379 bun test scheduler.test.ts
  */
 describe('Scheduler State Recovery (Integration)', () => {
-  const hasRedis = process.env.REDIS_URL !== undefined;
+  const hasRedis = process.env.RUN_REDIS_INTEGRATION_TESTS === '1';
 
   // Skip all tests in this describe block if Redis is not available
   beforeAll(() => {

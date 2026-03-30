@@ -4,6 +4,7 @@
   "description": "DNS Ops Workbench - DNS and mail operations platform",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.3.11",
   "workspaces": [
     "apps/*",
     "packages/*"

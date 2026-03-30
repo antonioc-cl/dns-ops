@@ -494,7 +494,7 @@ describe('Job Queue Infrastructure', () => {
  *   REDIS_URL=redis://localhost:6379 bun test queue.test.ts
  */
 describe('Job Retry and Failure Tracking (Integration)', () => {
-  const hasRedis = process.env.REDIS_URL !== undefined;
+  const hasRedis = process.env.RUN_REDIS_INTEGRATION_TESTS === '1';
 
   beforeAll(() => {
     if (!hasRedis) {

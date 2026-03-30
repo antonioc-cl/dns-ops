@@ -525,11 +525,34 @@ findingsRoutes.post('/snapshot/:snapshotId/evaluate', requireAuth, async (c) => 
  * GET /api/snapshot/:snapshotId/findings/summary
  * Get a quick summary of findings by severity
  */
-findingsRoutes.get('/snapshot/:snapshotId/findings/summary', async (c) => {
+findingsRoutes.get('/snapshot/:snapshotId/findings/summary', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
 
   try {
+    // Resolve snapshot→domain→tenant for isolation
+    const snapshotRepo = new SnapshotRepository(db);
+    const domainRepo = new DomainRepository(db);
+
+    const snapshot = await snapshotRepo.findById(snapshotId);
+    if (!snapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
+    const domain = await domainRepo.findById(snapshot.domainId);
+    if (!domain) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
+    // Tenant isolation: reject if domain belongs to a different tenant
+    if (domain.tenantId && domain.tenantId !== tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+    if (!tenantId && domain.tenantId) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
     const findingRepo = new FindingRepository(db);
     const severityCounts = await findingRepo.countBySeverity(snapshotId);
     const hasFindings = await findingRepo.hasFindings(snapshotId);

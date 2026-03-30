@@ -9,6 +9,10 @@
       "!**/routeTree.gen.ts",
       "!**/.turbo/**",
       "!**/*.css",
+      "!**/.pi/**",
+      "!**/.beads/**",
+      "!**/beads/**",
+      "!**/sessions/**",
       "!packages/contracts/contracts",
       "!packages/db/db",
       "!packages/parsing/parsing"

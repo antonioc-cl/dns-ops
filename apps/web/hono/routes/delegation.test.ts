@@ -64,9 +64,17 @@ interface MockObservation {
   answerSection: Array<{ name: string; type: string; data: string; ttl: number }>;
 }
 
+interface MockDomain {
+  id: string;
+  name: string;
+  tenantId: string;
+  createdAt: Date;
+}
+
 interface MockData {
   snapshots: MockSnapshot[];
   observations: MockObservation[];
+  domains: MockDomain[];
 }
 
 function createMockData(): MockData {
@@ -196,6 +204,33 @@ function createMockData(): MockData {
         ],
       },
     ],
+    domains: [
+      {
+        id: 'domain-1',
+        name: 'example.com',
+        tenantId: 'test-tenant',
+        createdAt: now,
+      },
+      {
+        id: 'domain-2',
+        name: 'divergent.com',
+        tenantId: 'test-tenant',
+        createdAt: now,
+      },
+      {
+        id: 'domain-3',
+        name: 'nodelegation.com',
+        tenantId: 'test-tenant',
+        createdAt: now,
+      },
+      // Cross-tenant domain for isolation tests
+      {
+        id: 'domain-other',
+        name: 'other-tenant.com',
+        tenantId: 'other-tenant',
+        createdAt: now,
+      },
+    ],
   };
 }
 
@@ -216,12 +251,13 @@ function getTableName(table: unknown): string {
 }
 
 function createMockDb(data: MockData) {
-  const tableNameMap: Record<string, 'snapshots' | 'observations'> = {
+  const tableNameMap: Record<string, 'snapshots' | 'observations' | 'domains'> = {
     snapshots: 'snapshots',
     observations: 'observations',
+    domains: 'domains',
   };
 
-  const getTable = (table: unknown): 'snapshots' | 'observations' | '' => {
+  const getTable = (table: unknown): 'snapshots' | 'observations' | 'domains' | '' => {
     const name = getTableName(table);
     return tableNameMap[name] || '';
   };
@@ -233,6 +269,10 @@ function createMockDb(data: MockData) {
         // The condition contains the ID, but we can't easily parse SQL expressions
         // For testing, we return based on what the test needs
         return data.snapshots[0];
+      }
+      if (tableName === 'domains') {
+        // Return first domain for findByName queries
+        return data.domains[0] ?? null;
       }
       return undefined;
     }),
@@ -256,6 +296,16 @@ function createMockDb(data: MockData) {
       }
       return [];
     }),
+    findById: vi.fn(async (table: unknown, id: string) => {
+      const name = getTableName(table);
+      if (name === 'domains') {
+        return data.domains.find((d) => d.id === id) ?? null;
+      }
+      if (name === 'snapshots') {
+        return data.snapshots.find((s) => s.id === id) ?? null;
+      }
+      return null;
+    }),
   };
 }
 
@@ -278,6 +328,8 @@ describe('Delegation Routes', () => {
     // Setup middleware to inject dependencies
     app.use('*', (c, next) => {
       c.set('db', mockDb as unknown as Env['Variables']['db']);
+      c.set('tenantId', 'test-tenant');
+      c.set('actorId', 'test-actor');
       return next();
     });
 
@@ -550,13 +602,22 @@ describe('Delegation Routes', () => {
     });
 
     it('should handle error gracefully', async () => {
-      mockDb.selectOne = vi.fn(async () => {
-        throw new Error('Database error');
+      // Mock selectOne to return null for the snapshot (simulates not found)
+      // Note: findById internally calls selectOne, so we mock that
+      mockDb.selectOne = vi.fn(async (table: unknown, _condition: unknown) => {
+        const name = getTableName(table);
+        if (name === 'snapshots') {
+          return undefined; // snapshot not found
+        }
+        if (name === 'domains') {
+          return mockData.domains[0] ?? undefined;
+        }
+        return undefined;
       });
 
       const res = await app.request('/api/snapshot/snap-error/delegation');
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(404);
       const body = (await res.json()) as JsonBody;
       expect(body.error).toBeDefined();
     });
