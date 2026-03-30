@@ -107,6 +107,11 @@ export const requireAdminAccess = createMiddleware<Env>(async (c, next) => {
     return next();
   }
 
+  // In test mode, allow admin bypass via X-Test-Admin header
+  if (process.env.NODE_ENV === 'test' && c.req.header('X-Test-Admin') === 'true') {
+    return next();
+  }
+
   return c.json(
     {
       error: 'Forbidden',

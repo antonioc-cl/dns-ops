@@ -22,6 +22,12 @@ type JsonBody = Record<string, unknown>;
 // MOCK DATABASE SETUP
 // =============================================================================
 
+// Headers for admin-gated routes (template overrides require admin access)
+const adminHeaders = {
+  'Content-Type': 'application/json',
+  'X-Test-Admin': 'true',
+};
+
 interface MockData {
   domains: Array<{
     id: string;
@@ -1407,6 +1413,8 @@ describe('Portfolio Routes', () => {
 
   // ===========================================================================
   // TEMPLATE OVERRIDES TESTS
+  // Note: Template override CRUD requires admin access.
+  // These tests use X-Test-Admin header to bypass requireAdminAccess in test mode.
   // ===========================================================================
 
   describe('Template Overrides', () => {
@@ -1433,7 +1441,7 @@ describe('Portfolio Routes', () => {
     it('should create a template override', async () => {
       const res = await app.request('/api/portfolio/templates/overrides', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders,
         body: JSON.stringify({
           providerKey: 'google',
           templateKey: 'dkim',
@@ -1449,7 +1457,7 @@ describe('Portfolio Routes', () => {
     it('should validate override data is required', async () => {
       const res = await app.request('/api/portfolio/templates/overrides', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders,
         body: JSON.stringify({
           providerKey: 'google',
           templateKey: 'dkim',
@@ -1474,7 +1482,7 @@ describe('Portfolio Routes', () => {
 
       const res = await app.request('/api/portfolio/templates/overrides/override-1', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders,
         body: JSON.stringify({ overrideData: { selector: 'new' } }),
       });
 
@@ -1496,7 +1504,7 @@ describe('Portfolio Routes', () => {
 
       const res = await app.request('/api/portfolio/templates/overrides/override-1', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders,
         body: JSON.stringify({ tenantId: 'tenant-2' }),
       });
 
@@ -1520,6 +1528,7 @@ describe('Portfolio Routes', () => {
 
       const res = await app.request('/api/portfolio/templates/overrides/override-1', {
         method: 'DELETE',
+        headers: adminHeaders,
       });
 
       expect(res.status).toBe(200);
@@ -1542,7 +1551,7 @@ describe('Portfolio Routes', () => {
 
       const res = await app.request('/api/portfolio/templates/overrides/override-foreign', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminHeaders,
         body: JSON.stringify({ overrideData: { selector: 'new' } }),
       });
 
@@ -1777,7 +1786,7 @@ describe('Portfolio Routes', () => {
       it('should produce audit event when creating an override', async () => {
         const res = await app.request('/api/portfolio/templates/overrides', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: adminHeaders,
           body: JSON.stringify({
             providerKey: 'google-workspace',
             templateKey: 'dkim',

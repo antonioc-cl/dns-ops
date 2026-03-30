@@ -224,7 +224,7 @@ describe('alertRoutes shared reports', () => {
     expect(json.report.summary).toBeDefined();
   });
 
-  it('returns 404 for expired shared report', async () => {
+  it('returns 410 for shared report with expiresAt in the past', async () => {
     const pastDate = new Date('2020-01-01'); // Expired in the past
     const state: MockState = {
       alerts: [],
@@ -251,10 +251,12 @@ describe('alertRoutes shared reports', () => {
 
     const response = await app.request('/api/alerts/reports/shared/expired-token');
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(410);
+    const json = (await response.json()) as { error: string };
+    expect(json.error).toContain('expired');
   });
 
-  it('returns 404 for report past expiresAt timestamp', async () => {
+  it('returns 410 for report past expiresAt timestamp', async () => {
     // Create a report that expired yesterday
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -286,7 +288,9 @@ describe('alertRoutes shared reports', () => {
 
     const response = await app.request('/api/alerts/reports/shared/yesterday-token');
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(410);
+    const json = (await response.json()) as { error: string };
+    expect(json.error).toContain('expired');
   });
 
   it('allows access to shared report within valid expiresAt window', async () => {
@@ -380,9 +384,11 @@ describe('alertRoutes shared reports', () => {
     });
     expect(expireResponse.status).toBe(200);
 
-    // Verify report is no longer accessible
+    // Verify report is no longer accessible (returns 410 Gone)
     const afterResponse = await app.request('/api/alerts/reports/shared/expire-token');
-    expect(afterResponse.status).toBe(404);
+    expect(afterResponse.status).toBe(410);
+    const afterJson = (await afterResponse.json()) as { error: string };
+    expect(afterJson.error).toContain('expired');
 
     // Verify audit event was created
     expect(state.auditEvents.some((e) => e.action === 'shared_report_expired')).toBe(true);

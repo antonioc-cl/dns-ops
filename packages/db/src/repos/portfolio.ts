@@ -504,6 +504,16 @@ export class SharedReportRepository {
     });
   }
 
+  async findByTokenRaw(token: string): Promise<SharedReport | undefined> {
+    const reports = await this.db.select(sharedReports);
+    return reports.find((report) => {
+      if (report.shareToken !== token || report.visibility !== 'shared' || !report.tenantId) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   async listByTenant(tenantId: string): Promise<SharedReport[]> {
     const reports = await this.db.select(sharedReports);
     return reports

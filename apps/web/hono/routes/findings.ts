@@ -596,7 +596,11 @@ findingsRoutes.patch(
   async (c) => {
     const findingId = c.req.param('findingId');
     const db = c.get('db');
-    const actorId = c.req.header('X-Actor-Id') || 'unknown';
+    const actorId = c.get('actorId');
+
+    if (!actorId) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
 
     try {
       const findingRepo = new FindingRepository(db);
@@ -704,7 +708,11 @@ findingsRoutes.patch(
   async (c) => {
     const findingId = c.req.param('findingId');
     const db = c.get('db');
-    const actorId = c.req.header('X-Actor-Id') || 'unknown';
+    const actorId = c.get('actorId');
+
+    if (!actorId) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
 
     try {
       const findingRepo = new FindingRepository(db);
@@ -755,6 +763,12 @@ findingsRoutes.patch(
  */
 findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
   const db = c.get('db');
+  const actorId = c.get('actorId');
+
+  if (!actorId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
   const body = await c.req.json().catch(() => ({}));
   const {
     domainId,
@@ -779,7 +793,6 @@ findingsRoutes.post('/findings/backfill', requireAuth, async (c) => {
 
     // Get current ruleset and ensure version exists
     const ruleset = createCombinedRuleset();
-    const actorId = c.req.header('X-Actor-Id') || 'system';
     const rulesetVersionId = await ensureRulesetVersion(rulesetVersionRepo, ruleset, actorId);
 
     // Get backfill statistics

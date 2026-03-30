@@ -91,10 +91,27 @@ alertRoutes.get('/reports/shared/:token', async (c) => {
 
   const token = c.req.param('token');
   const reportRepo = new SharedReportRepository(db);
-  const report = await reportRepo.findByToken(token);
+
+  // Fetch raw report by token to distinguish between not-found vs expired/revoked
+  const report = await reportRepo.findByTokenRaw(token);
 
   if (!report) {
     return c.json({ error: 'Shared report not found' }, 404);
+  }
+
+  // Check status - expired or revoked reports return 410 Gone
+  if (report.status === 'expired') {
+    return c.json({ error: 'Shared report has expired' }, 410);
+  }
+
+  // Check if report has passed its expiry date
+  if (report.expiresAt && new Date(report.expiresAt) <= new Date()) {
+    return c.json({ error: 'Shared report has expired' }, 410);
+  }
+
+  // Only ready reports can be accessed
+  if (report.status !== 'ready') {
+    return c.json({ error: 'Shared report is not available' }, 410);
   }
 
   return c.json({

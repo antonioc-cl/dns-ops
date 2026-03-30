@@ -138,7 +138,16 @@ function createMockDb(state: MockState): IDatabaseAdapter {
         return row;
       });
     }),
-    update: vi.fn(),
+    update: vi.fn(async (table: unknown, values: Record<string, unknown>, condition: unknown) => {
+      const tableName = getTableName(table);
+      const param = getConditionParam(condition);
+      if (tableName === 'findings') {
+        const index = state.findings.findIndex((row) => row.id === param);
+        if (index !== -1) {
+          state.findings[index] = { ...state.findings[index], ...values };
+        }
+      }
+    }),
     updateOne: vi.fn(
       async (table: unknown, values: Record<string, unknown>, condition: unknown) => {
         const tableName = getTableName(table);
@@ -469,7 +478,6 @@ describe('findingsRoutes runtime', () => {
 
       const response = await app.request('/api/findings/finding-1/acknowledge', {
         method: 'PATCH',
-        headers: { 'X-Actor-Id': 'operator-1' },
       });
 
       expect(response.status).toBe(200);
@@ -486,6 +494,81 @@ describe('findingsRoutes runtime', () => {
       });
 
       expect(response.status).toBe(404);
+    });
+
+    it('returns 401 when X-Actor-Id header provided but no auth context', async () => {
+      const state = makeState({
+        findings: [
+          {
+            id: 'finding-1',
+            snapshotId: 'snap-1',
+            type: 'dns.authoritative-failure',
+            title: 'Auth failure',
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            falsePositive: false,
+          },
+        ],
+      });
+      const app = createApp(state, false); // No auth context
+
+      const response = await app.request('/api/findings/finding-1/acknowledge', {
+        method: 'PATCH',
+        headers: { 'X-Actor-Id': 'spoofed-actor' },
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('uses actor from auth context, not X-Actor-Id header', async () => {
+      const state = makeState({
+        findings: [
+          {
+            id: 'finding-1',
+            snapshotId: 'snap-1',
+            type: 'dns.authoritative-failure',
+            title: 'Auth failure',
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            falsePositive: false,
+          },
+        ],
+      });
+      const app = createApp(state, true); // Auth context sets actorId = 'actor-1'
+
+      const response = await app.request('/api/findings/finding-1/acknowledge', {
+        method: 'PATCH',
+        headers: { 'X-Actor-Id': 'spoofed-actor' }, // Should be ignored
+      });
+
+      expect(response.status).toBe(200);
+      // Verify the finding was updated with actor from context, not header
+      const updatedFinding = state.findings.find((f) => f.id === 'finding-1');
+      expect(updatedFinding?.acknowledgedBy).toBe('actor-1');
+      expect(updatedFinding?.acknowledgedBy).not.toBe('spoofed-actor');
+    });
+
+    it('returns 401 when no auth context (no actorId in context)', async () => {
+      const state = makeState({
+        findings: [
+          {
+            id: 'finding-1',
+            snapshotId: 'snap-1',
+            type: 'dns.authoritative-failure',
+            title: 'Auth failure',
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            falsePositive: false,
+          },
+        ],
+      });
+      const app = createApp(state, false); // No auth context
+
+      const response = await app.request('/api/findings/finding-1/acknowledge', {
+        method: 'PATCH',
+      });
+
+      expect(response.status).toBe(401);
     });
   });
 
@@ -508,7 +591,6 @@ describe('findingsRoutes runtime', () => {
 
       const response = await app.request('/api/findings/finding-1/false-positive', {
         method: 'PATCH',
-        headers: { 'X-Actor-Id': 'operator-1' },
       });
 
       expect(response.status).toBe(200);
@@ -525,6 +607,132 @@ describe('findingsRoutes runtime', () => {
       });
 
       expect(response.status).toBe(404);
+    });
+
+    it('returns 401 when X-Actor-Id header provided but no auth context', async () => {
+      const state = makeState({
+        findings: [
+          {
+            id: 'finding-1',
+            snapshotId: 'snap-1',
+            type: 'dns.authoritative-failure',
+            title: 'Auth failure',
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            falsePositive: false,
+          },
+        ],
+      });
+      const app = createApp(state, false); // No auth context
+
+      const response = await app.request('/api/findings/finding-1/false-positive', {
+        method: 'PATCH',
+        headers: { 'X-Actor-Id': 'spoofed-actor' },
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('uses actor from auth context, not X-Actor-Id header', async () => {
+      const state = makeState({
+        findings: [
+          {
+            id: 'finding-1',
+            snapshotId: 'snap-1',
+            type: 'dns.authoritative-failure',
+            title: 'Auth failure',
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            falsePositive: false,
+          },
+        ],
+      });
+      const app = createApp(state, true); // Auth context sets actorId = 'actor-1'
+
+      const response = await app.request('/api/findings/finding-1/false-positive', {
+        method: 'PATCH',
+        headers: { 'X-Actor-Id': 'spoofed-actor' }, // Should be ignored
+      });
+
+      expect(response.status).toBe(200);
+      // Verify the finding was updated with actor from context, not header
+      const updatedFinding = state.findings.find((f) => f.id === 'finding-1');
+      expect(updatedFinding?.acknowledgedBy).toBe('actor-1');
+      expect(updatedFinding?.acknowledgedBy).not.toBe('spoofed-actor');
+    });
+
+    it('returns 401 when no auth context (no actorId in context)', async () => {
+      const state = makeState({
+        findings: [
+          {
+            id: 'finding-1',
+            snapshotId: 'snap-1',
+            type: 'dns.authoritative-failure',
+            title: 'Auth failure',
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+            falsePositive: false,
+          },
+        ],
+      });
+      const app = createApp(state, false); // No auth context
+
+      const response = await app.request('/api/findings/finding-1/false-positive', {
+        method: 'PATCH',
+      });
+
+      expect(response.status).toBe(401);
+    });
+  });
+
+  describe('POST /findings/backfill', () => {
+    it('returns 401 when X-Actor-Id header provided but no auth context', async () => {
+      const state = makeState();
+      const app = createApp(state, false); // No auth context
+
+      const response = await app.request('/api/findings/backfill', {
+        method: 'POST',
+        headers: {
+          'X-Actor-Id': 'spoofed-actor',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ limit: 10 }),
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('uses actor from auth context, not X-Actor-Id header', async () => {
+      const state = makeState();
+      const app = createApp(state, true); // Auth context sets actorId = 'actor-1'
+
+      const response = await app.request('/api/findings/backfill', {
+        method: 'POST',
+        headers: {
+          'X-Actor-Id': 'spoofed-actor', // Should be ignored
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ limit: 10 }),
+      });
+
+      // Should succeed with auth context, ignoring header
+      // The response may be 200 (processed) or indicate no snapshots to backfill
+      expect(response.status).toBeLessThan(500);
+      const json = (await response.json()) as { processed?: number };
+      expect(json.processed).toBeDefined();
+    });
+
+    it('returns 401 when no auth context (no actorId in context)', async () => {
+      const state = makeState();
+      const app = createApp(state, false); // No auth context
+
+      const response = await app.request('/api/findings/backfill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 10 }),
+      });
+
+      expect(response.status).toBe(401);
     });
   });
 

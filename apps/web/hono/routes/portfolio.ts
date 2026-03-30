@@ -16,7 +16,11 @@ import {
 import { domains, findings, snapshots } from '@dns-ops/db/schema';
 import { and, desc, eq, inArray, like, or } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
+import {
+  requireAdminAccess,
+  requireAuth,
+  requireWritePermission,
+} from '../middleware/authorization.js';
 import { trackSearch } from '../middleware/error-tracking.js';
 import {
   boolean,
@@ -738,7 +742,8 @@ portfolioRoutes.get('/templates/overrides', async (c) => {
   }
 });
 
-portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) => {
+// Template management is admin-only - requires admin/internal access
+portfolioRoutes.post('/templates/overrides', requireAdminAccess, async (c) => {
   const db = c.get('db');
   const tenantId = c.get('tenantId');
   const actorId = c.get('actorId');
@@ -792,7 +797,8 @@ portfolioRoutes.post('/templates/overrides', requireWritePermission, async (c) =
   }
 });
 
-portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
+// Template management is admin-only - requires admin/internal access
+portfolioRoutes.put('/templates/overrides/:overrideId', requireAdminAccess, async (c) => {
   const db = c.get('db');
   const tenantId = c.get('tenantId');
   const actorId = c.get('actorId');
@@ -872,7 +878,8 @@ portfolioRoutes.put('/templates/overrides/:overrideId', requireWritePermission, 
   }
 });
 
-portfolioRoutes.delete('/templates/overrides/:overrideId', requireWritePermission, async (c) => {
+// Template management is admin-only - requires admin/internal access
+portfolioRoutes.delete('/templates/overrides/:overrideId', requireAdminAccess, async (c) => {
   const db = c.get('db');
   const tenantId = c.get('tenantId');
   const actorId = c.get('actorId');
