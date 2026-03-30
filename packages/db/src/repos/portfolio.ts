@@ -283,9 +283,16 @@ export class MonitoredDomainRepository {
     );
   }
 
-  async findActiveBySchedule(schedule: 'hourly' | 'daily' | 'weekly'): Promise<MonitoredDomain[]> {
+  async findActiveBySchedule(
+    schedule: 'hourly' | 'daily' | 'weekly',
+    tenantId?: string
+  ): Promise<MonitoredDomain[]> {
     const results = await this.db.select(monitoredDomains);
-    return results.filter((r) => r.schedule === schedule && r.isActive);
+    return results.filter((r) => {
+      if (r.schedule !== schedule || !r.isActive) return false;
+      if (tenantId && r.tenantId !== tenantId) return false;
+      return true;
+    });
   }
 
   async findByDomainId(domainId: string): Promise<MonitoredDomain | undefined> {

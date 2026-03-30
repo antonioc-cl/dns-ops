@@ -38,9 +38,10 @@ monitoringRoutes.post('/check', internalOnlyMiddleware, async (c) => {
   try {
     const monitoredRepo = new MonitoredDomainRepository(db);
     const domainRepo = new DomainRepository(db);
+    const tenantId = c.get('tenantId');
 
-    // Get domains scheduled for this check
-    const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule);
+    // Get domains scheduled for this check, scoped to this tenant
+    const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule, tenantId);
     const results = [];
 
     for (const monitored of monitoredDomains) {
@@ -363,12 +364,22 @@ monitoringRoutes.delete('/domains/:domainId/monitor', internalOnlyMiddleware, as
   }
 
   const domainId = c.req.param('domainId');
+  const tenantId = c.get('tenantId');
+
+  if (!tenantId) {
+    return c.json({ error: 'Tenant context required' }, 401);
+  }
 
   try {
     const monitoredRepo = new MonitoredDomainRepository(db);
     const existing = await monitoredRepo.findByDomainId(domainId);
 
     if (!existing) {
+      return c.json({ error: 'Domain is not monitored' }, 404);
+    }
+
+    // Tenant isolation: only the owning tenant can delete their monitored domain
+    if (existing.tenantId !== tenantId) {
       return c.json({ error: 'Domain is not monitored' }, 404);
     }
 

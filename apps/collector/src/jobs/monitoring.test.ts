@@ -15,6 +15,11 @@ import { monitoringRoutes } from './monitoring.js';
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// Normalized tenant UUID for 'test-tenant' (deterministic via UUID v5)
+// Auth middleware normalizes tenantId, so tests using raw 'test-tenant' in mock
+// middleware will have the auth value overwritten. Use this constant to match.
+const NORMALIZED_TENANT_ID = '197364d6-0eda-54c5-bcda-3702507a5221';
+
 // Set internal secret for tests
 const originalEnv = process.env;
 beforeEach(() => {
@@ -135,7 +140,7 @@ describe('Monitoring Routes', () => {
             monitoredDomains: [createMockMonitoredDomain({ schedule: 'daily', isActive: true })],
           })
         );
-        c.set('tenantId', 'test-tenant');
+        c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();
       });
       app.route('/api/monitoring', monitoringRoutes);
@@ -163,7 +168,7 @@ describe('Monitoring Routes', () => {
             monitoredDomains: [],
           })
         );
-        c.set('tenantId', 'test-tenant');
+        c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();
       });
       app.route('/api/monitoring', monitoringRoutes);
@@ -192,7 +197,7 @@ describe('Monitoring Routes', () => {
             monitoredDomains: [],
           })
         );
-        c.set('tenantId', 'test-tenant');
+        c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();
       });
       app.route('/api/monitoring', monitoringRoutes);
@@ -231,7 +236,7 @@ describe('Monitoring Routes', () => {
             alerts: [],
           })
         );
-        c.set('tenantId', 'test-tenant');
+        c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();
       });
       app.route('/api/monitoring', monitoringRoutes);
@@ -288,7 +293,7 @@ describe('Monitoring Routes', () => {
                 severity: 'high',
                 status: 'pending',
                 title: 'Alert 1',
-                tenantId: 'tenant-1',
+                tenantId: NORMALIZED_TENANT_ID,
               },
               {
                 id: 'alert-2',
@@ -297,7 +302,7 @@ describe('Monitoring Routes', () => {
                 severity: 'high',
                 status: 'pending',
                 title: 'Alert 2',
-                tenantId: 'tenant-1',
+                tenantId: NORMALIZED_TENANT_ID,
               },
               {
                 id: 'alert-3',
@@ -306,12 +311,12 @@ describe('Monitoring Routes', () => {
                 severity: 'high',
                 status: 'pending',
                 title: 'Alert 3',
-                tenantId: 'tenant-1',
+                tenantId: NORMALIZED_TENANT_ID,
               },
             ],
           })
         );
-        c.set('tenantId', 'test-tenant');
+        c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();
       });
       app.route('/api/monitoring', monitoringRoutes);
@@ -457,7 +462,7 @@ function createMockMonitoredDomain(
   return {
     id: 'mon-1',
     domainId: 'dom-1',
-    tenantId: 'tenant-1',
+    tenantId: NORMALIZED_TENANT_ID,
     schedule: 'daily',
     isActive: true,
     lastAlertAt: null,
@@ -579,7 +584,7 @@ describe('Webhook Notification Integration', () => {
         description: 'Test description',
         severity: 'high',
         domain: 'example.com',
-        tenantId: 'tenant-1',
+        tenantId: NORMALIZED_TENANT_ID,
         timestamp: new Date().toISOString(),
         domain360Link: 'https://app.example.com/domain/example.com',
       });
@@ -597,7 +602,7 @@ describe('Webhook Notification Integration', () => {
         description: 'Test description',
         severity: 'high',
         domain: 'example.com',
-        tenantId: 'tenant-1',
+        tenantId: NORMALIZED_TENANT_ID,
         timestamp: new Date().toISOString(),
         domain360Link: 'https://app.example.com/domain/example.com',
       });
@@ -618,7 +623,7 @@ describe('Webhook Notification Integration', () => {
         description: 'Test description',
         severity: 'high',
         domain: 'example.com',
-        tenantId: 'tenant-1',
+        tenantId: NORMALIZED_TENANT_ID,
         timestamp: new Date().toISOString(),
         domain360Link: 'https://app.example.com/domain/example.com',
       });
@@ -639,7 +644,7 @@ describe('Webhook Notification Integration', () => {
         description: 'Test description',
         severity: 'high',
         domain: 'example.com',
-        tenantId: 'tenant-1',
+        tenantId: NORMALIZED_TENANT_ID,
         timestamp: new Date().toISOString(),
         domain360Link: 'https://app.example.com/domain/example.com',
       });
