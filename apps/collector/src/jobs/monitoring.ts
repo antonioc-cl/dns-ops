@@ -89,7 +89,7 @@ monitoringRoutes.post('/check', internalOnlyMiddleware, async (c) => {
       if (!response.ok) {
         if (!monitored.tenantId) {
           monitoringLogger.error(`Monitored domain missing tenant ownership: ${monitored.id}`);
-          continue;
+          continue; // Skip domain without tenant - cannot create alerts without tenant ownership
         }
 
         // Create alert for collection failure

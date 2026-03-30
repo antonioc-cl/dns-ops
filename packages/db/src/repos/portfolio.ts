@@ -48,8 +48,12 @@ export class DomainNoteRepository {
     );
   }
 
-  async findById(id: string): Promise<DomainNote | undefined> {
-    return this.db.selectOne(domainNotes, eq(domainNotes.id, id));
+  async findById(id: string, tenantId?: string): Promise<DomainNote | undefined> {
+    const note = await this.db.selectOne(domainNotes, eq(domainNotes.id, id));
+    if (!note) return undefined;
+    // Tenant isolation: only return if owned by this tenant
+    if (tenantId && note.tenantId !== tenantId) return undefined;
+    return note;
   }
 
   async create(data: NewDomainNote): Promise<DomainNote> {
@@ -76,8 +80,11 @@ export class DomainNoteRepository {
 export class DomainTagRepository {
   constructor(private db: IDatabaseAdapter) {}
 
-  async findByDomainId(domainId: string): Promise<DomainTag[]> {
-    const results = await this.db.selectWhere(domainTags, eq(domainTags.domainId, domainId));
+  async findByDomainId(domainId: string, tenantId?: string): Promise<DomainTag[]> {
+    let results = await this.db.selectWhere(domainTags, eq(domainTags.domainId, domainId));
+    if (tenantId) {
+      results = results.filter((r) => r.tenantId === tenantId);
+    }
     return results.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
@@ -114,9 +121,13 @@ export class DomainTagRepository {
     await this.db.deleteOne(domainTags, eq(domainTags.id, id));
   }
 
-  async deleteByDomainAndTag(domainId: string, tag: string): Promise<void> {
-    const results = await this.db.select(domainTags);
-    const toDelete = results.find((r) => r.domainId === domainId && r.tag === tag);
+  async deleteByDomainAndTag(domainId: string, tag: string, tenantId?: string): Promise<void> {
+    let results = await this.db.select(domainTags);
+    results = results.filter((r) => r.domainId === domainId && r.tag === tag);
+    if (tenantId) {
+      results = results.filter((r) => r.tenantId === tenantId);
+    }
+    const toDelete = results[0];
     if (toDelete) {
       await this.db.deleteOne(domainTags, eq(domainTags.id, toDelete.id));
     }
@@ -143,8 +154,11 @@ export class SavedFilterRepository {
     );
   }
 
-  async findById(id: string): Promise<SavedFilter | undefined> {
-    return this.db.selectOne(savedFilters, eq(savedFilters.id, id));
+  async findById(id: string, tenantId?: string): Promise<SavedFilter | undefined> {
+    const filter = await this.db.selectOne(savedFilters, eq(savedFilters.id, id));
+    if (!filter) return undefined;
+    if (tenantId && filter.tenantId !== tenantId) return undefined;
+    return filter;
   }
 
   async create(data: NewSavedFilter): Promise<SavedFilter> {
@@ -220,8 +234,11 @@ export class TemplateOverrideRepository {
     return results;
   }
 
-  async findById(id: string): Promise<TemplateOverride | undefined> {
-    return this.db.selectOne(templateOverrides, eq(templateOverrides.id, id));
+  async findById(id: string, tenantId?: string): Promise<TemplateOverride | undefined> {
+    const override = await this.db.selectOne(templateOverrides, eq(templateOverrides.id, id));
+    if (!override) return undefined;
+    if (tenantId && override.tenantId !== tenantId) return undefined;
+    return override;
   }
 
   async findApplicable(

@@ -677,7 +677,7 @@ export const monitoredDomains = pgTable(
 
     // Actor context
     createdBy: varchar('created_by', { length: 100 }).notNull(),
-    tenantId: uuid('tenant_id'),
+    tenantId: uuid('tenant_id').notNull(),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
