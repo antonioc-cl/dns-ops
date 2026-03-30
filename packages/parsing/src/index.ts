@@ -7,7 +7,7 @@
 
 export * from './diff/index.js';
 export * from './dig/index.js';
-// DNS exports (excluding normalizeDomain to avoid conflict with idn)
+// DNS exports (excluding normalizeDomain to avoid conflict with domain)
 export {
   getWildcardBase,
   isWildcard,
@@ -18,12 +18,19 @@ export {
 } from './dns/index.js';
 export * from './dns/recordset.js';
 
-// IDN exports
+// Domain exports - CANONICAL domain normalization
 export {
-  fromPunycode,
+  DomainNormalizationError,
   isPunycode,
   isValidDomain,
+  type NormalizedDomain,
   normalizeDomain,
+  tryNormalizeDomain,
+} from './domain/index.js';
+
+// IDN exports (re-exported from domain for backward compatibility)
+export {
+  fromPunycode,
   toPunycode,
 } from './idn/index.js';
 export * from './mail/index.js';

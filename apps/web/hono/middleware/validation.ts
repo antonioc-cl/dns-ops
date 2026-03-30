@@ -5,6 +5,7 @@
  * Supports both inline validation and reusable schemas.
  */
 
+import { isValidDomain, normalizeDomain } from '@dns-ops/parsing';
 import type { Context } from 'hono';
 
 /**
@@ -225,6 +226,8 @@ export function email(fieldName: string, required = true): FieldValidator<string
 
 /**
  * Create a validator for domain name fields
+ *
+ * Uses @dns-ops/parsing for canonical domain normalization.
  */
 export function domainName(fieldName: string, required = true): FieldValidator<string | undefined> {
   return (value: unknown): string | undefined => {
@@ -237,25 +240,20 @@ export function domainName(fieldName: string, required = true): FieldValidator<s
     if (typeof value !== 'string') {
       throw new FieldValidationError(fieldName, 'INVALID_FORMAT', `${fieldName} must be a string`);
     }
-    if (value.length > 253) {
-      throw new FieldValidationError(
-        fieldName,
-        'INVALID_FORMAT',
-        `${fieldName} must be at most 253 characters`
-      );
-    }
-    // Basic domain validation - allow ASCII and IDN
-    const DOMAIN_RE =
-      /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*$/;
-    const IDN_RE = /^(xn--[a-zA-Z0-9]+\.?)+$/i;
-    if (!DOMAIN_RE.test(value) && !IDN_RE.test(value)) {
+
+    // Use canonical domain normalization from @dns-ops/parsing
+    // This handles: lowercase, trailing dot, IDN/punycode, whitespace trim, validation
+    if (!isValidDomain(value)) {
       throw new FieldValidationError(
         fieldName,
         'INVALID_FORMAT',
         `${fieldName} must be a valid domain name`
       );
     }
-    return value;
+
+    // Return the normalized form (punycode for IDN domains)
+    const normalized = normalizeDomain(value);
+    return normalized.normalized;
   };
 }
 

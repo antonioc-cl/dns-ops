@@ -8,6 +8,10 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./domain": {
+      "import": "./dist/domain/index.js",
+      "types": "./dist/domain/index.d.ts"
+    },
     "./dns": {
       "import": "./dist/dns/index.js",
       "types": "./dist/dns/index.d.ts"

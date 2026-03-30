@@ -3,9 +3,12 @@
  *
  * Handle punycode encoding/decoding for international domain names.
  * Uses the 'punycode' package for proper RFC 3492 implementation.
+ *
+ * NOTE: Domain normalization functions (normalizeDomain, isValidDomain, isPunycode)
+ * are now in the domain module. Import from @dns-ops/parsing for the canonical implementation.
  */
 
-import punycode from 'punycode/';
+import punycode from 'punycode/punycode.js';
 
 const { toASCII, toUnicode } = punycode;
 
@@ -13,6 +16,7 @@ const PREFIX = 'xn--';
 
 /**
  * Check if a domain name is punycode encoded
+ * @deprecated Use isPunycode from @dns-ops/parsing (domain module) instead
  */
 export function isPunycode(name: string): boolean {
   return name.startsWith(PREFIX);
@@ -37,17 +41,18 @@ export function toPunycode(unicode: string): string {
  * Convert Punycode to Unicode
  * Uses proper RFC 3492 implementation via the punycode package
  */
-export function fromPunycode(punycode: string): string {
-  if (!isPunycode(punycode)) {
-    return punycode.toLowerCase();
+export function fromPunycode(punycodeStr: string): string {
+  if (!isPunycode(punycodeStr)) {
+    return punycodeStr.toLowerCase();
   }
 
   // Use proper punycode conversion
-  return toUnicode(punycode);
+  return toUnicode(punycodeStr);
 }
 
 /**
  * Normalize a domain name (handles IDN conversion)
+ * @deprecated Use normalizeDomain from @dns-ops/parsing (domain module) instead
  */
 export function normalizeDomain(name: string): {
   original: string;
@@ -61,33 +66,34 @@ export function normalizeDomain(name: string): {
   const clean = lower.replace(/\.$/, '');
 
   let unicode: string;
-  let punycode: string;
+  let punycodeResult: string;
 
   if (isPunycode(clean)) {
-    punycode = clean;
+    punycodeResult = clean;
     unicode = fromPunycode(clean);
     // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentional ASCII check
   } else if (/^[\x00-\x7F]+$/.test(clean)) {
     // ASCII domain
     unicode = clean;
-    punycode = clean;
+    punycodeResult = clean;
   } else {
     // Unicode domain - convert to punycode
     unicode = clean;
-    punycode = toPunycode(clean);
+    punycodeResult = toPunycode(clean);
   }
 
   return {
     original: name,
     unicode,
-    punycode,
-    normalized: punycode,
+    punycode: punycodeResult,
+    normalized: punycodeResult,
   };
 }
 
 /**
  * Validate domain name format
  * Handles both ASCII and Unicode domains
+ * @deprecated Use isValidDomain from @dns-ops/parsing (domain module) instead
  */
 export function isValidDomain(name: string): boolean {
   if (!name || name.length > 253) {
