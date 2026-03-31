@@ -50,14 +50,13 @@ export async function queryWithDnsPacket(
   };
   responseCode: number;
 }> {
-  const packetOut = dnsPacket.prepareQuery({
-    type: DNS_TYPES[query.type] || 0,
-    name: query.name,
+  const packetOut = dnsPacket.encode({
+    type: 'query',
     id: Math.floor(Math.random() * 0xffff),
-    flags: dnsPacket.RECURSION_DESIRED,
+    flags: dnsPacket.RECURSION_DESIRED as number,
     questions: [
       {
-        type: DNS_TYPES[query.type] || 0,
+        type: DNS_TYPES[query.type] || query.type,
         name: query.name,
         class: 'IN',
       },
@@ -68,21 +67,29 @@ export async function queryWithDnsPacket(
   const response = await sendDnsQuery(packetOut, dnsServer, 53);
 
   // Parse response
-  const packetIn = dnsPacket.parse(response);
+  const packetIn = dnsPacket.decode(response) as {
+    flags?: number;
+    rcode?: number;
+    answers?: Array<Record<string, unknown>>;
+    authority?: Array<Record<string, unknown>>;
+    additionals?: Array<Record<string, unknown>>;
+  };
+
+  const flags = packetIn.flags || 0;
 
   // Extract answers
-  const answers: DNSAnswer[] = (packetIn.answers || []).map((r: dnsPacket.Record) => ({
-    name: r.name,
+  const answers: DNSAnswer[] = (packetIn.answers || []).map((r) => ({
+    name: String(r.name || ''),
     type: query.type,
-    ttl: r.ttl || 0,
+    ttl: Number(r.ttl || 0),
     data: formatRecordData(r),
   }));
 
   // Extract authority records
-  const authority: DNSAnswer[] = (packetIn.authority || []).map((r: dnsPacket.Record) => ({
-    name: r.name,
+  const authority: DNSAnswer[] = (packetIn.authority || []).map((r) => ({
+    name: String(r.name || ''),
     type: query.type,
-    ttl: r.ttl || 0,
+    ttl: Number(r.ttl || 0),
     data: formatRecordData(r),
   }));
 
@@ -91,12 +98,12 @@ export async function queryWithDnsPacket(
     authority,
     additional: [],
     flags: {
-      aa: !!(packetIn.flags & dnsPacket.AUTHORITATIVE_ANSWER),
-      tc: !!(packetIn.flags & dnsPacket.TRUNCATED_RESPONSE),
-      rd: !!(packetIn.flags & dnsPacket.RECURSION_DESIRED),
-      ra: !!(packetIn.flags & dnsPacket.RECURSION_AVAILABLE),
-      ad: !!(packetIn.flags & dnsPacket.AUTHENTICATED_DATA),
-      cd: !!(packetIn.flags & dnsPacket.CHECKING_DISABLED),
+      aa: !!(flags & (dnsPacket.AUTHORITATIVE_ANSWER as number)),
+      tc: !!(flags & (dnsPacket.TRUNCATED_RESPONSE as number)),
+      rd: !!(flags & (dnsPacket.RECURSION_DESIRED as number)),
+      ra: !!(flags & (dnsPacket.RECURSION_AVAILABLE as number)),
+      ad: !!(flags & (dnsPacket.AUTHENTICATED_DATA as number)),
+      cd: !!(flags & (dnsPacket.CHECKING_DISABLED as number)),
     },
     responseCode: packetIn.rcode || 0,
   };
@@ -105,20 +112,26 @@ export async function queryWithDnsPacket(
 /**
  * Format record data based on type
  */
-function formatRecordData(record: dnsPacket.Record): string {
-  // DNSKEY record
-  if ('flags' in record && 'algorithm' in record && 'publicKey' in record) {
-    const keyFlags = record.flags || 0;
-    return `${keyFlags} 3 ${record.algorithm || 8} ${record.publicKey}`;
+function formatRecordData(record: Record<string, unknown>): string {
+  const data = record.data;
+
+  // DNSKEY record - data is typically a buffer or string
+  if (record.type === DNS_TYPES.DNSKEY || String(record.type) === '48') {
+    if (typeof data === 'string') return data;
+    if (Buffer.isBuffer(data)) return data.toString('base64');
+    return JSON.stringify(data);
   }
 
   // DS record
-  if ('digestType' in record && 'digest' in record) {
-    return `${record.keyTag || 0} ${record.algorithm || 8} ${record.digestType || 2} ${record.digest}`;
+  if (record.type === DNS_TYPES.DS || String(record.type) === '43') {
+    if (typeof data === 'string') return data;
+    if (Buffer.isBuffer(data)) return data.toString('hex');
+    return JSON.stringify(data);
   }
 
   // Generic record - stringify
-  return JSON.stringify(record);
+  if (typeof data === 'string') return data;
+  return JSON.stringify(data);
 }
 
 /**
@@ -162,6 +175,10 @@ export async function queryDNSKEY(domain: string): Promise<{
   answers: DNSAnswer[];
   error?: string;
 }> {
+  if (!domain) {
+    return { success: false, answers: [], error: 'Domain is required' };
+  }
+
   try {
     const result = await queryWithDnsPacket({ name: domain, type: 'DNSKEY' });
 
@@ -194,6 +211,10 @@ export async function queryDS(domain: string): Promise<{
   answers: DNSAnswer[];
   error?: string;
 }> {
+  if (!domain) {
+    return { success: false, answers: [], error: 'Domain is required' };
+  }
+
   try {
     const result = await queryWithDnsPacket({ name: domain, type: 'DS' });
 
