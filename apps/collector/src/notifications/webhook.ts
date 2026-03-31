@@ -79,8 +79,8 @@ export async function sendAlertWebhook(
   payload: WebhookPayload,
   signal?: AbortSignal
 ): Promise<WebhookResult> {
-  // SSRF guard - reject private/internal URLs
-  if (isPrivateUrl(webhookUrl)) {
+  // SSRF guard - reject private/internal URLs (with DNS resolution for rebinding protection)
+  if (await isPrivateUrl(webhookUrl)) {
     return {
       success: false,
       error: 'SSRF_BLOCKED',

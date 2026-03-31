@@ -72,11 +72,22 @@ async function resolveAccessibleSnapshot(
 }
 
 apiRoutes.get('/health', (c) => {
-  return c.json({
-    status: 'healthy',
-    service: 'dns-ops-web',
-    timestamp: new Date().toISOString(),
-  });
+  const db = c.get('db');
+  const hasDbConnection = !!db;
+
+  return c.json(
+    {
+      status: hasDbConnection ? 'healthy' : 'degraded',
+      service: 'dns-ops-web',
+      timestamp: new Date().toISOString(),
+      ...(hasDbConnection
+        ? {}
+        : {
+            warning: 'Database connection not available - API functionality limited',
+          }),
+    },
+    hasDbConnection ? 200 : 503
+  );
 });
 
 // Detailed health check with admin access (PR-10.3)

@@ -114,6 +114,7 @@ shadowComparisonRoutes.post('/compare', async (c) => {
 
     // Store the comparison durably in the database
     // Convert legacyOutput to DB format (preserving checkedAt as-is)
+    const tenantId = c.get('tenantId');
     const stored = await shadowRepo.create({
       snapshotId,
       domain: snapshot.domainName,
@@ -123,6 +124,7 @@ shadowComparisonRoutes.post('/compare', async (c) => {
       metrics: result.metrics,
       summary: result.summary,
       legacyOutput: validatedLegacy.data as DBLegacyToolOutput,
+      tenantId: tenantId || undefined,
     });
 
     getFeedbackMetrics().shadow.comparisonRun({
@@ -214,10 +216,12 @@ shadowComparisonRoutes.get('/stats', async (c) => {
 shadowComparisonRoutes.get('/domain/:domain', async (c) => {
   const domain = c.req.param('domain');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
 
   try {
     const shadowRepo = new ShadowComparisonRepository(db);
-    const comparisons = await shadowRepo.findByDomain(domain);
+    // Tenant isolation: filter by tenantId
+    const comparisons = await shadowRepo.findByDomain(domain, tenantId);
 
     return c.json({
       domain,
@@ -627,10 +631,12 @@ shadowComparisonRoutes.post('/seed-baselines', requireAdminAccess, async (c) => 
 shadowComparisonRoutes.get('/:id', async (c) => {
   const id = c.req.param('id');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
 
   try {
     const shadowRepo = new ShadowComparisonRepository(db);
-    const comparison = await shadowRepo.findById(id);
+    // Tenant isolation: filter by tenantId
+    const comparison = await shadowRepo.findById(id, tenantId);
 
     if (!comparison) {
       return c.json({ error: 'Comparison not found' }, 404);
@@ -666,6 +672,7 @@ shadowComparisonRoutes.get('/:id', async (c) => {
 shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => {
   const id = c.req.param('id');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
   const body = await c.req.json().catch(() => ({}));
   const { adjudication, notes, operator } = body;
 
@@ -687,6 +694,13 @@ shadowComparisonRoutes.post('/:id/adjudicate', requireAdminAccess, async (c) => 
 
   try {
     const shadowRepo = new ShadowComparisonRepository(db);
+
+    // Tenant isolation: verify the comparison belongs to this tenant
+    const existing = await shadowRepo.findById(id, tenantId);
+    if (!existing) {
+      return c.json({ error: 'Comparison not found' }, 404);
+    }
+
     const updated = await shadowRepo.adjudicate(
       id,
       operator || 'unknown',

@@ -14,6 +14,7 @@
 
 import { LegacyAccessLogRepository, ShadowComparisonRepository } from '@dns-ops/db';
 import { findings as findingsTable, snapshots as snapshotsTable } from '@dns-ops/db/schema';
+import { isValidDomain as isValidDomainCanonical } from '@dns-ops/parsing';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { requireAuth } from '../middleware/authorization.js';
@@ -95,10 +96,6 @@ function configMissingResponse(c: import('hono').Context<Env>, toolName: string)
   return c.json(envelope, 503);
 }
 
-// Domain validation regex (basic ASCII domain format)
-const DOMAIN_RE =
-  /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
 // IP address pattern (IPv4)
 const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
 
@@ -115,30 +112,40 @@ const BLOCKED_DOMAINS = new Set([
 const SELECTOR_RE = /^[a-zA-Z0-9_-]{1,63}$/;
 
 /**
- * Validate and sanitize domain input
+ * Validate and sanitize domain input for legacy tools
  *
- * Security checks:
- * - Rejects XSS patterns (script tags, javascript: URLs, event handlers)
- * - Rejects IDN/punycode domains (xn-- prefix)
+ * Uses canonical isValidDomain from @dns-ops/parsing for format validation,
+ * then adds extra security checks specific to legacy tool usage:
+ * - Rejects punycode/IDN domains (legacy tools don't support IDN)
  * - Rejects IP addresses (IPv4 and IPv6)
  * - Rejects special hostnames (localhost, etc.)
  * - Rejects URL schemes in domain field
  * - Rejects injection characters (#, \n, \0)
  */
 function isValidDomain(domain: string): boolean {
-  if (!domain || domain.length > 253) return false;
+  // Additional security checks MUST run first (before canonical validation)
+  // because canonical converts Unicode to punycode
+
+  // Reject injection characters (URL fragments, newlines, null bytes)
+  if (/[#\n\r\0]/.test(domain)) return false;
 
   // Reject URL schemes
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(domain)) return false;
 
-  // Reject punycode/IDN domains
+  // Reject punycode/IDN domains (reject both raw punycode and Unicode that would convert to it)
   if (domain.startsWith('xn--')) return false;
+  // Also reject if domain contains non-ASCII characters (would convert to punycode)
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: Intentional ASCII-only check
+  if (/[^\x00-\x7F]/.test(domain)) return false;
 
   // Reject IPv4 addresses
   if (IPV4_RE.test(domain)) return false;
 
-  // Reject IPv6 addresses (simplified check)
-  if (domain.includes(':') && domain.startsWith('[')) return false;
+  // Reject IPv6 addresses in bracket notation [::1] or raw ::1
+  // DNS domains can't be IPv6, only IP addresses
+  if (domain.startsWith('[') && domain.endsWith(']')) return false;
+  // Also reject raw IPv6 (contains : and is all hex digits/colons)
+  if (domain.includes(':') && /^[0-9a-fA-F:]+$/.test(domain)) return false;
 
   // Reject blocked hostnames (case-insensitive)
   const lowerDomain = domain.toLowerCase();
@@ -147,11 +154,8 @@ function isValidDomain(domain: string): boolean {
   // Reject localhost patterns
   if (/^localhost/.test(lowerDomain)) return false;
 
-  // Reject injection characters (URL fragments, newlines, null bytes)
-  if (/[#\n\r\0]/.test(domain)) return false;
-
-  // Standard domain format check
-  return DOMAIN_RE.test(domain);
+  // Use canonical validation for basic format
+  return isValidDomainCanonical(domain);
 }
 
 /**

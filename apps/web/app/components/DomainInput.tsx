@@ -13,7 +13,8 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
   const normalizedDomain = useMemo(() => {
     if (!input.trim()) return '';
     try {
-      return normalizeDomain(input);
+      const result = normalizeDomain(input);
+      return result.normalized;
     } catch {
       return '';
     }
@@ -24,8 +25,8 @@ export function DomainInput({ onSubmit, initialValue = '' }: DomainInputProps) {
     setError(null);
 
     try {
-      const domain = normalizeDomain(input);
-      onSubmit(domain);
+      const result = normalizeDomain(input);
+      onSubmit(result.normalized);
     } catch (err: unknown) {
       if (err instanceof Error && err.message) {
         setError(err.message);

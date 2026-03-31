@@ -124,7 +124,14 @@ describe('snapshotRoutes runtime', () => {
   describe('GET /:domain', () => {
     it('lists snapshots for a domain sorted by date desc', async () => {
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [
           makeSnapshot({ id: 'snap-old', createdAt: yesterday }),
           makeSnapshot({ id: 'snap-new', createdAt: now }),
@@ -167,7 +174,14 @@ describe('snapshotRoutes runtime', () => {
   describe('GET /:domain/latest', () => {
     it('returns the most recent snapshot', async () => {
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [
           makeSnapshot({ id: 'snap-old', createdAt: yesterday }),
           makeSnapshot({ id: 'snap-new', createdAt: now, rulesetVersionId: 'rv-1' }),
@@ -192,7 +206,14 @@ describe('snapshotRoutes runtime', () => {
 
     it('returns 404 when domain has no snapshots', async () => {
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [],
         recordSets: [],
         findings: [],
@@ -224,7 +245,14 @@ describe('snapshotRoutes runtime', () => {
   describe('GET /:domain/:id', () => {
     it('returns a specific snapshot with metadata', async () => {
       const state: MockState = {
-        domains: [],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [
           makeSnapshot({
             id: 'snap-1',
@@ -267,7 +295,14 @@ describe('snapshotRoutes runtime', () => {
   describe('POST /:domain/diff', () => {
     it('returns 400 when snapshotA or snapshotB missing', async () => {
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [],
         recordSets: [],
         findings: [],
@@ -305,7 +340,14 @@ describe('snapshotRoutes runtime', () => {
 
     it('returns 404 when a snapshot does not exist', async () => {
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [makeSnapshot({ id: 'snap-1' })],
         recordSets: [],
         findings: [],
@@ -321,9 +363,17 @@ describe('snapshotRoutes runtime', () => {
       expect(response.status).toBe(404);
     });
 
-    it('returns 400 when snapshots belong to different domain', async () => {
+    it('returns 404 when snapshots belong to different domain', async () => {
+      // Note: Returns 404 instead of 400 to avoid leaking information about other tenants' data
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [
           makeSnapshot({ id: 'snap-1', domainId: 'domain-1' }),
           makeSnapshot({ id: 'snap-2', domainId: 'domain-other' }),
@@ -339,16 +389,22 @@ describe('snapshotRoutes runtime', () => {
         body: JSON.stringify({ snapshotA: 'snap-1', snapshotB: 'snap-2' }),
       });
 
-      expect(response.status).toBe(400);
-      const json = (await response.json()) as { error: string };
-      expect(json.error).toContain('do not belong');
+      // Returns 404 (not 400) for security - don't leak that the snapshot exists
+      expect(response.status).toBe(404);
     });
   });
 
   describe('POST /:domain/compare-latest', () => {
     it('returns 400 when fewer than 2 snapshots', async () => {
       const state: MockState = {
-        domains: [{ id: 'domain-1', name: 'example.com', normalizedName: 'example.com' }],
+        domains: [
+          {
+            id: 'domain-1',
+            name: 'example.com',
+            normalizedName: 'example.com',
+            tenantId: 'tenant-1',
+          },
+        ],
         snapshots: [makeSnapshot({ id: 'snap-1' })],
         recordSets: [],
         findings: [],

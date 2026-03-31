@@ -41,6 +41,10 @@ export class DNSResolver {
         success: true,
         responseCode: DNS_RCODE.NOERROR,
         flags: {
+          // NOTE: aa (Authoritative Answer) flag is always false because Node.js
+          // dns module doesn't expose the actual AA bit from the DNS response.
+          // For true authoritative queries, use dns-packet library.
+          // See docs/architecture/runtime-topology.md for details.
           aa: false,
           tc: false,
           rd: true,
@@ -78,6 +82,10 @@ export class DNSResolver {
         success: false,
         responseCode,
         flags: {
+          // NOTE: aa (Authoritative Answer) flag is always false because Node.js
+          // dns module doesn't expose the actual AA bit from the DNS response.
+          // For true authoritative queries, use dns-packet library.
+          // See docs/architecture/runtime-topology.md for details.
           aa: false,
           tc: false,
           rd: true,

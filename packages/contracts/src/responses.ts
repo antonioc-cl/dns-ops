@@ -3,12 +3,7 @@
  * All route responses MUST use these types for consistency.
  */
 
-import type {
-  Confidence,
-  KnownProvider,
-  RiskPosture,
-  Severity,
-} from './enums.js';
+import type { Confidence, KnownProvider, RiskPosture, Severity } from './enums.js';
 import type {
   FindingSummary,
   RemediationRequestDto,

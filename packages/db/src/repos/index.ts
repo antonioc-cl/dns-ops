@@ -11,8 +11,28 @@ export {
   SimpleDatabaseAdapter,
 } from '../database/index.js';
 
+// Result-based error handling (gradual migration)
+export {
+  dbResult,
+  dbResultOrNotFound,
+  DbError,
+  type DbErrorCode,
+  ensureTenantIsolation,
+  isDbError,
+  partitionDbResults,
+  Result,
+  type ResultOrError,
+  toNotFoundError,
+  toTenantIsolationError,
+  unwrapDbResultOr,
+} from './result.js';
+
 // Domain repositories
 export { type DomainFilter, DomainRepository } from './domain.js';
+export {
+  DomainRepositoryResults,
+  withDomainResults,
+} from './domain.result.js';
 export { FindingRepository } from './finding.js';
 // Mail evidence repositories
 export { DkimSelectorRepository, MailEvidenceRepository } from './mail-evidence.js';
@@ -41,4 +61,8 @@ export { RemediationRepository } from './remediation.js';
 export { RulesetVersionRepository } from './ruleset-version.js';
 // Legacy repositories (using adapter pattern)
 export { SnapshotRepository } from './snapshot.js';
+export {
+  SnapshotRepositoryResults,
+  withSnapshotResults,
+} from './snapshot.result.js';
 export { SuggestionRepository } from './suggestion.js';

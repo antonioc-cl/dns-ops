@@ -1,90 +1,25 @@
 /**
  * Domain normalization utilities
  *
- * Ensures consistent domain representation across the application.
- * Handles: case normalization, trailing dots, IDN/punycode conversion
+ * This module re-exports from @dns-ops/parsing for consistency.
+ * DX-004: Consolidated domain validation to single canonical implementation.
  */
 
-/**
- * Normalize a domain name for consistent storage and lookup
- */
-export function normalizeDomain(input: string): string {
-  // Trim whitespace
-  let normalized = input.trim();
+import {
+  DomainNormalizationError,
+  isPunycode,
+  isValidDomain,
+  type NormalizedDomain,
+  normalizeDomain,
+} from '@dns-ops/parsing';
 
-  // Convert to lowercase
-  normalized = normalized.toLowerCase();
-
-  // Remove trailing dot if present
-  if (normalized.endsWith('.')) {
-    normalized = normalized.slice(0, -1);
-  }
-
-  // Convert IDN to punycode if needed
-  if (containsUnicode(normalized)) {
-    normalized = toPunycode(normalized);
-  }
-
-  // Validate domain format
-  if (!isValidDomain(normalized)) {
-    throw new DomainValidationError(`Invalid domain: ${input}`);
-  }
-
-  return normalized;
-}
+export type { NormalizedDomain };
+export { DomainNormalizationError, isPunycode, isValidDomain, normalizeDomain };
 
 /**
- * Check if string contains unicode characters
- */
-function containsUnicode(str: string): boolean {
-  return /[^\p{ASCII}]/u.test(str);
-}
-
-/**
- * Convert unicode domain to punycode
- * Uses built-in URL API for conversion
- */
-function toPunycode(domain: string): string {
-  try {
-    // URL API automatically handles IDN to punycode
-    const url = new URL(`http://${domain}`);
-    return url.hostname;
-  } catch {
-    // Fallback: return as-is if conversion fails
-    return domain;
-  }
-}
-
-/**
- * Validate domain name format
- * Basic validation: not empty, no spaces, reasonable length
- */
-function isValidDomain(domain: string): boolean {
-  if (!domain || domain.length === 0) {
-    return false;
-  }
-
-  if (domain.length > 253) {
-    return false;
-  }
-
-  if (domain.includes(' ')) {
-    return false;
-  }
-
-  // Each label must be 1-63 characters
-  const labels = domain.split('.');
-  for (const label of labels) {
-    if (label.length === 0 || label.length > 63) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * Error thrown when domain validation fails
+ * DomainValidationError - re-exported for backwards compatibility
+ *
+ * @deprecated Use DomainNormalizationError from @dns-ops/parsing instead
  */
 export class DomainValidationError extends Error {
   constructor(message: string) {

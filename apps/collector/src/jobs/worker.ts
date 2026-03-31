@@ -13,6 +13,7 @@ import {
   createPostgresAdapter,
   DomainRepository,
   FindingRepository,
+  MonitoredDomainRepository,
   SnapshotRepository,
 } from '@dns-ops/db';
 import { type ConnectionOptions, type Job, Worker } from 'bullmq';
@@ -125,18 +126,110 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
   queued?: number;
   error?: string;
 }> {
-  const { monitoredDomainId, domainId, domainName, schedule } = job.data;
+  const { monitoredDomainId, domainId, domainName, schedule, tenantId } = job.data;
   const startTime = Date.now();
 
   // Handle scheduled placeholder jobs - these trigger batch refreshes
   if (monitoredDomainId === 'scheduled') {
-    logger.info('Processing scheduled monitoring refresh', { schedule, jobId: job.id });
-    // For scheduled jobs, we would query monitored domains and queue individual refreshes
-    // This is a simplified implementation - full implementation needs MonitoredDomainRepository queries
-    return {
-      success: true,
-      queued: 0,
-    };
+    logger.info('Processing scheduled monitoring refresh', { schedule, jobId: job.id, tenantId });
+
+    try {
+      const db = getDbAdapter();
+      const monitoredRepo = new MonitoredDomainRepository(db);
+      const domainRepo = new DomainRepository(db);
+      const { getCollectionQueue } = await import('./queue.js');
+      const queue = getCollectionQueue();
+
+      if (!queue) {
+        return {
+          success: false,
+          error: 'Queue not available for scheduling',
+        };
+      }
+
+      // Find all monitored domains due for refresh for this schedule
+      const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule, tenantId);
+      let queued = 0;
+
+      for (const monitored of monitoredDomains) {
+        // Check if within suppression window
+        if (monitored.lastCheckAt) {
+          const minutesSinceLastCheck =
+            (Date.now() - monitored.lastCheckAt.getTime()) / (60 * 1000);
+          const requiredInterval =
+            schedule === 'hourly' ? 60 : schedule === 'daily' ? 24 * 60 : 7 * 24 * 60;
+
+          // Skip if checked recently (within 90% of interval to avoid edge cases)
+          if (minutesSinceLastCheck < requiredInterval * 0.9) {
+            logger.debug('Skipping monitored domain - checked recently', {
+              monitoredDomainId: monitored.id,
+              minutesSinceLastCheck,
+              requiredInterval,
+            });
+            continue;
+          }
+        }
+
+        // Look up domain details
+        const domain = await domainRepo.findById(monitored.domainId);
+        if (!domain) {
+          logger.warn('Domain not found for monitored domain', {
+            monitoredDomainId: monitored.id,
+            domainId: monitored.domainId,
+          });
+          continue;
+        }
+
+        // Enqueue collection job
+        await queue.add(
+          `collect-${domain.name}`,
+          {
+            tenantId: monitored.tenantId,
+            domain: domain.name,
+            zoneManagement: domain.zoneManagement || 'unknown',
+            triggeredBy: `monitoring:${schedule}`,
+            includeMailRecords: true,
+          },
+          {
+            jobId: `monitoring-${monitored.id}-${Date.now()}`,
+            attempts: 3,
+            backoff: {
+              type: 'exponential',
+              delay: 5000,
+            },
+          }
+        );
+
+        queued++;
+        logger.debug('Queued collection job for monitored domain', {
+          monitoredDomainId: monitored.id,
+          domain: domain.name,
+        });
+      }
+
+      logger.info('Scheduled monitoring refresh complete', {
+        schedule,
+        tenantId,
+        monitoredCount: monitoredDomains.length,
+        queued,
+      });
+
+      return {
+        success: true,
+        queued,
+      };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Scheduled monitoring refresh failed', err, {
+        schedule,
+        tenantId,
+        jobId: job.id,
+      });
+      return {
+        success: false,
+        error: err.message,
+      };
+    }
   }
 
   trackJobStart({

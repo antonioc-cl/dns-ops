@@ -12,10 +12,28 @@ import { findings, recordSets } from '@dns-ops/db/schema';
 import { compareSnapshots } from '@dns-ops/parsing';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { requireAuth } from '../middleware/authorization.js';
 import { getWebLogger, trackDiff } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const snapshotRoutes = new Hono<Env>();
+
+// Apply authentication to all snapshot routes
+snapshotRoutes.use('*', requireAuth);
+
+/**
+ * Verify domain belongs to the current tenant
+ * Returns the domain if found, or null if not found
+ */
+async function verifyDomainTenantIsolation(
+  db: Env['Variables']['db'],
+  domainName: string,
+  tenantId: string
+): Promise<NonNullable<Awaited<ReturnType<DomainRepository['findByNameForTenant']>>> | null> {
+  const domainRepo = new DomainRepository(db);
+  const domain = await domainRepo.findByNameForTenant(domainName, tenantId);
+  return domain ?? null;
+}
 
 /**
  * GET /api/snapshots/:domain
@@ -23,20 +41,22 @@ export const snapshotRoutes = new Hono<Env>();
  */
 snapshotRoutes.get('/:domain', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
   const domainName = c.req.param('domain');
   const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '20', 10) || 20));
   const offset = Math.max(0, parseInt(c.req.query('offset') || '0', 10) || 0);
 
   try {
-    const domainRepo = new DomainRepository(db);
-    const snapshotRepo = new SnapshotRepository(db);
-
-    const domain = await domainRepo.findByName(domainName);
-
+    const domain = await verifyDomainTenantIsolation(db, domainName, tenantId);
     if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
+    const snapshotRepo = new SnapshotRepository(db);
     const allSnapshots = await snapshotRepo.findByDomain(domain.id, limit + offset);
     const snapshots = allSnapshots.slice(offset, offset + limit);
 
@@ -84,17 +104,20 @@ snapshotRoutes.get('/:domain', async (c) => {
  */
 snapshotRoutes.get('/:domain/latest', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
   const domainName = c.req.param('domain');
 
   try {
-    const domainRepo = new DomainRepository(db);
-    const snapshotRepo = new SnapshotRepository(db);
-
-    const domain = await domainRepo.findByName(domainName);
+    const domain = await verifyDomainTenantIsolation(db, domainName, tenantId);
     if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
+    const snapshotRepo = new SnapshotRepository(db);
     const snapshots = await snapshotRepo.findByDomain(domain.id, 1);
 
     if (snapshots.length === 0) {
@@ -143,13 +166,30 @@ snapshotRoutes.get('/:domain/latest', async (c) => {
  */
 snapshotRoutes.get('/:domain/:id', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  const domainName = c.req.param('domain');
   const snapshotId = c.req.param('id');
 
   try {
+    // Verify tenant owns the domain
+    const domain = await verifyDomainTenantIsolation(db, domainName, tenantId);
+    if (!domain) {
+      return c.json({ error: 'Domain not found' }, 404);
+    }
+
     const snapshotRepo = new SnapshotRepository(db);
     const snapshot = await snapshotRepo.findById(snapshotId);
 
     if (!snapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
+    // Verify snapshot belongs to this domain (and thus this tenant)
+    if (snapshot.domainId !== domain.id) {
       return c.json({ error: 'Snapshot not found' }, 404);
     }
 
@@ -194,6 +234,11 @@ snapshotRoutes.get('/:domain/:id', async (c) => {
  */
 snapshotRoutes.post('/:domain/diff', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
   const domainName = c.req.param('domain');
   const body = await c.req.json().catch(() => ({}) as { snapshotA?: string; snapshotB?: string });
   const { snapshotA, snapshotB } = body;
@@ -209,13 +254,13 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
   }
 
   try {
-    const domainRepo = new DomainRepository(db);
-    const snapshotRepo = new SnapshotRepository(db);
-
-    const domain = await domainRepo.findByName(domainName);
+    // Verify tenant owns the domain
+    const domain = await verifyDomainTenantIsolation(db, domainName, tenantId);
     if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
     }
+
+    const snapshotRepo = new SnapshotRepository(db);
 
     // Fetch both snapshots
     const [snapA, snapB] = await Promise.all([
@@ -230,14 +275,9 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
       return c.json({ error: `Snapshot ${snapshotB} not found` }, 404);
     }
 
-    // Verify snapshots belong to this domain
+    // Verify snapshots belong to this domain (and thus this tenant)
     if (snapA.domainId !== domain.id || snapB.domainId !== domain.id) {
-      return c.json(
-        {
-          error: 'Snapshots do not belong to the specified domain',
-        },
-        400
-      );
+      return c.json({ error: 'Snapshot not found' }, 404);
     }
 
     // Fetch records and findings for both snapshots
@@ -297,7 +337,6 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
     }
 
     // Track diff event (Bead 14.4)
-    const tenantId = c.get('tenantId');
     if (tenantId) {
       trackDiff({
         tenantId,
@@ -322,10 +361,20 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
         : undefined,
     });
   } catch (error) {
+    const logger = getWebLogger();
+    logger.error(
+      'Snapshot diff error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots/:domain/diff',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to compare snapshots',
-        message: error instanceof Error ? error.message : 'Unknown error',
       },
       500
     );
@@ -339,17 +388,21 @@ snapshotRoutes.post('/:domain/diff', async (c) => {
  */
 snapshotRoutes.post('/:domain/compare-latest', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
   const domainName = c.req.param('domain');
 
   try {
-    const domainRepo = new DomainRepository(db);
-    const snapshotRepo = new SnapshotRepository(db);
-
-    const domain = await domainRepo.findByName(domainName);
+    // Verify tenant owns the domain
+    const domain = await verifyDomainTenantIsolation(db, domainName, tenantId);
     if (!domain) {
       return c.json({ error: 'Domain not found' }, 404);
     }
 
+    const snapshotRepo = new SnapshotRepository(db);
     const snapshots = await snapshotRepo.findByDomain(domain.id, 2);
 
     if (snapshots.length < 2) {
@@ -415,7 +468,6 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
     }
 
     // Track diff event (Bead 14.4)
-    const tenantId = c.get('tenantId');
     if (tenantId) {
       trackDiff({
         tenantId,
@@ -435,10 +487,20 @@ snapshotRoutes.post('/:domain/compare-latest', async (c) => {
       warnings: warnings.length > 0 ? warnings : undefined,
     });
   } catch (error) {
+    const logger = getWebLogger();
+    logger.error(
+      'Snapshot compare-latest error:',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestId: c.req.header('X-Request-ID'),
+        path: '/api/snapshots/:domain/compare-latest',
+        method: 'POST',
+        tenantId: c.get('tenantId'),
+      }
+    );
     return c.json(
       {
         error: 'Failed to compare snapshots',
-        message: error instanceof Error ? error.message : 'Unknown error',
       },
       500
     );

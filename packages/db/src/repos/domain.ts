@@ -26,9 +26,22 @@ export class DomainRepository {
 
   /**
    * Find a domain by its normalized name
+   * Note: This returns the first matching domain. In multi-tenant mode,
+   * use findByNameForTenant for tenant-scoped lookups.
    */
   async findByName(normalizedName: string): Promise<Domain | undefined> {
     return this.db.selectOne(domains, eq(domains.normalizedName, normalizedName.toLowerCase()));
+  }
+
+  /**
+   * Find a domain by normalized name AND tenant ID.
+   * This is the preferred method for multi-tenant lookups.
+   */
+  async findByNameAndTenant(normalizedName: string, tenantId: string): Promise<Domain | undefined> {
+    const all = await this.db.select(domains);
+    return all.find(
+      (d) => d.normalizedName === normalizedName.toLowerCase() && d.tenantId === tenantId
+    );
   }
 
   /**
@@ -117,11 +130,21 @@ export class DomainRepository {
 
   /**
    * Create a new domain or return existing if name already exists
+   * In multi-tenant mode, considers (tenantId, normalizedName) as unique
    */
   async findOrCreate(data: NewDomain): Promise<Domain> {
-    const existing = await this.findByName(data.name);
-    if (existing) {
-      return existing;
+    // For multi-tenant: check within tenant scope
+    if (data.tenantId) {
+      const existing = await this.findByNameAndTenant(data.name, data.tenantId);
+      if (existing) {
+        return existing;
+      }
+    } else {
+      // For unowned domains: check globally
+      const existing = await this.findByName(data.name);
+      if (existing) {
+        return existing;
+      }
     }
     return this.create(data);
   }

@@ -223,6 +223,87 @@ collection. See `apps/collector/src/jobs/collect-domain.ts` for implementation d
 - Fleet report generation (`getReportsQueue`)
 - Bulk domain processing (future: batch collection endpoint)
 
+## Authoritative Querying
+
+### Current Limitation (DNS-001)
+
+**True authoritative DNS querying is NOT yet implemented.**
+
+The current implementation uses Node.js's built-in `dns` module, which has a
+critical limitation: it does not expose the AA (Authoritative Answer) flag from
+DNS responses. This means:
+
+1. **AA flag is always false** in query results, regardless of whether the
+   response actually came from an authoritative server
+2. **Lame delegation detection is limited** - we can only detect failures
+   (timeouts, refused, errors), not truly non-authoritative responses
+3. **DNSSEC validation source metadata is incomplete** - AD (Authentic Data)
+   flag is also not reliably available
+
+### Workaround
+
+The current "authoritative" collection strategy uses `dns.setServers()` to
+query specific nameservers, but this doesn't guarantee authoritative responses
+and cannot verify the AA flag.
+
+### Future Implementation
+
+To enable true authoritative querying with AA flag detection:
+
+1. **Use dns-packet library**: Send raw UDP/TCP DNS queries
+2. **Parse response flags directly**: Extract AA, AD, TC bits from response
+3. **Implement EDNS0 support**: Handle larger responses and DNSSEC
+
+```typescript
+// Future implementation sketch
+import * as dnsPacket from 'dns-packet';
+import * as dgram from 'node:dgram';
+
+function queryAuthoritative(
+  name: string,
+  type: string,
+  nameserver: string
+): Promise<DNSQueryResult> {
+  const socket = dgram.createSocket('udp4');
+  const query = dnsPacket.encode({
+    type: 'query',
+    id: Math.floor(Math.random() * 65535),
+    flags: dnsPacket.RECURSION_DESIRED,
+    questions: [{ name, type }],
+  });
+
+  return new Promise((resolve, reject) => {
+    socket.send(query, 53, nameserver, (err) => {
+      if (err) reject(err);
+    });
+
+    socket.once('message', (response) => {
+      const decoded = dnsPacket.decode(response);
+      resolve({
+        ...,
+        flags: {
+          aa: decoded.flags & dnsPacket.AUTHORITATIVE_ANSWER !== 0,
+          ad: decoded.flags & dnsPacket.AUTHENTIC_DATA !== 0,
+          // ... other flags
+        },
+      });
+    });
+  });
+}
+```
+
+### Impact on Delegation Detection
+
+Until true authoritative querying is implemented:
+
+- `DelegationCollector.detectLameDelegation()` only reports actual failures
+  (timeout, refused, error), not non-authoritative responses
+- The `not-authoritative` reason code is currently unused
+- Users may see "successful" responses from servers that aren't actually
+  authoritative for the zone
+
+This is a known limitation tracked as DNS-001.
+
 ## Related Documents
 
 - [Query Scope](../rules/query-scope.md) - DNS query policies

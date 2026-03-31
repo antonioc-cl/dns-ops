@@ -42,29 +42,64 @@ export class ShadowComparisonRepository {
 
   /**
    * Find a comparison by ID
+   * If tenantId is provided, filters by tenant ownership
    */
-  async findById(id: string): Promise<ShadowComparison | undefined> {
-    return this.db.selectOne(shadowComparisons, eq(shadowComparisons.id, id));
+  async findById(id: string, tenantId?: string): Promise<ShadowComparison | undefined> {
+    const comparison = await this.db.selectOne(shadowComparisons, eq(shadowComparisons.id, id));
+    if (!comparison) return undefined;
+
+    // Tenant isolation: only return if owned by this tenant or is public
+    if (tenantId && comparison.tenantId && comparison.tenantId !== tenantId) {
+      return undefined;
+    }
+
+    return comparison;
   }
 
   /**
    * Find comparisons by snapshot ID
+   * If tenantId is provided, filters by tenant ownership
    */
-  async findBySnapshotId(snapshotId: string): Promise<ShadowComparison[]> {
-    return this.db.selectWhere(shadowComparisons, eq(shadowComparisons.snapshotId, snapshotId));
+  async findBySnapshotId(snapshotId: string, tenantId?: string): Promise<ShadowComparison[]> {
+    let results = await this.db.selectWhere(
+      shadowComparisons,
+      eq(shadowComparisons.snapshotId, snapshotId)
+    );
+
+    // Tenant isolation filter
+    if (tenantId) {
+      results = results.filter((c) => !c.tenantId || c.tenantId === tenantId);
+    }
+
+    return results;
   }
 
   /**
    * Find comparisons by domain
+   * If tenantId is provided, filters by tenant ownership
    */
-  async findByDomain(domain: string): Promise<ShadowComparison[]> {
-    const results = await this.db.selectWhere(
+  async findByDomain(domain: string, tenantId?: string): Promise<ShadowComparison[]> {
+    let results = await this.db.selectWhere(
       shadowComparisons,
       eq(shadowComparisons.domain, domain)
     );
+
+    // Tenant isolation filter
+    if (tenantId) {
+      results = results.filter((c) => !c.tenantId || c.tenantId === tenantId);
+    }
+
     // Sort by comparedAt descending
     results.sort((a, b) => new Date(b.comparedAt).getTime() - new Date(a.comparedAt).getTime());
     return results;
+  }
+
+  /**
+   * Find comparisons by tenant ID
+   */
+  async findByTenant(tenantId: string): Promise<ShadowComparison[]> {
+    const all = await this.db.select(shadowComparisons);
+    return all.filter((c) => c.tenantId === tenantId);
   }
 
   /**

@@ -223,6 +223,13 @@ function createMockDb(data: MockData) {
           const domainId = data.domains[0]?.id;
           return data.snapshots.find((s) => s.domainId === domainId) || null;
         }),
+        findMany: vi.fn(async (_opts: { where?: unknown; orderBy?: unknown }) => {
+          // PERF-001: Batch query support
+          // Return all snapshots, sorted by createdAt desc
+          return [...data.snapshots].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        }),
       },
       findings: {
         findMany: vi.fn(async () => data.findings),

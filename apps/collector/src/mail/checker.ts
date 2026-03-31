@@ -1,11 +1,37 @@
 /**
- * Mail Checker
+ * Mail Checker - Live DNS Lookup Utility
  *
- * Performs comprehensive mail security checks:
+ * **IMPORTANT: This is NOT the authoritative mail evidence source.**
+ *
+ * This module performs live DNS lookups for mail security checks:
  * - DMARC, DKIM, SPF (core authentication)
  * - MX records with null MX detection
  * - MTA-STS (Mail Transfer Agent Strict Transport Security)
  * - TLS-RPT (SMTP TLS Reporting)
+ *
+ * ## Two Usage Patterns
+ *
+ * **1. Live Preview Only (`/mail/check` endpoint):**
+ *    - Ephemeral diagnostics without persistence
+ *    - Use for: quick checks, previews, debugging
+ *    - Results are NOT stored - for operator eyes only
+ *
+ * **2. Snapshot-Backed Collection (`/mail` endpoint with snapshotId):**
+ *    - Calls this checker, then persists results via:
+ *      - ObservationRepository (DNS observations)
+ *      - MailEvidenceRepository (mail evidence summary)
+ *      - DkimSelectorRepository (selector provenance)
+ *    - This is the AUTHORITATIVE path for mail evidence
+ *
+ * ## Authoritative Evidence Path
+ *
+ * DNS Collection → Observations → MailEvidence → Findings
+ *
+ * The checker.ts module is a utility for DNS lookups only.
+ * All persistent mail evidence flows through collect-mail.ts routes.
+ *
+ * @see collect-mail.ts for the authoritative collection endpoint
+ * @see MailEvidenceRepository for persisted evidence storage
  */
 
 import { type DMARCRecord, parseDMARC, parseSPF, type SPFRecord } from '@dns-ops/parsing';

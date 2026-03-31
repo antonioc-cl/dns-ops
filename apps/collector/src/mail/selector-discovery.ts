@@ -136,6 +136,18 @@ function isValidSelector(selector: string): boolean {
 /**
  * Main selector discovery function
  * Implements 5-level precedence strategy
+ *
+ * DNS-003: This function returns selector CANDIDATES.
+ * The `found` flag indicates DNS confirmation status:
+ * - `found: false` means it's a candidate that needs DNS verification
+ * - `found: true` means the DKIM key was actually found via DNS query
+ *
+ * Callers must verify selectors by querying DNS and updating the `found` status.
+ *
+ * NOTE ON CASCADE BEHAVIOR: If configured selectors (managed or operator) are
+ * all invalid (fail isValidSelector), the function cascades to the next level.
+ * This is intentional - invalid configured selectors should not block fallback
+ * to heuristic discovery. The provenance chain in `attempts` tracks what was tried.
  */
 export async function discoverSelectors(
   _domain: string,
@@ -156,38 +168,44 @@ export async function discoverSelectors(
   let detectedProvider: string | undefined;
 
   // Level 1: Managed zone configured selectors (highest precedence)
+  // DNS-003: These are configured candidates - must verify via DNS
   if (managedSelectors.length > 0) {
     selectors = managedSelectors.filter(isValidSelector).slice(0, maxSelectors);
     if (selectors.length > 0) {
       provenance = 'managed-zone-config';
       confidence = 'certain';
-      selectors.forEach((s) => attempts.push({ selector: s, found: true, source: provenance }));
+      // found: false - requires DNS verification
+      selectors.forEach((s) => attempts.push({ selector: s, found: false, source: provenance }));
       return { selectors, provenance, confidence, attempts };
     }
+    // Note: if selectors.length === 0, all configured selectors were invalid
+    // Cascade to next level (intentional - see function docstring)
   }
 
   // Level 2: Operator-supplied selectors
+  // DNS-003: These are configured candidates - must verify via DNS
   if (operatorSelectors.length > 0) {
     selectors = operatorSelectors.filter(isValidSelector).slice(0, maxSelectors);
     if (selectors.length > 0) {
       provenance = 'operator-supplied';
       confidence = 'high';
-      selectors.forEach((s) => attempts.push({ selector: s, found: true, source: provenance }));
+      // found: false - requires DNS verification
+      selectors.forEach((s) => attempts.push({ selector: s, found: false, source: provenance }));
       return { selectors, provenance, confidence, attempts };
     }
+    // Note: cascade to next level if all invalid
   }
 
   // Level 3: Provider-specific heuristics
   detectedProvider = detectProvider(dnsResults);
   if (detectedProvider !== 'unknown') {
     const providerSelectors = getProviderSelectors(detectedProvider);
-    // In a real implementation, we would validate these selectors exist
-    // by querying DNS. For now, we return them as candidates.
     selectors = providerSelectors.slice(0, maxSelectors);
     if (selectors.length > 0) {
       provenance = 'provider-heuristic';
       confidence = 'medium';
-      selectors.forEach((s) => attempts.push({ selector: s, found: true, source: provenance }));
+      // found: false - these are heuristic candidates, not DNS-confirmed
+      selectors.forEach((s) => attempts.push({ selector: s, found: false, source: provenance }));
       return {
         selectors,
         provenance,
@@ -203,7 +221,8 @@ export async function discoverSelectors(
     selectors = COMMON_SELECTORS.slice(0, maxSelectors);
     provenance = 'common-dictionary';
     confidence = 'low';
-    selectors.forEach((s) => attempts.push({ selector: s, found: true, source: provenance }));
+    // found: false - heuristic candidates, not DNS-confirmed
+    selectors.forEach((s) => attempts.push({ selector: s, found: false, source: provenance }));
     return { selectors, provenance, confidence, attempts };
   }
 
@@ -253,6 +272,40 @@ export function parseSpfRecord(result: DNSQueryResult): string | null {
     }
   }
   return null;
+}
+
+/**
+ * DNS-003: Update selector attempts with DNS verification results
+ *
+ * After querying DNS for DKIM keys, call this to mark which selectors were found.
+ *
+ * @param attempts - The attempts array from discoverSelectors()
+ * @param dkimResults - DNS query results for DKIM keys
+ * @returns Updated attempts with found status
+ */
+export function updateSelectorResults(
+  attempts: SelectorAttempt[],
+  dkimResults: DNSQueryResult[]
+): SelectorAttempt[] {
+  const foundSelectors = new Set<string>();
+
+  // Build a map of selector -> found status from DNS results
+  for (const result of dkimResults) {
+    if (!result.success) continue;
+    if (result.query.type !== 'TXT') continue;
+
+    // Extract selector from query name (format: selector._domainkey.domain)
+    const match = result.query.name.match(/^([^.]+)\._domainkey\./);
+    if (match && result.answers.length > 0) {
+      foundSelectors.add(match[1]);
+    }
+  }
+
+  // Update attempts with found status
+  return attempts.map((attempt) => ({
+    ...attempt,
+    found: foundSelectors.has(attempt.selector),
+  }));
 }
 
 /**

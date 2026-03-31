@@ -278,6 +278,16 @@ export class DelegationCollector {
 
   /**
    * Detect lame delegation
+   *
+   * NOTE: Currently only reports failures (timeouts, refused, errors).
+   * The "not-authoritative" detection is DISABLED because the Node.js
+   * dns module doesn't expose the AA (Authoritative Answer) flag from
+   * DNS responses. All queries report aa=false regardless of actual status.
+   *
+   * To enable true lame delegation detection, migrate to dns-packet
+   * library which provides raw DNS response flags.
+   *
+   * See: docs/architecture/runtime-topology.md#authoritative-querying
    */
   detectLameDelegation(responses: AuthoritativeResponse[]): LameDelegation[] {
     const lame: LameDelegation[] = [];
@@ -288,13 +298,14 @@ export class DelegationCollector {
           server: resp.server,
           reason: this.categorizeFailure(resp.result.error || ''),
         });
-      } else if (!resp.result.flags?.aa) {
-        // Not authoritative
-        lame.push({
-          server: resp.server,
-          reason: 'not-authoritative',
-        });
       }
+      // NOTE: AA flag check disabled - see function documentation above
+      // else if (!resp.result.flags?.aa) {
+      //   lame.push({
+      //     server: resp.server,
+      //     reason: 'not-authoritative',
+      //   });
+      // }
     }
 
     return lame;

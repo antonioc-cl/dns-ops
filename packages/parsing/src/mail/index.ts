@@ -273,8 +273,9 @@ export function parseDKIM(txtData: string): DKIMRecord | null {
 
 export interface MTASTSRecord {
   version: string;
-  mode: 'enforce' | 'testing' | 'none';
-  maxAge: number;
+  id?: string;
+  mode?: 'enforce' | 'testing' | 'none';
+  maxAge?: number;
   raw: string;
 }
 

@@ -111,58 +111,91 @@ portfolioRoutes.post('/search', async (c) => {
       orderBy: desc(domains.updatedAt),
     });
 
-    // Get findings for severity filtering
-    const filteredDomains = await Promise.all(
-      results.map(async (domain) => {
-        const latestSnapshot = await db.getDrizzle().query.snapshots.findFirst({
-          where: eq(snapshots.domainId, domain.id),
+    // PERF-001: Batch query optimization
+    // Instead of N queries for snapshots (one per domain), we do 1 query with IN clause
+    // Same for findings - batch by snapshot IDs
+
+    const resultDomainIds = results.map((d) => d.id);
+
+    // Batch fetch all snapshots for these domains
+    const allSnapshots = resultDomainIds.length > 0
+      ? await db.getDrizzle().query.snapshots.findMany({
+          where: inArray(snapshots.domainId, resultDomainIds),
           orderBy: desc(snapshots.createdAt),
-        });
+        })
+      : [];
 
-        if (!latestSnapshot) {
-          return {
-            ...domain,
-            findings: [],
-            findingsEvaluated: false,
-            latestSnapshot: null,
-          };
-        }
+    // Build a map of domainId -> latest snapshot
+    const latestSnapshotByDomain = new Map<string, typeof allSnapshots[0]>();
+    for (const snapshot of allSnapshots) {
+      if (!latestSnapshotByDomain.has(snapshot.domainId)) {
+        latestSnapshotByDomain.set(snapshot.domainId, snapshot);
+      }
+    }
 
-        // Check if findings were evaluated (rulesetVersionId set on snapshot)
-        const findingsEvaluated = latestSnapshot.rulesetVersionId !== null;
+    // Get all snapshot IDs for findings query
+    const snapshotIds = Array.from(latestSnapshotByDomain.values()).map((s) => s.id);
 
-        const hasSeverityFilter = severities && severities.length > 0;
-        const domainFindings = await db.getDrizzle().query.findings.findMany({
-          where: and(
-            eq(findings.snapshotId, latestSnapshot.id),
-            hasSeverityFilter
-              ? inArray(
+    // Batch fetch all findings for these snapshots
+    const hasSeverityFilter = severities && severities.length > 0;
+    const allFindings = snapshotIds.length > 0
+      ? await db.getDrizzle().query.findings.findMany({
+          where: hasSeverityFilter
+            ? and(
+                inArray(findings.snapshotId, snapshotIds),
+                inArray(
                   findings.severity,
                   severities as ('critical' | 'high' | 'medium' | 'low' | 'info')[]
                 )
-              : undefined
-          ),
-        });
+              )
+            : inArray(findings.snapshotId, snapshotIds),
+        })
+      : [];
 
-        // Filter out if severity filter doesn't match AND findings were evaluated
-        // Don't filter out if findings weren't evaluated (might have matching findings once evaluated)
-        if (hasSeverityFilter && domainFindings.length === 0 && findingsEvaluated) {
-          return null;
-        }
+    // Build a map of snapshotId -> findings
+    const findingsBySnapshot = new Map<string, typeof allFindings>();
+    for (const finding of allFindings) {
+      if (!findingsBySnapshot.has(finding.snapshotId)) {
+        findingsBySnapshot.set(finding.snapshotId, []);
+      }
+      findingsBySnapshot.get(finding.snapshotId)!.push(finding);
+    }
 
+    // Process results using the batched data
+    const filteredDomains = results.map((domain) => {
+      const latestSnapshot = latestSnapshotByDomain.get(domain.id);
+
+      if (!latestSnapshot) {
         return {
           ...domain,
-          findings: domainFindings,
-          findingsEvaluated,
-          latestSnapshot: {
-            id: latestSnapshot.id,
-            createdAt: latestSnapshot.createdAt,
-            resultState: latestSnapshot.resultState,
-            rulesetVersionId: latestSnapshot.rulesetVersionId,
-          },
+          findings: [],
+          findingsEvaluated: false,
+          latestSnapshot: null,
         };
-      })
-    );
+      }
+
+      // Check if findings were evaluated (rulesetVersionId set on snapshot)
+      const findingsEvaluated = latestSnapshot.rulesetVersionId !== null;
+      const domainFindings = findingsBySnapshot.get(latestSnapshot.id) || [];
+
+      // Filter out if severity filter doesn't match AND findings were evaluated
+      // Don't filter out if findings weren't evaluated (might have matching findings once evaluated)
+      if (hasSeverityFilter && domainFindings.length === 0 && findingsEvaluated) {
+        return null;
+      }
+
+      return {
+        ...domain,
+        findings: domainFindings,
+        findingsEvaluated,
+        latestSnapshot: {
+          id: latestSnapshot.id,
+          createdAt: latestSnapshot.createdAt,
+          resultState: latestSnapshot.resultState,
+          rulesetVersionId: latestSnapshot.rulesetVersionId,
+        },
+      };
+    });
 
     const domainResults = filteredDomains.filter(Boolean);
 

@@ -12,6 +12,7 @@
 
 import type { Finding } from '@dns-ops/db';
 import { DomainRepository, FindingRepository, SnapshotRepository } from '@dns-ops/db';
+import { isValidDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import type { Env } from '../types.js';
 
@@ -416,18 +417,4 @@ function generateSummary(
   };
 
   return summary;
-}
-
-function isValidDomain(domain: string): boolean {
-  // Domain validation: requires at least one dot (TLD), valid label format per RFC 1123
-  // Each label: starts with alphanumeric, ends with alphanumeric, hyphens allowed in middle
-  const labelRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$/;
-  if (!domain || domain.length > 253) return false;
-
-  const labels = domain.toLowerCase().split('.');
-  // Must have at least 2 labels (domain.tld)
-  if (labels.length < 2) return false;
-
-  // Each label must be valid
-  return labels.every((label) => labelRegex.test(label));
 }

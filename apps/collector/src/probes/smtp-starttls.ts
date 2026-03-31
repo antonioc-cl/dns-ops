@@ -32,10 +32,18 @@ export interface SMTPProbeResult {
 interface SMTPResponse {
   code: number;
   message: string;
+  lines: string[];
 }
 
 /**
  * Read SMTP response from socket
+ *
+ * SMTP responses can be multiline (ESMTP). Format:
+ * - Continuation lines start with "xxx-" (same code, more data)
+ * - Final line starts with "xxx " (space after code indicates end)
+ *
+ * SEC-004: Fixed to read ALL lines of multiline responses.
+ * Previously only read the last line, missing STARTTLS in middle of EHLO response.
  */
 function readResponse(socket: net.Socket, timeoutMs: number): Promise<SMTPResponse> {
   return new Promise((resolve, reject) => {
@@ -47,21 +55,29 @@ function readResponse(socket: net.Socket, timeoutMs: number): Promise<SMTPRespon
     const onData = (data: Buffer) => {
       buffer += data.toString();
 
-      // Check for complete response (ends with \r\n)
-      if (buffer.includes('\r\n')) {
-        const lines = buffer.split('\r\n').filter((l) => l);
-        const lastLine = lines[lines.length - 1];
+      // Check for complete response - need to find final line
+      // Final line format: "xxx <text>" (space after 3-digit code)
+      // Continuation format: "xxx-<text>" (hyphen after 3-digit code)
+      // Note: After splitting by \r?\n, lines should not contain \r, but we filter empty strings
+      const lines = buffer.split(/\r?\n/).filter((l) => l.trim());
 
-        // Parse response code
-        const match = lastLine.match(/^(\d{3})/);
-        if (match) {
-          clearTimeout(timeout);
-          socket.off('data', onData);
-          resolve({
-            code: parseInt(match[1], 10),
-            message: lastLine,
-          });
-        }
+      if (lines.length === 0) return;
+
+      const lastLine = lines[lines.length - 1];
+
+      // Check if this is the final line (space after code, not hyphen)
+      const finalLineMatch = lastLine.match(/^(\d{3})\s/);
+      if (finalLineMatch) {
+        clearTimeout(timeout);
+        socket.off('data', onData);
+
+        // SEC-004: Join all lines for complete response
+        const allLines = lines.join('\n');
+        resolve({
+          code: parseInt(finalLineMatch[1], 10),
+          message: allLines,
+          lines: lines,
+        });
       }
     };
 

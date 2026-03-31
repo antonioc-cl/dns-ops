@@ -269,16 +269,21 @@ describe('DelegationCollector', () => {
   });
 
   describe('Lame Delegation Detection', () => {
+    // NOTE: AA flag check is DISABLED - Node.js dns module doesn't expose AA flag
+    // See: apps/collector/src/delegation/collector.ts detectLameDelegation()
+    // Lame delegation detection now only uses failures (timeouts, refused, errors)
     it('should detect lame delegation when NS is not authoritative', async () => {
       const collector = new DelegationCollector('example.com');
       const nsServers = ['ns1.example.com'];
 
+      // Note: AA flag is always false in Node.js dns module, so we can't use it for detection
+      // This test documents the current behavior - empty answers with no error don't trigger lame detection
       mockQuery.mockResolvedValueOnce({
         query: { name: 'example.com', type: 'NS' },
         success: true,
-        answers: [], // Empty answer with AA=0
+        answers: [], // Empty answer
         flags: {
-          aa: false, // Not authoritative!
+          aa: false, // Always false in Node.js dns
         },
       });
 
@@ -289,9 +294,8 @@ describe('DelegationCollector', () => {
 
       const lame = collector.detectLameDelegation(results);
 
-      expect(lame).toHaveLength(1);
-      expect(lame[0].server).toBe('ns1.example.com');
-      expect(lame[0].reason).toBe('not-authoritative');
+      // With AA check disabled, empty answers without error don't trigger lame detection
+      expect(lame).toHaveLength(0);
     });
 
     it('should detect timeout from authoritative server', async () => {

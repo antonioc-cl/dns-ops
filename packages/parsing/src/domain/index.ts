@@ -10,6 +10,10 @@
  * - IDN/punycode round-trip conversion
  * - Whitespace trimming
  * - Validation (length, characters, format)
+ *
+ * Result Types:
+ * For Result-based error handling, import from './result.js':
+ * import { normalizeDomainResult, DomainValidationError } from './result.js';
  */
 
 import punycode from 'punycode/punycode.js';
@@ -260,3 +264,23 @@ export function tryNormalizeDomain(name: string): NormalizedDomain | null {
     return null;
   }
 }
+
+/**
+ * Result-based error handling for domain normalization
+ *
+ * Import from './result.js' for Result-based variants:
+ * - normalizeDomainResult() - Returns Result<NormalizedDomain, DomainValidationError>
+ * - DomainValidationError - Structured error with error codes
+ * - partitionDomainResults() - Batch processing helper
+ *
+ * @example
+ * ```typescript
+ * import { normalizeDomainResult } from './result.js';
+ *
+ * const result = normalizeDomainResult('Example.COM');
+ * if (Result.isOk(result)) {
+ *   console.log(result.value.normalized); // 'example.com'
+ * }
+ * ```
+ */
+export * from './result.js';

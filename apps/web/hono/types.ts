@@ -7,6 +7,12 @@ export type Env = {
     COLLECTOR_URL?: string;
     INTERNAL_SECRET?: string;
     API_KEY_SECRET?: string;
+    /** Cloudflare Workers environment */
+    NODE_ENV?: string;
+    /** Cloudflare Workers ASSETS binding */
+    ASSETS?: unknown;
+    /** Cloudflare Workers Hyperdrive binding */
+    HYPERDRIVE?: unknown;
   };
   Variables: {
     db: IDatabaseAdapter;
