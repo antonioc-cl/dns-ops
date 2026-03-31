@@ -14,11 +14,15 @@ import {
 } from '@dns-ops/db';
 import { type RuleContext, SimulationEngine } from '@dns-ops/rules';
 import { Hono } from 'hono';
+import { requireAuthMiddleware } from '../middleware/auth.js';
 import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 import { createCombinedRuleset } from './findings.js';
 
 export const simulationRoutes = new Hono<Env>();
+
+// Require authentication for all simulation routes
+simulationRoutes.use('*', requireAuthMiddleware);
 
 /**
  * POST /api/simulate

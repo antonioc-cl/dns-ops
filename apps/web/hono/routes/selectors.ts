@@ -12,10 +12,14 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { requireAuthMiddleware } from '../middleware/auth.js';
 import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const selectorRoutes = new Hono<Env>();
+
+// Require authentication for all selector routes
+selectorRoutes.use('*', requireAuthMiddleware);
 
 /**
  * GET /api/snapshot/:snapshotId/selectors
