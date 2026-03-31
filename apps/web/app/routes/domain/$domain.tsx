@@ -3,12 +3,12 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DNSViews } from '../../components/DNSViews.js';
-import { isDelegationTabEnabled, isSimulationEnabled } from '../../config/features.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { SimulationPanel } from '../../components/SimulationPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
 import { TagsPanel } from '../../components/TagsPanel.js';
+import { isDelegationTabEnabled, isSimulationEnabled } from '../../config/features.js';
 
 type DomainTabId = 'overview' | 'dns' | 'mail' | 'delegation';
 

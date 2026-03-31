@@ -1,5 +1,5 @@
 /**
- * SMTP STARTTLS Probe - Bead 10
+ * SMTP STARTTLS Probe - Bead 10 / AUTH-003
  *
  * Checks SMTP server for STARTTLS capability.
  * Performs limited SMTP handshake to detect TLS support.
@@ -7,7 +7,7 @@
 
 import * as net from 'node:net';
 import * as tls from 'node:tls';
-import { probeAllowlist } from './allowlist.js';
+import { probeAllowlistManager } from './allowlist.js';
 import { checkSSRF } from './ssrf-guard.js';
 
 export interface SMTPProbeResult {
@@ -98,9 +98,14 @@ function sendCommand(socket: net.Socket, command: string): void {
 
 /**
  * Probe SMTP server for STARTTLS capability
+ *
+ * @param hostname - Target SMTP server hostname
+ * @param tenantId - Tenant ID for allowlist scoping (AUTH-003)
+ * @param options - Probe options including port, timeout, and allowlist settings
  */
 export async function probeSMTPStarttls(
   hostname: string,
+  tenantId: string,
   options?: {
     port?: number;
     timeoutMs?: number;
@@ -131,8 +136,8 @@ export async function probeSMTPStarttls(
       };
     }
 
-    // Allowlist check
-    if (checkAllowlist && !probeAllowlist.isAllowed(hostname, port)) {
+    // Allowlist check (tenant-scoped via probeAllowlistManager)
+    if (checkAllowlist && !probeAllowlistManager.isAllowed(tenantId, hostname, port)) {
       return {
         success: false,
         hostname,

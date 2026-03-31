@@ -1,11 +1,11 @@
 /**
- * MTA-STS Policy Fetch Probe - Bead 10
+ * MTA-STS Policy Fetch Probe - Bead 10 / AUTH-003
  *
  * Fetches MTA-STS policy from https://mta-sts.{domain}/.well-known/mta-sts.txt
  * Validates policy format and extracts mode/max_age/mx directives.
  */
 
-import { probeAllowlist } from './allowlist.js';
+import { probeAllowlistManager } from './allowlist.js';
 import { validateUrl } from './ssrf-guard.js';
 
 export interface MTASTSProbeResult {
@@ -78,9 +78,14 @@ function parsePolicy(raw: string): MTASTSPolicy | null {
 
 /**
  * Fetch MTA-STS policy for a domain
+ *
+ * @param domain - Target domain for MTA-STS policy
+ * @param tenantId - Tenant ID for allowlist scoping (AUTH-003)
+ * @param options - Probe options including timeout and allowlist settings
  */
 export async function fetchMTASTSPolicy(
   domain: string,
+  tenantId: string,
   options?: {
     timeoutMs?: number;
     checkAllowlist?: boolean;
@@ -103,10 +108,10 @@ export async function fetchMTASTSPolicy(
       };
     }
 
-    // Check allowlist if enabled
+    // Check allowlist if enabled (tenant-scoped via probeAllowlistManager)
     if (checkAllowlist) {
       const hostname = `mta-sts.${domain}`;
-      if (!probeAllowlist.isAllowed(hostname, 443)) {
+      if (!probeAllowlistManager.isAllowed(tenantId, hostname, 443)) {
         return {
           success: false,
           domain,

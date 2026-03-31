@@ -1,13 +1,17 @@
 /**
- * Probe Destination Allowlist - Bead 10
+ * Probe Destination Allowlist - Bead 10 / AUTH-003
  *
  * Ensures probes only target destinations derived from DNS results.
  * Prevents arbitrary outbound probing.
+ *
+ * TENANT ISOLATION: Each tenant has isolated allowlist entries.
+ * All operations are scoped by tenantId.
  */
 
 import type { DNSQueryResult } from '../dns/types.js';
 
 export interface AllowlistEntry {
+  tenantId: string;
   type: 'mx' | 'mta-sts' | 'smtp' | 'custom';
   hostname: string;
   port?: number;
@@ -20,19 +24,247 @@ export interface AllowlistEntry {
   expiresAt: Date;
 }
 
+export interface TenantScopedAllowlist {
+  /**
+   * Generate allowlist entries from DNS query results for this tenant
+   */
+  generateFromDnsResults(domain: string, dnsResults: DNSQueryResult[]): AllowlistEntry[];
+
+  /**
+   * Add a custom allowlist entry for this tenant
+   */
+  addCustomEntry(hostname: string, port: number, requestedBy: string, reason: string): AllowlistEntry;
+
+  /**
+   * Check if a destination is allowed for this tenant
+   */
+  isAllowed(hostname: string, port?: number): boolean;
+
+  /**
+   * Get allowlist entry for a destination
+   */
+  getEntry(hostname: string, port?: number): AllowlistEntry | undefined;
+
+  /**
+   * Get all active allowlist entries for this tenant
+   */
+  getAllEntries(): AllowlistEntry[];
+
+  /**
+   * Clear all entries for this tenant
+   */
+  clear(): void;
+}
+
+/**
+ * Create a tenant-scoped allowlist instance
+ */
+export function createTenantAllowlist(tenantId: string): TenantScopedAllowlist {
+  const entries: Map<string, AllowlistEntry> = new Map();
+  const defaultTtlMs = 5 * 60 * 1000; // 5 minute default TTL
+
+  function key(entry: AllowlistEntry): string {
+    return entry.port ? `${entry.hostname}:${entry.port}` : entry.hostname;
+  }
+
+  function cleanup(): void {
+    const now = new Date();
+    for (const [k, entry] of entries) {
+      if (entry.expiresAt < now) {
+        entries.delete(k);
+      }
+    }
+  }
+
+  return {
+    generateFromDnsResults(domain: string, dnsResults: DNSQueryResult[]): AllowlistEntry[] {
+      const resultEntries: AllowlistEntry[] = [];
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + defaultTtlMs);
+
+      for (const dnsResult of dnsResults) {
+        if (!dnsResult.success) continue;
+
+        // Extract MX hosts
+        if (dnsResult.query.type === 'MX') {
+          for (const answer of dnsResult.answers) {
+            const parts = answer.data.trim().split(/\s+/);
+            if (parts.length >= 2) {
+              const hostname = parts[1].replace(/\.$/, '');
+              const entry: AllowlistEntry = {
+                tenantId,
+                type: 'mx',
+                hostname,
+                port: 25,
+                derivedFrom: {
+                  domain,
+                  queryType: dnsResult.query.type,
+                  queryName: dnsResult.query.name,
+                  answerData: answer.data,
+                },
+                expiresAt,
+              };
+              resultEntries.push(entry);
+              entries.set(key(entry), entry);
+            }
+          }
+        }
+
+        // Extract MTA-STS policy host
+        if (
+          dnsResult.query.type === 'TXT' &&
+          dnsResult.query.name.includes('_mta-sts')
+        ) {
+          const entry: AllowlistEntry = {
+            tenantId,
+            type: 'mta-sts',
+            hostname: `mta-sts.${domain}`,
+            port: 443,
+            derivedFrom: {
+              domain,
+              queryType: dnsResult.query.type,
+              queryName: dnsResult.query.name,
+              answerData: dnsResult.answers.map((a: { data: string }) => a.data).join(', '),
+            },
+            expiresAt,
+          };
+          resultEntries.push(entry);
+          entries.set(key(entry), entry);
+        }
+      }
+
+      return resultEntries;
+    },
+
+    addCustomEntry(
+      hostname: string,
+      port: number,
+      requestedBy: string,
+      reason: string
+    ): AllowlistEntry {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + defaultTtlMs);
+
+      const entry: AllowlistEntry = {
+        tenantId,
+        type: 'custom',
+        hostname,
+        port,
+        derivedFrom: {
+          domain: 'custom',
+          queryType: 'manual',
+          queryName: hostname,
+          answerData: `Requested by ${requestedBy}: ${reason}`,
+        },
+        expiresAt,
+      };
+
+      entries.set(key(entry), entry);
+      return entry;
+    },
+
+    isAllowed(hostname: string, port?: number): boolean {
+      cleanup();
+
+      const entryKey = port ? `${hostname}:${port}` : hostname;
+      if (entries.has(entryKey)) {
+        return true;
+      }
+
+      for (const entry of entries.values()) {
+        if (entry.hostname === hostname) {
+          if (port === undefined || entry.port === undefined || entry.port === port) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    },
+
+    getEntry(hostname: string, port?: number): AllowlistEntry | undefined {
+      cleanup();
+
+      const entryKey = port ? `${hostname}:${port}` : hostname;
+      return entries.get(entryKey);
+    },
+
+    getAllEntries(): AllowlistEntry[] {
+      cleanup();
+      return Array.from(entries.values());
+    },
+
+    clear(): void {
+      entries.clear();
+    },
+  };
+}
+
+/**
+ * Tenant-aware allowlist manager
+ * Manages allowlists across all tenants
+ */
+export class ProbeAllowlistManager {
+  private tenantAllowlists: Map<string, TenantScopedAllowlist> = new Map();
+
+  /**
+   * Get or create a tenant-scoped allowlist
+   */
+  getTenantAllowlist(tenantId: string): TenantScopedAllowlist {
+    let allowlist = this.tenantAllowlists.get(tenantId);
+    if (!allowlist) {
+      allowlist = createTenantAllowlist(tenantId);
+      this.tenantAllowlists.set(tenantId, allowlist);
+    }
+    return allowlist;
+  }
+
+  /**
+   * Check if a destination is allowed for a specific tenant
+   */
+  isAllowed(tenantId: string, hostname: string, port?: number): boolean {
+    return this.getTenantAllowlist(tenantId).isAllowed(hostname, port);
+  }
+
+  /**
+   * Clear all allowlists (use with caution)
+   */
+  clearAll(): void {
+    this.tenantAllowlists.clear();
+  }
+
+  /**
+   * Clear a specific tenant's allowlist
+   */
+  clearTenant(tenantId: string): void {
+    this.tenantAllowlists.delete(tenantId);
+  }
+
+  /**
+   * Get all active tenants with allowlists
+   */
+  getActiveTenants(): string[] {
+    return Array.from(this.tenantAllowlists.keys());
+  }
+}
+
+// Global manager instance
+export const probeAllowlistManager = new ProbeAllowlistManager();
+
+/**
+ * Legacy compatibility: Global allowlist instance
+ * DEPRECATED: Use probeAllowlistManager.getTenantAllowlist(tenantId) instead
+ *
+ * @deprecated Use TenantScopedAllowlist for new code
+ */
 export class ProbeAllowlist {
   private entries: Map<string, AllowlistEntry> = new Map();
   private readonly defaultTtlMs: number;
 
   constructor(defaultTtlMs = 5 * 60 * 1000) {
-    // 5 minute default TTL
     this.defaultTtlMs = defaultTtlMs;
   }
 
-  /**
-   * Generate allowlist entries from DNS query results
-   * Extracts MX hosts and MTA-STS endpoints
-   */
   generateFromDnsResults(domain: string, dnsResults: DNSQueryResult[]): AllowlistEntry[] {
     const entries: AllowlistEntry[] = [];
     const now = new Date();
@@ -41,14 +273,13 @@ export class ProbeAllowlist {
     for (const result of dnsResults) {
       if (!result.success) continue;
 
-      // Extract MX hosts
       if (result.query.type === 'MX') {
         for (const answer of result.answers) {
-          // MX format: "priority hostname"
           const parts = answer.data.trim().split(/\s+/);
           if (parts.length >= 2) {
-            const hostname = parts[1].replace(/\.$/, ''); // Remove trailing dot
+            const hostname = parts[1].replace(/\.$/, '');
             const entry: AllowlistEntry = {
+              tenantId: 'default', // Legacy entries are tenant-scoped
               type: 'mx',
               hostname,
               port: 25,
@@ -66,10 +297,9 @@ export class ProbeAllowlist {
         }
       }
 
-      // Extract MTA-STS policy host
       if (result.query.type === 'TXT' && result.query.name.includes('_mta-sts')) {
-        // MTA-STS policy is at https://mta-sts.{domain}/.well-known/mta-sts.txt
         const entry: AllowlistEntry = {
+          tenantId: 'default',
           type: 'mta-sts',
           hostname: `mta-sts.${domain}`,
           port: 443,
@@ -89,10 +319,6 @@ export class ProbeAllowlist {
     return entries;
   }
 
-  /**
-   * Add a custom allowlist entry (for operator-specified probes)
-   * Requires explicit approval
-   */
   addCustomEntry(
     hostname: string,
     port: number,
@@ -103,6 +329,7 @@ export class ProbeAllowlist {
     const expiresAt = new Date(now.getTime() + this.defaultTtlMs);
 
     const entry: AllowlistEntry = {
+      tenantId: 'default',
       type: 'custom',
       hostname,
       port,
@@ -119,19 +346,14 @@ export class ProbeAllowlist {
     return entry;
   }
 
-  /**
-   * Check if a destination is in the allowlist
-   */
   isAllowed(hostname: string, port?: number): boolean {
     this.cleanup();
 
-    // Check for exact match
     const key = port ? `${hostname}:${port}` : hostname;
     if (this.entries.has(key)) {
       return true;
     }
 
-    // Check for hostname match (any port)
     for (const entry of this.entries.values()) {
       if (entry.hostname === hostname) {
         if (port === undefined || entry.port === undefined || entry.port === port) {
@@ -143,9 +365,6 @@ export class ProbeAllowlist {
     return false;
   }
 
-  /**
-   * Get allowlist entry for a destination
-   */
   getEntry(hostname: string, port?: number): AllowlistEntry | undefined {
     this.cleanup();
 
@@ -153,17 +372,11 @@ export class ProbeAllowlist {
     return this.entries.get(key);
   }
 
-  /**
-   * Get all active allowlist entries
-   */
   getAllEntries(): AllowlistEntry[] {
     this.cleanup();
     return Array.from(this.entries.values());
   }
 
-  /**
-   * Remove expired entries
-   */
   private cleanup(): void {
     const now = new Date();
     for (const [key, entry] of this.entries) {
@@ -173,20 +386,14 @@ export class ProbeAllowlist {
     }
   }
 
-  /**
-   * Generate key for allowlist map
-   */
   private key(entry: AllowlistEntry): string {
     return entry.port ? `${entry.hostname}:${entry.port}` : entry.hostname;
   }
 
-  /**
-   * Clear all entries
-   */
   clear(): void {
     this.entries.clear();
   }
 }
 
-// Global allowlist instance
+// Global legacy instance
 export const probeAllowlist = new ProbeAllowlist();

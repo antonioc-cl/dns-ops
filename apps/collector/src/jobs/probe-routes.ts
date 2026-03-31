@@ -25,18 +25,18 @@
 
 import { Hono } from 'hono';
 import { getEnvConfig } from '../config/env.js';
+import type { Env } from '../types.js';
 import type { DNSQueryResult } from '../dns/types.js';
-import type { AllowlistEntry } from '../probes/allowlist.js';
 import {
   fetchMTASTSPolicy,
-  probeAllowlist,
+  probeAllowlistManager,
   probeMXHosts,
   probeSMTPStarttls,
   validateMTASTSTxtRecord,
 } from '../probes/index.js';
 import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
 
-export const probeRoutes = new Hono();
+export const probeRoutes = new Hono<Env>();
 
 /**
  * Middleware: Check if active probes are enabled
@@ -86,6 +86,7 @@ probeRoutes.use('/smtp-starttls', async (c, next) => {
 probeRoutes.post('/mta-sts', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const { domain, txtRecords } = body;
+  const tenantId = c.get('tenantId');
 
   if (!domain) {
     return c.json({ error: 'Domain is required' }, 400);
@@ -104,8 +105,8 @@ probeRoutes.post('/mta-sts', async (c) => {
     );
   }
 
-  // Add to allowlist (MTA-STS endpoint is derived from DNS)
-  probeAllowlist.addCustomEntry(
+  // Add to tenant-scoped allowlist (MTA-STS endpoint is derived from DNS)
+  probeAllowlistManager.getTenantAllowlist(tenantId).addCustomEntry(
     `mta-sts.${domain}`,
     443,
     'probe-api',
@@ -113,7 +114,7 @@ probeRoutes.post('/mta-sts', async (c) => {
   );
 
   // Fetch policy
-  const result = await fetchMTASTSPolicy(domain, {
+  const result = await fetchMTASTSPolicy(domain, tenantId, {
     timeoutMs: 15000,
     checkAllowlist: true,
   });
@@ -132,10 +133,11 @@ probeRoutes.post('/mta-sts', async (c) => {
 probeRoutes.post('/smtp-starttls', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const { hostname, port, mxRecords } = body;
+  const tenantId = c.get('tenantId');
 
   // Option 1: Single host probe
   if (hostname) {
-    // Add to allowlist if MX records provided
+    // Add to tenant-scoped allowlist if MX records provided
     if (mxRecords && Array.isArray(mxRecords)) {
       const mockResults: DNSQueryResult[] = [
         {
@@ -153,10 +155,10 @@ probeRoutes.post('/smtp-starttls', async (c) => {
           responseTime: 0,
         },
       ];
-      probeAllowlist.generateFromDnsResults(hostname, mockResults);
+      probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults(hostname, mockResults);
     }
 
-    const result = await probeSMTPStarttls(hostname, {
+    const result = await probeSMTPStarttls(hostname, tenantId, {
       port: port || 25,
       timeoutMs: 30000,
       checkAllowlist: true,
@@ -167,7 +169,7 @@ probeRoutes.post('/smtp-starttls', async (c) => {
 
   // Option 2: Batch probe from MX records
   if (mxRecords && Array.isArray(mxRecords) && mxRecords.length > 0) {
-    // Parse MX records and add to allowlist
+    // Parse MX records and add to tenant-scoped allowlist
     const hosts = mxRecords.map((record: string) => {
       const parts = record.trim().split(/\s+/);
       return {
@@ -176,7 +178,7 @@ probeRoutes.post('/smtp-starttls', async (c) => {
       };
     });
 
-    // Generate allowlist
+    // Generate tenant-scoped allowlist
     const mockResults: DNSQueryResult[] = [
       {
         query: { name: 'probe', type: 'MX' },
@@ -193,7 +195,7 @@ probeRoutes.post('/smtp-starttls', async (c) => {
         responseTime: 0,
       },
     ];
-    probeAllowlist.generateFromDnsResults('probe', mockResults);
+    probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults('probe', mockResults);
 
     const results = await probeMXHosts(hosts, {
       timeoutMs: 30000,

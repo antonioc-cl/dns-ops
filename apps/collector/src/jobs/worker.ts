@@ -17,7 +17,6 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { type ConnectionOptions, type Job, Worker } from 'bullmq';
-import { generateAlertsFromFindings } from './alert-from-findings.js';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
 import {
@@ -27,6 +26,7 @@ import {
   trackJobStart,
 } from '../middleware/error-tracking.js';
 import { getJobMetrics } from '../middleware/job-metrics.js';
+import { generateAlertsFromFindings } from './alert-from-findings.js';
 import {
   type CollectDomainJobData,
   type FleetReportJobData,
