@@ -12,7 +12,6 @@ import {
   dbResult,
   dbResultOrNotFound,
   ensureTenantIsolation,
-  type DbErrorCode,
 } from './result.js';
 import { DomainRepository, type DomainFilter } from './domain.js';
 

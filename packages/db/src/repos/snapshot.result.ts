@@ -63,12 +63,12 @@ export class SnapshotRepositoryResults {
 
   /**
    * Check for recent snapshot within dedup window
-   * Returns the recent snapshot if found, null if not (not an error)
+   * Returns the recent snapshot if found, undefined if not (not an error)
    */
   async findRecentByDomainResult(
     domainId: string,
     windowMs?: number
-  ): Promise<ResultOrError<Snapshot | null, DbError>> {
+  ): Promise<ResultOrError<Snapshot | undefined, DbError>> {
     return dbResult(
       () => this.repo.findRecentByDomain(domainId, windowMs),
       (e) =>

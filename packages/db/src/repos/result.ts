@@ -6,7 +6,6 @@
  */
 
 import {
-  DatabaseError,
   NotFoundError,
   Result,
   TaggedError,
@@ -239,7 +238,7 @@ export function toNotFoundError(dbError: DbError): NotFoundError {
 export function toTenantIsolationError(dbError: DbError): TenantIsolationError {
   return new TenantIsolationError({
     message: dbError.message,
-    tenantId: dbError.tenantId ?? '',
+    tenantId: dbError.tenantId,
     resourceTenantId: dbError.resourceTenantId,
   });
 }
