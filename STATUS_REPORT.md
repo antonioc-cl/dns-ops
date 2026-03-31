@@ -20,12 +20,14 @@
 | Skipped tests | 37 |
 | Failing tests | 0 |
 
-**Note:** Previous reports claimed 921 pass / 41 fail. Current state reflects:
+**Note:** Batch 1 audit completed. Current state reflects:
 - N+1 query fixes in portfolio routes
 - Tenant isolation tests for snapshots, simulation, findings
 - DB failfast middleware tests
 - Batch collection optimizations
 - E2E integration tests for DNS-003, SEC-004, DX-004
+- DATA-003: Probe observation persistence
+- OBS-001: APM/error aggregation observability
 
 ## Bead Coverage
 
@@ -52,6 +54,7 @@
 | PR-16 | 🔄 | Delegation evidence (DNS-001/DNS-002 pending) |
 | PR-17 | 🔄 | Non-DNS probe sandbox (AUTH-002 done, AUTH-003 pending) |
 | PR-18 | 🔄 | Batch findings report (DATA-002 pending) |
+| DATA-003 | ✅ | Probe observation persistence |
 | PR-20 | 🔄 | Alert notifications (JOB-002 pending) |
 
 ## Batch 1 Audit Tasks - Status
@@ -95,7 +98,7 @@
 | DOC-001 | ✅ | Runtime topology documentation |
 | DX-005 | ✅ | Redis fallback documentation - docs/REDIS_FALLBACK.md |
 | DX-006 | ✅ | Shared report evidence redaction - already implemented |
-| OBS-001 | 🔲 | APM/error aggregation - pending |
+| OBS-001 | ✅ | APM/error aggregation - observability.ts |
 
 ## Known Limitations
 
