@@ -70,7 +70,7 @@ describe('Result Handler Middleware', () => {
   });
 
   describe('isDbError', () => {
-    it('should return true for DbError with known code', () => {
+    it('should return true for DbError', () => {
       const error = DbError.notFound('Domain', 'id');
       expect(isDbError(error)).toBe(true);
     });
@@ -82,6 +82,15 @@ describe('Result Handler Middleware', () => {
     it('should return false for RuleError', () => {
       const error = RuleError.ruleNotFound('rule-1');
       expect(isDbError(error)).toBe(false);
+    });
+
+    it('should return true for DbError with any code', () => {
+      // Test with a code that might be added in the future
+      const error = new DbError({
+        message: 'Custom error',
+        code: 'FUTURE_ERROR_CODE',
+      });
+      expect(isDbError(error)).toBe(true);
     });
   });
 

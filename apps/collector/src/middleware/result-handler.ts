@@ -209,24 +209,27 @@ export function resultAwareHandler<T>(
 
 /**
  * Type guard for DbError
+ * Checks for DbError-specific properties
  */
 export function isDbError(error: Error): error is DbError {
-  return 'code' in error && typeof error.code === 'string' && 
-    ['NOT_FOUND', 'ALREADY_EXISTS', 'TENANT_ISOLATION', 'CONSTRAINT_VIOLATION', 'QUERY_FAILED'].includes(error.code);
+  return 'code' in error && typeof error.code === 'string' &&
+    ('table' in error || ['NOT_FOUND', 'ALREADY_EXISTS', 'TENANT_ISOLATION', 'CONSTRAINT_VIOLATION', 'QUERY_FAILED', 'CONNECTION_ERROR', 'TIMEOUT'].includes(error.code));
 }
 
 /**
  * Type guard for RuleError
+ * Checks for RuleError-specific properties
  */
 export function isRuleError(error: Error): error is RuleError {
   return 'code' in error && typeof error.code === 'string' &&
-    ['RULE_EXECUTION_FAILED', 'INVALID_CONTEXT', 'RULE_NOT_FOUND'].includes(error.code);
+    ('ruleId' in error || ['RULE_EXECUTION_FAILED', 'INVALID_CONTEXT', 'RULE_NOT_FOUND', 'RULESET_NOT_FOUND', 'EVALUATION_TIMEOUT'].includes(error.code));
 }
 
 /**
  * Type guard for SimulationError
+ * Checks for SimulationError-specific properties
  */
 export function isSimulationError(error: Error): error is SimulationError {
   return 'code' in error && typeof error.code === 'string' &&
-    ['INVALID_FINDING_TYPE', 'NO_ACTIONABLE_FINDINGS', 'SIMULATION_FAILED'].includes(error.code);
+    ('findingType' in error || ['INVALID_FINDING_TYPE', 'NO_ACTIONABLE_FINDINGS', 'SIMULATION_FAILED', 'INVALID_CONTEXT'].includes(error.code));
 }
