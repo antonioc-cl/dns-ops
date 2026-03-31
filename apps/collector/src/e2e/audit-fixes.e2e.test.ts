@@ -93,19 +93,14 @@ describe('Scheduler wiring', () => {
     expect(_getActiveScheduleCount()).toBe(0);
   });
 
-  it('index.ts imports initializeSchedules and cleanupSchedules', async () => {
-    // Static import check: verify the symbols exist in the index module
-    // This would have caught the bug where initializeSchedules was never called
-    const indexModule = await import('../index.js');
-
-    // The default export is the Hono app
-    expect(indexModule.default).toBeDefined();
-
-    // The module imports initializeSchedules from scheduler.ts
-    // We can verify this by checking the scheduler module is importable
+  it('scheduler exports initializeSchedules and cleanupSchedules', async () => {
+    // Verify the scheduler module exports both functions needed at startup/shutdown
+    // If someone removes these exports, this test catches it
     const scheduler = await import('../jobs/scheduler.js');
     expect(scheduler.initializeSchedules).toBeDefined();
     expect(scheduler.cleanupSchedules).toBeDefined();
+    expect(typeof scheduler.initializeSchedules).toBe('function');
+    expect(typeof scheduler.cleanupSchedules).toBe('function');
   });
 });
 
@@ -376,7 +371,6 @@ describe('Probe allowlist tenant isolation', () => {
 
   it('DNS-derived allowlist entries are tenant-scoped', async () => {
     const { probeAllowlistManager } = await import('../probes/allowlist.js');
-    const type = (await import('../dns/types.js')) as typeof import('../dns/types.js');
 
     probeAllowlistManager.clearAll();
 
