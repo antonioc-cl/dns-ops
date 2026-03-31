@@ -8,5 +8,7 @@ export default defineConfig({
       'apps/web/hono/**/*.test.ts',
     ],
     exclude: ['dist/**/*', 'node_modules/**/*'],
+    // Disable module caching to ensure fresh state in each test
+    cache: false,
   },
 });

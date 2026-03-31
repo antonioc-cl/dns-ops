@@ -30,11 +30,12 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 
 /**
  * Get or create a rate limit entry for a key
+ * Initializes with full token bucket (limit) so new tenants can burst
  */
-function getEntry(key: string): RateLimitEntry {
+function getEntry(key: string, limit: number): RateLimitEntry {
   let entry = rateLimitStore.get(key);
   if (!entry) {
-    entry = { tokens: 0, lastRefill: Date.now() };
+    entry = { tokens: limit, lastRefill: Date.now() };
     rateLimitStore.set(key, entry);
   }
   return entry;
@@ -58,12 +59,13 @@ function refillTokens(entry: RateLimitEntry, limit: number, windowMs: number): v
  * Attempt to consume a token
  * Returns true if request is allowed, false if rate limited
  */
-function tryConsume(entry: RateLimitEntry, limit: number): boolean {
-  if (entry.tokens >= limit) {
-    // Already at limit
+function tryConsume(entry: RateLimitEntry, _limit: number): boolean {
+  // Token bucket: if tokens <= 0, bucket is empty, reject
+  // Tokens start at limit (full bucket), decrement on each request
+  if (entry.tokens <= 0) {
     return false;
   }
-  entry.tokens++;
+  entry.tokens--;
   return true;
 }
 
@@ -130,7 +132,7 @@ export function rateLimitMiddleware(scope: 'collect' | 'probes') {
     }
 
     const key = createKey(tenantId, path);
-    const entry = getEntry(key);
+    const entry = getEntry(key, config.limit);
 
     // Refill tokens based on elapsed time
     refillTokens(entry, config.limit, config.windowMs);
