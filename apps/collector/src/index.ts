@@ -9,11 +9,12 @@
  * Requires REDIS_URL for job queue connectivity.
  */
 
-import { createLogger } from '@dns-ops/logging';
+import { createLogger, createLoggingMiddleware } from '@dns-ops/logging';
 import { serve } from '@hono/node-server';
+import type { MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
+
 import { assertEnvValid, getEnvConfig } from './config/env.js';
 import { collectDomainRoutes } from './jobs/collect-domain.js';
 import { collectMailRoutes } from './jobs/collect-mail.js';
@@ -31,10 +32,23 @@ import type { Env } from './types.js';
 
 assertEnvValid();
 
+// Create logger before middleware that uses it
+const collectorLogger = createLogger({
+  service: 'dns-ops-collector',
+  version: '1.0.0',
+  minLevel: 'info',
+});
+
 const app = new Hono<Env>();
 
-app.use('*', cors());
-app.use('*', logger());
+app.use('*', cors() as unknown as MiddlewareHandler);
+app.use(
+  '*',
+  createLoggingMiddleware({
+    logger: collectorLogger,
+    skipPaths: ['/health', '/healthz', '/readyz'],
+  }) as unknown as MiddlewareHandler
+);
 
 app.get('/healthz', (c) => {
   return c.json({
@@ -111,15 +125,13 @@ app.route('/api/notify', notificationRoutes);
 
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
 
-const collectorLogger = createLogger({
-  service: 'dns-ops-collector',
-  version: '1.0.0',
-  minLevel: 'info',
-});
-
 app.onError((err, c) => {
-  collectorLogger.error('Collector error', err, {
-    requestId: c.req.header('X-Request-ID'),
+  // Try to get request-scoped logger from context, fall back to collector logger
+  const requestLogger = c.get('logger') || collectorLogger;
+  const requestId = c.get('requestId') || c.req.header('X-Request-ID');
+
+  requestLogger.error('Collector error', err, {
+    requestId,
     path: c.req.path,
     method: c.req.method,
   });
@@ -127,6 +139,7 @@ app.onError((err, c) => {
     {
       error: 'Internal Server Error',
       message: err.message,
+      requestId,
     },
     500
   );
