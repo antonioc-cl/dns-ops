@@ -22,7 +22,8 @@
   "dependencies": {
     "@dns-ops/contracts": "workspace:*",
     "@dns-ops/db": "workspace:*",
-    "@dns-ops/parsing": "workspace:*"
+    "@dns-ops/parsing": "workspace:*",
+    "better-result": "^2.7.0"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
