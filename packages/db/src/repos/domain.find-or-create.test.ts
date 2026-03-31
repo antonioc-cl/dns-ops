@@ -99,6 +99,47 @@ describe('DomainRepository.findOrCreate atomic upsert', () => {
       expect(result.id).toBe('new-domain-id');
       expect(mockAdapter.getDrizzle).toHaveBeenCalled();
     });
+
+    it('passes correct target to onConflictDoNothing (normalizedName, tenantId)', async () => {
+      // This test verifies that onConflictDoNothing is called with the correct
+      // target constraint. Without the target, Drizzle only handles primary key
+      // conflicts, NOT unique index conflicts on (normalizedName, tenantId).
+      const newDomain: Domain = { ...mockDomain, id: 'new-domain-id' };
+      let capturedTarget: unknown = undefined;
+
+      const mockAdapter = {
+        selectOne: vi.fn().mockResolvedValue(null),
+        selectWhere: vi.fn().mockResolvedValue([]),
+        select: vi.fn().mockResolvedValue([]),
+        insert: vi.fn(),
+        update: vi.fn().mockResolvedValue([]),
+        updateOne: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue([]),
+        deleteOne: vi.fn().mockResolvedValue(undefined),
+        transaction: vi.fn(),
+        getDrizzle: vi.fn().mockReturnValue({
+          insert: vi.fn().mockReturnValue({
+            values: vi.fn().mockReturnValue({
+              onConflictDoNothing: vi.fn().mockImplementation((options?: { target?: unknown }) => {
+                capturedTarget = options?.target;
+                return {
+                  returning: vi.fn().mockResolvedValue([newDomain]),
+                };
+              }),
+            }),
+          }),
+        }),
+      };
+
+      const repo = new DomainRepository(mockAdapter as never);
+      await repo.findOrCreate(newDomainData);
+
+      // Verify target was passed
+      expect(capturedTarget).toBeDefined();
+      expect(Array.isArray(capturedTarget)).toBe(true);
+      // The target should reference the schema columns, not be undefined
+      expect((capturedTarget as unknown[]).length).toBeGreaterThan(0);
+    });
   });
 
   describe('conflict detection and fallback', () => {

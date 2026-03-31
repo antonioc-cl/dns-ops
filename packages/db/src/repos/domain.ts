@@ -148,12 +148,14 @@ export class DomainRepository {
     // Cast through unknown to handle the complex union types
     const rawDb = this.db.getDrizzle() as unknown as NodePgDatabase<typeof schema>;
 
-    // Try atomic insert with onConflictDoNothing
-    // This handles the race condition where concurrent calls might try to insert the same domain
+    // Try atomic insert with onConflictDoNothing targeting the unique constraint
+    // The domains table has a unique index on (normalizedName, tenantId)
+    // Without the target, onConflictDoNothing only handles primary key conflicts
+    // We must specify the target to catch unique constraint violations
     const insertResult = await rawDb
       .insert(domains)
       .values(insertData)
-      .onConflictDoNothing()
+      .onConflictDoNothing({ target: [domains.normalizedName, domains.tenantId] })
       .returning();
 
     // If insert succeeded, return the new record
