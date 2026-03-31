@@ -5,7 +5,8 @@
  * for the collector service.
  */
 
-import { createLogger } from '@dns-ops/logging';
+// @dns-ops/logging is available but currently unused in this module
+// import { createLogger } from '@dns-ops/logging';
 
 // ============================================================================
 // Request Tracing
