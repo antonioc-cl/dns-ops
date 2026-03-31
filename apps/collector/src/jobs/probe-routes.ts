@@ -34,6 +34,7 @@ import {
   probeSMTPStarttls,
   validateMTASTSTxtRecord,
 } from '../probes/index.js';
+import type { AllowlistEntry } from '../probes/allowlist.js';
 import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
 
 export const probeRoutes = new Hono<Env>();
@@ -197,7 +198,7 @@ probeRoutes.post('/smtp-starttls', async (c) => {
     ];
     probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults('probe', mockResults);
 
-    const results = await probeMXHosts(hosts, {
+    const results = await probeMXHosts(hosts, tenantId, {
       timeoutMs: 30000,
       concurrency: 3,
     });
@@ -222,11 +223,12 @@ probeRoutes.post('/smtp-starttls', async (c) => {
 
 /**
  * POST /api/probe/allowlist/generate
- * Generate allowlist from DNS results
+ * Generate tenant-scoped allowlist from DNS results
  */
 probeRoutes.post('/allowlist/generate', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const { domain, dnsResults } = body;
+  const tenantId = c.get('tenantId');
 
   if (!domain || !dnsResults || !Array.isArray(dnsResults)) {
     return c.json(
@@ -237,10 +239,11 @@ probeRoutes.post('/allowlist/generate', async (c) => {
     );
   }
 
-  const entries = probeAllowlist.generateFromDnsResults(domain, dnsResults);
+  const entries = probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults(domain, dnsResults);
 
   return c.json({
     domain,
+    tenantId,
     entriesAdded: entries.length,
     entries: entries.map((e: AllowlistEntry) => ({
       type: e.type,
@@ -253,10 +256,11 @@ probeRoutes.post('/allowlist/generate', async (c) => {
 
 /**
  * GET /api/probe/allowlist
- * List current allowlist entries
+ * List current tenant-scoped allowlist entries
  */
 probeRoutes.get('/allowlist', (c) => {
-  const entries = probeAllowlist.getAllEntries();
+  const tenantId = c.get('tenantId');
+  const entries = probeAllowlistManager.getTenantAllowlist(tenantId).getAllEntries();
 
   return c.json({
     count: entries.length,
@@ -294,7 +298,7 @@ probeRoutes.get('/health', (c) => {
   return c.json({
     status: 'healthy',
     service: 'probe-sandbox',
-    allowlistSize: probeAllowlist.getAllEntries().length,
+    activeTenants: probeAllowlistManager.getActiveTenants().length,
     timestamp: new Date().toISOString(),
   });
 });

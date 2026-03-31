@@ -289,6 +289,7 @@ export async function probeSMTPStarttls(
  */
 export async function probeMXHosts(
   hosts: Array<{ hostname: string; priority: number }>,
+  tenantId: string,
   options?: {
     timeoutMs?: number;
     concurrency?: number;
@@ -301,7 +302,7 @@ export async function probeMXHosts(
   // Process in batches to limit concurrency
   for (let i = 0; i < hosts.length; i += concurrency) {
     const batch = hosts.slice(i, i + concurrency);
-    const batchPromises = batch.map((host) => probeSMTPStarttls(host.hostname, { timeoutMs }));
+    const batchPromises = batch.map((host) => probeSMTPStarttls(host.hostname, tenantId, { timeoutMs }));
 
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
