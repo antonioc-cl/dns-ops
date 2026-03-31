@@ -935,14 +935,23 @@ describe('Delegation routes requireAuth enforcement', () => {
 // =============================================================================
 
 describe('Suggestions routes auth enforcement', () => {
-  function createSuggestionsApp(options: { actorId?: string; includeAuth?: boolean } = {}) {
-    const { actorId = 'test-actor', includeAuth = true } = options;
+  /**
+   * Creates a test app with optional auth context.
+   * Use omitActorId: true to test missing actorId scenario (bypasses JS default parameter).
+   */
+  function createSuggestionsApp(
+    options: { actorId?: string; includeAuth?: boolean; omitActorId?: boolean } = {}
+  ) {
+    const { actorId = 'test-actor', includeAuth = true, omitActorId = false } = options;
     const app = new Hono<Env>();
     app.use('*', async (c, next) => {
       c.set('db', createMockDb() as Env['Variables']['db']);
       if (includeAuth) {
         c.set('tenantId', 'tenant-1');
-        c.set('actorId', actorId as string);
+        // Only set actorId if not omitted - this tests missing actorId vs undefined
+        if (!omitActorId) {
+          c.set('actorId', actorId as string);
+        }
         c.set('actorEmail', 'test@example.com');
       }
       await next();
@@ -954,10 +963,9 @@ describe('Suggestions routes auth enforcement', () => {
   }
 
   describe('PATCH /api/suggestions/:suggestionId/apply', () => {
-    // Note: These tests have a default parameter issue - actorId: undefined triggers default 'test-actor'
-    // Skipped: Test setup doesn't properly isolate auth context
-    it.skip('returns 401 without actorId in context', async () => {
-      const app = createSuggestionsApp({ actorId: undefined, includeAuth: true });
+    it('returns 401 without actorId in context', async () => {
+      // Use omitActorId to truly test missing actorId (not undefined which triggers default)
+      const app = createSuggestionsApp({ omitActorId: true, includeAuth: true });
       const res = await app.request('/api/suggestions/sug-001/apply', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -966,7 +974,7 @@ describe('Suggestions routes auth enforcement', () => {
       expect(res.status).toBe(401);
     });
 
-    it.skip('returns 401 without any auth context at all', async () => {
+    it('returns 401 without any auth context at all', async () => {
       const app = createSuggestionsApp({ includeAuth: false });
       const res = await app.request('/api/suggestions/sug-001/apply', {
         method: 'PATCH',
@@ -978,9 +986,8 @@ describe('Suggestions routes auth enforcement', () => {
   });
 
   describe('PATCH /api/suggestions/:suggestionId/dismiss', () => {
-    // Note: Same default parameter issue as above
-    it.skip('returns 401 without actorId in context', async () => {
-      const app = createSuggestionsApp({ actorId: undefined, includeAuth: true });
+    it('returns 401 without actorId in context', async () => {
+      const app = createSuggestionsApp({ omitActorId: true, includeAuth: true });
       const res = await app.request('/api/suggestions/sug-001/dismiss', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
