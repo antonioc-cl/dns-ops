@@ -132,6 +132,31 @@ collectDomainRoutes.post('/domain', async (c) => {
       return c.json({ error: 'Database unavailable' }, 503);
     }
 
+    // VAL-003: Collection dedup check
+    // Prevent rapid re-collection of the same domain
+    const snapshotRepo = new SnapshotRepository(db);
+    const latestSnapshot = await snapshotRepo.findRecentByDomain(normalizedDomain);
+    if (latestSnapshot) {
+      const sixtySecondsAgo = Date.now() - 60 * 1000;
+      if (latestSnapshot.createdAt && latestSnapshot.createdAt.getTime() > sixtySecondsAgo) {
+        logger.info('Collection skipped - recent snapshot exists', {
+          domain: normalizedDomain,
+          snapshotId: latestSnapshot.id,
+          createdAt: latestSnapshot.createdAt,
+        });
+        return c.json(
+          {
+            success: false,
+            reason: 'recent_collection_exists',
+            message: `Collection skipped - a snapshot was created ${Math.round((Date.now() - latestSnapshot.createdAt.getTime()) / 1000)} seconds ago. Wait at least 60 seconds between collections.`,
+            snapshotId: latestSnapshot.id,
+            queued: false,
+          },
+          429
+        );
+      }
+    }
+
     // Run collection
     const collector = new DNSCollector(config, db);
     const result = await collector.collect();
