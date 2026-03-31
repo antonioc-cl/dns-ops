@@ -57,6 +57,13 @@
       "when": 1774363354561,
       "tag": "0007_slim_puma",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1774970923429,
+      "tag": "0008_moaning_mojo",
+      "breakpoints": true
     }
   ]
 }

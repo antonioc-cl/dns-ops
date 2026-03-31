@@ -806,6 +806,57 @@ export type SharedReport = typeof sharedReports.$inferSelect;
 export type NewSharedReport = typeof sharedReports.$inferInsert;
 
 // =============================================================================
+// FLEET REPORTS TABLE
+// =============================================================================
+
+export const fleetReportStatusEnum = pgEnum('fleet_report_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+]);
+
+export const fleetReports = pgTable(
+  'fleet_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenantId: uuid('tenant_id').notNull(),
+    createdBy: varchar('created_by', { length: 100 }).notNull(),
+    status: fleetReportStatusEnum('status').notNull().default('pending'),
+    inventory: jsonb('inventory').notNull().$type<string[]>(),
+    checks: jsonb('checks').notNull().$type<string[]>(),
+    format: varchar('format', { length: 20 }).notNull().default('summary'),
+    summary: jsonb('summary').$type<{
+      totalDomains: number;
+      processedDomains: number;
+      totalFindings: number;
+      checksApplied: string[];
+    }>(),
+    domainResults:
+      jsonb('domain_results').$type<
+        Array<{
+          domain: string;
+          findingsCount: number;
+          severityCounts: Record<string, number>;
+        }>
+      >(),
+    errorMessage: text('error_message'),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantIdx: index('fleet_report_tenant_idx').on(table.tenantId),
+    statusIdx: index('fleet_report_status_idx').on(table.status),
+    createdIdx: index('fleet_report_created_idx').on(table.createdAt),
+  })
+);
+
+export type FleetReport = typeof fleetReports.$inferSelect;
+export type NewFleetReport = typeof fleetReports.$inferInsert;
+
+// =============================================================================
 // PROBE OBSERVATIONS TABLE
 // =============================================================================
 

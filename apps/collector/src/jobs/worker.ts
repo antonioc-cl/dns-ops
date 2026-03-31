@@ -13,6 +13,7 @@ import {
   createPostgresAdapter,
   DomainRepository,
   FindingRepository,
+  FleetReportRepository,
   MonitoredDomainRepository,
   SnapshotRepository,
 } from '@dns-ops/db';
@@ -345,6 +346,20 @@ async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
     const domainRepo = new DomainRepository(db);
     const snapshotRepo = new SnapshotRepository(db);
     const findingRepo = new FindingRepository(db);
+    const fleetReportRepo = new FleetReportRepository(db);
+
+    // Create the fleet report record with status 'pending'
+    const newReport = await fleetReportRepo.create({
+      tenantId: tenantId || '00000000-0000-0000-0000-000000000000',
+      createdBy: triggeredBy,
+      status: 'pending',
+      inventory,
+      checks,
+      format: 'summary',
+    });
+
+    // Update to processing
+    await fleetReportRepo.markProcessing(newReport.id);
 
     let processed = 0;
     const results: Array<{
@@ -387,21 +402,22 @@ async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
       checksApplied: checks,
     };
 
-    const reportId = `report-${Date.now()}`;
+    // Persist the completed report
+    await fleetReportRepo.complete(newReport.id, summary, results);
 
     trackJobComplete({
       jobId: job.id || 'unknown',
       jobType: 'fleet-report',
       durationMs: Date.now() - startTime,
       result: 'success',
-      reportId,
+      reportId: newReport.id,
       processedDomains: results.length,
       totalFindings: summary.totalFindings,
     });
 
     return {
       success: true,
-      reportId,
+      reportId: newReport.id,
       summary,
     };
   } catch (error) {

@@ -17,6 +17,7 @@ export {
   withDomainResults,
 } from './domain.result.js';
 export { FindingRepository } from './finding.js';
+export { FleetReportRepository } from './fleet-report.js';
 // Mail evidence repositories
 export { DkimSelectorRepository, MailEvidenceRepository } from './mail-evidence.js';
 export { ObservationRepository } from './observation.js';
