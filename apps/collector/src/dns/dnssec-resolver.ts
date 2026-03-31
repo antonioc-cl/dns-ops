@@ -147,7 +147,6 @@ async function sendDnsQuery(
 
   return new Promise((resolve, reject) => {
     const dgram = require('node:dgram');
-    const _net = require('node:net');
     const client = dgram.createSocket('udp4');
 
     const timeout = setTimeout(() => {

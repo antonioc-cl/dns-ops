@@ -7,10 +7,14 @@
 
 import { SuggestionRepository } from '@dns-ops/db';
 import { Hono } from 'hono';
+import { requireAuth, requireWritePermission } from '../middleware/authorization.js';
 import { boolean, validateBody } from '../middleware/validation.js';
 import type { Env } from '../types.js';
 
 export const suggestionsRoutes = new Hono<Env>();
+
+// Apply auth middleware to all routes
+suggestionsRoutes.use('*', requireAuth);
 
 // =============================================================================
 // SCHEMAS
@@ -39,18 +43,14 @@ const ApplySuggestionSchema = {
  * Response: { success: true, suggestion: Suggestion }
  * Error: { error: string, code: 'REQUIRES_CONFIRMATION' | 'NOT_FOUND' | 'ALREADY_APPLIED' }
  */
-suggestionsRoutes.patch('/:suggestionId/apply', async (c) => {
+suggestionsRoutes.patch('/:suggestionId/apply', requireWritePermission, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
   }
 
   const suggestionId = c.req.param('suggestionId');
-  const actorId = c.get('actorId');
-
-  if (!actorId) {
-    return c.json({ error: 'Authentication required' }, 401);
-  }
+  const actorId = c.get('actorId')!; // Asserted by requireAuth middleware
 
   // Parse request body with optional confirmApply
   const bodyResult = await validateBody<ApplySuggestionBody>(c, ApplySuggestionSchema);
@@ -142,18 +142,14 @@ suggestionsRoutes.patch('/:suggestionId/apply', async (c) => {
  * Request: { reason?: string }
  * Response: { success: true, suggestion: Suggestion }
  */
-suggestionsRoutes.patch('/:suggestionId/dismiss', async (c) => {
+suggestionsRoutes.patch('/:suggestionId/dismiss', requireWritePermission, async (c) => {
   const db = c.get('db');
   if (!db) {
     return c.json({ error: 'Database not available' }, 503);
   }
 
   const suggestionId = c.req.param('suggestionId');
-  const actorId = c.get('actorId');
-
-  if (!actorId) {
-    return c.json({ error: 'Authentication required' }, 401);
-  }
+  const actorId = c.get('actorId')!; // Asserted by requireAuth middleware
 
   let reason: string | undefined;
   try {

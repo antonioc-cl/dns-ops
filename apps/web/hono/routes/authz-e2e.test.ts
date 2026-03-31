@@ -954,8 +954,8 @@ describe('Suggestions routes auth enforcement', () => {
   }
 
   describe('PATCH /api/suggestions/:suggestionId/apply', () => {
-    // Note: These test the auth behavior. Route matching requires correct Hono mount path.
-    // Skipped: route returns 404 due to mount path complexity.
+    // Note: These tests have a default parameter issue - actorId: undefined triggers default 'test-actor'
+    // Skipped: Test setup doesn't properly isolate auth context
     it.skip('returns 401 without actorId in context', async () => {
       const app = createSuggestionsApp({ actorId: undefined, includeAuth: true });
       const res = await app.request('/api/suggestions/sug-001/apply', {
@@ -978,6 +978,7 @@ describe('Suggestions routes auth enforcement', () => {
   });
 
   describe('PATCH /api/suggestions/:suggestionId/dismiss', () => {
+    // Note: Same default parameter issue as above
     it.skip('returns 401 without actorId in context', async () => {
       const app = createSuggestionsApp({ actorId: undefined, includeAuth: true });
       const res = await app.request('/api/suggestions/sug-001/dismiss', {
@@ -1159,31 +1160,30 @@ describe('Findings PATCH routes require write permission', () => {
   }
 
   describe('PATCH /api/findings/:findingId/acknowledge', () => {
-    // Note: Route matching requires correct Hono mount path. Skipped: route returns 404.
-    it.skip('returns 403 for system actor', async () => {
+    it('returns 403 for system actor', async () => {
       const app = createFindingsPatchApp({ actorId: 'system' });
       const res = await app.request(`/api/findings/${FINDING_ID}/acknowledge`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
       expect(res.status).toBe(403);
     });
 
-    it.skip('returns 403 for unknown actor', async () => {
+    it('returns 403 for unknown actor', async () => {
       const app = createFindingsPatchApp({ actorId: 'unknown' });
       const res = await app.request(`/api/findings/${FINDING_ID}/acknowledge`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
       expect(res.status).toBe(403);
     });
 
-    it.skip('allows valid user actor', async () => {
+    it('allows valid user actor', async () => {
       const app = createFindingsPatchApp({ actorId: 'user-123' });
       const res = await app.request(`/api/findings/${FINDING_ID}/acknowledge`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
