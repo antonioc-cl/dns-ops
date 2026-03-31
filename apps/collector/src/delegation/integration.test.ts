@@ -9,10 +9,21 @@
  */
 
 import type { IDatabaseAdapter } from '@dns-ops/db';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig, DNSQueryResult, VantageInfo } from '../dns/types.js';
 import { DelegationCollector } from './collector.js';
+
+// ── Mock dnssec-resolver for DNSKEY/DS queries ────────────────────────────
+
+// vi.hoisted ensures mocks are available during vi.mock hoisting
+const mockQueryDNSKEY = vi.hoisted(() => vi.fn());
+const mockQueryDS = vi.hoisted(() => vi.fn());
+
+vi.mock('../dns/dnssec-resolver.js', () => ({
+  queryDNSKEY: mockQueryDNSKEY,
+  queryDS: mockQueryDS,
+}));
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -153,6 +164,10 @@ function patchResolver(target: unknown, resultsByQuery: Map<string, DNSQueryResu
 // ── Tests ────────────────────────────────────────────────────────────────
 
 describe('Delegation Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('DelegationCollector full chain', () => {
     it('should produce a complete delegation summary with DNSSEC info', async () => {
       const collector = new DelegationCollector('example.com');
@@ -204,21 +219,6 @@ describe('Delegation Integration', () => {
             { flags: { aa: true } }
           ),
         ],
-        // DNSKEY
-        [
-          'example.com:DNSKEY',
-          buildSuccessResult('example.com', 'DNSKEY', [
-            makeAnswer('example.com', 'DNSKEY', '256 3 8 AwEAA...'),
-            makeAnswer('example.com', 'DNSKEY', '257 3 8 AwEAA...'),
-          ]),
-        ],
-        // DS from parent
-        [
-          'example.com:DS',
-          buildSuccessResult('example.com', 'DS', [
-            makeAnswer('example.com', 'DS', '12345 8 2 abc...'),
-          ]),
-        ],
         // Sample A query with AD flag for DNSSEC
         [
           'example.com:A',
@@ -234,6 +234,21 @@ describe('Delegation Integration', () => {
           ),
         ],
       ]);
+
+      // Mock DNSKEY and DS queries
+      mockQueryDNSKEY.mockResolvedValueOnce({
+        success: true,
+        answers: [
+          makeAnswer('example.com', 'DNSKEY', '256 3 8 AwEAA...'),
+          makeAnswer('example.com', 'DNSKEY', '257 3 8 AwEAA...'),
+        ],
+      });
+      mockQueryDS.mockResolvedValueOnce({
+        success: true,
+        answers: [
+          makeAnswer('example.com', 'DS', '12345 8 2 abc...'),
+        ],
+      });
 
       patchResolver(collector, queryResults);
 

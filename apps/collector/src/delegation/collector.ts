@@ -10,7 +10,9 @@
  */
 
 import { DNSResolver } from '../dns/resolver.js';
+import { queryDNSKEY, queryDS } from '../dns/dnssec-resolver.js';
 import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from '../dns/types.js';
+import { DNS_RCODE } from '@dns-ops/contracts';
 
 export interface DelegationSummary {
   domain: string;
@@ -330,16 +332,106 @@ export class DelegationCollector {
 
   /**
    * Collect DNSKEY records
+   *
+   * Uses dns-packet resolver (DNS-002) since Node.js native dns module
+   * doesn't support DNSKEY queries.
    */
   async collectDnskey(domain: string, recursiveResolver: string): Promise<DNSQueryResult> {
-    return this.collectWithDnssec(domain, 'DNSKEY', recursiveResolver);
+    try {
+      const result = await queryDNSKEY(domain);
+
+      if (result.success) {
+        return {
+          query: { name: domain, type: 'DNSKEY' },
+          vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+          success: true,
+          responseCode: DNS_RCODE.NOERROR,
+          flags: { aa: false, tc: false, rd: true, ra: true, ad: false, cd: false },
+          answers: result.answers,
+          authority: [],
+          additional: [],
+          responseTime: 0,
+        };
+      }
+
+      return {
+        query: { name: domain, type: 'DNSKEY' },
+        vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+        success: false,
+        responseCode: DNS_RCODE.SERVFAIL,
+        flags: { aa: false, tc: false, rd: true, ra: false, ad: false, cd: false },
+        answers: [],
+        authority: [],
+        additional: [],
+        responseTime: 0,
+        error: result.error,
+      };
+    } catch (error) {
+      return {
+        query: { name: domain, type: 'DNSKEY' },
+        vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+        success: false,
+        responseCode: DNS_RCODE.SERVFAIL,
+        flags: { aa: false, tc: false, rd: true, ra: false, ad: false, cd: false },
+        answers: [],
+        authority: [],
+        additional: [],
+        responseTime: 0,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
-   * Collect DS records from parent
+   * Collect DS records from parent zone
+   *
+   * Uses dns-packet resolver (DNS-002) since Node.js native dns module
+   * doesn't support DS queries.
    */
   async collectDsFromParent(domain: string, recursiveResolver: string): Promise<DNSQueryResult> {
-    return this.collectWithDnssec(domain, 'DS', recursiveResolver);
+    try {
+      const result = await queryDS(domain);
+
+      if (result.success) {
+        return {
+          query: { name: domain, type: 'DS' },
+          vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+          success: true,
+          responseCode: DNS_RCODE.NOERROR,
+          flags: { aa: false, tc: false, rd: true, ra: true, ad: false, cd: false },
+          answers: result.answers,
+          authority: [],
+          additional: [],
+          responseTime: 0,
+        };
+      }
+
+      return {
+        query: { name: domain, type: 'DS' },
+        vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+        success: false,
+        responseCode: DNS_RCODE.SERVFAIL,
+        flags: { aa: false, tc: false, rd: true, ra: false, ad: false, cd: false },
+        answers: [],
+        authority: [],
+        additional: [],
+        responseTime: 0,
+        error: result.error,
+      };
+    } catch (error) {
+      return {
+        query: { name: domain, type: 'DS' },
+        vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+        success: false,
+        responseCode: DNS_RCODE.SERVFAIL,
+        flags: { aa: false, tc: false, rd: true, ra: false, ad: false, cd: false },
+        answers: [],
+        authority: [],
+        additional: [],
+        responseTime: 0,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**

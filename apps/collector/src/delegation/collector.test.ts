@@ -16,15 +16,26 @@ import { DelegationCollector } from './collector';
 // Mock DNSResolver - vi.hoisted ensures mockQuery is available during vi.mock hoisting
 const mockQuery = vi.hoisted(() => vi.fn());
 
+// Mock dnssec-resolver - vi.hoisted ensures mocks are available during vi.mock hoisting
+const mockQueryDNSKEY = vi.hoisted(() => vi.fn());
+const mockQueryDS = vi.hoisted(() => vi.fn());
+
 vi.mock('../dns/resolver.js', () => ({
   DNSResolver: class {
     query = mockQuery;
   },
 }));
 
+vi.mock('../dns/dnssec-resolver.js', () => ({
+  queryDNSKEY: mockQueryDNSKEY,
+  queryDS: mockQueryDS,
+}));
+
 describe('DelegationCollector', () => {
   beforeEach(() => {
     mockQuery.mockClear();
+    mockQueryDNSKEY.mockClear();
+    mockQueryDS.mockClear();
   });
 
   describe('Parent Zone Delegation View', () => {
@@ -252,8 +263,7 @@ describe('DelegationCollector', () => {
     it('should capture DNSKEY for zone when queried', async () => {
       const collector = new DelegationCollector('example.com');
 
-      mockQuery.mockResolvedValueOnce({
-        query: { name: 'example.com', type: 'DNSKEY' },
+      mockQueryDNSKEY.mockResolvedValueOnce({
         success: true,
         answers: [
           { name: 'example.com', type: 'DNSKEY', ttl: 3600, data: '256 3 8 AwEAA...' },
@@ -263,6 +273,7 @@ describe('DelegationCollector', () => {
 
       const result = await collector.collectDnskey('example.com', '8.8.8.8');
 
+      expect(result.success).toBe(true);
       expect(result.answers).toHaveLength(2);
       expect(result.answers[0].type).toBe('DNSKEY');
     });
