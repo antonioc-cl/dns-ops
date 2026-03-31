@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DNSViews } from '../../components/DNSViews.js';
+import { isDelegationTabEnabled } from '../../config/features.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { SimulationPanel } from '../../components/SimulationPanel.js';
@@ -32,7 +33,11 @@ interface DomainSearchParams {
   tab?: DomainTabId;
 }
 
-const VALID_TABS: DomainTabId[] = ['overview', 'dns', 'mail', 'delegation'];
+// UI-001: Delegation tab is behind feature flag (ahead of plan)
+const DELEGATION_ENABLED = isDelegationTabEnabled();
+const BASE_TABS: DomainTabId[] = ['overview', 'dns', 'mail'];
+const ALL_TABS: DomainTabId[] = DELEGATION_ENABLED ? [...BASE_TABS, 'delegation'] : BASE_TABS;
+const VALID_TABS: DomainTabId[] = ALL_TABS;
 
 export const Route = createFileRoute('/domain/$domain')({
   component: Domain360Page,
@@ -99,7 +104,8 @@ const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'dns', label: 'DNS' },
   { id: 'mail', label: 'Mail' },
-  { id: 'delegation', label: 'Delegation' },
+  // UI-001: Delegation tab behind feature flag
+  ...(DELEGATION_ENABLED ? [{ id: 'delegation' as const, label: 'Delegation' }] : []),
 ];
 
 function Domain360Page() {
@@ -329,16 +335,19 @@ function Domain360Page() {
           {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id} />}
         </div>
 
-        <div
-          role="tabpanel"
-          id={getPanelId('delegation')}
-          aria-labelledby={getTabId('delegation')}
-          hidden={activeTab !== 'delegation'}
-        >
-          {activeTab === 'delegation' && (
-            <DelegationTab domain={domain} snapshotId={snapshot?.id} />
-          )}
-        </div>
+        {/* UI-001: Delegation panel behind feature flag */}
+        {DELEGATION_ENABLED && (
+          <div
+            role="tabpanel"
+            id={getPanelId('delegation')}
+            aria-labelledby={getTabId('delegation')}
+            hidden={activeTab !== 'delegation'}
+          >
+            {activeTab === 'delegation' && (
+              <DelegationTab domain={domain} snapshotId={snapshot?.id} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

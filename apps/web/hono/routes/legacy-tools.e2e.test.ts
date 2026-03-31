@@ -12,8 +12,10 @@
  */
 
 import { Hono } from 'hono';
+import type { IDatabaseAdapter } from '@dns-ops/db';
 import { describe, expect, it, vi } from 'vitest';
 import { legacyToolsRoutes } from './legacy-tools.js';
+import type { Env } from '../types.js';
 
 interface MockState {
   legacyAccessLogs?: Array<Record<string, unknown>>;
@@ -36,7 +38,7 @@ function getTableName(table: unknown): string {
   return '';
 }
 
-function createMockDb(state: MockState) {
+function createMockDb(state: MockState): IDatabaseAdapter {
   return {
     getDrizzle: vi.fn(),
     select: vi.fn(async (table: unknown) => {
@@ -49,11 +51,14 @@ function createMockDb(state: MockState) {
     insert: vi.fn(async () => ({ returning: vi.fn(() => []) })),
     update: vi.fn(async () => ({ where: vi.fn(() => ({ returning: vi.fn(() => []) })) })),
     delete: vi.fn(async () => ({ where: vi.fn(() => ({ returning: vi.fn(() => []) })) })),
-  };
+    transaction: vi.fn(async (callback: (db: IDatabaseAdapter) => Promise<unknown>) =>
+      callback(createMockDb(state))
+    ),
+  } as unknown as IDatabaseAdapter;
 }
 
 function createApp(state: MockState = {}) {
-  const app = new Hono();
+  const app = new Hono<Env>();
 
   // Set environment variables for legacy tools
   process.env.VITE_DMARC_TOOL_URL = 'https://dmarc.example.com';
@@ -62,7 +67,7 @@ function createApp(state: MockState = {}) {
   const mockDb = createMockDb(state);
 
   app.use('*', async (c, next) => {
-    c.set('db', mockDb as never);
+    c.set('db', mockDb);
     c.set('tenantId', 'test-tenant-id');
     c.set('actorId', 'test-actor-id');
     c.set('actorEmail', 'test@example.com');
