@@ -8,6 +8,17 @@
 import type { BlastRadius, Confidence, Severity } from '@dns-ops/contracts';
 import type { NewFinding, NewSuggestion, Observation, RecordSet } from '@dns-ops/db';
 
+// Result-based error handling
+export {
+  isRuleError,
+  partitionRuleResults,
+  RuleError,
+  type RuleErrorCode,
+  ruleResult,
+  ruleResultAsync,
+  validateRuleContext,
+} from './result.js';
+
 export interface RuleContext {
   snapshotId: string;
   domainId: string;

@@ -8,6 +8,18 @@
  */
 
 import type { NewFinding, Observation, RecordSet } from '@dns-ops/db';
+
+// Result-based error handling
+export {
+  getActionableFindingTypes,
+  isActionableFindingType,
+  isSimulationError,
+  SimulationError,
+  type SimulationErrorCode,
+  simulationResult,
+  validateSimulationContext,
+} from './result.js';
+
 import type { RuleContext, Ruleset } from '../engine/index.js';
 import { RulesEngine } from '../engine/index.js';
 import {

@@ -6,9 +6,7 @@
 
 // DNS Rules
 export * from './dns/rules.js';
-// Re-export types
-export type { Rule, RuleContext, RuleResult, Ruleset } from './engine/index.js';
-// Engine
+// Engine and Result types
 export * from './engine/index.js';
 // Mail Rules (Bead 09)
 export * from './mail/rules.js';
