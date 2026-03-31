@@ -7,7 +7,7 @@
 
 import { eq } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
-import { type FleetReport, type NewFleetReport, fleetReports } from '../schema/index.js';
+import { type FleetReport, fleetReports, type NewFleetReport } from '../schema/index.js';
 
 export class FleetReportRepository {
   constructor(private db: IDatabaseAdapter) {}

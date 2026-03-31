@@ -5,7 +5,9 @@
  */
 
 import { eq } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { IDatabaseAdapter } from '../database/simple-adapter.js';
+import type * as schema from '../schema/index.js';
 import { type Domain, domains, type NewDomain } from '../schema/index.js';
 
 export interface DomainFilter {
@@ -130,23 +132,55 @@ export class DomainRepository {
 
   /**
    * Create a new domain or return existing if name already exists
-   * In multi-tenant mode, considers (tenantId, normalizedName) as unique
+   * Uses atomic upsert to prevent race conditions with concurrent calls.
+   *
+   * In multi-tenant mode, considers (normalizedName, tenantId) as unique.
+   * For global domains (no tenantId), considers (normalizedName, NULL) as unique.
    */
   async findOrCreate(data: NewDomain): Promise<Domain> {
-    // For multi-tenant: check within tenant scope
+    const normalizedName = data.normalizedName || data.name.toLowerCase();
+    const insertData = {
+      ...data,
+      normalizedName,
+    };
+
+    // Get raw Drizzle instance for atomic upsert
+    // Cast through unknown to handle the complex union types
+    const rawDb = this.db.getDrizzle() as unknown as NodePgDatabase<typeof schema>;
+
+    // Try atomic insert with onConflictDoNothing
+    // This handles the race condition where concurrent calls might try to insert the same domain
+    const insertResult = await rawDb
+      .insert(domains)
+      .values(insertData)
+      .onConflictDoNothing()
+      .returning();
+
+    // If insert succeeded, return the new record
+    if (insertResult.length > 0) {
+      return insertResult[0];
+    }
+
+    // Conflict occurred - another caller inserted first
+    // Query for the existing record
     if (data.tenantId) {
       const existing = await this.findByNameAndTenant(data.name, data.tenantId);
       if (existing) {
         return existing;
       }
+      // Fallback: query by normalized name directly (should exist after conflict)
+      const fallback = await this.findByName(data.name);
+      if (fallback) {
+        return fallback;
+      }
     } else {
-      // For unowned domains: check globally
       const existing = await this.findByName(data.name);
       if (existing) {
         return existing;
       }
     }
-    return this.create(data);
+    // This shouldn't happen if insert failed due to conflict
+    throw new Error(`Domain ${data.name} not found after conflict resolution`);
   }
 
   /**
