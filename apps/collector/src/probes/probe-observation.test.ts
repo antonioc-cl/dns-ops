@@ -1,0 +1,221 @@
+/**
+ * Probe Observation Persistence Tests - DATA-003
+ *
+ * Tests that probe results are persisted to the database.
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { IDatabaseAdapter } from '@dns-ops/db';
+import { ProbeObservationRepository } from '@dns-ops/db';
+
+describe('Probe Observation Persistence', () => {
+  describe('Repository', () => {
+    it('should create probe observation', async () => {
+      const mockDb: IDatabaseAdapter = {
+        select: vi.fn(),
+        selectOne: vi.fn(),
+        selectWhere: vi.fn(),
+        insert: vi.fn(async () => ({
+          id: 'probe-obs-1',
+          snapshotId: 'snapshot-1',
+          probeType: 'smtp_starttls' as const,
+          status: 'success' as const,
+          hostname: 'mail.example.com',
+          port: 25,
+          success: true,
+          errorMessage: null,
+          probedAt: new Date(),
+          responseTimeMs: 150,
+          probeData: { supportsStarttls: true },
+        })),
+        insertMany: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        transaction: vi.fn(),
+        getDrizzle: vi.fn(),
+      };
+
+      const repo = new ProbeObservationRepository(mockDb);
+
+      const observation = await repo.create({
+        snapshotId: 'snapshot-1',
+        probeType: 'smtp_starttls',
+        status: 'success',
+        hostname: 'mail.example.com',
+        port: 25,
+        success: true,
+        responseTimeMs: 150,
+        probeData: { supportsStarttls: true },
+      });
+
+      expect(observation.id).toBe('probe-obs-1');
+      expect(observation.hostname).toBe('mail.example.com');
+      expect(observation.success).toBe(true);
+    });
+
+    it('should find observations by snapshot', async () => {
+      const mockObservations = [
+        {
+          id: 'probe-1',
+          snapshotId: 'snapshot-1',
+          probeType: 'smtp_starttls',
+          status: 'success' as const,
+          hostname: 'mx1.example.com',
+          port: 25,
+          success: true,
+          errorMessage: null,
+          probedAt: new Date(),
+          responseTimeMs: 100,
+          probeData: null,
+        },
+        {
+          id: 'probe-2',
+          snapshotId: 'snapshot-1',
+          probeType: 'mta_sts',
+          status: 'success' as const,
+          hostname: 'mta-sts.example.com',
+          port: 443,
+          success: true,
+          errorMessage: null,
+          probedAt: new Date(),
+          responseTimeMs: 200,
+          probeData: null,
+        },
+      ];
+
+      const mockDb: IDatabaseAdapter = {
+        select: vi.fn(),
+        selectOne: vi.fn(),
+        selectWhere: vi.fn(async () => mockObservations),
+        insert: vi.fn(),
+        insertMany: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        transaction: vi.fn(),
+        getDrizzle: vi.fn(),
+      };
+
+      const repo = new ProbeObservationRepository(mockDb);
+      const results = await repo.findBySnapshotId('snapshot-1');
+
+      expect(results).toHaveLength(2);
+      // Sorted alphabetically by hostname
+      expect(results[0].hostname).toBe('mta-sts.example.com');
+      expect(results[1].hostname).toBe('mx1.example.com');
+    });
+
+    it('should filter by probe type', async () => {
+      const mockObservations = [
+        {
+          id: 'probe-1',
+          snapshotId: 'snapshot-1',
+          probeType: 'smtp_starttls',
+          status: 'success' as const,
+          hostname: 'mx1.example.com',
+          port: 25,
+          success: true,
+          errorMessage: null,
+          probedAt: new Date(),
+          responseTimeMs: 100,
+          probeData: null,
+        },
+        {
+          id: 'probe-2',
+          snapshotId: 'snapshot-1',
+          probeType: 'smtp_starttls',
+          status: 'timeout' as const,
+          hostname: 'mx2.example.com',
+          port: 25,
+          success: false,
+          errorMessage: 'Timeout',
+          probedAt: new Date(),
+          responseTimeMs: 30000,
+          probeData: null,
+        },
+      ];
+
+      const mockDb: IDatabaseAdapter = {
+        select: vi.fn(),
+        selectOne: vi.fn(),
+        selectWhere: vi.fn(async () => mockObservations),
+        insert: vi.fn(),
+        insertMany: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        transaction: vi.fn(),
+        getDrizzle: vi.fn(),
+      };
+
+      const repo = new ProbeObservationRepository(mockDb);
+      const smtpProbes = await repo.findBySnapshotAndType('snapshot-1', 'smtp_starttls');
+
+      expect(smtpProbes).toHaveLength(2);
+    });
+
+    it('should get summary statistics', async () => {
+      const mockObservations = [
+        {
+          id: 'probe-1',
+          snapshotId: 'snapshot-1',
+          probeType: 'smtp_starttls',
+          status: 'success' as const,
+          hostname: 'mx1.example.com',
+          port: 25,
+          success: true,
+          errorMessage: null,
+          probedAt: new Date(),
+          responseTimeMs: 100,
+          probeData: null,
+        },
+        {
+          id: 'probe-2',
+          snapshotId: 'snapshot-1',
+          probeType: 'mta_sts',
+          status: 'success' as const,
+          hostname: 'mta-sts.example.com',
+          port: 443,
+          success: true,
+          errorMessage: null,
+          probedAt: new Date(),
+          responseTimeMs: 200,
+          probeData: null,
+        },
+        {
+          id: 'probe-3',
+          snapshotId: 'snapshot-1',
+          probeType: 'smtp_starttls',
+          status: 'error' as const,
+          hostname: 'mx2.example.com',
+          port: 25,
+          success: false,
+          errorMessage: 'Connection refused',
+          probedAt: new Date(),
+          responseTimeMs: 50,
+          probeData: null,
+        },
+      ];
+
+      const mockDb: IDatabaseAdapter = {
+        select: vi.fn(),
+        selectOne: vi.fn(),
+        selectWhere: vi.fn(async () => mockObservations),
+        insert: vi.fn(),
+        insertMany: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        transaction: vi.fn(),
+        getDrizzle: vi.fn(),
+      };
+
+      const repo = new ProbeObservationRepository(mockDb);
+      const summary = await repo.getSummary('snapshot-1');
+
+      expect(summary.total).toBe(3);
+      expect(summary.successful).toBe(2);
+      expect(summary.failed).toBe(1);
+      expect(summary.avgResponseTimeMs).toBe(117); // (100 + 200 + 50) / 3 = 116.67 rounds to 117
+      expect(summary.byType['smtp_starttls']).toBe(2);
+      expect(summary.byType['mta_sts']).toBe(1);
+    });
+  });
+});
