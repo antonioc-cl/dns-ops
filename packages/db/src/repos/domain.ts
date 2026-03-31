@@ -162,19 +162,19 @@ export class DomainRepository {
     }
 
     // Conflict occurred - another caller inserted first
-    // Query for the existing record
+    // Query for the existing record using normalizedName (not data.name)
     if (data.tenantId) {
-      const existing = await this.findByNameAndTenant(data.name, data.tenantId);
+      const existing = await this.findByNameAndTenant(normalizedName, data.tenantId);
       if (existing) {
         return existing;
       }
       // Fallback: query by normalized name directly (should exist after conflict)
-      const fallback = await this.findByName(data.name);
+      const fallback = await this.findByName(normalizedName);
       if (fallback) {
         return fallback;
       }
     } else {
-      const existing = await this.findByName(data.name);
+      const existing = await this.findByName(normalizedName);
       if (existing) {
         return existing;
       }
