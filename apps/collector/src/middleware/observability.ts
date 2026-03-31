@@ -55,11 +55,11 @@ export function trackError(errorType: string, message: string): void {
   if (!errorMessages.has(errorType)) {
     errorMessages.set(errorType, new Set());
   }
-  errorMessages.get(errorType)!.add(message);
+  errorMessages.get(errorType)?.add(message);
 
   // Keep only last 5 unique messages per type
-  const messages = errorMessages.get(errorType)!;
-  if (messages.size > 5) {
+  const messages = errorMessages.get(errorType);
+  if (messages && messages.size > 5) {
     const arr = Array.from(messages);
     messages.clear();
     arr.slice(-5).forEach((m) => messages.add(m));
@@ -93,6 +93,15 @@ export function getErrorSummary(): {
 export function resetErrorCounts(): void {
   errorCounts.clear();
   errorMessages.clear();
+}
+
+/**
+ * Reset all metrics (counters, histograms, error counts) - for testing
+ */
+export function resetMetrics(): void {
+  resetErrorCounts();
+  counters.clear();
+  histograms.clear();
 }
 
 // ============================================================================
@@ -220,7 +229,7 @@ export function getPrometheusMetrics(): string {
     lines.push(`dns_ops_errors_total{type="${type}"} ${data.count}`);
   }
 
-  return lines.join('\n') + '\n';
+  return `${lines.join('\n')}\n`;
 }
 
 /**

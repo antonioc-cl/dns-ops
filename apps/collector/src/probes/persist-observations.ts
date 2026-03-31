@@ -11,6 +11,17 @@ import type { MTASTSProbeResult } from './mta-sts.js';
 import type { SMTPProbeResult } from './smtp-starttls.js';
 
 /**
+ * Probe observation status types
+ */
+export type ProbeStatus =
+  | 'success'
+  | 'timeout'
+  | 'refused'
+  | 'ssrf_blocked'
+  | 'allowlist_denied'
+  | 'error';
+
+/**
  * Map SMTP probe result to probe observation format
  */
 export function smtpResultToObservation(
@@ -19,7 +30,7 @@ export function smtpResultToObservation(
 ): {
   snapshotId: string;
   probeType: 'smtp_starttls';
-  status: 'success' | 'timeout' | 'refused' | 'error';
+  status: ProbeStatus;
   hostname: string;
   port: number;
   success: boolean;
@@ -28,7 +39,8 @@ export function smtpResultToObservation(
   probeData: Record<string, unknown> | null;
 } {
   // Determine status from result
-  let status: 'success' | 'timeout' | 'refused' | 'error' = 'error';
+  let status: ProbeStatus = 'error';
+
   if (result.success) {
     if (result.supportsStarttls) {
       status = 'success';
@@ -37,7 +49,13 @@ export function smtpResultToObservation(
     }
   } else if (result.error) {
     const errorLower = result.error.toLowerCase();
-    if (errorLower.includes('timeout')) {
+
+    // Check for specific error types in order of specificity
+    if (errorLower.includes('ssrf')) {
+      status = 'ssrf_blocked';
+    } else if (errorLower.includes('allowlist') || errorLower.includes('not in allowlist')) {
+      status = 'allowlist_denied';
+    } else if (errorLower.includes('timeout')) {
       status = 'timeout';
     } else if (errorLower.includes('refused') || errorLower.includes('connect')) {
       status = 'refused';
@@ -60,6 +78,9 @@ export function smtpResultToObservation(
       }
     : { supportsStarttls: result.supportsStarttls, smtpBanner: result.smtpBanner };
 
+  // Handle empty string error message - keep as null
+  const errorMessage = result.error && result.error.trim().length > 0 ? result.error : null;
+
   return {
     snapshotId,
     probeType: 'smtp_starttls',
@@ -67,7 +88,7 @@ export function smtpResultToObservation(
     hostname: result.hostname,
     port: result.port,
     success: result.success && result.supportsStarttls,
-    errorMessage: result.error || null,
+    errorMessage,
     responseTimeMs: result.responseTimeMs,
     probeData,
   };
@@ -83,7 +104,7 @@ export function mtastsResultToObservation(
 ): {
   snapshotId: string;
   probeType: 'mta_sts';
-  status: 'success' | 'error';
+  status: ProbeStatus;
   hostname: string;
   port: number;
   success: boolean;
@@ -91,6 +112,21 @@ export function mtastsResultToObservation(
   responseTimeMs: number;
   probeData: Record<string, unknown> | null;
 } {
+  // Determine status from result
+  let status: ProbeStatus = 'error';
+  if (result.success) {
+    status = 'success';
+  } else if (result.error) {
+    const errorLower = result.error.toLowerCase();
+    if (errorLower.includes('timeout')) {
+      status = 'timeout';
+    } else if (errorLower.includes('certificate') || errorLower.includes('tls')) {
+      status = 'error';
+    } else {
+      status = 'error';
+    }
+  }
+
   const probeData: Record<string, unknown> | null = result.policy
     ? {
         domain: result.domain,
@@ -104,14 +140,17 @@ export function mtastsResultToObservation(
       }
     : { domain: result.domain, policyUrl: result.policyUrl };
 
+  // Handle empty string error message - keep as null
+  const errorMessage = result.error && result.error.trim().length > 0 ? result.error : null;
+
   return {
     snapshotId,
     probeType: 'mta_sts',
-    status: result.success ? 'success' : 'error',
+    status,
     hostname,
     port: 443,
     success: result.success,
-    errorMessage: result.error || null,
+    errorMessage,
     responseTimeMs: result.responseTimeMs,
     probeData,
   };

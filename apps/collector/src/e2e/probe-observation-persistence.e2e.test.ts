@@ -7,16 +7,24 @@
  * 3. All probe status types are correctly handled
  * 4. Failed probes (SSRF, allowlist, timeout) have correct status
  * 5. Observations can be persisted and retrieved
+ *
+ * These tests catch issues like:
+ * - SSRF/allowlist errors mapped to generic 'error' instead of specific status
+ * - Empty string error messages not properly handled
+ * - Missing status types for different error conditions
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
+import { describe, expect, it } from 'vitest';
 import type { MTASTSProbeResult } from '../probes/mta-sts.js';
-import { smtpResultToObservation, mtastsResultToObservation } from '../probes/persist-observations.js';
+import {
+  mtastsResultToObservation,
+  smtpResultToObservation,
+} from '../probes/persist-observations.js';
+import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
 
 describe('Probe Observation Persistence E2E', () => {
-  describe('SMTP Result Mapping', () => {
-    it('should map successful STARTTLS result', () => {
+  describe('SMTP Result Mapping - Status Types', () => {
+    it('should map successful STARTTLS result to success status', () => {
       const result: SMTPProbeResult = {
         success: true,
         hostname: 'mail.example.com',
@@ -49,7 +57,7 @@ describe('Probe Observation Persistence E2E', () => {
       expect(observation.probeData?.tlsVersion).toBe('TLSv1.3');
     });
 
-    it('should map SMTP result with timeout error', () => {
+    it('should map SMTP result with timeout error to timeout status', () => {
       const result: SMTPProbeResult = {
         success: false,
         hostname: 'slow.example.com',
@@ -67,7 +75,7 @@ describe('Probe Observation Persistence E2E', () => {
       expect(observation.probeData).toEqual({ supportsStarttls: false, smtpBanner: undefined });
     });
 
-    it('should map SMTP result with connection refused', () => {
+    it('should map SMTP result with connection refused to refused status', () => {
       const result: SMTPProbeResult = {
         success: false,
         hostname: 'blocked.example.com',
@@ -83,7 +91,7 @@ describe('Probe Observation Persistence E2E', () => {
       expect(observation.success).toBe(false);
     });
 
-    it('should map SMTP result with generic error', () => {
+    it('should map SMTP result with generic error to error status', () => {
       const result: SMTPProbeResult = {
         success: false,
         hostname: 'error.example.com',
@@ -100,7 +108,7 @@ describe('Probe Observation Persistence E2E', () => {
       expect(observation.errorMessage).toBe('SSL certificate verification failed');
     });
 
-    it('should map SMTP result without STARTTLS support', () => {
+    it('should map SMTP result without STARTTLS support to error status', () => {
       const result: SMTPProbeResult = {
         success: true,
         hostname: 'legacy.example.com',
@@ -118,9 +126,12 @@ describe('Probe Observation Persistence E2E', () => {
       expect(observation.probeData?.supportsStarttls).toBe(false);
     });
 
-    it('should map SMTP result with SSRF blocked error', () => {
-      // SSRF blocked should be mapped - but currently it's not!
-      // This test documents the current limitation
+    // =============================================================================
+    // SSRF BLOCKED STATUS TESTS - Critical for security isolation
+    // These tests verify that SSRF errors are properly categorized
+    // =============================================================================
+
+    it('should map SSRF blocked to ssrf_blocked status', () => {
       const result: SMTPProbeResult = {
         success: false,
         hostname: '10.0.0.1',
@@ -132,13 +143,46 @@ describe('Probe Observation Persistence E2E', () => {
 
       const observation = smtpResultToObservation('snap-ssrf', result);
 
-      // Currently maps to 'error' - should ideally map to 'ssrf_blocked'
-      expect(observation.status).toBe('error');
+      expect(observation.status).toBe('ssrf_blocked');
       expect(observation.errorMessage).toContain('SSRF');
     });
 
-    it('should map SMTP result with allowlist denied', () => {
-      // Allowlist denied should be mapped - but currently it's not!
+    it('should map SSRF with lowercase error to ssrf_blocked status', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: '192.168.1.1',
+        port: 25,
+        supportsStarttls: false,
+        error: 'ssrf blocked: private ip',
+        responseTimeMs: 3,
+      };
+
+      const observation = smtpResultToObservation('snap-ssrf-lower', result);
+
+      expect(observation.status).toBe('ssrf_blocked');
+    });
+
+    it('should map SSRF with mixed case error to ssrf_blocked status', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: '127.0.0.1',
+        port: 25,
+        supportsStarttls: false,
+        error: 'Ssrf Blocked: Localhost Detected',
+        responseTimeMs: 1,
+      };
+
+      const observation = smtpResultToObservation('snap-ssrf-mixed', result);
+
+      expect(observation.status).toBe('ssrf_blocked');
+    });
+
+    // =============================================================================
+    // ALLOWLIST DENIED STATUS TESTS - Critical for tenant isolation
+    // These tests verify that allowlist violations are properly categorized
+    // =============================================================================
+
+    it('should map allowlist denied to allowlist_denied status', () => {
       const result: SMTPProbeResult = {
         success: false,
         hostname: 'unlisted.example.com',
@@ -150,8 +194,76 @@ describe('Probe Observation Persistence E2E', () => {
 
       const observation = smtpResultToObservation('snap-allow', result);
 
-      // Currently maps to 'error' - should ideally map to 'allowlist_denied'
-      expect(observation.status).toBe('error');
+      expect(observation.status).toBe('allowlist_denied');
+    });
+
+    it('should map allowlist with "not in allowlist" error to allowlist_denied', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'not-allowed.com',
+        port: 25,
+        supportsStarttls: false,
+        error: 'Host not in allowlist: unauthorized destination',
+        responseTimeMs: 3,
+      };
+
+      const observation = smtpResultToObservation('snap-allow-2', result);
+
+      expect(observation.status).toBe('allowlist_denied');
+    });
+
+    it('should map allowlist denied with lowercase error to allowlist_denied', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'cross-tenant.com',
+        port: 25,
+        supportsStarttls: false,
+        error: 'allowlist denied: tenant-b cannot probe tenant-a resources',
+        responseTimeMs: 2,
+      };
+
+      const observation = smtpResultToObservation('snap-allow-3', result);
+
+      expect(observation.status).toBe('allowlist_denied');
+    });
+
+    // =============================================================================
+    // STATUS ORDERING TESTS - Specific statuses take precedence
+    // SSRF and allowlist should be checked before generic error
+    // =============================================================================
+
+    it('should check SSRF before generic error matching', () => {
+      // Error that mentions SSRF but also contains "error" in the message
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: '10.0.0.1',
+        port: 25,
+        supportsStarttls: false,
+        error: 'SSRF blocked: Internal error occurred',
+        responseTimeMs: 5,
+      };
+
+      const observation = smtpResultToObservation('snap-ssrf-first', result);
+
+      // Should be ssrf_blocked, not error (SSRF check comes first)
+      expect(observation.status).toBe('ssrf_blocked');
+    });
+
+    it('should check allowlist before generic error matching', () => {
+      // Error that mentions allowlist but also contains "refused" in the message
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'blocked.com',
+        port: 25,
+        supportsStarttls: false,
+        error: 'Allowlist denied: Connection refused',
+        responseTimeMs: 5,
+      };
+
+      const observation = smtpResultToObservation('snap-allow-first', result);
+
+      // Should be allowlist_denied, not refused (allowlist check comes first)
+      expect(observation.status).toBe('allowlist_denied');
     });
   });
 
@@ -212,7 +324,11 @@ describe('Probe Observation Persistence E2E', () => {
         // No policy field means policy fetch failed or domain doesn't support MTA-STS
       };
 
-      const observation = mtastsResultToObservation('snap-null', 'mta-sts.nullmx.example.com', result);
+      const observation = mtastsResultToObservation(
+        'snap-null',
+        'mta-sts.nullmx.example.com',
+        result
+      );
 
       expect(observation.success).toBe(true); // Connection succeeded
       expect(observation.probeData?.policyMode).toBeUndefined();
@@ -230,7 +346,7 @@ describe('Probe Observation Persistence E2E', () => {
         tlsCipher: 'ECDHE-RSA-AES256-SHA',
         certificate: {
           subject: 'secure.example.com',
-          issuer: 'Let\'s Encrypt Authority X3',
+          issuer: "Let's Encrypt Authority X3",
           validFrom: '2024-01-15',
           validTo: '2024-04-15',
           fingerprint: 'FINGERPRINT',
@@ -246,7 +362,7 @@ describe('Probe Observation Persistence E2E', () => {
         tlsVersion: 'TLSv1.2',
         tlsCipher: 'ECDHE-RSA-AES256-SHA',
         certificateSubject: 'secure.example.com',
-        certificateIssuer: 'Let\'s Encrypt Authority X3',
+        certificateIssuer: "Let's Encrypt Authority X3",
         certificateValidFrom: '2024-01-15',
         certificateValidTo: '2024-04-15',
         smtpBanner: '220 secure.example.com ESMTP',
@@ -272,8 +388,13 @@ describe('Probe Observation Persistence E2E', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle empty error message', () => {
+  // =============================================================================
+  // EMPTY/WHITESPACE ERROR MESSAGE TESTS
+  // Empty or whitespace-only error messages should be handled gracefully
+  // =============================================================================
+
+  describe('Empty Error Message Handling', () => {
+    it('should convert empty string error to null', () => {
       const result: SMTPProbeResult = {
         success: false,
         hostname: 'empty.example.com',
@@ -285,13 +406,178 @@ describe('Probe Observation Persistence E2E', () => {
 
       const observation = smtpResultToObservation('snap-empty', result);
 
-      // Empty string is converted to null
       expect(observation.errorMessage).toBeNull();
       expect(observation.status).toBe('error');
     });
 
+    it('should convert whitespace-only error to null', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'whitespace.example.com',
+        port: 25,
+        supportsStarttls: false,
+        error: '   ',
+        responseTimeMs: 0,
+      };
+
+      const observation = smtpResultToObservation('snap-whitespace', result);
+
+      expect(observation.errorMessage).toBeNull();
+    });
+
+    it('should convert tab/newline error to null', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'newline.example.com',
+        port: 25,
+        supportsStarttls: false,
+        error: '\n\t  \r',
+        responseTimeMs: 0,
+      };
+
+      const observation = smtpResultToObservation('snap-newline', result);
+
+      expect(observation.errorMessage).toBeNull();
+    });
+
+    it('should preserve single-character error message', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'single-char.example.com',
+        port: 25,
+        supportsStarttls: false,
+        error: 'x',
+        responseTimeMs: 0,
+      };
+
+      const observation = smtpResultToObservation('snap-single', result);
+
+      expect(observation.errorMessage).toBe('x');
+    });
+  });
+
+  // =============================================================================
+  // MTA-STS STATUS TYPE TESTS
+  // =============================================================================
+
+  describe('MTA-STS Result Mapping - Status Types', () => {
+    it('should map successful MTA-STS result to success status', () => {
+      const result: MTASTSProbeResult = {
+        success: true,
+        domain: 'example.com',
+        policyUrl: 'https://mta-sts.example.com/.well-known/mta-sts.txt',
+        policy: {
+          version: 'STSv1',
+          mode: 'enforce',
+          maxAge: 86400,
+          mx: ['mail.example.com', 'mail2.example.com'],
+          raw: 'version: STSv1\nmode: enforce\nmx: mail.example.com\nmx: mail2.example.com\nmax_age: 86400',
+        },
+        responseTimeMs: 200,
+        tlsVersion: 'TLSv1.3',
+        certificateValid: true,
+      };
+
+      const observation = mtastsResultToObservation('snap-123', 'mta-sts.example.com', result);
+
+      expect(observation.snapshotId).toBe('snap-123');
+      expect(observation.probeType).toBe('mta_sts');
+      expect(observation.status).toBe('success');
+      expect(observation.hostname).toBe('mta-sts.example.com');
+      expect(observation.port).toBe(443);
+      expect(observation.success).toBe(true);
+      expect(observation.probeData?.policyMode).toBe('enforce');
+      expect(observation.probeData?.policyMaxAge).toBe(86400);
+      expect(observation.probeData?.tlsVersion).toBe('TLSv1.3');
+    });
+
+    it('should map MTA-STS TLS error to error status', () => {
+      const result: MTASTSProbeResult = {
+        success: false,
+        domain: 'example.com',
+        policyUrl: 'https://mta-sts.example.com/.well-known/mta-sts.txt',
+        error: 'TLS handshake failed',
+        responseTimeMs: 5000,
+      };
+
+      const observation = mtastsResultToObservation('snap-456', 'mta-sts.example.com', result);
+
+      expect(observation.status).toBe('error');
+      expect(observation.success).toBe(false);
+      expect(observation.errorMessage).toBe('TLS handshake failed');
+      expect(observation.probeData?.policyMode).toBeUndefined();
+    });
+
+    it('should map MTA-STS timeout to timeout status', () => {
+      const result: MTASTSProbeResult = {
+        success: false,
+        domain: 'example.com',
+        policyUrl: 'https://mta-sts.example.com/.well-known/mta-sts.txt',
+        error: 'Connection timeout after 10000ms',
+        responseTimeMs: 10000,
+      };
+
+      const observation = mtastsResultToObservation('snap-timeout', 'mta-sts.example.com', result);
+
+      expect(observation.status).toBe('timeout');
+      expect(observation.success).toBe(false);
+    });
+
+    it('should map MTA-STS certificate error to error status', () => {
+      const result: MTASTSProbeResult = {
+        success: false,
+        domain: 'example.com',
+        policyUrl: 'https://mta-sts.example.com/.well-known/mta-sts.txt',
+        error: 'Certificate verification failed',
+        responseTimeMs: 2000,
+      };
+
+      const observation = mtastsResultToObservation('snap-cert-err', 'mta-sts.example.com', result);
+
+      expect(observation.status).toBe('error');
+    });
+
+    it('should handle MTA-STS with no policy (null MX)', () => {
+      const result: MTASTSProbeResult = {
+        success: true,
+        domain: 'nullmx.example.com',
+        policyUrl: 'https://mta-sts.nullmx.example.com/.well-known/mta-sts.txt',
+        responseTimeMs: 150,
+        // No policy field means policy fetch failed or domain doesn't support MTA-STS
+      };
+
+      const observation = mtastsResultToObservation(
+        'snap-null',
+        'mta-sts.nullmx.example.com',
+        result
+      );
+
+      expect(observation.success).toBe(true); // Connection succeeded
+      expect(observation.probeData?.policyMode).toBeUndefined();
+    });
+
+    it('should convert empty MTA-STS error to null', () => {
+      const result: MTASTSProbeResult = {
+        success: false,
+        domain: 'example.com',
+        policyUrl: 'https://mta-sts.example.com/.well-known/mta-sts.txt',
+        error: '',
+        responseTimeMs: 0,
+      };
+
+      const observation = mtastsResultToObservation('snap-empty', 'mta-sts.example.com', result);
+
+      expect(observation.errorMessage).toBeNull();
+    });
+  });
+
+  // =============================================================================
+  // EDGE CASES
+  // =============================================================================
+
+  describe('Edge Cases', () => {
     it('should handle very long hostname', () => {
-      const longHostname = 'a'.repeat(60) + '.example.com';
+      const longHostname = `${'a'.repeat(60)}.example.com`;
       const result: SMTPProbeResult = {
         success: true,
         hostname: longHostname,
@@ -317,7 +603,9 @@ describe('Probe Observation Persistence E2E', () => {
 
       const observation = smtpResultToObservation('snap-special', result);
 
-      expect(observation.errorMessage).toBe('Error with "quotes" and \'apostrophes\' and <brackets>');
+      expect(observation.errorMessage).toBe(
+        'Error with "quotes" and \'apostrophes\' and <brackets>'
+      );
     });
 
     it('should handle very large response time', () => {
@@ -333,6 +621,37 @@ describe('Probe Observation Persistence E2E', () => {
       const observation = smtpResultToObservation('snap-slow', result);
 
       expect(observation.responseTimeMs).toBe(300000);
+    });
+
+    it('should handle zero response time', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'instant.example.com',
+        port: 25,
+        supportsStarttls: false,
+        error: 'Connection refused',
+        responseTimeMs: 0,
+      };
+
+      const observation = smtpResultToObservation('snap-zero', result);
+
+      expect(observation.responseTimeMs).toBe(0);
+    });
+
+    it('should preserve error message with leading/trailing whitespace', () => {
+      const result: SMTPProbeResult = {
+        success: false,
+        hostname: 'whitespace.example.com',
+        port: 25,
+        supportsStarttls: false,
+        error: '  Error message  ',
+        responseTimeMs: 100,
+      };
+
+      const observation = smtpResultToObservation('snap-trim', result);
+
+      // Leading/trailing whitespace is preserved in the error message
+      expect(observation.errorMessage).toBe('  Error message  ');
     });
   });
 });

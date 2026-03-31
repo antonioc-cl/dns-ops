@@ -427,7 +427,7 @@ describe('E2E: Result Integration Across All Layers', () => {
   describe('Server Error Logging', () => {
     it('should log 5xx errors but not 4xx errors', async () => {
       const app = new Hono();
-      const loggedErrors: string[] = [];
+      const _loggedErrors: string[] = [];
 
       // Override logger for testing
       // Note: In real test we'd mock the logger

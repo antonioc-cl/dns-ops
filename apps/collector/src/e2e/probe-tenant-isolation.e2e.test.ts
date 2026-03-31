@@ -9,10 +9,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  createTenantAllowlist,
-  ProbeAllowlistManager,
-} from '../probes/allowlist.js';
+import { createTenantAllowlist, ProbeAllowlistManager } from '../probes/allowlist.js';
 
 // Mock dnssec-resolver
 vi.mock('../dns/dnssec-resolver.js', () => ({
@@ -30,7 +27,7 @@ describe('Probe Tenant Isolation E2E', () => {
   describe('Tenant-Scoped Allowlist Isolation', () => {
     it('should isolate allowlists between tenants', () => {
       const tenantA = manager.getTenantAllowlist('tenant-a');
-      const tenantB = manager.getTenantAllowlist('tenant-b');
+      const _tenantB = manager.getTenantAllowlist('tenant-b');
 
       // Tenant A adds a host
       tenantA.addCustomEntry('mail.tenant-a.com', 25, 'user', 'Test');

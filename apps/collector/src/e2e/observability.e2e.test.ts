@@ -3,6 +3,11 @@
  *
  * Tests that verify observability functionality.
  * Uses unique metric names per test to avoid state pollution.
+ *
+ * These tests catch issues like:
+ * - Missing resetMetrics() function for counters/histograms
+ * - Module-level state pollution between tests
+ * - Metric name collisions causing test interference
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -10,7 +15,8 @@ import * as observability from '../middleware/observability.js';
 
 describe('Observability Module E2E', () => {
   beforeEach(() => {
-    observability.resetErrorCounts();
+    // Reset all metrics before each test to prevent state pollution
+    observability.resetMetrics();
   });
 
   describe('Request ID Generation', () => {
@@ -49,8 +55,8 @@ describe('Observability Module E2E', () => {
       const summary = observability.getErrorSummary();
 
       expect(summary.totalErrors).toBe(3);
-      expect(summary.byType['network_error'].count).toBe(2);
-      expect(summary.byType['validation_error'].count).toBe(1);
+      expect(summary.byType.network_error.count).toBe(2);
+      expect(summary.byType.validation_error.count).toBe(1);
     });
 
     it('should limit sample messages per error type', () => {
@@ -68,7 +74,7 @@ describe('Observability Module E2E', () => {
       expect(samples.length).toBeLessThanOrEqual(5);
     });
 
-    it('should reset error counts', () => {
+    it('should reset error counts with resetErrorCounts', () => {
       observability.trackError('error1', 'Message 1');
       observability.trackError('error2', 'Message 2');
 
@@ -77,6 +83,93 @@ describe('Observability Module E2E', () => {
       const summary = observability.getErrorSummary();
       expect(summary.totalErrors).toBe(0);
       expect(Object.keys(summary.byType)).toHaveLength(0);
+    });
+  });
+
+  // =============================================================================
+  // RESET METRICS TESTS - Critical for test isolation
+  // These tests verify that resetMetrics() clears ALL module state
+  // =============================================================================
+
+  describe('resetMetrics() - Complete State Reset', () => {
+    it('should reset all metrics (counters, histograms, error counts)', () => {
+      // Add counters
+      observability.incrementCounter('counter1', { label: 'value1' });
+      observability.incrementCounter('counter2', { label: 'value2' }, 5);
+
+      // Add histograms
+      observability.recordHistogram('histogram1', 0.5);
+      observability.recordHistogram('histogram2', 1.5);
+
+      // Add errors
+      observability.trackError('error1', 'Error message 1');
+      observability.trackError('error2', 'Error message 2');
+
+      // Verify state exists
+      let metrics = observability.getPrometheusMetrics();
+      expect(metrics).toContain('counter1');
+      expect(metrics).toContain('counter2');
+      expect(metrics).toContain('histogram1');
+      expect(metrics).toContain('dns_ops_errors_total');
+
+      let summary = observability.getErrorSummary();
+      expect(summary.totalErrors).toBeGreaterThan(0);
+
+      // Reset everything
+      observability.resetMetrics();
+
+      // Verify all state is cleared
+      metrics = observability.getPrometheusMetrics();
+      summary = observability.getErrorSummary();
+
+      expect(summary.totalErrors).toBe(0);
+      expect(Object.keys(summary.byType)).toHaveLength(0);
+    });
+
+    it('should reset counters completely', () => {
+      const counterName = `reset_counter_${Date.now()}`;
+
+      observability.incrementCounter(counterName, {}, 100);
+      observability.resetMetrics();
+
+      const metrics = observability.getPrometheusMetrics();
+      expect(metrics).not.toContain(`${counterName}{}`);
+    });
+
+    it('should reset histograms completely', () => {
+      const histName = `reset_hist_${Date.now()}`;
+
+      observability.recordHistogram(histName, 0.5);
+      observability.recordHistogram(histName, 1.5);
+      observability.resetMetrics();
+
+      const metrics = observability.getPrometheusMetrics();
+      expect(metrics).not.toContain(`dns_ops_histogram_${histName}_count`);
+    });
+
+    it('should allow incrementing after reset without leftover state', () => {
+      const counterName = `fresh_counter_${Date.now()}`;
+
+      // First set of increments
+      observability.incrementCounter(counterName, {}, 10);
+
+      // Reset
+      observability.resetMetrics();
+
+      // New increments should be independent
+      observability.incrementCounter(counterName, {}, 5);
+
+      const metrics = observability.getPrometheusMetrics();
+      expect(metrics).toContain(`${counterName}{} 5`);
+      expect(metrics).not.toContain(`${counterName}{} 10`);
+    });
+
+    it('should reset error aggregation after reset', () => {
+      observability.trackError('old_error', 'Old error message');
+      observability.resetMetrics();
+
+      const summary = observability.getErrorSummary();
+      expect(summary.byType.old_error).toBeUndefined();
     });
   });
 
