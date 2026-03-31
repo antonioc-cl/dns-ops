@@ -5,6 +5,9 @@
  * Limits requests per tenant to prevent abuse.
  */
 
+import { createMiddleware } from 'hono/factory';
+import type { Env } from '../types.js';
+
 interface RateLimitConfig {
   limit: number;
   windowMs: number;
@@ -120,4 +123,33 @@ export function createRateLimitHeaders(result: RateLimitResult): Record<string, 
     'X-RateLimit-Reset': String(reset),
     ...(result.retryAfter > 0 ? { 'Retry-After': String(result.retryAfter) } : {}),
   };
+}
+
+/**
+ * Hono middleware factory for rate limiting.
+ * Must be applied after auth middleware (needs tenantId from context).
+ */
+export function rateLimitMiddleware(type: RateLimitKey) {
+  return createMiddleware<Env>(async (c, next) => {
+    const tenantId = c.get('tenantId');
+    const result = checkRateLimit(type, tenantId);
+    const headers = createRateLimitHeaders(result);
+
+    // Always set rate limit headers
+    for (const [key, value] of Object.entries(headers)) {
+      c.header(key, value);
+    }
+
+    if (!result.allowed) {
+      return c.json(
+        {
+          error: 'Rate limit exceeded',
+          retryAfter: result.retryAfter,
+        },
+        429
+      );
+    }
+
+    return next();
+  });
 }

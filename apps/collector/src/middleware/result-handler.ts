@@ -213,7 +213,7 @@ export function resultAwareHandler<T>(
  */
 export function isDbError(error: Error): error is DbError {
   return 'code' in error && typeof error.code === 'string' &&
-    ('table' in error || ['NOT_FOUND', 'ALREADY_EXISTS', 'TENANT_ISOLATION', 'CONSTRAINT_VIOLATION', 'QUERY_FAILED', 'CONNECTION_ERROR', 'TIMEOUT'].includes(error.code));
+    ('table' in error || 'identifier' in error || 'DbError' === error.name);
 }
 
 /**
@@ -222,7 +222,7 @@ export function isDbError(error: Error): error is DbError {
  */
 export function isRuleError(error: Error): error is RuleError {
   return 'code' in error && typeof error.code === 'string' &&
-    ('ruleId' in error || ['RULE_EXECUTION_FAILED', 'INVALID_CONTEXT', 'RULE_NOT_FOUND', 'RULESET_NOT_FOUND', 'EVALUATION_TIMEOUT'].includes(error.code));
+    ('ruleId' in error || 'context' in error || 'RuleError' === error.name);
 }
 
 /**
@@ -231,5 +231,5 @@ export function isRuleError(error: Error): error is RuleError {
  */
 export function isSimulationError(error: Error): error is SimulationError {
   return 'code' in error && typeof error.code === 'string' &&
-    ('findingType' in error || ['INVALID_FINDING_TYPE', 'NO_ACTIONABLE_FINDINGS', 'SIMULATION_FAILED', 'INVALID_CONTEXT'].includes(error.code));
+    ('findingType' in error || 'SimulationError' === error.name);
 }

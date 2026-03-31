@@ -23,6 +23,7 @@
     "@playwright/test": "1.49.0",
     "@vitest/coverage-v8": "^4.1.0",
     "better-result": "^2.7.0",
+    "dns-packet": "^5.6.1",
     "turbo": "^1.11.0",
     "typescript": "^5.3.0",
     "vitest": "^4.1.0"

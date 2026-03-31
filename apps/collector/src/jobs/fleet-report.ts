@@ -56,6 +56,12 @@ fleetReportRoutes.post('/run', async (c) => {
     );
   }
 
+  // Tenant-scoped domain lookups
+  const tenantId = c.get('tenantId');
+  if (!tenantId) {
+    return c.json({ error: 'Authenticated tenant context required' }, 401);
+  }
+
   try {
     const domainRepo = new DomainRepository(db);
     const snapshotRepo = new SnapshotRepository(db);
@@ -69,8 +75,8 @@ fleetReportRoutes.post('/run', async (c) => {
       const domainName = typeof item === 'string' ? item : item.domain;
 
       try {
-        // Find domain
-        const domain = await domainRepo.findByName(domainName);
+        // Find domain scoped to tenant
+        const domain = await domainRepo.findByNameForTenant(domainName, tenantId);
 
         if (!domain) {
           errors.push({

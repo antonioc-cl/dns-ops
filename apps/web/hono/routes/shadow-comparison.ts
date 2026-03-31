@@ -353,13 +353,14 @@ function applyOverrides(
  * GET /api/shadow-comparison/provider-baselines
  * Get active provider baselines with template overrides applied
  *
+ * Uses auth-context tenantId for override filtering (not caller-supplied).
  * Query params:
- *   - tenantId: Filter overrides by tenant (optional)
  *   - domainName: Apply only domain-specific overrides (optional)
  */
 shadowComparisonRoutes.get('/provider-baselines', async (c) => {
   const db = c.get('db');
-  const tenantId = c.req.query('tenantId');
+  // SEC: Use auth-context tenantId, not caller-supplied query param
+  const tenantId = c.get('tenantId');
   const domainName = c.req.query('domainName');
 
   try {

@@ -17,6 +17,7 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { type ConnectionOptions, type Job, Worker } from 'bullmq';
+import { generateAlertsFromFindings } from './alert-from-findings.js';
 import { DNSCollector } from '../dns/collector.js';
 import type { CollectionConfig } from '../dns/types.js';
 import {
@@ -86,6 +87,24 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
 
     const collector = new DNSCollector(config, db);
     const result = await collector.collect();
+
+    // JOB-002: Generate alerts from high-severity findings post-collection
+    try {
+      const alerts = await generateAlertsFromFindings(db, result.snapshotId, tenantId);
+      if (alerts.length > 0) {
+        logger.info('Generated alerts from findings', {
+          snapshotId: result.snapshotId,
+          alertCount: alerts.length,
+          domain,
+        });
+      }
+    } catch (alertError) {
+      // Alert generation failure should not fail the collection job
+      logger.warn('Alert generation failed (non-fatal)', {
+        snapshotId: result.snapshotId,
+        error: alertError instanceof Error ? alertError.message : String(alertError),
+      });
+    }
 
     await job.updateProgress(100);
 
@@ -300,7 +319,7 @@ async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
   summary?: Record<string, unknown>;
   error?: string;
 }> {
-  const { inventory, checks, triggeredBy } = job.data;
+  const { inventory, checks, triggeredBy, tenantId } = job.data;
   const startTime = Date.now();
 
   trackJobStart({
@@ -324,7 +343,10 @@ async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
     }> = [];
 
     for (const domainName of inventory) {
-      const domain = await domainRepo.findByName(domainName);
+      // Tenant-scoped domain lookup
+      const domain = tenantId
+        ? await domainRepo.findByNameForTenant(domainName, tenantId)
+        : await domainRepo.findByName(domainName);
       if (!domain) continue;
 
       const snapshots = await snapshotRepo.findByDomain(domain.id, 1);

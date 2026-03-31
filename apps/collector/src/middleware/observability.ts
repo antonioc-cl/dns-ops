@@ -5,7 +5,7 @@
  * for the collector service.
  */
 
-import { createLogger, type Logger } from '@dns-ops/logging';
+import { createLogger } from '@dns-ops/logging';
 
 // ============================================================================
 // Request Tracing

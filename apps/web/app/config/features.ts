@@ -35,6 +35,14 @@ export function isShadowComparisonEnabled(): boolean {
 }
 
 /**
+ * Enable the simulation panel in Domain 360 overview
+ * Requires SEC-002 (simulation route auth) to be implemented
+ */
+export function isSimulationEnabled(): boolean {
+  return process.env.VITE_FEATURE_SIMULATION === 'true';
+}
+
+/**
  * All available feature flags
  */
 export const FEATURE_FLAGS = {
@@ -61,5 +69,11 @@ export const FEATURE_FLAGS = {
     envVar: 'VITE_FEATURE_SHADOW_COMPARISON',
     description: 'Enable legacy tool vs new findings comparison',
     enabled: isShadowComparisonEnabled(),
+  },
+  simulation: {
+    name: 'Fix Simulation',
+    envVar: 'VITE_FEATURE_SIMULATION',
+    description: 'Enable DNS fix simulation in Domain 360 overview',
+    enabled: isSimulationEnabled(),
   },
 } as const;

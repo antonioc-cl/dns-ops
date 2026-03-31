@@ -97,7 +97,7 @@ export function mtastsResultToObservation(
         policyUrl: result.policyUrl,
         policyVersion: result.policy.version,
         policyMode: result.policy.mode,
-        policyMaxAge: result.policy.max_age,
+        policyMaxAge: result.policy.maxAge,
         policyMx: result.policy.mx,
         tlsVersion: result.tlsVersion,
         certificateValid: result.certificateValid,
@@ -128,7 +128,7 @@ export function mtastsResultToObservation(
 export async function persistProbeObservations(
   db: Env['Variables']['db'],
   snapshotId: string,
-  tenantId: string,
+  _tenantId: string,
   observations: Array<{
     snapshotId: string;
     probeType: 'smtp_starttls' | 'mta_sts';

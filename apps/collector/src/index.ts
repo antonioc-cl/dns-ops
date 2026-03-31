@@ -21,9 +21,11 @@ import { fleetReportRoutes } from './jobs/fleet-report.js';
 import { monitoringRoutes } from './jobs/monitoring.js';
 import { probeRoutes } from './jobs/probe-routes.js';
 import { closeQueues, getQueueHealth } from './jobs/queue.js';
+import { cleanupSchedules, initializeSchedules } from './jobs/scheduler.js';
 import { startWorkers, stopWorkers, workersRunning } from './jobs/worker.js';
 import { dbMiddleware, getSharedDbAdapter } from './middleware/db.js';
 import { requireServiceAuthMiddleware } from './middleware/index.js';
+import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import { notificationRoutes } from './notifications/routes.js';
 import type { Env } from './types.js';
 
@@ -97,6 +99,9 @@ app.get('/readyz', async (c) => {
 app.use('/api/*', dbMiddleware);
 app.use('/api/*', requireServiceAuthMiddleware);
 
+app.use('/api/collect/*', rateLimitMiddleware('collect'));
+app.use('/api/probe/*', rateLimitMiddleware('probes'));
+
 app.route('/api/collect', collectDomainRoutes);
 app.route('/api/collect', collectMailRoutes);
 app.route('/api/probe', probeRoutes);
@@ -144,6 +149,9 @@ const server = serve(
     if (process.env.WORKER_ENABLED === 'true') {
       collectorLogger.info('Starting job queue workers...');
       await startWorkers();
+
+      collectorLogger.info('Initializing monitoring schedules...');
+      await initializeSchedules();
     }
   }
 );
@@ -152,6 +160,9 @@ async function shutdown(signal: string): Promise<void> {
   collectorLogger.info('Received shutdown signal', { signal });
 
   if (workersRunning()) {
+    collectorLogger.info('Cleaning up schedules...');
+    await cleanupSchedules();
+
     collectorLogger.info('Stopping workers...');
     await stopWorkers();
   }

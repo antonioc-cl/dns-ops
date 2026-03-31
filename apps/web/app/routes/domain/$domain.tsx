@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DNSViews } from '../../components/DNSViews.js';
-import { isDelegationTabEnabled } from '../../config/features.js';
+import { isDelegationTabEnabled, isSimulationEnabled } from '../../config/features.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { SimulationPanel } from '../../components/SimulationPanel.js';
@@ -35,6 +35,7 @@ interface DomainSearchParams {
 
 // UI-001: Delegation tab is behind feature flag (ahead of plan)
 const DELEGATION_ENABLED = isDelegationTabEnabled();
+const SIMULATION_ENABLED = isSimulationEnabled();
 const BASE_TABS: DomainTabId[] = ['overview', 'dns', 'mail'];
 const ALL_TABS: DomainTabId[] = DELEGATION_ENABLED ? [...BASE_TABS, 'delegation'] : BASE_TABS;
 const VALID_TABS: DomainTabId[] = ALL_TABS;
@@ -403,13 +404,15 @@ function OverviewTab({
         />
       </div>
 
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-2">Fix Simulation</h3>
-        <p className="text-sm text-gray-500 mb-3">
-          Simulate DNS changes to see which findings would be resolved.
-        </p>
-        <SimulationPanel snapshotId={snapshot.id} />
-      </div>
+      {SIMULATION_ENABLED && (
+        <div>
+          <h3 className="font-semibold text-gray-900 mb-2">Fix Simulation</h3>
+          <p className="text-sm text-gray-500 mb-3">
+            Simulate DNS changes to see which findings would be resolved.
+          </p>
+          <SimulationPanel snapshotId={snapshot.id} />
+        </div>
+      )}
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-semibold text-blue-900 mb-3">Query Scope</h3>
