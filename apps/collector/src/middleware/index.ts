@@ -29,3 +29,14 @@ export {
   trackProbeResult,
   trackWarning,
 } from './error-tracking.js';
+export {
+  createErrorResponse,
+  errorToStatusCode,
+  handleResult,
+  handleResultWithStatus,
+  isDbError,
+  isRuleError,
+  resultAwareHandler,
+  type ErrorResponse,
+  type SuccessResponse,
+} from './result-handler.js';
