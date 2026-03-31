@@ -123,6 +123,49 @@ export async function dbResult<T>(
 }
 
 /**
+ * Map specific database error patterns to appropriate error codes
+ */
+export function mapDatabaseError(e: unknown, table: string, identifier?: string): DbError {
+  const message = e instanceof Error ? e.message : String(e);
+  
+  // Check for specific error patterns
+  if (message.includes('connection') || message.includes('ECONNREFUSED')) {
+    return new DbError({
+      message,
+      code: 'CONNECTION_ERROR',
+      table,
+      identifier,
+    });
+  }
+  
+  if (message.includes('timeout') || message.includes('ETIMEDOUT')) {
+    return new DbError({
+      message,
+      code: 'TIMEOUT',
+      table,
+      identifier,
+    });
+  }
+  
+  if (message.includes('unique constraint') || message.includes('duplicate')) {
+    return new DbError({
+      message,
+      code: 'ALREADY_EXISTS',
+      table,
+      identifier,
+    });
+  }
+  
+  // Default to generic query failed
+  return new DbError({
+    message,
+    code: 'QUERY_FAILED',
+    table,
+    identifier,
+  });
+}
+
+/**
  * Wrap a database operation that should return a value or NotFound
  *
  * @example
@@ -146,14 +189,7 @@ export async function dbResultOrNotFound<T>(
     }
     return Result.ok(value);
   } catch (e) {
-    return Result.err(
-      new DbError({
-        message: e instanceof Error ? e.message : String(e),
-        code: 'QUERY_FAILED',
-        table,
-        identifier,
-      })
-    );
+    return Result.err(mapDatabaseError(e, table, identifier));
   }
 }
 

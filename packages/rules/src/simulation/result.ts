@@ -103,7 +103,17 @@ export function isActionableFindingType(findingType: string): boolean {
 }
 
 /**
- * Validate simulation context
+ * Field type validators for simulation context
+ */
+const contextFieldValidators: Record<string, (value: unknown) => boolean> = {
+  snapshotId: (v) => typeof v === 'string' && v.length > 0,
+  domainId: (v) => typeof v === 'string' && v.length > 0,
+  domainName: (v) => typeof v === 'string' && v.length > 0,
+  recordSets: (v) => Array.isArray(v),
+};
+
+/**
+ * Validate simulation context with type checking
  */
 export function validateSimulationContext(context: unknown): ResultOrError<true, SimulationError> {
   if (!context || typeof context !== 'object') {
@@ -125,6 +135,18 @@ export function validateSimulationContext(context: unknown): ResultOrError<true,
           message: `Missing required context field: ${field}`,
           code: 'INVALID_CONTEXT',
           details: { missingField: field },
+        })
+      );
+    }
+
+    // Validate field type
+    const validator = contextFieldValidators[field];
+    if (validator && !validator(ctx[field])) {
+      return Result.err(
+        new SimulationError({
+          message: `Invalid type for context field: ${field}`,
+          code: 'INVALID_CONTEXT',
+          details: { field, value: ctx[field], expectedType: field === 'recordSets' ? 'array' : 'non-empty string' },
         })
       );
     }

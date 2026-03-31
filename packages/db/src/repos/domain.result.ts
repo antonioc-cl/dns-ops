@@ -115,7 +115,7 @@ export class DomainRepositoryResults {
       );
     }
 
-    // Check for duplicates within tenant
+    // Check for duplicates - handle both tenant-scoped and global domains
     if (data.tenantId) {
       const existing = await this.repo.findByNameAndTenant(
         data.name,
@@ -124,6 +124,14 @@ export class DomainRepositoryResults {
       if (existing) {
         return Result.err(
           DbError.alreadyExists('Domain', `${data.name} (tenant: ${data.tenantId})`)
+        );
+      }
+    } else {
+      // For global domains (no tenant), check by name only
+      const existing = await this.repo.findByName(data.name);
+      if (existing && !existing.tenantId) {
+        return Result.err(
+          DbError.alreadyExists('Domain', `${data.name} (global)`)
         );
       }
     }

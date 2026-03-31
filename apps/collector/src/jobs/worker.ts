@@ -89,14 +89,23 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
     const result = await collector.collect();
 
     // JOB-002: Generate alerts from high-severity findings post-collection
+    // Alerts only apply to monitored domains — the function handles the lookup
     try {
-      const alerts = await generateAlertsFromFindings(db, result.snapshotId, tenantId);
-      if (alerts.length > 0) {
-        logger.info('Generated alerts from findings', {
-          snapshotId: result.snapshotId,
-          alertCount: alerts.length,
-          domain,
-        });
+      const domainRecord = await new DomainRepository(db).findByNameForTenant(domain, tenantId);
+      if (domainRecord) {
+        const alerts = await generateAlertsFromFindings(
+          db,
+          result.snapshotId,
+          tenantId,
+          domainRecord.id
+        );
+        if (alerts.length > 0) {
+          logger.info('Generated alerts from findings', {
+            snapshotId: result.snapshotId,
+            alertCount: alerts.length,
+            domain,
+          });
+        }
       }
     } catch (alertError) {
       // Alert generation failure should not fail the collection job
@@ -149,8 +158,9 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
   const startTime = Date.now();
 
   // Handle scheduled placeholder jobs - these trigger batch refreshes
+  // Note: scheduled jobs use tenantId='system' — we query ALL tenants
   if (monitoredDomainId === 'scheduled') {
-    logger.info('Processing scheduled monitoring refresh', { schedule, jobId: job.id, tenantId });
+    logger.info('Processing scheduled monitoring refresh', { schedule, jobId: job.id });
 
     try {
       const db = getDbAdapter();
@@ -166,8 +176,9 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
         };
       }
 
-      // Find all monitored domains due for refresh for this schedule
-      const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule, tenantId);
+      // Find all monitored domains due for refresh across ALL tenants
+      // (scheduled jobs are system-wide, not tenant-scoped)
+      const monitoredDomains = await monitoredRepo.findActiveBySchedule(schedule);
       let queued = 0;
 
       for (const monitored of monitoredDomains) {

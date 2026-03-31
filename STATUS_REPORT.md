@@ -117,7 +117,7 @@
 | Auth middleware | ✅ | `requireAuth` on all protected routes |
 | SSRF protection | ✅ | Webhook URLs validated with DNS resolution |
 | Probe sandbox | ✅ | Feature-flagged, SSRF guards in place |
-| Probe allowlist | 🔲 | AUTH-003 (tenant-scoped allowlist) pending |
+| Probe allowlist | ✅ | AUTH-003 (tenant-scoped allowlist) complete |
 
 ## Recent Changes (This Session)
 

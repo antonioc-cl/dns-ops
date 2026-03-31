@@ -19,6 +19,7 @@ export {
   type DbErrorCode,
   ensureTenantIsolation,
   isDbError,
+  mapDatabaseError,
   partitionDbResults,
   Result,
   type ResultOrError,

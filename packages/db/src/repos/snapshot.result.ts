@@ -46,8 +46,19 @@ export class SnapshotRepositoryResults {
 
   /**
    * Get the latest snapshot for a domain
+   * Returns undefined if no snapshots exist (not an error for new domains)
    */
   async findLatestByDomainResult(
+    domainId: string
+  ): Promise<ResultOrError<Snapshot | undefined, DbError>> {
+    const snapshot = await this.repo.findLatestByDomain(domainId);
+    return Result.ok(snapshot);
+  }
+
+  /**
+   * Get the latest snapshot for a domain, error if none exists
+   */
+  async requireLatestByDomainResult(
     domainId: string
   ): Promise<ResultOrError<Snapshot, DbError>> {
     const snapshot = await this.repo.findLatestByDomain(domainId);

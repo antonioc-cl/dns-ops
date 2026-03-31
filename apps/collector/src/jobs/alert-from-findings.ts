@@ -5,7 +5,7 @@
  * Runs after collection completes and findings are generated.
  */
 
-import { AlertRepository, FindingRepository } from '@dns-ops/db';
+import { AlertRepository, FindingRepository, MonitoredDomainRepository } from '@dns-ops/db';
 import { createLogger } from '@dns-ops/logging';
 import { buildWebhookPayload, sendAlertWebhook } from '../notifications/webhook.js';
 import type { Env } from '../types.js';
@@ -34,9 +34,14 @@ export interface AlertFromFindingsConfig {
  * After DNS collection and finding generation, this function checks
  * for high-severity findings and creates alerts for monitored domains.
  *
+ * Only generates alerts for domains that are actively monitored (have a
+ * MonitoredDomain record). Non-monitored domains are skipped — the alert
+ * system is for ongoing monitoring, not ad-hoc checks.
+ *
  * @param db - Database adapter
  * @param snapshotId - The snapshot to check for findings
  * @param tenantId - Tenant ID for alert ownership
+ * @param domainId - Domain ID to look up monitored domain record
  * @param config - Configuration options
  * @returns Array of created alerts
  */
@@ -44,16 +49,22 @@ export async function generateAlertsFromFindings(
   db: Env['Variables']['db'],
   snapshotId: string,
   tenantId: string,
+  domainId: string,
   config: AlertFromFindingsConfig = {}
 ): Promise<Array<{ alertId: string; findingId: string }>> {
-  const {
-    minSeverity = 'high',
-    maxAlertsPerSnapshot = 5,
-    skipReviewOnly = true,
-  } = config;
+  const { minSeverity = 'high', maxAlertsPerSnapshot = 5, skipReviewOnly = true } = config;
 
   if (!db) {
     logger.warn('Database not available, skipping alert generation');
+    return [];
+  }
+
+  // Look up monitored domain — alerts only apply to monitored domains
+  const monitoredRepo = new MonitoredDomainRepository(db);
+  const monitored = await monitoredRepo.findByDomainId(domainId, tenantId);
+
+  if (!monitored) {
+    // Domain is not monitored — skip alert generation (not an error)
     return [];
   }
 
@@ -98,7 +109,7 @@ export async function generateAlertsFromFindings(
   for (const finding of alertableFindings) {
     try {
       const alert = await alertRepo.create({
-        monitoredDomainId: '', // Would need proper linkage to monitored domain
+        monitoredDomainId: monitored.id,
         title: `[${finding.severity.toUpperCase()}] ${finding.title}`,
         description: finding.description,
         severity: finding.severity,
@@ -112,6 +123,7 @@ export async function generateAlertsFromFindings(
         alertId: alert.id,
         findingId: finding.id,
         severity: finding.severity,
+        monitoredDomainId: monitored.id,
       });
     } catch (error) {
       logger.error(`Failed to create alert from finding ${finding.id}`, { error });
@@ -127,15 +139,19 @@ export async function generateAlertsFromFindings(
  * @param db - Database adapter
  * @param snapshotId - The snapshot to check
  * @param tenantId - Tenant ID for alert ownership
+ * @param domainId - Domain ID to look up monitored domain
+ * @param domainName - Domain name for webhook payload
  * @param webhookUrl - Optional webhook URL to send alerts
  */
 export async function generateAndSendFindingAlerts(
   db: Env['Variables']['db'],
   snapshotId: string,
   tenantId: string,
+  domainId: string,
+  domainName: string,
   webhookUrl?: string
 ): Promise<{ alerts: Array<{ alertId: string; findingId: string }>; webhookSent: boolean }> {
-  const alerts = await generateAlertsFromFindings(db, snapshotId, tenantId, {
+  const alerts = await generateAlertsFromFindings(db, snapshotId, tenantId, domainId, {
     minSeverity: 'high',
     maxAlertsPerSnapshot: 3,
   });
@@ -151,7 +167,7 @@ export async function generateAndSendFindingAlerts(
           title: 'High Severity Finding Alert',
           description: `Finding ${findingId} requires attention`,
           severity: 'high',
-          domain: snapshotId,
+          domain: domainName,
           tenantId,
         });
 

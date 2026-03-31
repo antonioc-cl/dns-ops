@@ -305,6 +305,13 @@ export async function scheduleMonitoredDomainRefreshes(
  * Call this on worker startup
  */
 export async function initializeSchedules(): Promise<void> {
+  // Guard: skip initialization if monitoring queue is unavailable (no Redis)
+  const queue = getMonitoringQueue();
+  if (!queue) {
+    schedulerLogger.info('Monitoring queue not available (no Redis) — schedules not initialized');
+    return;
+  }
+
   schedulerLogger.info('Initializing monitoring schedules...');
 
   const scheduleTypes: ScheduleType[] = ['hourly', 'daily', 'weekly'];
