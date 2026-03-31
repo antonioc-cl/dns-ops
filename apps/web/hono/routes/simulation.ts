@@ -14,15 +14,12 @@ import {
 } from '@dns-ops/db';
 import { type RuleContext, SimulationEngine } from '@dns-ops/rules';
 import { Hono } from 'hono';
-import { requireAuthMiddleware } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/authorization.js';
 import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 import { createCombinedRuleset } from './findings.js';
 
 export const simulationRoutes = new Hono<Env>();
-
-// Require authentication for all simulation routes
-simulationRoutes.use('*', requireAuthMiddleware);
 
 /**
  * POST /api/simulate
@@ -32,7 +29,7 @@ simulationRoutes.use('*', requireAuthMiddleware);
  *
  * Returns: SimulationResult with proposed changes + dry-run findings diff
  */
-simulationRoutes.post('/', async (c) => {
+simulationRoutes.post('/', requireAuth, async (c) => {
   const db = c.get('db');
   const body = await c.req.json<{
     snapshotId?: string;
@@ -141,7 +138,7 @@ simulationRoutes.post('/', async (c) => {
  *
  * Returns the list of finding types that the simulation engine can generate fixes for.
  */
-simulationRoutes.get('/actionable-types', (c) => {
+simulationRoutes.get('/actionable-types', requireAuth, (c) => {
   return c.json({
     actionableTypes: [
       {

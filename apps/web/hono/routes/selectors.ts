@@ -12,14 +12,11 @@ import {
   SnapshotRepository,
 } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { requireAuthMiddleware } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/authorization.js';
 import { getWebLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 
 export const selectorRoutes = new Hono<Env>();
-
-// Require authentication for all selector routes
-selectorRoutes.use('*', requireAuthMiddleware);
 
 /**
  * GET /api/snapshot/:snapshotId/selectors
@@ -28,7 +25,7 @@ selectorRoutes.use('*', requireAuthMiddleware);
  * Returns selector data from dkim_selectors table which stores provenance
  * at collection time (not inferred from selector names).
  */
-selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
+selectorRoutes.get('/snapshot/:snapshotId/selectors', requireAuth, async (c) => {
   const snapshotId = c.req.param('snapshotId');
   const db = c.get('db');
 
@@ -139,7 +136,7 @@ selectorRoutes.get('/snapshot/:snapshotId/selectors', async (c) => {
  * Uses direct repo access instead of self-referencing HTTP fetch,
  * which would fail on Cloudflare Workers (no loopback).
  */
-selectorRoutes.get('/domain/:domain/selectors/suggest', async (c) => {
+selectorRoutes.get('/domain/:domain/selectors/suggest', requireAuth, async (c) => {
   const domain = c.req.param('domain');
   const db = c.get('db');
 

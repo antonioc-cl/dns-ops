@@ -292,7 +292,7 @@ describe('PR-09.1: Simulation Route Tenant Isolation', () => {
   });
 
   describe('Public read access for unowned domains', () => {
-    it('should succeed without auth for unowned domain snapshot (public read)', async () => {
+    it('should require auth for unowned domain snapshot (no public access)', async () => {
       const state: MockState = {
         snapshots: [
           {
@@ -311,7 +311,7 @@ describe('PR-09.1: Simulation Route Tenant Isolation', () => {
             name: 'example.com',
             normalizedName: 'example.com',
             zoneManagement: 'managed',
-            tenantId: null, // Unowned - public read
+            tenantId: null, // Unowned
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -349,7 +349,7 @@ describe('PR-09.1: Simulation Route Tenant Isolation', () => {
         ],
       };
 
-      // No tenant context (public access)
+      // No tenant context (no auth)
       const app = createAppWithTenant(state, undefined);
 
       const response = await app.request('/api/simulate', {
@@ -358,10 +358,8 @@ describe('PR-09.1: Simulation Route Tenant Isolation', () => {
         body: JSON.stringify({ snapshotId: SNAPSHOT_ID }),
       });
 
-      // Should succeed - public read for unowned domains
-      expect(response.status).toBe(200);
-      const json = (await response.json()) as { domain: string };
-      expect(json.domain).toBe('example.com');
+      // Should return 401 - auth required for all simulation routes
+      expect(response.status).toBe(401);
     });
 
     it('should fail without auth for tenant-owned domain snapshot', async () => {
@@ -402,8 +400,8 @@ describe('PR-09.1: Simulation Route Tenant Isolation', () => {
         body: JSON.stringify({ snapshotId: SNAPSHOT_ID }),
       });
 
-      // Should return 404 - owned domains require auth
-      expect(response.status).toBe(404);
+      // Should return 401 - auth required for simulation routes
+      expect(response.status).toBe(401);
     });
   });
 

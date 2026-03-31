@@ -40,9 +40,14 @@ function requiresAuth(path: string): boolean {
 }
 
 alertRoutes.use('*', async (c, next) => {
-  if (!requiresAuth(c.req.path)) {
+  const path = c.req.path;
+  const needsAuth = requiresAuth(path);
+  console.error(`[DEBUG] alerts middleware: path=${path}, needsAuth=${needsAuth}`);
+  if (!needsAuth) {
+    console.error('[DEBUG] alerts: skipping auth');
     return next();
   }
+  console.error('[DEBUG] alerts: requiring auth');
   return requireAuth(c, next);
 });
 
