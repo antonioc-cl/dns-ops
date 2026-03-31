@@ -49,7 +49,9 @@ function createMockAdapter(options: {
       insert: vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
           onConflictDoNothing: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue(options.upsertResult ? [options.upsertResult] : []),
+            returning: vi
+              .fn()
+              .mockResolvedValue(options.upsertResult ? [options.upsertResult] : []),
           }),
         }),
       }),
