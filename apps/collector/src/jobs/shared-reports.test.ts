@@ -127,7 +127,13 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -159,7 +165,13 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -191,7 +203,13 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -229,7 +247,13 @@ describe('Shared Reports Redaction - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -281,7 +305,13 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -306,7 +336,13 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -338,7 +374,13 @@ describe('Shared Reports Tenant Isolation - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -379,7 +421,13 @@ describe('Shared Reports Alert Limits - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -411,7 +459,13 @@ describe('Shared Reports Alert Limits - Bead 12.7', () => {
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    const res = await app.request('/api/monitoring/reports/shared', { headers: { 'X-Internal-Secret': 'test-internal-secret', 'X-Tenant-Id': 'test-tenant', 'X-Actor-Id': 'test-actor' } });
+    const res = await app.request('/api/monitoring/reports/shared', {
+      headers: {
+        'X-Internal-Secret': 'test-internal-secret',
+        'X-Tenant-Id': 'test-tenant',
+        'X-Actor-Id': 'test-actor',
+      },
+    });
 
     expect(res.status).toBe(200);
     const json = await res.json();

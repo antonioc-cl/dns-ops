@@ -49,7 +49,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockFetch.mockResolvedValue({ ok: true, status: 200 });
 });
-afterEach(() => { process.env = ORIGINAL_ENV; });
+afterEach(() => {
+  process.env = ORIGINAL_ENV;
+});
 
 // =============================================================================
 // In-Memory Mock DB with Seeded Data
@@ -88,9 +90,11 @@ class InMemoryMockDb implements IDatabaseAdapter {
   }) {
     if (seed?.domainNotes) seed.domainNotes.forEach((n) => this.domainNotes.set(n.id, n));
     if (seed?.savedFilters) seed.savedFilters.forEach((f) => this.savedFilters.set(f.id, f));
-    if (seed?.templateOverrides) seed.templateOverrides.forEach((o) => this.templateOverrides.set(o.id, o));
+    if (seed?.templateOverrides)
+      seed.templateOverrides.forEach((o) => this.templateOverrides.set(o.id, o));
     if (seed?.domainTags) seed.domainTags.forEach((t) => this.domainTags.set(t.id, t));
-    if (seed?.monitoredDomains) seed.monitoredDomains.forEach((m) => this.monitoredDomains.set(m.id, m));
+    if (seed?.monitoredDomains)
+      seed.monitoredDomains.forEach((m) => this.monitoredDomains.set(m.id, m));
 
     this.whereData = {
       domainNotes: seed?.domainNotes,
@@ -110,13 +114,16 @@ class InMemoryMockDb implements IDatabaseAdapter {
     const tableName = this._getTableName(table);
     if (tableName === 'domain_notes') return Promise.resolve(this.whereData.domainNotes || []);
     if (tableName === 'saved_filters') return Promise.resolve(this.whereData.savedFilters || []);
-    if (tableName === 'template_overrides') return Promise.resolve(this.whereData.templateOverrides || []);
+    if (tableName === 'template_overrides')
+      return Promise.resolve(this.whereData.templateOverrides || []);
     if (tableName === 'domain_tags') return Promise.resolve(this.whereData.domainTags || []);
     if (tableName === 'monitored_domains') {
       // Extract domainId from eq() condition for findByDomainId
       const domainId = this._extractId(_condition);
       if (domainId) {
-        const filtered = (this.whereData.monitoredDomains || []).filter((m) => m.domainId === domainId);
+        const filtered = (this.whereData.monitoredDomains || []).filter(
+          (m) => m.domainId === domainId
+        );
         return Promise.resolve(filtered);
       }
       return Promise.resolve(this.whereData.monitoredDomains || []);
@@ -131,10 +138,14 @@ class InMemoryMockDb implements IDatabaseAdapter {
     const id = this._extractId(_condition);
     if (!id) {
       // Fallback: return first item if no ID extractable
-      if (tableName === 'domain_notes') return Promise.resolve((this.whereData.domainNotes || [])[0] || null);
-      if (tableName === 'saved_filters') return Promise.resolve((this.whereData.savedFilters || [])[0] || null);
-      if (tableName === 'template_overrides') return Promise.resolve((this.whereData.templateOverrides || [])[0] || null);
-      if (tableName === 'domain_tags') return Promise.resolve((this.whereData.domainTags || [])[0] || null);
+      if (tableName === 'domain_notes')
+        return Promise.resolve((this.whereData.domainNotes || [])[0] || null);
+      if (tableName === 'saved_filters')
+        return Promise.resolve((this.whereData.savedFilters || [])[0] || null);
+      if (tableName === 'template_overrides')
+        return Promise.resolve((this.whereData.templateOverrides || [])[0] || null);
+      if (tableName === 'domain_tags')
+        return Promise.resolve((this.whereData.domainTags || [])[0] || null);
       return Promise.resolve(null);
     }
     if (tableName === 'domain_notes') {
@@ -190,12 +201,24 @@ class InMemoryMockDb implements IDatabaseAdapter {
     return Promise.resolve({ id: `new-${Date.now()}` });
   }
 
-  update(): Promise<number> { return Promise.resolve(1); }
-  updateOne(): Promise<number> { return Promise.resolve(1); }
-  delete(): Promise<number> { return Promise.resolve(1); }
-  deleteOne(): Promise<number> { return Promise.resolve(1); }
-  query(): Promise<unknown[]> { return Promise.resolve([]); }
-  getDrizzle(): unknown { return { query: {} }; }
+  update(): Promise<number> {
+    return Promise.resolve(1);
+  }
+  updateOne(): Promise<number> {
+    return Promise.resolve(1);
+  }
+  delete(): Promise<number> {
+    return Promise.resolve(1);
+  }
+  deleteOne(): Promise<number> {
+    return Promise.resolve(1);
+  }
+  query(): Promise<unknown[]> {
+    return Promise.resolve([]);
+  }
+  getDrizzle(): unknown {
+    return { query: {} };
+  }
 
   private _getTableName(table: unknown): string {
     if (!table || typeof table !== 'object') return '';
@@ -343,7 +366,9 @@ function makeDomainTag(overrides: Partial<MockDomainTag> = {}): MockDomainTag {
   };
 }
 
-function makeMonitoredDomain(overrides: Partial<MockMonitoredDomain> & { tenantId?: string | null } = {}): MockMonitoredDomain {
+function makeMonitoredDomain(
+  overrides: Partial<MockMonitoredDomain> & { tenantId?: string | null } = {}
+): MockMonitoredDomain {
   return {
     id: 'mon-1',
     domainId: 'dom-1',
@@ -385,8 +410,16 @@ describe('Repository Tenant Isolation', () => {
   describe('DomainNoteRepository.findById enforces tenant isolation', () => {
     it('cross-tenant: returns undefined when querying note owned by another tenant', async () => {
       // Seed both tenants' notes
-      const noteA = makeDomainNote({ id: 'note-a1', tenantId: TENANT_A, content: 'Tenant A private note' });
-      const noteB = makeDomainNote({ id: 'note-b1', tenantId: TENANT_B, content: 'Tenant B private note' });
+      const noteA = makeDomainNote({
+        id: 'note-a1',
+        tenantId: TENANT_A,
+        content: 'Tenant A private note',
+      });
+      const noteB = makeDomainNote({
+        id: 'note-b1',
+        tenantId: TENANT_B,
+        content: 'Tenant B private note',
+      });
 
       const db = new InMemoryMockDb({ domainNotes: [noteA, noteB] });
       const repo = new DomainNoteRepository(db);
@@ -505,8 +538,18 @@ describe('Repository Tenant Isolation', () => {
   describe('DomainTagRepository.findByDomainId enforces tenant isolation', () => {
     it('cross-tenant: returns only own tenant tags for a domain, not other tenants', async () => {
       // Both tenants have a domain named 'shared-dom' with different tags
-      const tagA = makeDomainTag({ id: 'tag-a1', domainId: 'shared-dom', tenantId: TENANT_A, tag: 'production' });
-      const tagB = makeDomainTag({ id: 'tag-b1', domainId: 'shared-dom', tenantId: TENANT_B, tag: 'staging' });
+      const tagA = makeDomainTag({
+        id: 'tag-a1',
+        domainId: 'shared-dom',
+        tenantId: TENANT_A,
+        tag: 'production',
+      });
+      const tagB = makeDomainTag({
+        id: 'tag-b1',
+        domainId: 'shared-dom',
+        tenantId: TENANT_B,
+        tag: 'staging',
+      });
 
       const db = new InMemoryMockDb({ domainTags: [tagA, tagB] });
       const repo = new DomainTagRepository(db);
@@ -521,8 +564,18 @@ describe('Repository Tenant Isolation', () => {
     });
 
     it('same-tenant: returns all tags for domain owned by same tenant', async () => {
-      const tag1 = makeDomainTag({ id: 'tag-a1', domainId: 'our-dom', tenantId: TENANT_A, tag: 'production' });
-      const tag2 = makeDomainTag({ id: 'tag-a2', domainId: 'our-dom', tenantId: TENANT_A, tag: 'critical' });
+      const tag1 = makeDomainTag({
+        id: 'tag-a1',
+        domainId: 'our-dom',
+        tenantId: TENANT_A,
+        tag: 'production',
+      });
+      const tag2 = makeDomainTag({
+        id: 'tag-a2',
+        domainId: 'our-dom',
+        tenantId: TENANT_A,
+        tag: 'critical',
+      });
 
       const db = new InMemoryMockDb({ domainTags: [tag1, tag2] });
       const repo = new DomainTagRepository(db);
@@ -555,8 +608,18 @@ describe('Repository Tenant Isolation', () => {
    */
   describe('DomainTagRepository.deleteByDomainAndTag enforces tenant isolation', () => {
     it('cross-tenant: only deletes own tenant tag, not other tenant with same domain+tag', async () => {
-      const tagA = makeDomainTag({ id: 'tag-a1', domainId: 'shared-dom', tenantId: TENANT_A, tag: 'production' });
-      const tagB = makeDomainTag({ id: 'tag-b1', domainId: 'shared-dom', tenantId: TENANT_B, tag: 'production' });
+      const tagA = makeDomainTag({
+        id: 'tag-a1',
+        domainId: 'shared-dom',
+        tenantId: TENANT_A,
+        tag: 'production',
+      });
+      const tagB = makeDomainTag({
+        id: 'tag-b1',
+        domainId: 'shared-dom',
+        tenantId: TENANT_B,
+        tag: 'production',
+      });
 
       const allTags = [tagA, tagB];
       const deletedIds: string[] = [];
@@ -657,27 +720,28 @@ describe('Repository Tenant Isolation', () => {
     });
   });
 
-function extractIdFromCondition(condition: unknown): string | null {
-  if (!condition) return null;
-  if (typeof condition === 'string') return condition;
-  if (typeof condition === 'object') {
-    const obj = condition as Record<string, unknown>;
-    if (Array.isArray(obj['queryChunks'])) {
-      const chunks = obj['queryChunks'] as unknown[];
-      if (chunks.length >= 4) {
-        const valueChunk = chunks[3];
-        if (typeof valueChunk === 'object' && valueChunk !== null) {
-          const vc = valueChunk as Record<string, unknown>;
-          if (typeof vc['value'] === 'string' && vc['value']) return vc['value'] as string;
-          if (Array.isArray(vc['value']) && typeof (vc['value'] as unknown[])[0] === 'string') return (vc['value'] as string[])[0];
+  function extractIdFromCondition(condition: unknown): string | null {
+    if (!condition) return null;
+    if (typeof condition === 'string') return condition;
+    if (typeof condition === 'object') {
+      const obj = condition as Record<string, unknown>;
+      if (Array.isArray(obj['queryChunks'])) {
+        const chunks = obj['queryChunks'] as unknown[];
+        if (chunks.length >= 4) {
+          const valueChunk = chunks[3];
+          if (typeof valueChunk === 'object' && valueChunk !== null) {
+            const vc = valueChunk as Record<string, unknown>;
+            if (typeof vc['value'] === 'string' && vc['value']) return vc['value'] as string;
+            if (Array.isArray(vc['value']) && typeof (vc['value'] as unknown[])[0] === 'string')
+              return (vc['value'] as string[])[0];
+          }
+          if (typeof valueChunk === 'string') return valueChunk;
         }
-        if (typeof valueChunk === 'string') return valueChunk;
       }
+      if (obj['value'] && typeof obj['value'] === 'string') return obj['value'] as string;
     }
-    if (obj['value'] && typeof obj['value'] === 'string') return obj['value'] as string;
+    return null;
   }
-  return null;
-}
 });
 
 // =============================================================================
@@ -776,18 +840,23 @@ describe('Monitoring Routes: Null TenantId Handling', () => {
 
     const app = new Hono<Env>();
     app.use('*', async (c, next) => {
-      c.set('db', createMonitoringMockDb({
-        monitoredDomains: [orphanDomain],
-        domains: [{ id: 'dom-orphan', name: 'orphan.example.com', tenantId: 'any-tenant' }],
-        alerts: [],
-      }));
+      c.set(
+        'db',
+        createMonitoringMockDb({
+          monitoredDomains: [orphanDomain],
+          domains: [{ id: 'dom-orphan', name: 'orphan.example.com', tenantId: 'any-tenant' }],
+          alerts: [],
+        })
+      );
       c.set('tenantId', TENANT_A);
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
     // Simulate collection failure to trigger alert creation
-    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, text: () => Promise.resolve('server error') });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 500, text: () => Promise.resolve('server error') });
 
     const res = await app.request('/api/monitoring/check', {
       method: 'POST',
@@ -817,17 +886,22 @@ describe('Monitoring Routes: Null TenantId Handling', () => {
 
     const app = new Hono<Env>();
     app.use('*', async (c, next) => {
-      c.set('db', createMonitoringMockDb({
-        monitoredDomains: [otherTenantDomain],
-        domains: [{ id: 'dom-other', name: 'other.example.com', tenantId: TENANT_B }],
-        alerts: [],
-      }));
+      c.set(
+        'db',
+        createMonitoringMockDb({
+          monitoredDomains: [otherTenantDomain],
+          domains: [{ id: 'dom-other', name: 'other.example.com', tenantId: TENANT_B }],
+          alerts: [],
+        })
+      );
       c.set('tenantId', TENANT_A); // We are TENANT_A
       await next();
     });
     app.route('/api/monitoring', monitoringRoutes);
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, text: () => Promise.resolve('error') });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 500, text: () => Promise.resolve('error') });
 
     const res = await app.request('/api/monitoring/check', {
       method: 'POST',
@@ -856,11 +930,14 @@ describe('Monitoring Routes: Null TenantId Handling', () => {
 
     const app = new Hono<Env>();
     app.use('*', async (c, next) => {
-      c.set('db', createMonitoringMockDb({
-        monitoredDomains: [ourDomain],
-        domains: [{ id: 'dom-a1', name: 'our.example.com', tenantId: TENANT_A }],
-        alerts: [],
-      }));
+      c.set(
+        'db',
+        createMonitoringMockDb({
+          monitoredDomains: [ourDomain],
+          domains: [{ id: 'dom-a1', name: 'our.example.com', tenantId: TENANT_A }],
+          alerts: [],
+        })
+      );
       c.set('tenantId', TENANT_A);
       await next();
     });
@@ -923,7 +1000,7 @@ describe('Auth Header TenantId Normalization', () => {
     const res = await app.request('/api/monitoring/reports/shared', {
       headers: {
         'X-Internal-Secret': 'test-secret',
-        'X-Tenant-Id': 'my-tenant-slug',  // Raw slug — middleware normalizes to UUID
+        'X-Tenant-Id': 'my-tenant-slug', // Raw slug — middleware normalizes to UUID
         'X-Actor-Id': 'my-actor-id',
       },
     });

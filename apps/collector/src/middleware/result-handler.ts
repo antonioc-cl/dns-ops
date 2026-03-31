@@ -107,7 +107,12 @@ export function createErrorResponse(error: {
  */
 export function handleResult<T>(
   c: Context,
-  result: { isOk(): boolean; isErr(): boolean; value?: T; error?: DbError | RuleError | SimulationError | Error }
+  result: {
+    isOk(): boolean;
+    isErr(): boolean;
+    value?: T;
+    error?: DbError | RuleError | SimulationError | Error;
+  }
 ): Response {
   if (result.isOk()) {
     const response: SuccessResponse<T> = {
@@ -130,11 +135,15 @@ export function handleResult<T>(
 
   // Log server errors (5xx)
   if (statusCode >= 500) {
-    logger.error('Server error in request handler', error instanceof Error ? error : new Error(String(error)), {
-      path: c.req.path,
-      method: c.req.method,
-      statusCode,
-    });
+    logger.error(
+      'Server error in request handler',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        path: c.req.path,
+        method: c.req.method,
+        statusCode,
+      }
+    );
   }
 
   return c.json(errorResponse, statusCode);
@@ -153,7 +162,12 @@ export function handleResult<T>(
  */
 export function handleResultWithStatus<T>(
   c: Context,
-  result: { isOk(): boolean; isErr(): boolean; value?: T; error?: DbError | RuleError | SimulationError | Error },
+  result: {
+    isOk(): boolean;
+    isErr(): boolean;
+    value?: T;
+    error?: DbError | RuleError | SimulationError | Error;
+  },
   successStatus: StatusCode
 ): Response {
   if (result.isOk()) {
@@ -176,11 +190,15 @@ export function handleResultWithStatus<T>(
   });
 
   if (statusCode >= 500) {
-    logger.error('Server error in request handler', error instanceof Error ? error : new Error(String(error)), {
-      path: c.req.path,
-      method: c.req.method,
-      statusCode,
-    });
+    logger.error(
+      'Server error in request handler',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        path: c.req.path,
+        method: c.req.method,
+        statusCode,
+      }
+    );
   }
 
   return c.json(errorResponse, statusCode);
@@ -198,7 +216,12 @@ export function handleResultWithStatus<T>(
  * ```
  */
 export function resultAwareHandler<T>(
-  handler: (c: Context) => Promise<{ isOk(): boolean; isErr(): boolean; value?: T; error?: DbError | RuleError | SimulationError | Error }>,
+  handler: (c: Context) => Promise<{
+    isOk(): boolean;
+    isErr(): boolean;
+    value?: T;
+    error?: DbError | RuleError | SimulationError | Error;
+  }>,
   successStatus: StatusCode = 200
 ): (c: Context) => Promise<Response> {
   return async (c: Context) => {
@@ -212,8 +235,11 @@ export function resultAwareHandler<T>(
  * Checks for DbError-specific properties
  */
 export function isDbError(error: Error): error is DbError {
-  return 'code' in error && typeof error.code === 'string' &&
-    ('table' in error || 'identifier' in error || 'DbError' === error.name);
+  return (
+    'code' in error &&
+    typeof error.code === 'string' &&
+    ('table' in error || 'identifier' in error || 'DbError' === error.name)
+  );
 }
 
 /**
@@ -221,8 +247,11 @@ export function isDbError(error: Error): error is DbError {
  * Checks for RuleError-specific properties
  */
 export function isRuleError(error: Error): error is RuleError {
-  return 'code' in error && typeof error.code === 'string' &&
-    ('ruleId' in error || 'context' in error || 'RuleError' === error.name);
+  return (
+    'code' in error &&
+    typeof error.code === 'string' &&
+    ('ruleId' in error || 'context' in error || 'RuleError' === error.name)
+  );
 }
 
 /**
@@ -230,6 +259,9 @@ export function isRuleError(error: Error): error is RuleError {
  * Checks for SimulationError-specific properties
  */
 export function isSimulationError(error: Error): error is SimulationError {
-  return 'code' in error && typeof error.code === 'string' &&
-    ('findingType' in error || 'SimulationError' === error.name);
+  return (
+    'code' in error &&
+    typeof error.code === 'string' &&
+    ('findingType' in error || 'SimulationError' === error.name)
+  );
 }

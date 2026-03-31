@@ -2,9 +2,9 @@
  * Result Handler Middleware Tests
  */
 
+import { Result } from '@dns-ops/contracts';
 import { DbError } from '@dns-ops/db';
 import { RuleError } from '@dns-ops/rules';
-import { Result } from '@dns-ops/contracts';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import {
@@ -114,7 +114,10 @@ describe('Result Handler Middleware', () => {
     it('should return success response for Ok result', async () => {
       const app = new Hono();
 
-      app.get('/test', resultAwareHandler(async () => Result.ok({ id: '1', name: 'Test' })));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => Result.ok({ id: '1', name: 'Test' }))
+      );
 
       const res = await app.request('/test');
       expect(res.status).toBe(200);
@@ -127,9 +130,10 @@ describe('Result Handler Middleware', () => {
     it('should return error response for Err result', async () => {
       const app = new Hono();
 
-      app.get('/test', resultAwareHandler(async () => 
-        Result.err(DbError.notFound('Domain', 'missing-id'))
-      ));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => Result.err(DbError.notFound('Domain', 'missing-id')))
+      );
 
       const res = await app.request('/test');
       expect(res.status).toBe(404);
@@ -142,9 +146,10 @@ describe('Result Handler Middleware', () => {
     it('should use custom success status', async () => {
       const app = new Hono();
 
-      app.post('/test', resultAwareHandler(async () => 
-        Result.ok({ created: true }), 201
-      ));
+      app.post(
+        '/test',
+        resultAwareHandler(async () => Result.ok({ created: true }), 201)
+      );
 
       const res = await app.request('/test', { method: 'POST' });
       expect(res.status).toBe(201);

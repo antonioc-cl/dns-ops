@@ -10,24 +10,6 @@ export {
   type IDatabaseAdapter,
   SimpleDatabaseAdapter,
 } from '../database/index.js';
-
-// Result-based error handling (gradual migration)
-export {
-  dbResult,
-  dbResultOrNotFound,
-  DbError,
-  type DbErrorCode,
-  ensureTenantIsolation,
-  isDbError,
-  mapDatabaseError,
-  partitionDbResults,
-  Result,
-  type ResultOrError,
-  toNotFoundError,
-  toTenantIsolationError,
-  unwrapDbResultOr,
-} from './result.js';
-
 // Domain repositories
 export { type DomainFilter, DomainRepository } from './domain.js';
 export {
@@ -59,6 +41,22 @@ export {
 export { ProbeObservationRepository } from './probe-observation.js';
 export { RecordSetRepository } from './recordset.js';
 export { RemediationRepository } from './remediation.js';
+// Result-based error handling (gradual migration)
+export {
+  DbError,
+  type DbErrorCode,
+  dbResult,
+  dbResultOrNotFound,
+  ensureTenantIsolation,
+  isDbError,
+  mapDatabaseError,
+  partitionDbResults,
+  Result,
+  type ResultOrError,
+  toNotFoundError,
+  toTenantIsolationError,
+  unwrapDbResultOr,
+} from './result.js';
 export { RulesetVersionRepository } from './ruleset-version.js';
 // Legacy repositories (using adapter pattern)
 export { SnapshotRepository } from './snapshot.js';

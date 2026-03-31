@@ -7,7 +7,13 @@
 
 export type { AllowlistEntry, TenantScopedAllowlist } from './allowlist.js';
 // Allowlist
-export { ProbeAllowlist, probeAllowlist, ProbeAllowlistManager, probeAllowlistManager, createTenantAllowlist } from './allowlist.js';
+export {
+  createTenantAllowlist,
+  ProbeAllowlist,
+  ProbeAllowlistManager,
+  probeAllowlist,
+  probeAllowlistManager,
+} from './allowlist.js';
 export type { MTASTSPolicy, MTASTSProbeResult } from './mta-sts.js';
 // MTA-STS Probe
 export { fetchMTASTSPolicy, validateMTASTSTxtRecord } from './mta-sts.js';

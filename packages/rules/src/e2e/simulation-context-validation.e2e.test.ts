@@ -8,10 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import {
-  SimulationError,
-  validateSimulationContext,
-} from '../simulation/result.js';
+import { SimulationError, validateSimulationContext } from '../simulation/result.js';
 
 describe('E2E: Simulation Context Type Validation', () => {
   describe('Basic Validation', () => {
@@ -253,7 +250,7 @@ describe('E2E: Simulation Context Type Validation', () => {
       // Whitespace is technically a non-empty string, so this might pass
       // depending on strictness requirements
       const result = validateSimulationContext(context);
-      
+
       // Current implementation accepts whitespace - document this behavior
       expect(result.isOk()).toBe(true);
     });
@@ -302,12 +299,7 @@ describe('E2E: Simulation Context Type Validation', () => {
         snapshotId: 'snap-123',
         domainId: 'domain-456',
         domainName: 'example.com',
-        recordSets: [
-          { type: 'A', data: '192.0.2.1' },
-          null,
-          undefined,
-          'string item',
-        ],
+        recordSets: [{ type: 'A', data: '192.0.2.1' }, null, undefined, 'string item'],
       };
 
       // Current implementation only checks that recordSets is an array,

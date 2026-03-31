@@ -57,11 +57,13 @@ afterEach(() => {
  * Create a mock database with explicit tenant isolation.
  * Uses NORMALIZED_TENANT_ID to match auth middleware's normalization.
  */
-function createMockDb(overrides: {
-  monitoredDomains?: MockMonitoredDomain[];
-  alerts?: MockAlert[];
-  domains?: MockDomain[];
-} = {}): IDatabaseAdapter {
+function createMockDb(
+  overrides: {
+    monitoredDomains?: MockMonitoredDomain[];
+    alerts?: MockAlert[];
+    domains?: MockDomain[];
+  } = {}
+): IDatabaseAdapter {
   const domains = overrides.domains || [];
   const alerts = overrides.alerts || [];
   const monitoredDomains = overrides.monitoredDomains || [];
@@ -186,7 +188,9 @@ interface MockDomain {
   tenantId?: string;
 }
 
-function makeMonitoredDomain(overrides: Partial<MockMonitoredDomain> & { tenantId?: string } = {}): MockMonitoredDomain {
+function makeMonitoredDomain(
+  overrides: Partial<MockMonitoredDomain> & { tenantId?: string } = {}
+): MockMonitoredDomain {
   return {
     id: 'mon-1',
     domainId: 'dom-1',
@@ -443,15 +447,19 @@ describe('Monitoring Routes Auth Enforcement', () => {
         callOrder.push('wildcard-end');
       });
 
-      app.get('/test', async (c, next) => {
-        callOrder.push('per-route-start');
-        c.set('tenantId', 'per-route-value');
-        await next();
-        callOrder.push('per-route-end');
-      }, (c) => {
-        callOrder.push('handler');
-        return c.json({ tenantId: c.get('tenantId') });
-      });
+      app.get(
+        '/test',
+        async (c, next) => {
+          callOrder.push('per-route-start');
+          c.set('tenantId', 'per-route-value');
+          await next();
+          callOrder.push('per-route-end');
+        },
+        (c) => {
+          callOrder.push('handler');
+          return c.json({ tenantId: c.get('tenantId') });
+        }
+      );
 
       const res = await app.request('/test');
       expect(res.status).toBe(200);
@@ -477,11 +485,14 @@ describe('Monitoring Routes Auth Enforcement', () => {
 
       app.use('*', async (c, next) => {
         // Only set db, NOT tenantId - let auth middleware handle it
-        c.set('db', createMockDb({
-          monitoredDomains: [makeMonitoredDomain()],
-          domains: [makeDomain()],
-          alerts: [],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [makeMonitoredDomain()],
+            domains: [makeDomain()],
+            alerts: [],
+          })
+        );
         // tenantId is set by auth middleware (per-route), don't touch it here
         await next();
       });
@@ -537,14 +548,17 @@ describe('Monitoring Routes Tenant Isolation', () => {
       });
 
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [ourDomain, otherDomain],
-          domains: [
-            makeDomain({ id: 'dom-us', name: 'our-domain.com' }),
-            makeDomain({ id: 'dom-other', name: 'other-domain.com' }),
-          ],
-          alerts: [],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [ourDomain, otherDomain],
+            domains: [
+              makeDomain({ id: 'dom-us', name: 'our-domain.com' }),
+              makeDomain({ id: 'dom-other', name: 'other-domain.com' }),
+            ],
+            alerts: [],
+          })
+        );
         c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();
       });
@@ -582,9 +596,12 @@ describe('Monitoring Routes Tenant Isolation', () => {
       });
 
       app.use('*', async (c, next) => {
-        c.set('db', createMockDb({
-          monitoredDomains: [otherTenantDomain],
-        }));
+        c.set(
+          'db',
+          createMockDb({
+            monitoredDomains: [otherTenantDomain],
+          })
+        );
         // We are tenant-A
         c.set('tenantId', NORMALIZED_TENANT_ID);
         await next();

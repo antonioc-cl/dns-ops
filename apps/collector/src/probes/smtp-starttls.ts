@@ -302,7 +302,9 @@ export async function probeMXHosts(
   // Process in batches to limit concurrency
   for (let i = 0; i < hosts.length; i += concurrency) {
     const batch = hosts.slice(i, i + concurrency);
-    const batchPromises = batch.map((host) => probeSMTPStarttls(host.hostname, tenantId, { timeoutMs }));
+    const batchPromises = batch.map((host) =>
+      probeSMTPStarttls(host.hostname, tenantId, { timeoutMs })
+    );
 
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);

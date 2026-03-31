@@ -11,11 +11,11 @@
  * These tests verify the security hardening from DX-004 consolidation.
  */
 
-import { Hono } from 'hono';
 import type { IDatabaseAdapter } from '@dns-ops/db';
+import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
-import { legacyToolsRoutes } from './legacy-tools.js';
 import type { Env } from '../types.js';
+import { legacyToolsRoutes } from './legacy-tools.js';
 
 interface MockState {
   legacyAccessLogs?: Array<Record<string, unknown>>;

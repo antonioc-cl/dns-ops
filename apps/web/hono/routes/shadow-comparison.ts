@@ -55,19 +55,7 @@ shadowComparisonRoutes.post('/compare', async (c) => {
   }
 
   try {
-    // Initialize repositories
-    const snapshotRepo = new SnapshotRepository(db);
-    const shadowRepo = new ShadowComparisonRepository(db);
-    const legacyLogRepo = new LegacyAccessLogRepository(db);
-
-    const snapshot = await snapshotRepo.findById(snapshotId);
-    if (!snapshot) {
-      return c.json({ error: 'Snapshot not found' }, 404);
-    }
-
-    const findings = await db.selectWhere(findingsTable, eq(findingsTable.snapshotId, snapshotId));
-
-    // Validate legacy output format
+    // Validate legacy output format before any DB lookups
     const validatedLegacy = validateLegacyOutput(legacyOutput);
     if (!validatedLegacy.valid || !validatedLegacy.data) {
       return c.json(
@@ -78,6 +66,29 @@ shadowComparisonRoutes.post('/compare', async (c) => {
         400
       );
     }
+
+    // Initialize repositories
+    const snapshotRepo = new SnapshotRepository(db);
+    const shadowRepo = new ShadowComparisonRepository(db);
+    const legacyLogRepo = new LegacyAccessLogRepository(db);
+
+    const snapshot = await snapshotRepo.findById(snapshotId);
+    if (!snapshot) {
+      return c.json({ error: 'Snapshot not found' }, 404);
+    }
+
+    // SEC: Verify snapshot belongs to the requesting tenant's domain
+    const tenantId = c.get('tenantId');
+    if (tenantId) {
+      const { DomainRepository } = await import('@dns-ops/db');
+      const domainRepo = new DomainRepository(db);
+      const domain = await domainRepo.findById(snapshot.domainId);
+      if (!domain || (domain.tenantId && domain.tenantId !== tenantId)) {
+        return c.json({ error: 'Snapshot not found' }, 404);
+      }
+    }
+
+    const findings = await db.selectWhere(findingsTable, eq(findingsTable.snapshotId, snapshotId));
 
     // Log the legacy access
     await legacyLogRepo.log({
@@ -114,7 +125,7 @@ shadowComparisonRoutes.post('/compare', async (c) => {
 
     // Store the comparison durably in the database
     // Convert legacyOutput to DB format (preserving checkedAt as-is)
-    const tenantId = c.get('tenantId');
+    // tenantId already declared above for tenant isolation check
     const stored = await shadowRepo.create({
       snapshotId,
       domain: snapshot.domainName,
@@ -173,11 +184,13 @@ shadowComparisonRoutes.post('/compare', async (c) => {
  */
 shadowComparisonRoutes.get('/stats', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
 
   try {
     const shadowRepo = new ShadowComparisonRepository(db);
-    const stats = await shadowRepo.getStats();
-    const pending = await shadowRepo.findPendingAdjudications();
+    // SEC: Scope stats to requesting tenant's comparisons
+    const stats = await shadowRepo.getStats(tenantId);
+    const pending = await shadowRepo.findPendingAdjudications(tenantId);
 
     return c.json({
       stats,
@@ -262,12 +275,14 @@ shadowComparisonRoutes.get('/domain/:domain', async (c) => {
  */
 shadowComparisonRoutes.get('/legacy-logs', async (c) => {
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
   const limit = Number.parseInt(c.req.query('limit') || '50', 10);
 
   try {
     const legacyLogRepo = new LegacyAccessLogRepository(db);
-    const logs = await legacyLogRepo.getRecent(limit);
-    const stats = await legacyLogRepo.getStats();
+    // SEC: Scope legacy logs to requesting tenant
+    const logs = await legacyLogRepo.getRecent(limit, tenantId);
+    const stats = await legacyLogRepo.getStats(tenantId);
 
     return c.json({
       logs: logs.map((l) => ({
@@ -418,14 +433,15 @@ shadowComparisonRoutes.get('/provider-baselines', async (c) => {
  * GET /api/shadow-comparison/provider-baselines/:providerKey
  * Get a specific provider baseline with template overrides applied
  *
+ * Uses auth-context tenantId for override filtering (not caller-supplied).
  * Query params:
- *   - tenantId: Filter overrides by tenant (optional)
  *   - domainName: Apply only domain-specific overrides (optional)
  */
 shadowComparisonRoutes.get('/provider-baselines/:providerKey', async (c) => {
   const providerKey = c.req.param('providerKey');
   const db = c.get('db');
-  const tenantId = c.req.query('tenantId');
+  // SEC: Use auth-context tenantId, not caller-supplied query param
+  const tenantId = c.get('tenantId');
   const domainName = c.req.query('domainName');
 
   try {
@@ -533,10 +549,12 @@ shadowComparisonRoutes.post('/mismatch-report', requireAdminAccess, async (c) =>
 shadowComparisonRoutes.get('/mismatch-reports/:domain', async (c) => {
   const domain = c.req.param('domain');
   const db = c.get('db');
+  const tenantId = c.get('tenantId');
 
   try {
     const reportRepo = new MismatchReportRepository(db);
-    const reports = await reportRepo.findByDomain(domain);
+    // SEC: Scope mismatch reports to requesting tenant
+    const reports = await reportRepo.findByDomain(domain, tenantId);
     const latest = reports[0];
 
     return c.json({

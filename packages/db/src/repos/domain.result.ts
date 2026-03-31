@@ -7,13 +7,8 @@
 
 import { Result, type ResultOrError } from '@dns-ops/contracts';
 import type { Domain, NewDomain } from '../schema/index.js';
-import {
-  DbError,
-  dbResult,
-  dbResultOrNotFound,
-  ensureTenantIsolation,
-} from './result.js';
-import { DomainRepository, type DomainFilter } from './domain.js';
+import type { DomainFilter, DomainRepository } from './domain.js';
+import { DbError, dbResult, dbResultOrNotFound, ensureTenantIsolation } from './result.js';
 
 // Re-export for convenience
 export { DbError, type DbErrorCode } from './result.js';
@@ -61,12 +56,7 @@ export class DomainRepositoryResults {
 
     // Apply tenant isolation check if tenantId provided
     if (tenantId && result.isOk()) {
-      return ensureTenantIsolation(
-        result.value,
-        result.value.tenantId,
-        tenantId,
-        'Domain'
-      );
+      return ensureTenantIsolation(result.value, result.value.tenantId, tenantId, 'Domain');
     }
 
     return result;
@@ -86,14 +76,10 @@ export class DomainRepositoryResults {
       // Check if domain exists under different tenant
       const existing = await this.repo.findByName(normalizedName);
       if (existing?.tenantId && existing.tenantId !== tenantId) {
-        return Result.err(
-          DbError.tenantIsolation('Domain', tenantId, existing.tenantId)
-        );
+        return Result.err(DbError.tenantIsolation('Domain', tenantId, existing.tenantId));
       }
 
-      return Result.err(
-        DbError.notFound('Domain', `${normalizedName} (tenant: ${tenantId})`)
-      );
+      return Result.err(DbError.notFound('Domain', `${normalizedName} (tenant: ${tenantId})`));
     }
 
     return Result.ok(domain);
@@ -117,10 +103,7 @@ export class DomainRepositoryResults {
 
     // Check for duplicates - handle both tenant-scoped and global domains
     if (data.tenantId) {
-      const existing = await this.repo.findByNameAndTenant(
-        data.name,
-        data.tenantId
-      );
+      const existing = await this.repo.findByNameAndTenant(data.name, data.tenantId);
       if (existing) {
         return Result.err(
           DbError.alreadyExists('Domain', `${data.name} (tenant: ${data.tenantId})`)
@@ -130,35 +113,35 @@ export class DomainRepositoryResults {
       // For global domains (no tenant), check by name only
       const existing = await this.repo.findByName(data.name);
       if (existing && !existing.tenantId) {
-        return Result.err(
-          DbError.alreadyExists('Domain', `${data.name} (global)`)
-        );
+        return Result.err(DbError.alreadyExists('Domain', `${data.name} (global)`));
       }
     }
 
-    return dbResult(() => this.repo.create(data), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Failed to create domain',
-        code: 'QUERY_FAILED',
-        table: 'Domain',
-        operation: 'create',
-      })
+    return dbResult(
+      () => this.repo.create(data),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Failed to create domain',
+          code: 'QUERY_FAILED',
+          table: 'Domain',
+          operation: 'create',
+        })
     );
   }
 
   /**
    * Find or create a domain with Result
    */
-  async findOrCreateResult(
-    data: NewDomain
-  ): Promise<ResultOrError<Domain, DbError>> {
-    return dbResult(() => this.repo.findOrCreate(data), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Failed to find or create domain',
-        code: 'QUERY_FAILED',
-        table: 'Domain',
-        operation: 'findOrCreate',
-      })
+  async findOrCreateResult(data: NewDomain): Promise<ResultOrError<Domain, DbError>> {
+    return dbResult(
+      () => this.repo.findOrCreate(data),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Failed to find or create domain',
+          code: 'QUERY_FAILED',
+          table: 'Domain',
+          operation: 'findOrCreate',
+        })
     );
   }
 
@@ -175,11 +158,7 @@ export class DomainRepositoryResults {
       return Result.err(DbError.notFound('Domain', id));
     }
 
-    return dbResultOrNotFound(
-      () => this.repo.update(id, data),
-      'Domain',
-      id
-    );
+    return dbResultOrNotFound(() => this.repo.update(id, data), 'Domain', id);
   }
 
   /**
@@ -207,11 +186,7 @@ export class DomainRepositoryResults {
       return isolationResult;
     }
 
-    return dbResultOrNotFound(
-      () => this.repo.update(id, data),
-      'Domain',
-      id
-    );
+    return dbResultOrNotFound(() => this.repo.update(id, data), 'Domain', id);
   }
 
   /**
@@ -255,13 +230,15 @@ export class DomainRepositoryResults {
     pattern: string,
     limit?: number
   ): Promise<ResultOrError<Domain[], DbError>> {
-    return dbResult(() => this.repo.searchByName(pattern, limit), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Search failed',
-        code: 'QUERY_FAILED',
-        table: 'Domain',
-        operation: 'search',
-      })
+    return dbResult(
+      () => this.repo.searchByName(pattern, limit),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Search failed',
+          code: 'QUERY_FAILED',
+          table: 'Domain',
+          operation: 'search',
+        })
     );
   }
 
@@ -272,13 +249,15 @@ export class DomainRepositoryResults {
     filter?: DomainFilter,
     options?: { limit?: number; offset?: number }
   ): Promise<ResultOrError<Domain[], DbError>> {
-    return dbResult(() => this.repo.findAll(filter, options), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Find all failed',
-        code: 'QUERY_FAILED',
-        table: 'Domain',
-        operation: 'findAll',
-      })
+    return dbResult(
+      () => this.repo.findAll(filter, options),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Find all failed',
+          code: 'QUERY_FAILED',
+          table: 'Domain',
+          operation: 'findAll',
+        })
     );
   }
 }

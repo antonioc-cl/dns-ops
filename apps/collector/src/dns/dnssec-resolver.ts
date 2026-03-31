@@ -5,9 +5,9 @@
  * Node.js native dns module doesn't support these record types.
  */
 
+import { DNS_RCODE } from '@dns-ops/contracts';
 import * as dnsPacket from 'dns-packet';
 import type { DNSAnswer, DNSQuery } from './types.js';
-import { DNS_RCODE } from '@dns-ops/contracts';
 
 /**
  * DNS record types supported by dns-packet
@@ -137,11 +137,7 @@ function formatRecordData(record: Record<string, unknown>): string {
 /**
  * Send DNS query over UDP
  */
-async function sendDnsQuery(
-  packet: Buffer,
-  server: string,
-  port: number
-): Promise<Buffer> {
+async function sendDnsQuery(packet: Buffer, server: string, port: number): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const dgram = require('node:dgram');
     const client = dgram.createSocket('udp4');

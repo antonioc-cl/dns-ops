@@ -146,7 +146,11 @@ export function validateSimulationContext(context: unknown): ResultOrError<true,
         new SimulationError({
           message: `Invalid type for context field: ${field}`,
           code: 'INVALID_CONTEXT',
-          details: { field, value: ctx[field], expectedType: field === 'recordSets' ? 'array' : 'non-empty string' },
+          details: {
+            field,
+            value: ctx[field],
+            expectedType: field === 'recordSets' ? 'array' : 'non-empty string',
+          },
         })
       );
     }

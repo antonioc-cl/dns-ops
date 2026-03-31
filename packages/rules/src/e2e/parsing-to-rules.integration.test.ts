@@ -7,16 +7,16 @@
 
 import { Result, type ResultOrError } from '@dns-ops/contracts';
 import { DbError } from '@dns-ops/db';
-import { RuleError, SimulationError, isActionableFindingType } from '@dns-ops/rules';
-import { describe, expect, it } from 'vitest';
 import {
   normalizeDomainResult,
-  parseDNSAnswerResult,
-  parseSPFResult,
-  parseDMARCResult,
   parseDKIMResult,
+  parseDMARCResult,
+  parseDNSAnswerResult,
   parseMTASTSResult,
-} from '../index.js';
+  parseSPFResult,
+} from '@dns-ops/parsing';
+import { isActionableFindingType, RuleError, SimulationError } from '@dns-ops/rules';
+import { describe, expect, it } from 'vitest';
 
 describe('Integration: Parsing → Database → Rules', () => {
   describe('Domain Parsing → Domain Repository Flow', () => {
@@ -136,7 +136,9 @@ describe('Integration: Parsing → Database → Rules', () => {
     });
 
     it('should parse DKIM record for rule evaluation', () => {
-      const result = parseDKIMResult('v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY');
+      const result = parseDKIMResult(
+        'v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1TaNgLlSyQMNWVLNLvyY'
+      );
 
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
@@ -205,11 +207,7 @@ describe('Integration: Parsing → Database → Rules', () => {
     });
 
     it('should not simulate non-actionable findings', () => {
-      const nonActionable = [
-        'mail.spf-valid',
-        'mail.dmarc-valid',
-        'dns.a-record-exists',
-      ];
+      const nonActionable = ['mail.spf-valid', 'mail.dmarc-valid', 'dns.a-record-exists'];
 
       for (const finding of nonActionable) {
         expect(isActionableFindingType(finding)).toBe(false);
@@ -291,11 +289,7 @@ describe('Integration: Parsing → Database → Rules', () => {
     });
 
     it('should collect multiple parsing errors', () => {
-      const results = [
-        parseSPFResult(''),
-        parseDMARCResult(''),
-        parseDKIMResult(''),
-      ];
+      const results = [parseSPFResult(''), parseDMARCResult(''), parseDKIMResult('')];
 
       const errors = results
         .filter((r): r is { isOk(): false; isErr(): true; error: { code: string } } => r.isErr())
@@ -358,8 +352,18 @@ describe('Integration: Parsing → Database → Rules', () => {
 
         // Step 2: Parse DNS records
         const records = [
-          parseDNSAnswerResult({ name: domainResult.value.normalized, type: 'A', ttl: 300, data: '192.0.2.1' }),
-          parseDNSAnswerResult({ name: domainResult.value.normalized, type: 'MX', ttl: 300, data: '10 mail.example.com' }),
+          parseDNSAnswerResult({
+            name: domainResult.value.normalized,
+            type: 'A',
+            ttl: 300,
+            data: '192.0.2.1',
+          }),
+          parseDNSAnswerResult({
+            name: domainResult.value.normalized,
+            type: 'MX',
+            ttl: 300,
+            data: '10 mail.example.com',
+          }),
         ];
 
         const [ok, err] = Result.partition(records);

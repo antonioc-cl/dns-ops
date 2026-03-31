@@ -245,9 +245,7 @@ describe('Delegation Integration', () => {
       });
       mockQueryDS.mockResolvedValueOnce({
         success: true,
-        answers: [
-          makeAnswer('example.com', 'DS', '12345 8 2 abc...'),
-        ],
+        answers: [makeAnswer('example.com', 'DS', '12345 8 2 abc...')],
       });
 
       patchResolver(collector, queryResults);

@@ -8,8 +8,8 @@
 import {
   NotFoundError,
   Result,
-  TaggedError,
   type ResultOrError,
+  TaggedError,
   TenantIsolationError,
 } from '@dns-ops/contracts';
 
@@ -58,11 +58,7 @@ export class DbError extends DbError_base {
   /**
    * Create a TENANT_ISOLATION error
    */
-  static tenantIsolation(
-    table: string,
-    tenantId: string,
-    resourceTenantId?: string
-  ): DbError {
+  static tenantIsolation(table: string, tenantId: string, resourceTenantId?: string): DbError {
     return new DbError({
       message: `Cross-tenant access denied for ${table}`,
       code: 'TENANT_ISOLATION',
@@ -127,7 +123,7 @@ export async function dbResult<T>(
  */
 export function mapDatabaseError(e: unknown, table: string, identifier?: string): DbError {
   const message = e instanceof Error ? e.message : String(e);
-  
+
   // Check for specific error patterns
   if (message.includes('connection') || message.includes('ECONNREFUSED')) {
     return new DbError({
@@ -137,7 +133,7 @@ export function mapDatabaseError(e: unknown, table: string, identifier?: string)
       identifier,
     });
   }
-  
+
   if (message.includes('timeout') || message.includes('ETIMEDOUT')) {
     return new DbError({
       message,
@@ -146,7 +142,7 @@ export function mapDatabaseError(e: unknown, table: string, identifier?: string)
       identifier,
     });
   }
-  
+
   if (message.includes('unique constraint') || message.includes('duplicate')) {
     return new DbError({
       message,
@@ -155,7 +151,7 @@ export function mapDatabaseError(e: unknown, table: string, identifier?: string)
       identifier,
     });
   }
-  
+
   // Default to generic query failed
   return new DbError({
     message,
@@ -229,9 +225,7 @@ export function ensureTenantIsolation<T extends { tenantId?: string | null }>(
 
   // Check tenant match
   if (resourceTenantId !== currentTenantId) {
-    return Result.err(
-      DbError.tenantIsolation(table, currentTenantId, resourceTenantId)
-    );
+    return Result.err(DbError.tenantIsolation(table, currentTenantId, resourceTenantId));
   }
 
   return Result.ok(resource);
@@ -240,9 +234,10 @@ export function ensureTenantIsolation<T extends { tenantId?: string | null }>(
 /**
  * Partition database results into successes and failures
  */
-export function partitionDbResults<T>(
-  results: ResultOrError<T, DbError>[]
-): { ok: T[]; err: DbError[] } {
+export function partitionDbResults<T>(results: ResultOrError<T, DbError>[]): {
+  ok: T[];
+  err: DbError[];
+} {
   const [ok, err] = Result.partition(results);
   return { ok, err };
 }
@@ -250,10 +245,7 @@ export function partitionDbResults<T>(
 /**
  * Unwrap a database result or return a default
  */
-export function unwrapDbResultOr<T>(
-  result: ResultOrError<T, DbError>,
-  defaultValue: T
-): T {
+export function unwrapDbResultOr<T>(result: ResultOrError<T, DbError>, defaultValue: T): T {
   return Result.unwrapOr(result, defaultValue);
 }
 

@@ -9,10 +9,10 @@
  * - Lame delegation detection
  */
 
-import { DNSResolver } from '../dns/resolver.js';
-import { queryDNSKEY, queryDS } from '../dns/dnssec-resolver.js';
-import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from '../dns/types.js';
 import { DNS_RCODE } from '@dns-ops/contracts';
+import { queryDNSKEY, queryDS } from '../dns/dnssec-resolver.js';
+import { DNSResolver } from '../dns/resolver.js';
+import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from '../dns/types.js';
 
 export interface DelegationSummary {
   domain: string;
@@ -343,7 +343,11 @@ export class DelegationCollector {
       if (result.success) {
         return {
           query: { name: domain, type: 'DNSKEY' },
-          vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+          vantage: {
+            type: 'public-recursive',
+            identifier: recursiveResolver,
+            region: 'us-central',
+          },
           success: true,
           responseCode: DNS_RCODE.NOERROR,
           flags: { aa: false, tc: false, rd: true, ra: true, ad: false, cd: false },
@@ -395,7 +399,11 @@ export class DelegationCollector {
       if (result.success) {
         return {
           query: { name: domain, type: 'DS' },
-          vantage: { type: 'public-recursive', identifier: recursiveResolver, region: 'us-central' },
+          vantage: {
+            type: 'public-recursive',
+            identifier: recursiveResolver,
+            region: 'us-central',
+          },
           success: true,
           responseCode: DNS_RCODE.NOERROR,
           flags: { aa: false, tc: false, rd: true, ra: true, ad: false, cd: false },

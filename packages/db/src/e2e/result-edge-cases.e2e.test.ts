@@ -33,7 +33,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
 
       // Simulate createResult logic for global domain
       const data = { name: 'example.com', tenantId: undefined };
-      
+
       const existing = await mockRepo.findByName(data.name);
       if (existing && !existing.tenantId) {
         const error = DbError.alreadyExists('Domain', `${data.name} (global)`);
@@ -49,7 +49,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
 
       const data = { name: 'example.com', tenantId: 'tenant-1' };
       const existing = await mockRepo.findByNameAndTenant(data.name, data.tenantId);
-      
+
       expect(existing).toBeNull();
     });
 
@@ -64,7 +64,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
 
       const data = { name: 'example.com', tenantId: 'tenant-1' };
       const existing = await mockRepo.findByNameAndTenant(data.name, data.tenantId);
-      
+
       if (existing) {
         const error = DbError.alreadyExists('Domain', `${data.name} (tenant: ${data.tenantId})`);
         expect(error.code).toBe('ALREADY_EXISTS');
@@ -76,7 +76,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should map connection errors to CONNECTION_ERROR code', () => {
       const connectionError = new Error('Connection refused: ECONNREFUSED');
       const mapped = mapDatabaseError(connectionError, 'Domain', 'id-1');
-      
+
       expect(mapped.code).toBe('CONNECTION_ERROR');
       expect(mapped.table).toBe('Domain');
       expect(mapped.identifier).toBe('id-1');
@@ -85,27 +85,29 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should map timeout errors to TIMEOUT code', () => {
       const timeoutError = new Error('Query timeout: ETIMEDOUT');
       const mapped = mapDatabaseError(timeoutError, 'Snapshot', 'snap-1');
-      
+
       expect(mapped.code).toBe('TIMEOUT');
     });
 
     it('should map unique constraint violations to ALREADY_EXISTS', () => {
-      const uniqueError = new Error('duplicate key value violates unique constraint "domains_name_key"');
+      const uniqueError = new Error(
+        'duplicate key value violates unique constraint "domains_name_key"'
+      );
       const mapped = mapDatabaseError(uniqueError, 'Domain', 'example.com');
-      
+
       expect(mapped.code).toBe('ALREADY_EXISTS');
     });
 
     it('should map unknown errors to QUERY_FAILED', () => {
       const unknownError = new Error('Some random database error');
       const mapped = mapDatabaseError(unknownError, 'Domain', 'id-1');
-      
+
       expect(mapped.code).toBe('QUERY_FAILED');
     });
 
     it('should handle non-Error objects', () => {
       const mapped = mapDatabaseError('string error', 'Domain', 'id-1');
-      
+
       expect(mapped.code).toBe('QUERY_FAILED');
       expect(mapped.message).toBe('string error');
     });
@@ -119,7 +121,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
       };
 
       const snapshot = await mockRepo.findLatestByDomain('new-domain-id');
-      
+
       // Should return ok(undefined), not an error
       const result = Result.ok(snapshot);
       expect(result.isOk()).toBe(true);
@@ -132,7 +134,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
       };
 
       const snapshot = await mockRepo.findLatestByDomain('domain-id');
-      
+
       if (!snapshot) {
         const error = DbError.notFound('Snapshot', 'latest for domain: domain-id');
         expect(error.code).toBe('NOT_FOUND');
@@ -144,28 +146,28 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should treat undefined tenantId as public resource', () => {
       const resource = { id: '1', tenantId: undefined };
       const result = ensureTenantIsolation(resource, undefined, 'tenant-1', 'Domain');
-      
+
       expect(result.isOk()).toBe(true);
     });
 
     it('should treat null tenantId as public resource', () => {
       const resource = { id: '1', tenantId: null };
       const result = ensureTenantIsolation(resource, null, 'tenant-1', 'Domain');
-      
+
       expect(result.isOk()).toBe(true);
     });
 
     it('should allow access when tenant matches', () => {
       const resource = { id: '1', tenantId: 'tenant-1' };
       const result = ensureTenantIsolation(resource, 'tenant-1', 'tenant-1', 'Domain');
-      
+
       expect(result.isOk()).toBe(true);
     });
 
     it('should deny access when tenant differs', () => {
       const resource = { id: '1', tenantId: 'tenant-2' };
       const result = ensureTenantIsolation(resource, 'tenant-2', 'tenant-1', 'Domain');
-      
+
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.code).toBe('TENANT_ISOLATION');
@@ -176,7 +178,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
 
     it('should return NOT_FOUND when resource is undefined', () => {
       const result = ensureTenantIsolation(undefined, 'tenant-1', 'tenant-1', 'Domain');
-      
+
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.code).toBe('NOT_FOUND');
@@ -188,7 +190,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should handle undefined return as not found', async () => {
       const operation = () => Promise.resolve(undefined);
       const result = await dbResultOrNotFound(operation, 'Domain', 'missing-id');
-      
+
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.code).toBe('NOT_FOUND');
@@ -198,7 +200,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should handle null return as not found', async () => {
       const operation = () => Promise.resolve(null);
       const result = await dbResultOrNotFound(operation, 'Domain', 'missing-id');
-      
+
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.code).toBe('NOT_FOUND');
@@ -208,7 +210,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should return value when found', async () => {
       const operation = () => Promise.resolve({ id: '1', name: 'example.com' });
       const result = await dbResultOrNotFound(operation, 'Domain', '1');
-      
+
       expect(result.isOk()).toBe(true);
       if (result.isOk()) {
         expect(result.value.name).toBe('example.com');
@@ -218,7 +220,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should map connection errors correctly', async () => {
       const operation = () => Promise.reject(new Error('ECONNREFUSED'));
       const result = await dbResultOrNotFound(operation, 'Domain', '1');
-      
+
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
         expect(result.error.code).toBe('CONNECTION_ERROR');
@@ -233,7 +235,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
         message: longMessage,
         code: 'QUERY_FAILED',
       });
-      
+
       expect(error.message).toBe(longMessage);
       expect(error.message.length).toBe(10000);
     });
@@ -244,14 +246,14 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
         message: specialMessage,
         code: 'QUERY_FAILED',
       });
-      
+
       expect(error.message).toBe(specialMessage);
     });
 
     it('should handle unicode in error messages', () => {
       const unicodeMessage = 'Error: 日本語 ñ émojis 🎉';
       const error = DbError.notFound('Domain', unicodeMessage);
-      
+
       expect(error.message).toContain(unicodeMessage);
     });
   });
@@ -260,19 +262,15 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
     it('should handle empty results array', () => {
       const results: Result<string, DbError>[] = [];
       const [ok, err] = Result.partition(results);
-      
+
       expect(ok).toHaveLength(0);
       expect(err).toHaveLength(0);
     });
 
     it('should handle all success results', () => {
-      const results = [
-        Result.ok('a'),
-        Result.ok('b'),
-        Result.ok('c'),
-      ];
+      const results = [Result.ok('a'), Result.ok('b'), Result.ok('c')];
       const [ok, err] = Result.partition(results);
-      
+
       expect(ok).toHaveLength(3);
       expect(err).toHaveLength(0);
     });
@@ -284,7 +282,7 @@ describe('E2E: Result Edge Cases and Bug Fixes', () => {
         Result.err(DbError.notFound('X', '3')),
       ];
       const [ok, err] = Result.partition(results);
-      
+
       expect(ok).toHaveLength(0);
       expect(err).toHaveLength(3);
     });

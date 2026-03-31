@@ -147,7 +147,9 @@ describe('Tenant-Scoped Allowlist - AUTH-003', () => {
         {
           success: true,
           query: { name: 'example.com', type: 'MX' as const },
-          answers: [{ name: 'example.com', type: 'MX' as const, ttl: 300, data: '10 mail.example.com' }],
+          answers: [
+            { name: 'example.com', type: 'MX' as const, ttl: 300, data: '10 mail.example.com' },
+          ],
         },
       ];
 

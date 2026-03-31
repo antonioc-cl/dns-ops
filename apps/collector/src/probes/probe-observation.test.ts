@@ -4,9 +4,9 @@
  * Tests that probe results are persisted to the database.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IDatabaseAdapter } from '@dns-ops/db';
 import { ProbeObservationRepository } from '@dns-ops/db';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Probe Observation Persistence', () => {
   describe('Repository', () => {

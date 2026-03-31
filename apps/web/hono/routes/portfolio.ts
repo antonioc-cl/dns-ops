@@ -118,15 +118,16 @@ portfolioRoutes.post('/search', async (c) => {
     const resultDomainIds = results.map((d) => d.id);
 
     // Batch fetch all snapshots for these domains
-    const allSnapshots = resultDomainIds.length > 0
-      ? await db.getDrizzle().query.snapshots.findMany({
-          where: inArray(snapshots.domainId, resultDomainIds),
-          orderBy: desc(snapshots.createdAt),
-        })
-      : [];
+    const allSnapshots =
+      resultDomainIds.length > 0
+        ? await db.getDrizzle().query.snapshots.findMany({
+            where: inArray(snapshots.domainId, resultDomainIds),
+            orderBy: desc(snapshots.createdAt),
+          })
+        : [];
 
     // Build a map of domainId -> latest snapshot
-    const latestSnapshotByDomain = new Map<string, typeof allSnapshots[0]>();
+    const latestSnapshotByDomain = new Map<string, (typeof allSnapshots)[0]>();
     for (const snapshot of allSnapshots) {
       if (!latestSnapshotByDomain.has(snapshot.domainId)) {
         latestSnapshotByDomain.set(snapshot.domainId, snapshot);
@@ -138,19 +139,20 @@ portfolioRoutes.post('/search', async (c) => {
 
     // Batch fetch all findings for these snapshots
     const hasSeverityFilter = severities && severities.length > 0;
-    const allFindings = snapshotIds.length > 0
-      ? await db.getDrizzle().query.findings.findMany({
-          where: hasSeverityFilter
-            ? and(
-                inArray(findings.snapshotId, snapshotIds),
-                inArray(
-                  findings.severity,
-                  severities as ('critical' | 'high' | 'medium' | 'low' | 'info')[]
+    const allFindings =
+      snapshotIds.length > 0
+        ? await db.getDrizzle().query.findings.findMany({
+            where: hasSeverityFilter
+              ? and(
+                  inArray(findings.snapshotId, snapshotIds),
+                  inArray(
+                    findings.severity,
+                    severities as ('critical' | 'high' | 'medium' | 'low' | 'info')[]
+                  )
                 )
-              )
-            : inArray(findings.snapshotId, snapshotIds),
-        })
-      : [];
+              : inArray(findings.snapshotId, snapshotIds),
+          })
+        : [];
 
     // Build a map of snapshotId -> findings
     const findingsBySnapshot = new Map<string, typeof allFindings>();

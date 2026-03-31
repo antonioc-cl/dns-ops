@@ -2,7 +2,7 @@
  * DNSSEC DNS Resolver Tests - DNS-002
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { queryDNSKEY, queryDS } from './dnssec-resolver.js';
 
 describe('DNSSEC DNS Resolver', () => {

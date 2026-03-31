@@ -33,7 +33,12 @@ export interface TenantScopedAllowlist {
   /**
    * Add a custom allowlist entry for this tenant
    */
-  addCustomEntry(hostname: string, port: number, requestedBy: string, reason: string): AllowlistEntry;
+  addCustomEntry(
+    hostname: string,
+    port: number,
+    requestedBy: string,
+    reason: string
+  ): AllowlistEntry;
 
   /**
    * Check if a destination is allowed for this tenant
@@ -111,10 +116,7 @@ export function createTenantAllowlist(tenantId: string): TenantScopedAllowlist {
         }
 
         // Extract MTA-STS policy host
-        if (
-          dnsResult.query.type === 'TXT' &&
-          dnsResult.query.name.includes('_mta-sts')
-        ) {
+        if (dnsResult.query.type === 'TXT' && dnsResult.query.name.includes('_mta-sts')) {
           const entry: AllowlistEntry = {
             tenantId,
             type: 'mta-sts',

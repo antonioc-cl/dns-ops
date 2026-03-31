@@ -104,17 +104,23 @@ export class ShadowComparisonRepository {
 
   /**
    * Find all mismatches (status is 'mismatch' or 'partial-match')
+   * If tenantId is provided, scopes to that tenant's comparisons only.
    */
-  async findMismatches(): Promise<ShadowComparison[]> {
+  async findMismatches(tenantId?: string): Promise<ShadowComparison[]> {
     const all = await this.db.select(shadowComparisons);
-    return all.filter((c) => c.status === 'mismatch' || c.status === 'partial-match');
+    let filtered = all.filter((c) => c.status === 'mismatch' || c.status === 'partial-match');
+    if (tenantId) {
+      filtered = filtered.filter((c) => c.tenantId === tenantId);
+    }
+    return filtered;
   }
 
   /**
    * Find pending adjudications (mismatches without adjudication)
+   * If tenantId is provided, scopes to that tenant's comparisons only.
    */
-  async findPendingAdjudications(): Promise<ShadowComparison[]> {
-    const mismatches = await this.findMismatches();
+  async findPendingAdjudications(tenantId?: string): Promise<ShadowComparison[]> {
+    const mismatches = await this.findMismatches(tenantId);
     return mismatches.filter((c) => !c.adjudication);
   }
 
@@ -145,9 +151,10 @@ export class ShadowComparisonRepository {
   }
 
   /**
-   * Get statistics for all comparisons
+   * Get statistics for comparisons.
+   * If tenantId is provided, scopes to that tenant's comparisons only.
    */
-  async getStats(): Promise<{
+  async getStats(tenantId?: string): Promise<{
     total: number;
     matches: number;
     mismatches: number;
@@ -155,7 +162,10 @@ export class ShadowComparisonRepository {
     acknowledged: number;
     pending: number;
   }> {
-    const all = await this.db.select(shadowComparisons);
+    let all = await this.db.select(shadowComparisons);
+    if (tenantId) {
+      all = all.filter((c) => c.tenantId === tenantId);
+    }
     return {
       total: all.length,
       matches: all.filter((c) => c.status === 'match').length,
@@ -220,25 +230,33 @@ export class LegacyAccessLogRepository {
   }
 
   /**
-   * Get recent logs (last N)
+   * Get recent logs (last N).
+   * If tenantId is provided, scopes to that tenant's logs only.
    */
-  async getRecent(limit = 100): Promise<LegacyAccessLog[]> {
-    const all = await this.db.select(legacyAccessLogs);
+  async getRecent(limit = 100, tenantId?: string): Promise<LegacyAccessLog[]> {
+    let all = await this.db.select(legacyAccessLogs);
+    if (tenantId) {
+      all = all.filter((l) => l.tenantId === tenantId);
+    }
     // Sort by requestedAt descending
     all.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
     return all.slice(0, limit);
   }
 
   /**
-   * Get access statistics
+   * Get access statistics.
+   * If tenantId is provided, scopes to that tenant's logs only.
    */
-  async getStats(): Promise<{
+  async getStats(tenantId?: string): Promise<{
     total: number;
     byToolType: Record<string, number>;
     successRate: number;
     last24h: number;
   }> {
-    const all = await this.db.select(legacyAccessLogs);
+    let all = await this.db.select(legacyAccessLogs);
+    if (tenantId) {
+      all = all.filter((l) => l.tenantId === tenantId);
+    }
     const byToolType: Record<string, number> = {};
 
     for (const log of all) {
@@ -463,10 +481,14 @@ export class MismatchReportRepository {
   }
 
   /**
-   * Find reports by domain
+   * Find reports by domain.
+   * If tenantId is provided, scopes to that tenant's reports only.
    */
-  async findByDomain(domain: string): Promise<MismatchReport[]> {
-    const results = await this.db.selectWhere(mismatchReports, eq(mismatchReports.domain, domain));
+  async findByDomain(domain: string, tenantId?: string): Promise<MismatchReport[]> {
+    let results = await this.db.selectWhere(mismatchReports, eq(mismatchReports.domain, domain));
+    if (tenantId) {
+      results = results.filter((r) => r.tenantId === tenantId);
+    }
     results.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
     return results;
   }

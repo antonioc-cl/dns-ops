@@ -6,9 +6,9 @@
  */
 
 import { ProbeObservationRepository } from '@dns-ops/db';
-import type { SMTPProbeResult } from './smtp-starttls.js';
-import type { MTASTSProbeResult } from './mta-sts.js';
 import type { Env } from '../types.js';
+import type { MTASTSProbeResult } from './mta-sts.js';
+import type { SMTPProbeResult } from './smtp-starttls.js';
 
 /**
  * Map SMTP probe result to probe observation format
@@ -154,7 +154,9 @@ export async function persistProbeObservations(
 
   try {
     const created = await repo.createMany(observations as Parameters<typeof repo.createMany>[0]);
-    console.info(`[ProbeObservation] Persisted ${created.length} probe observations for snapshot ${snapshotId}`);
+    console.info(
+      `[ProbeObservation] Persisted ${created.length} probe observations for snapshot ${snapshotId}`
+    );
     return created.length;
   } catch (error) {
     console.error(`[ProbeObservation] Failed to persist observations: ${error}`);

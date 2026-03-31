@@ -31,12 +31,12 @@ export {
 } from './error-tracking.js';
 export {
   createErrorResponse,
+  type ErrorResponse,
   errorToStatusCode,
   handleResult,
   handleResultWithStatus,
   isDbError,
   isRuleError,
   resultAwareHandler,
-  type ErrorResponse,
   type SuccessResponse,
 } from './result-handler.js';

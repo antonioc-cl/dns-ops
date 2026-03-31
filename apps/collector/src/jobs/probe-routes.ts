@@ -25,8 +25,8 @@
 
 import { Hono } from 'hono';
 import { getEnvConfig } from '../config/env.js';
-import type { Env } from '../types.js';
 import type { DNSQueryResult } from '../dns/types.js';
+import type { AllowlistEntry } from '../probes/allowlist.js';
 import {
   fetchMTASTSPolicy,
   probeAllowlistManager,
@@ -34,8 +34,8 @@ import {
   probeSMTPStarttls,
   validateMTASTSTxtRecord,
 } from '../probes/index.js';
-import type { AllowlistEntry } from '../probes/allowlist.js';
 import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
+import type { Env } from '../types.js';
 
 export const probeRoutes = new Hono<Env>();
 
@@ -107,12 +107,9 @@ probeRoutes.post('/mta-sts', async (c) => {
   }
 
   // Add to tenant-scoped allowlist (MTA-STS endpoint is derived from DNS)
-  probeAllowlistManager.getTenantAllowlist(tenantId).addCustomEntry(
-    `mta-sts.${domain}`,
-    443,
-    'probe-api',
-    `MTA-STS policy fetch for ${domain}`
-  );
+  probeAllowlistManager
+    .getTenantAllowlist(tenantId)
+    .addCustomEntry(`mta-sts.${domain}`, 443, 'probe-api', `MTA-STS policy fetch for ${domain}`);
 
   // Fetch policy
   const result = await fetchMTASTSPolicy(domain, tenantId, {
@@ -156,7 +153,9 @@ probeRoutes.post('/smtp-starttls', async (c) => {
           responseTime: 0,
         },
       ];
-      probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults(hostname, mockResults);
+      probeAllowlistManager
+        .getTenantAllowlist(tenantId)
+        .generateFromDnsResults(hostname, mockResults);
     }
 
     const result = await probeSMTPStarttls(hostname, tenantId, {
@@ -239,7 +238,9 @@ probeRoutes.post('/allowlist/generate', async (c) => {
     );
   }
 
-  const entries = probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults(domain, dnsResults);
+  const entries = probeAllowlistManager
+    .getTenantAllowlist(tenantId)
+    .generateFromDnsResults(domain, dnsResults);
 
   return c.json({
     domain,

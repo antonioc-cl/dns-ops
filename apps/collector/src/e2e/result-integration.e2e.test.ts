@@ -284,9 +284,12 @@ describe('E2E: Result Integration Across All Layers', () => {
     it('should handle async handler that throws', async () => {
       const app = new Hono();
 
-      app.get('/test', resultAwareHandler(async () => {
-        throw new Error('Handler threw');
-      }));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => {
+          throw new Error('Handler threw');
+        })
+      );
 
       // The handler itself throws, not returning a Result
       // This should be caught by Hono's error handler
@@ -297,9 +300,12 @@ describe('E2E: Result Integration Across All Layers', () => {
     it('should handle handler returning non-Result', async () => {
       const app = new Hono();
 
-      app.get('/test', resultAwareHandler(async () => {
-        return { notAResult: true } as never;
-      }));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => {
+          return { notAResult: true } as never;
+        })
+      );
 
       const res = await app.request('/test');
       // Should fail when trying to call isOk()
@@ -310,10 +316,13 @@ describe('E2E: Result Integration Across All Layers', () => {
       const app = new Hono();
       let capturedContext: string | undefined;
 
-      app.get('/test', resultAwareHandler(async (c) => {
-        capturedContext = c.req.header('X-Custom-Header');
-        return Result.ok({ received: capturedContext });
-      }));
+      app.get(
+        '/test',
+        resultAwareHandler(async (c) => {
+          capturedContext = c.req.header('X-Custom-Header');
+          return Result.ok({ received: capturedContext });
+        })
+      );
 
       const res = await app.request('/test', {
         headers: { 'X-Custom-Header': 'test-value' },
@@ -329,21 +338,24 @@ describe('E2E: Result Integration Across All Layers', () => {
       const app = new Hono();
 
       // Simulate parsing layer error propagating to API
-      app.post('/parse', resultAwareHandler(async (c) => {
-        const body = await c.req.json();
+      app.post(
+        '/parse',
+        resultAwareHandler(async (c) => {
+          const body = await c.req.json();
 
-        // Simulate parsing failure
-        if (!body.domain) {
-          return Result.err(
-            new DbError({
-              message: 'Domain is required',
-              code: 'CONSTRAINT_VIOLATION',
-            })
-          );
-        }
+          // Simulate parsing failure
+          if (!body.domain) {
+            return Result.err(
+              new DbError({
+                message: 'Domain is required',
+                code: 'CONSTRAINT_VIOLATION',
+              })
+            );
+          }
 
-        return Result.ok({ parsed: body.domain });
-      }));
+          return Result.ok({ parsed: body.domain });
+        })
+      );
 
       const res = await app.request('/parse', {
         method: 'POST',
@@ -359,10 +371,13 @@ describe('E2E: Result Integration Across All Layers', () => {
     it('should handle database error → API response flow', async () => {
       const app = new Hono();
 
-      app.get('/db-error', resultAwareHandler(async () => {
-        // Simulate database layer error
-        return Result.err(DbError.notFound('Snapshot', 'snap-123'));
-      }));
+      app.get(
+        '/db-error',
+        resultAwareHandler(async () => {
+          // Simulate database layer error
+          return Result.err(DbError.notFound('Snapshot', 'snap-123'));
+        })
+      );
 
       const res = await app.request('/db-error');
       expect(res.status).toBe(404);
@@ -375,10 +390,13 @@ describe('E2E: Result Integration Across All Layers', () => {
     it('should handle rules engine error → API response flow', async () => {
       const app = new Hono();
 
-      app.get('/rule-error', resultAwareHandler(async () => {
-        // Simulate rules engine error
-        return Result.err(RuleError.ruleNotFound('missing-rule'));
-      }));
+      app.get(
+        '/rule-error',
+        resultAwareHandler(async () => {
+          // Simulate rules engine error
+          return Result.err(RuleError.ruleNotFound('missing-rule'));
+        })
+      );
 
       const res = await app.request('/rule-error');
       expect(res.status).toBe(404);
@@ -390,10 +408,13 @@ describe('E2E: Result Integration Across All Layers', () => {
     it('should handle simulation error → API response flow', async () => {
       const app = new Hono();
 
-      app.get('/sim-error', resultAwareHandler(async () => {
-        // Simulate simulation error
-        return Result.err(SimulationError.invalidFindingType('unsupported.type'));
-      }));
+      app.get(
+        '/sim-error',
+        resultAwareHandler(async () => {
+          // Simulate simulation error
+          return Result.err(SimulationError.invalidFindingType('unsupported.type'));
+        })
+      );
 
       const res = await app.request('/sim-error');
       expect(res.status).toBe(400);
@@ -411,16 +432,24 @@ describe('E2E: Result Integration Across All Layers', () => {
       // Override logger for testing
       // Note: In real test we'd mock the logger
 
-      app.get('/client-error', resultAwareHandler(async () => {
-        return Result.err(DbError.notFound('X', '1')); // 404
-      }));
+      app.get(
+        '/client-error',
+        resultAwareHandler(async () => {
+          return Result.err(DbError.notFound('X', '1')); // 404
+        })
+      );
 
-      app.get('/server-error', resultAwareHandler(async () => {
-        return Result.err(new DbError({
-          message: 'DB crashed',
-          code: 'QUERY_FAILED',
-        })); // 500
-      }));
+      app.get(
+        '/server-error',
+        resultAwareHandler(async () => {
+          return Result.err(
+            new DbError({
+              message: 'DB crashed',
+              code: 'QUERY_FAILED',
+            })
+          ); // 500
+        })
+      );
 
       const clientRes = await app.request('/client-error');
       expect(clientRes.status).toBe(404);
@@ -433,7 +462,10 @@ describe('E2E: Result Integration Across All Layers', () => {
   describe('Response Metadata', () => {
     it('should include timestamp in success response', async () => {
       const app = new Hono();
-      app.get('/test', resultAwareHandler(async () => Result.ok({ data: 'test' })));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => Result.ok({ data: 'test' }))
+      );
 
       const res = await app.request('/test');
       const json = await res.json();
@@ -444,7 +476,10 @@ describe('E2E: Result Integration Across All Layers', () => {
 
     it('should include request ID when provided', async () => {
       const app = new Hono();
-      app.get('/test', resultAwareHandler(async () => Result.ok({ data: 'test' })));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => Result.ok({ data: 'test' }))
+      );
 
       const res = await app.request('/test', {
         headers: { 'X-Request-ID': 'req-123' },
@@ -456,7 +491,10 @@ describe('E2E: Result Integration Across All Layers', () => {
 
     it('should handle missing request ID', async () => {
       const app = new Hono();
-      app.get('/test', resultAwareHandler(async () => Result.ok({ data: 'test' })));
+      app.get(
+        '/test',
+        resultAwareHandler(async () => Result.ok({ data: 'test' }))
+      );
 
       const res = await app.request('/test');
       const json = await res.json();

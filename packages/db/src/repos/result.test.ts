@@ -144,11 +144,7 @@ describe('Database Result Utilities', () => {
     });
 
     it('should return Err NOT_FOUND when undefined', async () => {
-      const result = await dbResultOrNotFound(
-        async () => undefined,
-        'Domain',
-        'missing-id'
-      );
+      const result = await dbResultOrNotFound(async () => undefined, 'Domain', 'missing-id');
 
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
@@ -158,11 +154,7 @@ describe('Database Result Utilities', () => {
     });
 
     it('should return Err NOT_FOUND when null', async () => {
-      const result = await dbResultOrNotFound(
-        async () => null,
-        'Snapshot',
-        'missing-id'
-      );
+      const result = await dbResultOrNotFound(async () => null, 'Snapshot', 'missing-id');
 
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {
@@ -201,12 +193,7 @@ describe('Database Result Utilities', () => {
     });
 
     it('should return Err NOT_FOUND for undefined resource', () => {
-      const result = ensureTenantIsolation(
-        undefined,
-        'tenant-1',
-        'tenant-1',
-        'Domain'
-      );
+      const result = ensureTenantIsolation(undefined, 'tenant-1', 'tenant-1', 'Domain');
 
       expect(result.isErr()).toBe(true);
       if (result.isErr()) {

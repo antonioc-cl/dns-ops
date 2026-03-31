@@ -122,7 +122,11 @@ const histograms: Map<string, Histogram> = new Map();
 /**
  * Increment a counter
  */
-export function incrementCounter(name: string, labels: Record<string, string> = {}, value = 1): void {
+export function incrementCounter(
+  name: string,
+  labels: Record<string, string> = {},
+  value = 1
+): void {
   const key = metricKey(name, labels);
   const existing = counters.get(key);
   if (existing) {
@@ -267,7 +271,10 @@ export const MetricNames = {
  * Record a collection event
  */
 export function recordCollection(domain: string, success: boolean, durationMs: number): void {
-  incrementCounter(MetricNames.COLLECTION_REQUESTS, { domain, status: success ? 'success' : 'failure' });
+  incrementCounter(MetricNames.COLLECTION_REQUESTS, {
+    domain,
+    status: success ? 'success' : 'failure',
+  });
   recordHistogram(MetricNames.COLLECTION_DURATION, durationMs / 1000, { domain });
   if (!success) {
     incrementCounter(MetricNames.COLLECTION_ERRORS, { domain, type: 'collection_failed' });
@@ -286,7 +293,10 @@ export function recordDnsQuery(type: string, success: boolean, durationMs: numbe
  * Record a probe execution
  */
 export function recordProbe(probeType: string, success: boolean, durationMs: number): void {
-  incrementCounter(MetricNames.PROBE_REQUESTS, { type: probeType, status: success ? 'success' : 'failure' });
+  incrementCounter(MetricNames.PROBE_REQUESTS, {
+    type: probeType,
+    status: success ? 'success' : 'failure',
+  });
   recordHistogram(MetricNames.PROBE_DURATION, durationMs / 1000, { type: probeType });
   if (!success) {
     trackError(`probe_${probeType}`, 'Probe failed');

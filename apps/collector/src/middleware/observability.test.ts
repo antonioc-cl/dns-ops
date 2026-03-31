@@ -2,18 +2,18 @@
  * Observability Tests - OBS-001
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   generateRequestId,
-  incrementCounter,
-  recordHistogram,
-  getPrometheusMetrics,
-  trackError,
   getErrorSummary,
-  resetErrorCounts,
+  getPrometheusMetrics,
+  incrementCounter,
   recordCollection,
   recordDnsQuery,
+  recordHistogram,
   recordProbe,
+  resetErrorCounts,
+  trackError,
 } from './observability.js';
 
 describe('Observability', () => {

@@ -474,6 +474,7 @@ describe('shadowComparisonRoutes runtime', () => {
           requestSource: 'api',
           responseStatus: 'success',
           outputSummary: {},
+          tenantId: 'tenant-1',
         },
       ];
       const app = createApp(state);
@@ -565,6 +566,7 @@ describe('shadowComparisonRoutes runtime', () => {
         {
           id: 'mr-1',
           domain: 'example.com',
+          tenantId: 'tenant-1',
           periodStart: new Date(),
           periodEnd: new Date(),
           matchRate: 0.95,

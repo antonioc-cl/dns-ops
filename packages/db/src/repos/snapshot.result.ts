@@ -8,7 +8,7 @@
 import { Result, type ResultOrError } from '@dns-ops/contracts';
 import type { NewSnapshot, Snapshot } from '../schema/index.js';
 import { DbError, dbResult, dbResultOrNotFound } from './result.js';
-import { SnapshotRepository } from './snapshot.js';
+import type { SnapshotRepository } from './snapshot.js';
 
 // Re-export for convenience
 export { DbError } from './result.js';
@@ -33,14 +33,16 @@ export class SnapshotRepositoryResults {
     domainId: string,
     limit?: number
   ): Promise<ResultOrError<Snapshot[], DbError>> {
-    return dbResult(() => this.repo.findByDomain(domainId, limit), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Failed to find snapshots',
-        code: 'QUERY_FAILED',
-        table: 'Snapshot',
-        operation: 'findByDomain',
-        identifier: domainId,
-      })
+    return dbResult(
+      () => this.repo.findByDomain(domainId, limit),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Failed to find snapshots',
+          code: 'QUERY_FAILED',
+          table: 'Snapshot',
+          operation: 'findByDomain',
+          identifier: domainId,
+        })
     );
   }
 
@@ -58,15 +60,11 @@ export class SnapshotRepositoryResults {
   /**
    * Get the latest snapshot for a domain, error if none exists
    */
-  async requireLatestByDomainResult(
-    domainId: string
-  ): Promise<ResultOrError<Snapshot, DbError>> {
+  async requireLatestByDomainResult(domainId: string): Promise<ResultOrError<Snapshot, DbError>> {
     const snapshot = await this.repo.findLatestByDomain(domainId);
 
     if (!snapshot) {
-      return Result.err(
-        DbError.notFound('Snapshot', `latest for domain: ${domainId}`)
-      );
+      return Result.err(DbError.notFound('Snapshot', `latest for domain: ${domainId}`));
     }
 
     return Result.ok(snapshot);
@@ -109,13 +107,15 @@ export class SnapshotRepositoryResults {
       );
     }
 
-    return dbResult(() => this.repo.create(data), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Failed to create snapshot',
-        code: 'QUERY_FAILED',
-        table: 'Snapshot',
-        operation: 'create',
-      })
+    return dbResult(
+      () => this.repo.create(data),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Failed to create snapshot',
+          code: 'QUERY_FAILED',
+          table: 'Snapshot',
+          operation: 'create',
+        })
     );
   }
 
@@ -132,11 +132,7 @@ export class SnapshotRepositoryResults {
       return findResult;
     }
 
-    return dbResultOrNotFound(
-      () => this.repo.updateError(id, errorMessage),
-      'Snapshot',
-      id
-    );
+    return dbResultOrNotFound(() => this.repo.updateError(id, errorMessage), 'Snapshot', id);
   }
 
   /**
@@ -152,11 +148,7 @@ export class SnapshotRepositoryResults {
       return findResult;
     }
 
-    return dbResultOrNotFound(
-      () => this.repo.updateDuration(id, durationMs),
-      'Snapshot',
-      id
-    );
+    return dbResultOrNotFound(() => this.repo.updateDuration(id, durationMs), 'Snapshot', id);
   }
 
   /**
@@ -186,13 +178,15 @@ export class SnapshotRepositoryResults {
     limit?: number;
     offset?: number;
   }): Promise<ResultOrError<Snapshot[], DbError>> {
-    return dbResult(() => this.repo.list(options), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Failed to list snapshots',
-        code: 'QUERY_FAILED',
-        table: 'Snapshot',
-        operation: 'list',
-      })
+    return dbResult(
+      () => this.repo.list(options),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Failed to list snapshots',
+          code: 'QUERY_FAILED',
+          table: 'Snapshot',
+          operation: 'list',
+        })
     );
   }
 
@@ -200,14 +194,16 @@ export class SnapshotRepositoryResults {
    * Count snapshots by domain
    */
   async countByDomainResult(domainId: string): Promise<ResultOrError<number, DbError>> {
-    return dbResult(() => this.repo.countByDomain(domainId), (e) =>
-      new DbError({
-        message: e instanceof Error ? e.message : 'Failed to count snapshots',
-        code: 'QUERY_FAILED',
-        table: 'Snapshot',
-        operation: 'countByDomain',
-        identifier: domainId,
-      })
+    return dbResult(
+      () => this.repo.countByDomain(domainId),
+      (e) =>
+        new DbError({
+          message: e instanceof Error ? e.message : 'Failed to count snapshots',
+          code: 'QUERY_FAILED',
+          table: 'Snapshot',
+          operation: 'countByDomain',
+          identifier: domainId,
+        })
     );
   }
 
@@ -238,8 +234,6 @@ export class SnapshotRepositoryResults {
 /**
  * Extend SnapshotRepository with Result-based methods
  */
-export function withSnapshotResults(
-  repo: SnapshotRepository
-): SnapshotRepositoryResults {
+export function withSnapshotResults(repo: SnapshotRepository): SnapshotRepositoryResults {
   return new SnapshotRepositoryResults(repo);
 }
