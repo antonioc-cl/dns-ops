@@ -1,13 +1,13 @@
 # DNS Ops Workbench — Status Report
 
-**Report Date:** 2026-03-31
+**Report Date:** 2026-04-01
 **Method:** `bun run test`, `bun run lint`, `bun run typecheck` against current HEAD
 
 ## Executive Summary
 
 | Command | Status |
 |---------|--------|
-| `bun run test` | ✅ 2027 pass, 31 skip, 0 fail |
+| `bun run test` | ✅ 2066 pass, 31 skip, 0 fail |
 | `bun run lint` | ✅ All packages pass |
 | `bun run typecheck` | ✅ All packages pass |
 | `bun run build` | ✅ All packages build |
@@ -16,16 +16,20 @@
 
 | Metric | Count |
 |--------|-------|
-| Passing tests | 2027 |
+| Passing tests | 2066 (+39 new) |
 | Skipped tests | 31 |
 | Failing tests | 0 |
-| Test files | 103 |
+| Test files | 105 |
+
+**New Tests Added:**
+- `error-tracking.e2e.test.ts`: 32 tests for Sentry APM stub
+- `val-003-dedup.test.ts`: 7 tests for dedup bug fix
 
 **Test Coverage:**
 - `packages/db`: 68 tests
 - `packages/parsing`: 261 tests
 - `packages/rules`: 151 tests
-- `apps/collector`: 797 tests
+- `apps/collector`: 835 tests (+38)
 - `apps/web`: 750+ tests
 
 ## Bead Coverage
