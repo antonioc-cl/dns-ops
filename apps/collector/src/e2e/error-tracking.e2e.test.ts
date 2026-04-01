@@ -92,9 +92,7 @@ describe('Error Tracking E2E', () => {
     });
 
     it('should include context', () => {
-      expect(() =>
-        captureMessage('Test', 'info', { key: 'value' })
-      ).not.toThrow();
+      expect(() => captureMessage('Test', 'info', { key: 'value' })).not.toThrow();
     });
   });
 
@@ -104,23 +102,17 @@ describe('Error Tracking E2E', () => {
     });
 
     it('should add breadcrumb with category', () => {
-      expect(() =>
-        addBreadcrumb('HTTP request', 'http')
-      ).not.toThrow();
+      expect(() => addBreadcrumb('HTTP request', 'http')).not.toThrow();
     });
 
     it('should add breadcrumb with data', () => {
-      expect(() =>
-        addBreadcrumb('Click event', 'ui', { buttonId: 'submit' })
-      ).not.toThrow();
+      expect(() => addBreadcrumb('Click event', 'ui', { buttonId: 'submit' })).not.toThrow();
     });
   });
 
   describe('setUserContext', () => {
     it('should set user context', () => {
-      expect(() =>
-        setUserContext({ id: '123', email: 'test@example.com' })
-      ).not.toThrow();
+      expect(() => setUserContext({ id: '123', email: 'test@example.com' })).not.toThrow();
     });
 
     it('should handle minimal user', () => {
@@ -130,9 +122,7 @@ describe('Error Tracking E2E', () => {
 
   describe('setContext', () => {
     it('should set extra context', () => {
-      expect(() =>
-        setContext('job', { jobId: '123', type: 'collection' })
-      ).not.toThrow();
+      expect(() => setContext('job', { jobId: '123', type: 'collection' })).not.toThrow();
     });
   });
 
@@ -175,9 +165,7 @@ describe('Error Tracking E2E', () => {
   describe('Collection tracking helpers', () => {
     it('should track collection errors', () => {
       const error = new Error('Collection failed');
-      expect(() =>
-        trackCollectionError(error, { domain: 'example.com' })
-      ).not.toThrow();
+      expect(() => trackCollectionError(error, { domain: 'example.com' })).not.toThrow();
     });
 
     it('should track collection results', () => {
@@ -196,15 +184,11 @@ describe('Error Tracking E2E', () => {
   describe('Job tracking helpers', () => {
     it('should track job errors', () => {
       const error = new Error('Job failed');
-      expect(() =>
-        trackJobError(error, { jobId: 'job-1', jobType: 'collection' })
-      ).not.toThrow();
+      expect(() => trackJobError(error, { jobId: 'job-1', jobType: 'collection' })).not.toThrow();
     });
 
     it('should track job start', () => {
-      expect(() =>
-        trackJobStart({ jobId: 'job-2', jobType: 'monitoring' })
-      ).not.toThrow();
+      expect(() => trackJobStart({ jobId: 'job-2', jobType: 'monitoring' })).not.toThrow();
     });
 
     it('should track job completion', () => {

@@ -301,7 +301,7 @@ interface CheckResult {
  * re-analyzing observations, ensuring consistency with the
  * main findings API.
  */
-function findingsToCheckResults(findings: Finding[], checkTypes: string[]): CheckResult[] {
+export function findingsToCheckResults(findings: Finding[], checkTypes: string[]): CheckResult[] {
   const results: CheckResult[] = [];
 
   // Map finding types to check categories
@@ -381,7 +381,7 @@ function findingsToCheckResults(findings: Finding[], checkTypes: string[]): Chec
 /**
  * Map finding severity to check status
  */
-function mapSeverityToStatus(severity: string): CheckResult['status'] {
+export function mapSeverityToStatus(severity: string): CheckResult['status'] {
   switch (severity) {
     case 'critical':
     case 'high':
@@ -396,7 +396,7 @@ function mapSeverityToStatus(severity: string): CheckResult['status'] {
   }
 }
 
-function generateSummary(
+export function generateSummary(
   results: FleetReportResult[],
   checkTypes: string[]
 ): Record<string, unknown> {

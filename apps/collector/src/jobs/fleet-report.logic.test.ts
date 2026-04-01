@@ -7,144 +7,13 @@
  * - generateSummary
  */
 
-import { describe, expect, it } from 'vitest';
 import type { Finding } from '@dns-ops/db';
-
-// Re-implement the functions here since they're not exported
-// This mirrors the logic in fleet-report.ts for testing
-
-interface CheckResult {
-  check: string;
-  status: 'pass' | 'fail' | 'warning' | 'missing';
-  severity: 'ok' | 'low' | 'medium' | 'high' | 'critical';
-  message: string;
-  details?: Record<string, unknown>;
-}
-
-interface FleetReportResult {
-  domain: string;
-  snapshotId: string;
-  collectedAt: Date;
-  rulesetVersion: string | null;
-  findingsCount: number;
-  checks: CheckResult[];
-  issues: CheckResult[];
-}
-
-function findingsToCheckResults(findings: Finding[], checkTypes: string[]): CheckResult[] {
-  const results: CheckResult[] = [];
-
-  const checkCategoryMap: Record<string, string[]> = {
-    spf: ['mail.no-spf-record', 'mail.spf-present', 'mail.spf-permissive-all'],
-    dmarc: ['mail.no-dmarc-record', 'mail.dmarc-present', 'mail.dmarc-policy-none'],
-    mx: ['mail.no-mx-record', 'mail.mx-present', 'mail.null-mx-configured'],
-    dkim: ['mail.no-dkim-queried', 'mail.dkim-keys-present', 'mail.dkim-no-valid-keys'],
-    infrastructure: [
-      'dns.authoritative-timeout',
-      'dns.authoritative-refused',
-      'dns.authoritative-error',
-      'dns.authoritative-mismatch',
-      'dns.recursive-authoritative-mismatch',
-    ],
-    delegation: [
-      'dns.lame-delegation',
-      'dns.divergent-ns',
-      'dns.missing-glue',
-      'dns.ns-mismatch',
-    ],
-  };
-
-  for (const checkType of checkTypes) {
-    const relevantTypes = checkCategoryMap[checkType] || [];
-    const relevantFindings = findings.filter((f) =>
-      relevantTypes.some((t) => f.type.startsWith(t.replace('.', '.')))
-    );
-
-    const prefixFindings = findings.filter((f) => {
-      if (checkType === 'spf') return f.type.includes('spf');
-      if (checkType === 'dmarc') return f.type.includes('dmarc');
-      if (checkType === 'mx') return f.type.includes('mx') && f.type.startsWith('mail.');
-      if (checkType === 'dkim') return f.type.includes('dkim');
-      if (checkType === 'infrastructure') return f.type.startsWith('dns.auth');
-      if (checkType === 'delegation') return f.type.includes('delegation') || f.type.includes('ns');
-      return false;
-    });
-
-    const allRelevant = [...new Set([...relevantFindings, ...prefixFindings])];
-
-    if (allRelevant.length === 0) {
-      results.push({
-        check: checkType,
-        status: 'pass',
-        severity: 'ok',
-        message: `No ${checkType.toUpperCase()} issues detected`,
-      });
-    } else {
-      for (const finding of allRelevant) {
-        results.push({
-          check: checkType,
-          status: mapSeverityToStatus(finding.severity),
-          severity: finding.severity as CheckResult['severity'],
-          message: finding.title,
-          details: {
-            findingId: finding.id,
-            type: finding.type,
-            description: finding.description,
-            ruleId: finding.ruleId,
-          },
-        });
-      }
-    }
-  }
-
-  return results;
-}
-
-function mapSeverityToStatus(severity: string): CheckResult['status'] {
-  switch (severity) {
-    case 'critical':
-    case 'high':
-      return 'fail';
-    case 'medium':
-      return 'warning';
-    case 'low':
-    case 'info':
-      return 'pass';
-    default:
-      return 'pass';
-  }
-}
-
-function generateSummary(
-  results: FleetReportResult[],
-  checkTypes: string[]
-): Record<string, unknown> {
-  const summary: Record<string, unknown> = {
-    totalDomains: results.length,
-    domainsWithIssues: results.filter((r) => r.issues.length > 0).length,
-  };
-
-  for (const checkType of checkTypes) {
-    const checkResults = results.flatMap((r) => r.checks.filter((c) => c.check === checkType));
-
-    summary[`${checkType}Stats`] = {
-      pass: checkResults.filter((r) => r.status === 'pass').length,
-      fail: checkResults.filter((r) => r.status === 'fail').length,
-      warning: checkResults.filter((r) => r.status === 'warning').length,
-      missing: checkResults.filter((r) => r.status === 'missing').length,
-    };
-  }
-
-  const allIssues = results.flatMap((r) => r.issues);
-  summary.issueSeverity = {
-    critical: allIssues.filter((i) => i.severity === 'critical').length,
-    high: allIssues.filter((i) => i.severity === 'high').length,
-    medium: allIssues.filter((i) => i.severity === 'medium').length,
-    low: allIssues.filter((i) => i.severity === 'low').length,
-  };
-
-  return summary;
-}
+import { describe, expect, it } from 'vitest';
+import {
+  findingsToCheckResults,
+  generateSummary,
+  mapSeverityToStatus,
+} from './fleet-report.js';
 
 // Helper to create mock findings
 function createMockFinding(overrides: Partial<Finding> = {}): Finding {
@@ -179,7 +48,11 @@ describe('Fleet Report Logic - Bead 18', () => {
     it('should map SPF findings correctly', () => {
       const findings = [
         createMockFinding({ type: 'mail.no-spf-record', severity: 'high', title: 'Missing SPF' }),
-        createMockFinding({ type: 'mail.spf-permissive-all', severity: 'medium', title: 'SPF too permissive' }),
+        createMockFinding({
+          type: 'mail.spf-permissive-all',
+          severity: 'medium',
+          title: 'SPF too permissive',
+        }),
       ];
 
       const results = findingsToCheckResults(findings, ['spf']);
@@ -193,8 +66,16 @@ describe('Fleet Report Logic - Bead 18', () => {
 
     it('should map DMARC findings correctly', () => {
       const findings = [
-        createMockFinding({ type: 'mail.no-dmarc-record', severity: 'critical', title: 'No DMARC' }),
-        createMockFinding({ type: 'mail.dmarc-policy-none', severity: 'medium', title: 'DMARC p=none' }),
+        createMockFinding({
+          type: 'mail.no-dmarc-record',
+          severity: 'critical',
+          title: 'No DMARC',
+        }),
+        createMockFinding({
+          type: 'mail.dmarc-policy-none',
+          severity: 'medium',
+          title: 'DMARC p=none',
+        }),
       ];
 
       const results = findingsToCheckResults(findings, ['dmarc']);
@@ -219,7 +100,11 @@ describe('Fleet Report Logic - Bead 18', () => {
 
     it('should map DKIM findings correctly', () => {
       const findings = [
-        createMockFinding({ type: 'mail.dkim-no-valid-keys', severity: 'high', title: 'Invalid DKIM' }),
+        createMockFinding({
+          type: 'mail.dkim-no-valid-keys',
+          severity: 'high',
+          title: 'Invalid DKIM',
+        }),
       ];
 
       const results = findingsToCheckResults(findings, ['dkim']);
@@ -230,8 +115,16 @@ describe('Fleet Report Logic - Bead 18', () => {
 
     it('should map infrastructure findings correctly', () => {
       const findings = [
-        createMockFinding({ type: 'dns.authoritative-timeout', severity: 'medium', title: 'Auth timeout' }),
-        createMockFinding({ type: 'dns.authoritative-mismatch', severity: 'high', title: 'Auth mismatch' }),
+        createMockFinding({
+          type: 'dns.authoritative-timeout',
+          severity: 'medium',
+          title: 'Auth timeout',
+        }),
+        createMockFinding({
+          type: 'dns.authoritative-mismatch',
+          severity: 'high',
+          title: 'Auth mismatch',
+        }),
       ];
 
       const results = findingsToCheckResults(findings, ['infrastructure']);
@@ -243,8 +136,16 @@ describe('Fleet Report Logic - Bead 18', () => {
 
     it('should map delegation findings correctly', () => {
       const findings = [
-        createMockFinding({ type: 'dns.lame-delegation', severity: 'high', title: 'Lame delegation' }),
-        createMockFinding({ type: 'dns.divergent-ns', severity: 'critical', title: 'NS divergence' }),
+        createMockFinding({
+          type: 'dns.lame-delegation',
+          severity: 'high',
+          title: 'Lame delegation',
+        }),
+        createMockFinding({
+          type: 'dns.divergent-ns',
+          severity: 'critical',
+          title: 'NS divergence',
+        }),
       ];
 
       const results = findingsToCheckResults(findings, ['delegation']);
@@ -256,7 +157,11 @@ describe('Fleet Report Logic - Bead 18', () => {
     it('should handle multiple check types', () => {
       const findings = [
         createMockFinding({ type: 'mail.no-spf-record', severity: 'high', title: 'No SPF' }),
-        createMockFinding({ type: 'mail.no-dmarc-record', severity: 'critical', title: 'No DMARC' }),
+        createMockFinding({
+          type: 'mail.no-dmarc-record',
+          severity: 'critical',
+          title: 'No DMARC',
+        }),
       ];
 
       const results = findingsToCheckResults(findings, ['spf', 'dmarc']);
@@ -296,6 +201,17 @@ describe('Fleet Report Logic - Bead 18', () => {
 
       // Should still produce results but deduplication happens via Set
       expect(results.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle unknown check types gracefully', () => {
+      const findings = [createMockFinding({ severity: 'high' })];
+
+      const results = findingsToCheckResults(findings, ['unknown-check-type']);
+
+      // Should return a pass result since no findings match
+      expect(results).toHaveLength(1);
+      expect(results[0].check).toBe('unknown-check-type');
+      expect(results[0].status).toBe('pass');
     });
   });
 

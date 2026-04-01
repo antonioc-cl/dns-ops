@@ -178,12 +178,14 @@ describe('generateAlertsFromFindings', () => {
     } as unknown as Env['Variables']['db'];
   }
 
-  function createMockFinding(overrides: {
-    id?: string;
-    severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
-    reviewOnly?: boolean;
-    title?: string;
-  } = {}) {
+  function createMockFinding(
+    overrides: {
+      id?: string;
+      severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+      reviewOnly?: boolean;
+      title?: string;
+    } = {}
+  ) {
     return {
       id: overrides.id || `finding-${Math.random().toString(36).slice(2)}`,
       snapshotId: SNAPSHOT_ID,

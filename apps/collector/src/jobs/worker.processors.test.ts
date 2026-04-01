@@ -3,9 +3,9 @@
  *
  * Tests for the exported processor functions:
  * - processCollectDomain
- * - processMonitoringRefresh  
+ * - processMonitoringRefresh
  * - processFleetReport
- * 
+ *
  * NOTE: These tests are intentionally minimal because the processor functions
  * depend on many external services (DB, DNS, BullMQ) that require complex mocking.
  * The main integration tests are in monitoring.integration.test.ts and other e2e tests.
@@ -60,7 +60,21 @@ vi.mock('./queue.js', () => ({
 }));
 
 // Import after mocks
+import type { Job } from 'bullmq';
+import type { CollectDomainJobData, FleetReportJobData, MonitoringRefreshJobData } from './queue.js';
 import { processCollectDomain, processFleetReport, processMonitoringRefresh } from './worker.js';
+
+// Helper to create mock jobs with proper typing
+function createMockJob<T>(id: string, data: T): Job<T> {
+  return {
+    id,
+    data,
+    updateProgress: vi.fn().mockResolvedValue(undefined),
+    attemptsMade: 0,
+    processedOn: Date.now(),
+    finishedOn: null,
+  } as unknown as Job<T>;
+}
 
 describe('Job Worker Processors - Bead 19', () => {
   describe('processCollectDomain', () => {
@@ -72,13 +86,13 @@ describe('Job Worker Processors - Bead 19', () => {
       const originalEnv = process.env.DATABASE_URL;
       delete process.env.DATABASE_URL;
 
-      const job = {
-        id: 'job-1',
-        data: { tenantId: 't1', domain: 'example.com', triggeredBy: 'user' },
-        updateProgress: vi.fn().mockResolvedValue(undefined),
-      };
+      const job = createMockJob<CollectDomainJobData>('job-1', {
+        tenantId: 't1',
+        domain: 'example.com',
+        triggeredBy: 'user',
+      });
 
-      const result = await processCollectDomain(job as any);
+      const result = await processCollectDomain(job);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('DATABASE_URL');
@@ -96,19 +110,15 @@ describe('Job Worker Processors - Bead 19', () => {
       const originalEnv = process.env.DATABASE_URL;
       delete process.env.DATABASE_URL;
 
-      const job = {
-        id: 'job-2',
-        data: { 
-          monitoredDomainId: 'm1',
-          domainId: 'd1', 
-          domainName: 'example.com',
-          schedule: 'daily',
-          tenantId: 't1' 
-        },
-        updateProgress: vi.fn().mockResolvedValue(undefined),
-      };
+      const job = createMockJob<MonitoringRefreshJobData>('job-2', {
+        monitoredDomainId: 'm1',
+        domainId: 'd1',
+        domainName: 'example.com',
+        schedule: 'daily',
+        tenantId: 't1',
+      });
 
-      const result = await processMonitoringRefresh(job as any);
+      const result = await processMonitoringRefresh(job);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('DATABASE_URL');
@@ -126,18 +136,15 @@ describe('Job Worker Processors - Bead 19', () => {
       const originalEnv = process.env.DATABASE_URL;
       delete process.env.DATABASE_URL;
 
-      const job = {
-        id: 'job-3',
-        data: { 
-          inventory: ['example.com'],
-          checks: ['spf'],
-          triggeredBy: 'user',
-          tenantId: 't1'
-        },
-        updateProgress: vi.fn().mockResolvedValue(undefined),
-      };
+      const job = createMockJob<FleetReportJobData>('job-3', {
+        inventory: ['example.com'],
+        checks: ['spf'],
+        format: 'detailed',
+        triggeredBy: 'user',
+        tenantId: 't1',
+      });
 
-      const result = await processFleetReport(job as any);
+      const result = await processFleetReport(job);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('DATABASE_URL');

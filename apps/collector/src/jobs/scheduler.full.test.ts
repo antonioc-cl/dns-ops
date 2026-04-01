@@ -41,6 +41,8 @@ vi.mock('./queue.js', () => {
 
 import { getMonitoringQueue, scheduleMonitoringJob } from './queue.js';
 import {
+  _clearScheduleStateForTesting,
+  _getActiveScheduleCount,
   cleanupSchedules,
   getActiveSchedules,
   getScheduleConfig,
@@ -52,11 +54,9 @@ import {
   resumeSchedule,
   SCHEDULE_DESCRIPTIONS,
   SCHEDULE_PATTERNS,
+  type ScheduleType,
   scheduleMonitoredDomainRefreshes,
   setupSchedule,
-  type ScheduleType,
-  _clearScheduleStateForTesting,
-  _getActiveScheduleCount,
 } from './scheduler.js';
 
 describe('Job Scheduler - Bead 19', () => {
@@ -159,10 +159,9 @@ describe('Job Scheduler - Bead 19', () => {
       const result = await setupSchedule('hourly', { overwrite: true });
 
       expect(result.created).toBe(true);
-      expect(mockQueue.removeRepeatable).toHaveBeenCalledWith(
-        'scheduled-refresh:hourly',
-        { pattern: '0 * * * *' }
-      );
+      expect(mockQueue.removeRepeatable).toHaveBeenCalledWith('scheduled-refresh:hourly', {
+        pattern: '0 * * * *',
+      });
       expect(mockQueue.add).toHaveBeenCalled();
     });
 
@@ -192,10 +191,9 @@ describe('Job Scheduler - Bead 19', () => {
       const result = await removeSchedule('hourly');
 
       expect(result).toBe(true);
-      expect(mockQueue.removeRepeatable).toHaveBeenCalledWith(
-        'scheduled-refresh:hourly',
-        { pattern: '0 * * * *' }
-      );
+      expect(mockQueue.removeRepeatable).toHaveBeenCalledWith('scheduled-refresh:hourly', {
+        pattern: '0 * * * *',
+      });
       expect(_getActiveScheduleCount()).toBe(0);
     });
 

@@ -2,9 +2,9 @@
  * VAL-003 Collection Dedup Logic Tests
  *
  * Tests for the deduplication check logic.
- * 
+ *
  * CRITICAL BUG THAT THESE TESTS WOULD HAVE CAUGHT:
- * 
+ *
  * The dedup check was passing normalizedDomain (string) to findRecentByDomain()
  * which expects a UUID domain ID. This caused queries to fail silently.
  */
@@ -56,7 +56,7 @@ describe('VAL-003: Deduplication Logic', () => {
   describe('BUG DEMONSTRATION: Domain name vs domain ID', () => {
     /**
      * This test demonstrates why the bug occurred.
-     * 
+     *
      * Bug: Passing "example.com" to findRecentByDomain() which expects UUID.
      * The query would never find matches because string !== UUID.
      */
@@ -102,16 +102,16 @@ describe('VAL-003: Deduplication Logic', () => {
     it('should block collection for recent snapshot', () => {
       const domainName = 'example.com';
       const recentSnapshot = { createdAt: new Date(Date.now() - 30 * 1000) };
-      
+
       // Step 1: Find domain by name
       const domainId = 'valid-uuid-here';
-      
+
       // Step 2: Find recent snapshot using domain ID
       const result = { domainId, recentSnapshot };
-      
+
       // Step 3: Check if recent
       const shouldBlock = isRecentSnapshot(result.recentSnapshot);
-      
+
       expect(shouldBlock).toBe(true);
     });
 
