@@ -14,7 +14,10 @@ import type { Finding } from '@dns-ops/db';
 import { DomainRepository, FindingRepository, SnapshotRepository } from '@dns-ops/db';
 import { isValidDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
+
+const logger = getCollectorLogger();
 
 export const fleetReportRoutes = new Hono<Env>();
 
@@ -149,11 +152,12 @@ fleetReportRoutes.post('/run', async (c) => {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error('Fleet report error:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Fleet report error', err);
     return c.json(
       {
         error: 'Failed to generate fleet report',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: err.message,
       },
       500
     );

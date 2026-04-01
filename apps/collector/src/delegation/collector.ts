@@ -13,6 +13,9 @@ import { DNS_RCODE } from '@dns-ops/contracts';
 import { queryDNSKEY, queryDS } from '../dns/dnssec-resolver.js';
 import { DNSResolver } from '../dns/resolver.js';
 import type { DNSAnswer, DNSQuery, DNSQueryResult, VantageInfo } from '../dns/types.js';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
+
+const logger = getCollectorLogger();
 
 export interface DelegationSummary {
   domain: string;
@@ -519,7 +522,8 @@ export class DelegationCollector {
         validatingSource: recursiveResolver,
       };
     } catch (error) {
-      console.error('Error collecting DNSSEC info:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('Error collecting DNSSEC info', err, { domain: this.domain });
       return null;
     }
   }

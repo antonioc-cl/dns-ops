@@ -9,6 +9,9 @@ import type { IDatabaseAdapter } from '@dns-ops/db';
 import { createPostgresAdapter } from '@dns-ops/db';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types.js';
+import { getCollectorLogger } from './error-tracking.js';
+
+const logger = getCollectorLogger();
 
 let sharedAdapter: IDatabaseAdapter | null = null;
 let sharedDatabaseUrl: string | null = null;
@@ -38,11 +41,15 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
   try {
     c.set('db', getSharedDbAdapter());
   } catch (error) {
-    console.error('Failed to create database adapter:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Failed to create database adapter', err, {
+      path: c.req.path,
+      method: c.req.method,
+    });
     return c.json(
       {
         error: 'Database connection error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: err.message,
       },
       500
     );

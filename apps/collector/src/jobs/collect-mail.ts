@@ -38,7 +38,10 @@ import {
 import { isValidDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { type MailCheckResult, performMailCheck } from '../mail/checker.js';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
+
+const logger = getCollectorLogger();
 
 export const collectMailRoutes = new Hono<Env>();
 
@@ -47,28 +50,28 @@ export const collectMailRoutes = new Hono<Env>();
  * Trigger mail record collection for a domain
  */
 collectMailRoutes.post('/mail', async (c) => {
+  const body = await c.req.json();
+
+  // Validate request using shared validation
+  if (!validateCollectMailRequest(body)) {
+    return c.json({ error: 'Invalid request', message: 'Domain is required' }, 400);
+  }
+
+  const req = body as CollectMailRequest;
+  const { domain, snapshotId, preferredProvider, explicitSelectors } = req;
+
+  // Normalize domain
+  const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
+
+  // Validate domain format using shared validation
+  if (!isValidDomain(normalizedDomain)) {
+    return c.json(
+      { error: 'Invalid domain format', message: `"${domain}" is not a valid domain name` },
+      400
+    );
+  }
+
   try {
-    const body = await c.req.json();
-
-    // Validate request using shared validation
-    if (!validateCollectMailRequest(body)) {
-      return c.json({ error: 'Invalid request', message: 'Domain is required' }, 400);
-    }
-
-    const req = body as CollectMailRequest;
-    const { domain, snapshotId, preferredProvider, explicitSelectors } = req;
-
-    // Normalize domain
-    const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
-
-    // Validate domain format using shared validation
-    if (!isValidDomain(normalizedDomain)) {
-      return c.json(
-        { error: 'Invalid domain format', message: `"${domain}" is not a valid domain name` },
-        400
-      );
-    }
-
     // Perform mail check
     const startTime = Date.now();
     const result = await performMailCheck(normalizedDomain, {
@@ -141,11 +144,12 @@ collectMailRoutes.post('/mail', async (c) => {
       200
     );
   } catch (error) {
-    console.error('Mail collection error:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Mail collection error', err, { domain: normalizedDomain });
     return c.json(
       {
         error: 'Mail collection failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: err.message,
       },
       500
     );
@@ -162,20 +166,20 @@ collectMailRoutes.post('/mail', async (c) => {
  * - Testing mail configuration changes
  */
 collectMailRoutes.post('/mail/check', async (c) => {
+  const body = await c.req.json();
+  const { domain, preferredProvider, explicitSelectors } = body;
+
+  if (!domain || typeof domain !== 'string') {
+    return c.json({ error: 'Domain is required' }, 400);
+  }
+
+  const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
+
+  if (!isValidDomain(normalizedDomain)) {
+    return c.json({ error: 'Invalid domain format' }, 400);
+  }
+
   try {
-    const body = await c.req.json();
-    const { domain, preferredProvider, explicitSelectors } = body;
-
-    if (!domain || typeof domain !== 'string') {
-      return c.json({ error: 'Domain is required' }, 400);
-    }
-
-    const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
-
-    if (!isValidDomain(normalizedDomain)) {
-      return c.json({ error: 'Invalid domain format' }, 400);
-    }
-
     const startTime = Date.now();
     const result = await performMailCheck(normalizedDomain, {
       preferredProvider,
@@ -227,11 +231,12 @@ collectMailRoutes.post('/mail/check', async (c) => {
       },
     });
   } catch (error) {
-    console.error('Mail check error:', error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('Mail check error', err, { domain: normalizedDomain });
     return c.json(
       {
         error: 'Mail check failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: err.message,
       },
       500
     );

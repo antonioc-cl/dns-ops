@@ -5,6 +5,10 @@
  * The collector requires DATABASE_URL since it always uses PostgreSQL.
  */
 
+import { getCollectorLogger } from '../middleware/error-tracking.js';
+
+const logger = getCollectorLogger();
+
 /**
  * Environment variable definitions with validation rules
  */
@@ -281,15 +285,12 @@ export function assertEnvValid(processEnv: Record<string, string | undefined> = 
 
   // Log warnings even if valid
   if (result.warnings.length > 0) {
-    console.warn('[ENV] Warnings:');
-    for (const warn of result.warnings) {
-      console.warn(`  ⚠ ${warn}`);
-    }
+    logger.warn('[ENV] Warnings:', { warnings: result.warnings });
   }
 
   if (!result.valid) {
     const message = formatValidationErrors(result);
-    console.error(message);
+    logger.error('[ENV] Validation failed', new Error(message), { errors: result.errors });
     throw new Error(`Environment validation failed: ${result.errors.length} error(s)`);
   }
 }

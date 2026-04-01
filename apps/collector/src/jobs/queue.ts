@@ -11,6 +11,9 @@
 
 import { Queue, type QueueOptions } from 'bullmq';
 import type { Redis } from 'ioredis';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
+
+const logger = getCollectorLogger();
 
 // =============================================================================
 // Job Types
@@ -72,7 +75,7 @@ export function getRedisConnection(): Redis | null {
 
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) {
-    console.warn('[Queue] REDIS_URL not set - job queue disabled');
+    logger.warn('[Queue] REDIS_URL not set - job queue disabled');
     return null;
   }
 
@@ -85,7 +88,7 @@ export function getRedisConnection(): Redis | null {
   });
 
   redisConnection?.on('error', (err: Error) => {
-    console.error('[Queue] Redis connection error:', err.message);
+    logger.error('[Queue] Redis connection error', err);
   });
 
   return redisConnection as Redis;
@@ -163,7 +166,10 @@ export async function scheduleCollectionJob(
 ): Promise<string | null> {
   const queue = getCollectionQueue();
   if (!queue) {
-    console.warn('[Queue] Collection queue not available - running synchronously');
+    logger.warn('[Queue] Collection queue not available - running synchronously', {
+      domain: data.domain,
+      tenantId: data.tenantId,
+    });
     return null;
   }
 
@@ -184,7 +190,10 @@ export async function scheduleMonitoringJob(
 ): Promise<string | null> {
   const queue = getMonitoringQueue();
   if (!queue) {
-    console.warn('[Queue] Monitoring queue not available');
+    logger.warn('[Queue] Monitoring queue not available', {
+      domainName: data.domainName,
+      tenantId: data.tenantId,
+    });
     return null;
   }
 

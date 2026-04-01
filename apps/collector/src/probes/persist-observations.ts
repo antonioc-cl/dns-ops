@@ -6,9 +6,12 @@
  */
 
 import { ProbeObservationRepository } from '@dns-ops/db';
+import { getCollectorLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
 import type { MTASTSProbeResult } from './mta-sts.js';
 import type { SMTPProbeResult } from './smtp-starttls.js';
+
+const logger = getCollectorLogger();
 
 /**
  * Probe observation status types
@@ -181,7 +184,9 @@ export async function persistProbeObservations(
   }>
 ): Promise<number> {
   if (!db) {
-    console.warn('[ProbeObservation] Database not available, skipping persistence');
+    logger.warn('[ProbeObservation] Database not available, skipping persistence', {
+      snapshotId,
+    });
     return 0;
   }
 
@@ -193,12 +198,16 @@ export async function persistProbeObservations(
 
   try {
     const created = await repo.createMany(observations as Parameters<typeof repo.createMany>[0]);
-    console.info(
-      `[ProbeObservation] Persisted ${created.length} probe observations for snapshot ${snapshotId}`
-    );
+    logger.info(`[ProbeObservation] Persisted ${created.length} probe observations`, {
+      snapshotId,
+      count: created.length,
+    });
     return created.length;
   } catch (error) {
-    console.error(`[ProbeObservation] Failed to persist observations: ${error}`);
+    const err = error instanceof Error ? error : new Error(String(error));
+    logger.error('[ProbeObservation] Failed to persist observations', err, {
+      snapshotId,
+    });
     return 0;
   }
 }
