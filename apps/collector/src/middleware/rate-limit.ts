@@ -213,3 +213,47 @@ export function getRateLimitStatus(
     resetMs: entry ? entry.lastRefill + config.windowMs : Date.now() + config.windowMs,
   };
 }
+
+/**
+ * Check rate limit without middleware (for testing)
+ * Returns { allowed: boolean, remaining: number }
+ *
+ * @param scope - 'collect' or 'probes' (maps to base paths)
+ * @param tenantId - Optional tenant ID (if undefined, no rate limiting applies)
+ * @param path - Optional custom path (defaults to scope base path)
+ */
+export function checkRateLimit(
+  scope: 'collect' | 'probes',
+  tenantId?: string,
+  path?: string
+): {
+  allowed: boolean;
+  remaining: number;
+  retryAfter?: number;
+} {
+  // If no tenantId, skip rate limiting (passthrough)
+  if (!tenantId) {
+    return { allowed: true, remaining: Infinity };
+  }
+
+  // Use provided path or determine from scope
+  const checkPath = path || (scope === 'probes' ? '/api/probe' : '/api/collect/domain');
+  const config = matchRateLimit(checkPath);
+
+  if (!config) {
+    return { allowed: true, remaining: Infinity };
+  }
+
+  const key = createKey(tenantId, checkPath);
+  const entry = getEntry(key, config.limit);
+
+  // Refill tokens
+  refillTokens(entry, config.limit, config.windowMs);
+
+  // Try to consume a token
+  if (!tryConsume(entry, config.limit)) {
+    return { allowed: false, remaining: 0, retryAfter: Math.ceil(config.windowMs / 1000) };
+  }
+
+  return { allowed: true, remaining: entry.tokens };
+}
