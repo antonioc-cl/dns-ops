@@ -42,7 +42,7 @@ const logger = getCollectorLogger();
 // Database Helper
 // =============================================================================
 
-function getDbAdapter() {
+export function getDbAdapter() {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
     throw new Error('DATABASE_URL not configured');
@@ -56,8 +56,9 @@ function getDbAdapter() {
 
 /**
  * Process domain collection job
+ * Exported for testing
  */
-async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
+export async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
   success: boolean;
   snapshotId?: string;
   error?: string;
@@ -148,8 +149,9 @@ async function processCollectDomain(job: Job<CollectDomainJobData>): Promise<{
 
 /**
  * Process monitoring refresh job
+ * Exported for testing
  */
-async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Promise<{
+export async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Promise<{
   success: boolean;
   snapshotId?: string;
   queued?: number;
@@ -324,8 +326,9 @@ async function processMonitoringRefresh(job: Job<MonitoringRefreshJobData>): Pro
 
 /**
  * Process fleet report job
+ * Exported for testing
  */
-async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
+export async function processFleetReport(job: Job<FleetReportJobData>): Promise<{
   success: boolean;
   reportId?: string;
   summary?: Record<string, unknown>;
