@@ -39,7 +39,7 @@ import {
   type CollectDomainResponse,
   validateCollectDomainRequest,
 } from '@dns-ops/contracts';
-import { SnapshotRepository } from '@dns-ops/db';
+import { DomainRepository, SnapshotRepository } from '@dns-ops/db';
 import { isValidDomain, normalizeDomain } from '@dns-ops/parsing';
 import { Hono } from 'hono';
 import { DNSCollector } from '../dns/collector.js';
@@ -134,13 +134,18 @@ collectDomainRoutes.post('/domain', async (c) => {
 
     // VAL-003: Collection dedup check
     // Prevent rapid re-collection of the same domain
-    const snapshotRepo = new SnapshotRepository(db);
-    const latestSnapshot = await snapshotRepo.findRecentByDomain(normalizedDomain);
-    if (latestSnapshot) {
-      const sixtySecondsAgo = Date.now() - 60 * 1000;
-      if (latestSnapshot.createdAt && latestSnapshot.createdAt.getTime() > sixtySecondsAgo) {
+    // First, find the domain by name to get the domain ID
+    const domainRepo = new DomainRepository(db);
+    const domain = await domainRepo.findByNameForTenant(normalizedDomain, tenantId);
+
+    if (domain) {
+      // Domain exists, check for recent snapshots using the domain ID (UUID)
+      const snapshotRepo = new SnapshotRepository(db);
+      const latestSnapshot = await snapshotRepo.findRecentByDomain(domain.id);
+      if (latestSnapshot) {
         logger.info('Collection skipped - recent snapshot exists', {
           domain: normalizedDomain,
+          domainId: domain.id,
           snapshotId: latestSnapshot.id,
           createdAt: latestSnapshot.createdAt,
         });
