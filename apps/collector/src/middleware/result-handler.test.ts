@@ -10,8 +10,6 @@ import { describe, expect, it } from 'vitest';
 import {
   createErrorResponse,
   errorToStatusCode,
-  handleResult,
-  handleResultWithStatus,
   isDbError,
   isRuleError,
   resultAwareHandler,

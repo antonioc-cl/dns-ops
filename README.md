@@ -75,7 +75,7 @@ The simulation engine closes the operational loop: **finding detected → fix pr
 
 ### Test coverage
 
-- **1330 tests** (71 test files) — tenant isolation, auth, and integration tests comprehensive
+- **2187 tests** (112 test files) — tenant isolation, auth, and integration tests comprehensive
 - Well-covered: rules engine, auth, monitoring, alerts, portfolio, parsing
 - All write paths require auth with tenant isolation enforced at schema, repository, and route layers
 - Runtime route tests follow mock-DB + `app.request()` pattern

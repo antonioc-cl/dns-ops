@@ -125,6 +125,7 @@ export function handleResult<T>(
     return c.json(response, 200);
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: result.isOk() check above guarantees error exists
   const error = result.error!;
   const statusCode = errorToStatusCode(error);
   const errorResponse = createErrorResponse({
@@ -181,6 +182,7 @@ export function handleResultWithStatus<T>(
     return c.json(response, successStatus);
   }
 
+  // biome-ignore lint/style/noNonNullAssertion: result.isOk() check above guarantees error exists
   const error = result.error!;
   const statusCode = errorToStatusCode(error);
   const errorResponse = createErrorResponse({

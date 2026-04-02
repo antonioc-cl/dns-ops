@@ -77,8 +77,8 @@ describe('VAL-003: Deduplication Logic', () => {
       };
       const result = findRecentByDomainFixed(domainName, mockGetDomainId);
       expect(result).not.toBeNull();
-      expect(result!.domainId).toBe('550e8400-e29b-41d4-a716-446655440000');
-      expect(result!.error).toBeUndefined();
+      expect(result?.domainId).toBe('550e8400-e29b-41d4-a716-446655440000');
+      expect(result?.error).toBeUndefined();
     });
   });
 
@@ -100,7 +100,6 @@ describe('VAL-003: Deduplication Logic', () => {
 
   describe('Full dedup flow (simulated)', () => {
     it('should block collection for recent snapshot', () => {
-      const domainName = 'example.com';
       const recentSnapshot = { createdAt: new Date(Date.now() - 30 * 1000) };
 
       // Step 1: Find domain by name

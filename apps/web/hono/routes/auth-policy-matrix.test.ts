@@ -765,7 +765,7 @@ function extractRoutes(app: Hono<Env>): RouteInfo[] {
 function normalizeRoutePath(path: string): string {
   // Ensure path starts with /
   if (!path.startsWith('/')) {
-    path = '/' + path;
+    path = `/${path}`;
   }
   // Remove trailing slash except for root
   if (path.length > 1 && path.endsWith('/')) {

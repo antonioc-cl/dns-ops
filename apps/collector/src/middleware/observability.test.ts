@@ -39,8 +39,8 @@ describe('Observability', () => {
 
       const summary = getErrorSummary();
       expect(summary.totalErrors).toBe(3);
-      expect(summary.byType['network_error'].count).toBe(2);
-      expect(summary.byType['validation_error'].count).toBe(1);
+      expect(summary.byType.network_error.count).toBe(2);
+      expect(summary.byType.validation_error.count).toBe(1);
     });
 
     it('should limit sample messages per type', () => {
@@ -49,7 +49,7 @@ describe('Observability', () => {
       }
 
       const summary = getErrorSummary();
-      expect(summary.byType['test_error'].sampleMessages.length).toBeLessThanOrEqual(5);
+      expect(summary.byType.test_error.sampleMessages.length).toBeLessThanOrEqual(5);
     });
   });
 

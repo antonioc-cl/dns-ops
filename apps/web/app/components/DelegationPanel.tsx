@@ -5,7 +5,7 @@
  * glue records, divergence detection, and DNSSEC status.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { EmptyState, ErrorState, LoadingState } from './ui/StateDisplay.js';
 
 interface DelegationData {
@@ -51,26 +51,59 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // All hooks must be called before any early returns
+  const fetchDelegationData = useCallback(async () => {
     if (!snapshotId) return;
 
     setLoading(true);
-    Promise.all([
-      fetch(`/api/snapshot/${snapshotId}/delegation`).then((r) => r.json()),
-      fetch(`/api/snapshot/${snapshotId}/delegation/issues`).then((r) => r.json()),
-    ])
-      .then(([delegationData, issuesData]) => {
-        const delegationPayload = delegationData as DelegationResponse;
-        const issuesPayload = issuesData as DelegationIssuesResponse;
-        setDelegation(delegationPayload.delegation || null);
-        setIssues(issuesPayload.issues || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+    setError(null);
+
+    try {
+      const [delegationRes, issuesRes] = await Promise.all([
+        fetch(`/api/snapshot/${snapshotId}/delegation`),
+        fetch(`/api/snapshot/${snapshotId}/delegation/issues`),
+      ]);
+
+      if (!delegationRes.ok) {
+        throw new Error(
+          `Failed to load delegation: ${delegationRes.status} ${delegationRes.statusText}`
+        );
+      }
+      if (!issuesRes.ok) {
+        throw new Error(
+          `Failed to load delegation issues: ${issuesRes.status} ${issuesRes.statusText}`
+        );
+      }
+
+      const [delegationData, issuesData] = await Promise.all([
+        delegationRes.json() as Promise<DelegationResponse>,
+        issuesRes.json() as Promise<DelegationIssuesResponse>,
+      ]);
+
+      setDelegation(delegationData.delegation || null);
+      setIssues(issuesData.issues || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
   }, [snapshotId]);
+
+  useEffect(() => {
+    fetchDelegationData();
+  }, [fetchDelegationData]);
+
+  // Early return for no snapshot - AFTER all hooks are called
+  if (!snapshotId) {
+    return (
+      <EmptyState
+        icon="globe"
+        title="No delegation data available"
+        description="Collect a DNS snapshot to view delegation analysis."
+        size="sm"
+      />
+    );
+  }
 
   if (loading) {
     return <LoadingState message="Loading delegation data..." />;

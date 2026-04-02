@@ -149,7 +149,7 @@ function extractParam(condition: unknown, fieldName?: string): unknown {
   try {
     // Try to extract from the condition object's queryChunks
     const c = condition as Record<string, unknown>;
-    const queryChunks = c['queryChunks'] as Array<{
+    const queryChunks = c.queryChunks as Array<{
       constructor?: { name?: string };
       value?: unknown;
     }>;
@@ -759,8 +759,8 @@ describe('Domain normalization consistency (CONTRACT-001)', () => {
       'example-.com',
       'example..com',
       'exam!ple.com',
-      'a'.repeat(64) + '.com',
-      'a'.repeat(250) + '.com',
+      `${'a'.repeat(64)}.com`,
+      `${'a'.repeat(250)}.com`,
     ];
 
     for (const domain of invalidDomains) {
@@ -813,12 +813,12 @@ describe('Domain normalization consistency (CONTRACT-001)', () => {
 
   it('isValidDomain rejects domains exceeding 253 characters', async () => {
     const { isValidDomain } = await import('@dns-ops/parsing');
-    expect(isValidDomain('a'.repeat(250) + '.com')).toBe(false);
+    expect(isValidDomain(`${'a'.repeat(250)}.com`)).toBe(false);
   });
 
   it('isValidDomain rejects labels exceeding 63 characters', async () => {
     const { isValidDomain } = await import('@dns-ops/parsing');
-    expect(isValidDomain('a'.repeat(64) + '.com')).toBe(false);
+    expect(isValidDomain(`${'a'.repeat(64)}.com`)).toBe(false);
   });
 
   it('isValidDomain accepts punycode domains', async () => {

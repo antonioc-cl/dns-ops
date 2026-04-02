@@ -8,11 +8,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  createTenantAllowlist,
-  ProbeAllowlistManager,
-  probeAllowlistManager,
-} from './allowlist.js';
+import { createTenantAllowlist, ProbeAllowlistManager } from './allowlist.js';
 
 describe('Tenant-Scoped Allowlist - AUTH-003', () => {
   describe('createTenantAllowlist', () => {

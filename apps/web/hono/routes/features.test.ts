@@ -1,11 +1,10 @@
 /**
  * Feature Flags Tests
  *
- * Tests that feature flags correctly read environment variables
- * and default to disabled when not set.
+ * Tests that feature flags correctly read environment variables.
  *
- * WOULD HAVE CAUGHT: Simulation panel showing unconditionally
- * despite feature flag infrastructure existing.
+ * Note: Delegation tab is shipped by default (returns true when not set).
+ * Other flags default to disabled.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -46,13 +45,19 @@ describe('Feature flags', () => {
     expect(isDelegationTabEnabled()).toBe(true);
   });
 
-  it('isDelegationTabEnabled returns false when env var not set', async () => {
-    delete process.env.VITE_FEATURE_DELEGATION;
+  it('isDelegationTabEnabled returns false when VITE_FEATURE_DELEGATION=false', async () => {
+    process.env.VITE_FEATURE_DELEGATION = 'false';
     const { isDelegationTabEnabled } = await import('../../app/config/features.js');
     expect(isDelegationTabEnabled()).toBe(false);
   });
 
-  it('all flags default to false', async () => {
+  it('isDelegationTabEnabled returns true when env var not set (shipped by default)', async () => {
+    delete process.env.VITE_FEATURE_DELEGATION;
+    const { isDelegationTabEnabled } = await import('../../app/config/features.js');
+    expect(isDelegationTabEnabled()).toBe(true);
+  });
+
+  it('all non-delegation flags default to false', async () => {
     delete process.env.VITE_FEATURE_SIMULATION;
     delete process.env.VITE_FEATURE_DELEGATION;
     delete process.env.VITE_FEATURE_MAIL_DIAGNOSTICS;
@@ -66,7 +71,7 @@ describe('Feature flags', () => {
       isShadowComparisonEnabled,
     } = await import('../../app/config/features.js');
     expect(isSimulationEnabled()).toBe(false);
-    expect(isDelegationTabEnabled()).toBe(false);
+    expect(isDelegationTabEnabled()).toBe(true); // Shipped by default
     expect(isMailDiagnosticsEnabled()).toBe(false);
     expect(isFleetReportingEnabled()).toBe(false);
     expect(isShadowComparisonEnabled()).toBe(false);

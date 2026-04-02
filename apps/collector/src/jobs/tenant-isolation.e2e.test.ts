@@ -174,17 +174,17 @@ class InMemoryMockDb implements IDatabaseAdapter {
       const obj = condition as Record<string, unknown>;
       // Handle Drizzle eq() format: { queryChunks: [empty, columnInfo, operator, {value: idStr}, empty] }
       // The value is at queryChunks[3].value as a direct string
-      if (Array.isArray(obj['queryChunks'])) {
-        const chunks = obj['queryChunks'] as unknown[];
+      if (Array.isArray(obj.queryChunks)) {
+        const chunks = obj.queryChunks as unknown[];
         if (chunks.length >= 4) {
           const valueChunk = chunks[3];
           if (typeof valueChunk === 'object' && valueChunk !== null) {
             const vc = valueChunk as Record<string, unknown>;
             // Direct string value: { value: 'note-b1' }
-            if (typeof vc['value'] === 'string' && vc['value']) return vc['value'] as string;
+            if (typeof vc.value === 'string' && vc.value) return vc.value as string;
             // Array-wrapped value: { value: ['note-b1'] }
-            if (Array.isArray(vc['value']) && typeof (vc['value'] as unknown[])[0] === 'string') {
-              return (vc['value'] as string[])[0];
+            if (Array.isArray(vc.value) && typeof (vc.value as unknown[])[0] === 'string') {
+              return (vc.value as string[])[0];
             }
           }
           // Raw string at index 3
@@ -192,7 +192,7 @@ class InMemoryMockDb implements IDatabaseAdapter {
         }
       }
       // Fallback: direct value property
-      if (obj['value'] && typeof obj['value'] === 'string') return obj['value'] as string;
+      if (obj.value && typeof obj.value === 'string') return obj.value as string;
     }
     return null;
   }
@@ -228,7 +228,7 @@ class InMemoryMockDb implements IDatabaseAdapter {
         return String(obj[key]);
       }
     }
-    const underscore = obj['_'] as { name?: string } | undefined;
+    const underscore = obj._ as { name?: string } | undefined;
     if (underscore?.name) return underscore.name;
     return '';
   }
@@ -633,7 +633,7 @@ describe('Repository Tenant Isolation', () => {
         update: () => Promise.resolve(1),
         updateOne: () => Promise.resolve(1),
         delete: () => Promise.resolve(1),
-        deleteOne: async (table: unknown, _cond: unknown) => {
+        deleteOne: async (_table: unknown, _cond: unknown) => {
           // The repo calls deleteOne with eq(domainTags.id, tagId)
           // We need to extract the tagId from the condition
           const tagId = extractIdFromCondition(_cond);
@@ -725,20 +725,20 @@ describe('Repository Tenant Isolation', () => {
     if (typeof condition === 'string') return condition;
     if (typeof condition === 'object') {
       const obj = condition as Record<string, unknown>;
-      if (Array.isArray(obj['queryChunks'])) {
-        const chunks = obj['queryChunks'] as unknown[];
+      if (Array.isArray(obj.queryChunks)) {
+        const chunks = obj.queryChunks as unknown[];
         if (chunks.length >= 4) {
           const valueChunk = chunks[3];
           if (typeof valueChunk === 'object' && valueChunk !== null) {
             const vc = valueChunk as Record<string, unknown>;
-            if (typeof vc['value'] === 'string' && vc['value']) return vc['value'] as string;
-            if (Array.isArray(vc['value']) && typeof (vc['value'] as unknown[])[0] === 'string')
-              return (vc['value'] as string[])[0];
+            if (typeof vc.value === 'string' && vc.value) return vc.value as string;
+            if (Array.isArray(vc.value) && typeof (vc.value as unknown[])[0] === 'string')
+              return (vc.value as string[])[0];
           }
           if (typeof valueChunk === 'string') return valueChunk;
         }
       }
-      if (obj['value'] && typeof obj['value'] === 'string') return obj['value'] as string;
+      if (obj.value && typeof obj.value === 'string') return obj.value as string;
     }
     return null;
   }
@@ -778,7 +778,7 @@ describe('Monitoring Routes: Null TenantId Handling', () => {
       for (const key of Object.getOwnPropertySymbols(t)) {
         if (key.toString().includes('drizzle')) return String(t[key]);
       }
-      return t['_']?.name || '';
+      return t._?.name || '';
     };
 
     const db = {

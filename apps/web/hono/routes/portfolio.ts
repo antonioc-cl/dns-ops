@@ -160,7 +160,7 @@ portfolioRoutes.post('/search', async (c) => {
       if (!findingsBySnapshot.has(finding.snapshotId)) {
         findingsBySnapshot.set(finding.snapshotId, []);
       }
-      findingsBySnapshot.get(finding.snapshotId)!.push(finding);
+      findingsBySnapshot.get(finding.snapshotId)?.push(finding);
     }
 
     // Process results using the batched data

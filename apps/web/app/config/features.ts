@@ -7,10 +7,12 @@
 
 /**
  * Enable the Delegation tab in Domain 360 view
- * Requires DNS-002 (delegation evidence) to be fully implemented
+ * Delegation analysis is now shipped by default (DNS-002 complete)
  */
 export function isDelegationTabEnabled(): boolean {
-  return process.env.VITE_FEATURE_DELEGATION === 'true';
+  // Ship by default - delegation panel, backend, and tests are all implemented
+  // Can be disabled by setting VITE_FEATURE_DELEGATION='false' if needed
+  return process.env.VITE_FEATURE_DELEGATION !== 'false';
 }
 
 /**

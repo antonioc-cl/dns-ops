@@ -61,7 +61,11 @@ vi.mock('./queue.js', () => ({
 
 // Import after mocks
 import type { Job } from 'bullmq';
-import type { CollectDomainJobData, FleetReportJobData, MonitoringRefreshJobData } from './queue.js';
+import type {
+  CollectDomainJobData,
+  FleetReportJobData,
+  MonitoringRefreshJobData,
+} from './queue.js';
 import { processCollectDomain, processFleetReport, processMonitoringRefresh } from './worker.js';
 
 // Helper to create mock jobs with proper typing

@@ -9,11 +9,7 @@
 
 import type { Finding } from '@dns-ops/db';
 import { describe, expect, it } from 'vitest';
-import {
-  findingsToCheckResults,
-  generateSummary,
-  mapSeverityToStatus,
-} from './fleet-report.js';
+import { findingsToCheckResults, generateSummary, mapSeverityToStatus } from './fleet-report.js';
 
 // Helper to create mock findings
 function createMockFinding(overrides: Partial<Finding> = {}): Finding {
@@ -245,8 +241,24 @@ describe('Fleet Report Logic - Bead 18', () => {
   describe('generateSummary', () => {
     it('should calculate total domains', () => {
       const results: FleetReportResult[] = [
-        { domain: 'a.com', snapshotId: 's1', collectedAt: new Date(), rulesetVersion: '1.0', findingsCount: 0, checks: [], issues: [] },
-        { domain: 'b.com', snapshotId: 's2', collectedAt: new Date(), rulesetVersion: '1.0', findingsCount: 0, checks: [], issues: [] },
+        {
+          domain: 'a.com',
+          snapshotId: 's1',
+          collectedAt: new Date(),
+          rulesetVersion: '1.0',
+          findingsCount: 0,
+          checks: [],
+          issues: [],
+        },
+        {
+          domain: 'b.com',
+          snapshotId: 's2',
+          collectedAt: new Date(),
+          rulesetVersion: '1.0',
+          findingsCount: 0,
+          checks: [],
+          issues: [],
+        },
       ];
 
       const summary = generateSummary(results, ['spf']);
@@ -256,8 +268,24 @@ describe('Fleet Report Logic - Bead 18', () => {
 
     it('should calculate domains with issues', () => {
       const results: FleetReportResult[] = [
-        { domain: 'clean.com', snapshotId: 's1', collectedAt: new Date(), rulesetVersion: '1.0', findingsCount: 0, checks: [], issues: [] },
-        { domain: 'dirty.com', snapshotId: 's2', collectedAt: new Date(), rulesetVersion: '1.0', findingsCount: 2, checks: [], issues: [{ check: 'spf', status: 'fail', severity: 'high', message: 'Bad' }] },
+        {
+          domain: 'clean.com',
+          snapshotId: 's1',
+          collectedAt: new Date(),
+          rulesetVersion: '1.0',
+          findingsCount: 0,
+          checks: [],
+          issues: [],
+        },
+        {
+          domain: 'dirty.com',
+          snapshotId: 's2',
+          collectedAt: new Date(),
+          rulesetVersion: '1.0',
+          findingsCount: 2,
+          checks: [],
+          issues: [{ check: 'spf', status: 'fail', severity: 'high', message: 'Bad' }],
+        },
       ];
 
       const summary = generateSummary(results, ['spf']);

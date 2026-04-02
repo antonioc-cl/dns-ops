@@ -50,7 +50,10 @@ suggestionsRoutes.patch('/:suggestionId/apply', requireWritePermission, async (c
   }
 
   const suggestionId = c.req.param('suggestionId');
-  const actorId = c.get('actorId')!; // Asserted by requireAuth middleware
+  const actorId = c.get('actorId');
+  if (!actorId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
 
   // Parse request body with optional confirmApply
   const bodyResult = await validateBody<ApplySuggestionBody>(c, ApplySuggestionSchema);
@@ -149,7 +152,10 @@ suggestionsRoutes.patch('/:suggestionId/dismiss', requireWritePermission, async 
   }
 
   const suggestionId = c.req.param('suggestionId');
-  const actorId = c.get('actorId')!; // Asserted by requireAuth middleware
+  const actorId = c.get('actorId');
+  if (!actorId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
 
   let reason: string | undefined;
   try {

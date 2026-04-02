@@ -2,7 +2,9 @@ import type { Observation, Snapshot } from '@dns-ops/db/schema';
 import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
+import { DiscoveredSelectors } from '../../components/DiscoveredSelectors.js';
 import { DNSViews } from '../../components/DNSViews.js';
+import { MailFindingsPanel } from '../../components/MailFindingsPanel.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { SimulationPanel } from '../../components/SimulationPanel.js';
@@ -33,7 +35,7 @@ interface DomainSearchParams {
   tab?: DomainTabId;
 }
 
-// UI-001: Delegation tab is behind feature flag (ahead of plan)
+// Delegation tab is controlled by feature flag (shipped by default)
 const DELEGATION_ENABLED = isDelegationTabEnabled();
 const SIMULATION_ENABLED = isSimulationEnabled();
 const BASE_TABS: DomainTabId[] = ['overview', 'dns', 'mail'];
@@ -105,7 +107,7 @@ const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'dns', label: 'DNS' },
   { id: 'mail', label: 'Mail' },
-  // UI-001: Delegation tab behind feature flag
+  // Delegation tab controlled by feature flag
   ...(DELEGATION_ENABLED ? [{ id: 'delegation' as const, label: 'Delegation' }] : []),
 ];
 
@@ -336,7 +338,7 @@ function Domain360Page() {
           {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id} />}
         </div>
 
-        {/* UI-001: Delegation panel behind feature flag */}
+        {/* Delegation panel - shipped by default */}
         {DELEGATION_ENABLED && (
           <div
             role="tabpanel"
@@ -496,15 +498,50 @@ function DnsTab({ observations }: { observations: Observation[] }) {
 }
 
 function MailTab({ domain, snapshotId }: { domain: string; snapshotId?: string }) {
-  return (
-    <div>
-      <div className="mb-4">
-        <h3 className="font-semibold text-gray-900">Mail Security</h3>
-        <p className="text-sm text-gray-500">
-          Run mail diagnostics and submit tenant-scoped remediation requests.
+  if (!snapshotId) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">
+          No DNS evidence available yet for {domain}. Refresh to collect mail data.
         </p>
       </div>
-      <MailDiagnostics domain={domain} snapshotId={snapshotId} />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Persisted mail findings - canonical read path */}
+      <section>
+        <div className="mb-4">
+          <h3 className="font-semibold text-gray-900">Mail Security Analysis</h3>
+          <p className="text-sm text-gray-500">
+            Persisted mail configuration findings based on collected evidence.
+          </p>
+        </div>
+        <MailFindingsPanel snapshotId={snapshotId} />
+      </section>
+
+      {/* Discovered DKIM selectors */}
+      <section>
+        <div className="mb-4">
+          <h3 className="font-semibold text-gray-900">DKIM Selectors</h3>
+          <p className="text-sm text-gray-500">
+            Discovered DKIM selectors with provenance and confidence levels.
+          </p>
+        </div>
+        <DiscoveredSelectors snapshotId={snapshotId} />
+      </section>
+
+      {/* Supplemental live diagnostics */}
+      <section className="border-t pt-4">
+        <div className="mb-4">
+          <h3 className="font-semibold text-gray-900">Live Diagnostics</h3>
+          <p className="text-sm text-gray-500">
+            Run additional mail diagnostics to refresh and analyze current mail configuration.
+          </p>
+        </div>
+        <MailDiagnostics domain={domain} snapshotId={snapshotId} />
+      </section>
     </div>
   );
 }

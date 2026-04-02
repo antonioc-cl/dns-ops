@@ -15,7 +15,7 @@
  * Run with: bun run test apps/collector/src/jobs/monitoring.integration.test.ts
  */
 
-import type { IDatabaseAdapter, MonitoredDomain } from '@dns-ops/db';
+import type { IDatabaseAdapter } from '@dns-ops/db';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../types.js';

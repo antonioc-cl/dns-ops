@@ -6,7 +6,7 @@
 
 import type { IDatabaseAdapter } from '@dns-ops/db';
 import { ProbeObservationRepository } from '@dns-ops/db';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Probe Observation Persistence', () => {
   describe('Repository', () => {
@@ -214,8 +214,8 @@ describe('Probe Observation Persistence', () => {
       expect(summary.successful).toBe(2);
       expect(summary.failed).toBe(1);
       expect(summary.avgResponseTimeMs).toBe(117); // (100 + 200 + 50) / 3 = 116.67 rounds to 117
-      expect(summary.byType['smtp_starttls']).toBe(2);
-      expect(summary.byType['mta_sts']).toBe(1);
+      expect(summary.byType.smtp_starttls).toBe(2);
+      expect(summary.byType.mta_sts).toBe(1);
     });
   });
 });

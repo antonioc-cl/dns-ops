@@ -7,7 +7,7 @@
 
 | Command | Status |
 |---------|--------|
-| `bun run test` | ✅ 2066 pass, 31 skip, 0 fail |
+| `bun run test` | ✅ 2187 pass, 32 skip, 0 fail |
 | `bun run lint` | ✅ All packages pass |
 | `bun run typecheck` | ✅ All packages pass |
 | `bun run build` | ✅ All packages build |
@@ -16,14 +16,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Passing tests | 2066 (+39 new) |
-| Skipped tests | 31 |
+| Passing tests | 2187 (+121 new) |
+| Skipped tests | 32 |
 | Failing tests | 0 |
-| Test files | 105 |
+| Test files | 112 |
 
 **New Tests Added:**
-- `error-tracking.e2e.test.ts`: 32 tests for Sentry APM stub
-- `val-003-dedup.test.ts`: 7 tests for dedup bug fix
+- Phase 0/1 fixes: Domain 360 reconciliation, DelegationPanel fixes, mail findings integration
 
 **Test Coverage:**
 - `packages/db`: 68 tests

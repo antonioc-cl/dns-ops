@@ -301,6 +301,7 @@ interface CheckResult {
  * re-analyzing observations, ensuring consistency with the
  * main findings API.
  */
+// Export for testing - these are module-internal but accessible for unit tests
 export function findingsToCheckResults(findings: Finding[], checkTypes: string[]): CheckResult[] {
   const results: CheckResult[] = [];
 
@@ -381,6 +382,7 @@ export function findingsToCheckResults(findings: Finding[], checkTypes: string[]
 /**
  * Map finding severity to check status
  */
+// Export for testing
 export function mapSeverityToStatus(severity: string): CheckResult['status'] {
   switch (severity) {
     case 'critical':
@@ -396,6 +398,7 @@ export function mapSeverityToStatus(severity: string): CheckResult['status'] {
   }
 }
 
+// Export for testing
 export function generateSummary(
   results: FleetReportResult[],
   checkTypes: string[]
