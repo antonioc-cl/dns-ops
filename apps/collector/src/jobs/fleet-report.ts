@@ -320,13 +320,15 @@ export function findingsToCheckResults(findings: Finding[], checkTypes: string[]
       'dns.authoritative-mismatch', // From dns.auth-mismatch.v1
       'dns.recursive-authoritative-mismatch', // From dns.recursive-auth-mismatch.v1
     ],
-    // Delegation checks: NS record and glue consistency
-    // Note: Specific delegation rules to be added in future bead
+    // Delegation checks: NS record and glue consistency.
+    // The delegation collector detects these issues as evidence objects today.
+    // When delegation findings are promoted to rules-engine output, they will
+    // match these type prefixes for fleet-report categorization.
     delegation: [
-      'dns.lame-delegation', // Placeholder: nameserver doesn't respond authoritatively
-      'dns.divergent-ns', // Placeholder: NS records differ between parent/child
-      'dns.missing-glue', // Placeholder: in-zone NS without glue at parent
-      'dns.ns-mismatch', // Catches NS-related inconsistencies via prefix
+      'dns.lame-delegation', // Nameserver doesn't respond authoritatively
+      'dns.divergent-ns', // NS records differ between parent and child
+      'dns.missing-glue', // In-zone NS without glue record at parent
+      'dns.ns-mismatch', // NS-related inconsistencies (prefix match)
     ],
   };
 

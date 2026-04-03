@@ -1,9 +1,12 @@
 /**
- * Error Reporter Integration
+ * Error Reporter
  *
  * Provides ErrorReporter interface for centralized error reporting.
- * ConsoleErrorReporter is the default.
- * SentryErrorReporter can be enabled via SENTRY_DSN env var.
+ * Default implementation: ConsoleErrorReporter (logs to console.error).
+ *
+ * To integrate an external service (e.g. Sentry), implement the
+ * ErrorReporter interface and pass it where needed — or use the
+ * `ErrorTrackingConfig.onError` hook in the collector/web middleware.
  */
 
 /**
@@ -17,7 +20,7 @@ export interface ErrorReporter {
 }
 
 /**
- * Console error reporter - logs to console
+ * Console error reporter — logs errors to stderr via console.error.
  */
 export class ConsoleErrorReporter implements ErrorReporter {
   report(error: Error, context?: Record<string, unknown>): void {
@@ -29,7 +32,7 @@ export class ConsoleErrorReporter implements ErrorReporter {
 }
 
 /**
- * Create error reporter based on environment
+ * Create the default error reporter (console-backed).
  */
 export function createErrorReporter(): ErrorReporter {
   return new ConsoleErrorReporter();

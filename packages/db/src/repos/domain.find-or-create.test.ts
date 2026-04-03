@@ -307,17 +307,47 @@ describe('DomainRepository.findOrCreate atomic upsert', () => {
 });
 
 // =============================================================================
-// TESTS: SIMILAR PATTERNS IN OTHER REPOSITORIES
+// TESTS: findOrCreate normalizedName derivation
 // =============================================================================
 
-describe('Similar upsert patterns in other repositories', () => {
-  // This section documents and tests other findOrCreate-style patterns
-  // that may have the same bug. Currently no other repositories have this pattern.
+describe('findOrCreate normalizedName derivation', () => {
+  it('should derive normalizedName from name when normalizedName is empty', async () => {
+    const capturedValues: Record<string, unknown>[] = [];
 
-  it('should have no other findOrCreate implementations using non-atomic pattern', () => {
-    // If this test fails, it means someone added a new findOrCreate
-    // that should be reviewed for the same race condition bug.
-    // Placeholder for future enforcement.
-    expect(true).toBe(true);
+    const insertSpy = vi.fn().mockReturnValue({
+      values: vi.fn().mockImplementation((vals: Record<string, unknown>) => {
+        capturedValues.push(vals);
+        return {
+          onConflictDoNothing: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([
+              {
+                ...mockDomain,
+                name: 'Example.COM',
+                normalizedName: 'example.com',
+              },
+            ]),
+          }),
+        };
+      }),
+    });
+
+    const mockAdapter = createMockAdapter({ upsertResult: null });
+    (mockAdapter as unknown as { getDrizzle: () => { insert: typeof insertSpy } }).getDrizzle =
+      () => ({ insert: insertSpy });
+
+    const repo = new DomainRepository(mockAdapter as never);
+    const result = await repo.findOrCreate({
+      name: 'Example.COM',
+      normalizedName: '', // empty string is falsy — triggers fallback
+      tenantId: 'test-tenant',
+      zoneManagement: 'unknown',
+    });
+
+    // findOrCreate falls back to name.toLowerCase() when normalizedName is falsy
+    expect(result.normalizedName).toBe('example.com');
+
+    // Verify the insert was called with derived lowercase normalizedName
+    expect(capturedValues.length).toBeGreaterThan(0);
+    expect(capturedValues[0].normalizedName).toBe('example.com');
   });
 });

@@ -325,49 +325,6 @@ export interface ExpireSharedReportResponse {
 }
 
 // =============================================================================
-// LEGACY RESERVED REQUEST SHAPES (NOT THE LIVE REMEDIATION API)
-// =============================================================================
-
-/**
- * Historical reserved shape for Bead 15 portfolio writes.
- * This does NOT describe the live remediation-request workflow now exposed by web routes.
- */
-export interface _ReservedRemediationRequest {
-  findingId: string;
-  suggestionId: string;
-  action: 'apply' | 'dismiss' | 'defer';
-  reason?: string;
-  deferUntil?: string;
-}
-
-/**
- * Historical reserved remediation result shape.
- * This does NOT describe the live remediation-request workflow now exposed by web routes.
- */
-export interface _ReservedRemediationResponse {
-  success: boolean;
-  auditId: string;
-  resultingState?: {
-    findingAcknowledged: boolean;
-    suggestionApplied: boolean;
-  };
-}
-
-// =============================================================================
-// LEGACY PORTFOLIO REQUEST SHAPES (NOT THE CURRENT MOUNTED UI SURFACE)
-// =============================================================================
-
-/**
- * Historical reserved portfolio request shape.
- * The currently mounted portfolio UI is narrower than this reserved surface.
- */
-export interface _ReservedPortfolioRequest {
-  name: string;
-  domains: string[];
-  metadata?: Record<string, unknown>;
-}
-
-// =============================================================================
 // ERROR RESPONSES
 // =============================================================================
 

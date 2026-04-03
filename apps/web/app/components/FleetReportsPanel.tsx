@@ -47,11 +47,10 @@ interface FleetReportResponse {
   errors?: Array<{ domain: string; error: string }>;
 }
 
-// TemplatesResponse type for future API integration
-// interface TemplatesResponse {
-//   templates: ReportTemplate[];
-// }
-
+// Report templates are intentionally client-side static config. The collector
+// exposes GET /api/fleet-report/templates, but the web proxy does not surface
+// it — templates are stable enough to live in the UI bundle without a network
+// round-trip or loading state.
 const DEFAULT_TEMPLATES: ReportTemplate[] = [
   {
     id: 'mail-security-baseline',
@@ -75,7 +74,7 @@ const DEFAULT_TEMPLATES: ReportTemplate[] = [
 
 export function FleetReportsPanel() {
   const inventoryFieldId = useId();
-  const [templates] = useState<ReportTemplate[]>(DEFAULT_TEMPLATES);
+  const templates = DEFAULT_TEMPLATES;
   const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
   const [inventoryInput, setInventoryInput] = useState('');
   const [running, setRunning] = useState(false);
