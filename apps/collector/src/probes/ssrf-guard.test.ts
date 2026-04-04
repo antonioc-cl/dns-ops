@@ -254,44 +254,82 @@ describe('PR-06.1: IPv4 Full 127.x Range Coverage', () => {
   });
 });
 
-describe('PR-06.1: IPv6 Equivalents (::ffff:127.0.0.1 style)', () => {
-  // IPv4-mapped IPv6 addresses: ::ffff:0:0/96
-  // These represent IPv4 addresses in IPv6 format
-  it('should block ::ffff:127.0.0.1 (IPv4-mapped loopback)', () => {
+describe('PR-06.1: IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)', () => {
+  // IPv4-mapped IPv6 (RFC 4291 §2.5.5.2): ::ffff:a.b.c.d
+  // These embed a real IPv4 address inside an IPv6 literal. A naive guard that
+  // only checks IPv6 prefix would misclassify or miss these entirely.
+  // The fix: extract the embedded IPv4 and run it through checkIPv4.
+
+  it('should block ::ffff:127.0.0.1 with category loopback', () => {
     const result = checkSSRF('::ffff:127.0.0.1');
-    // Note: The current implementation doesn't handle IPv4-mapped IPv6
-    // This test documents the expected behavior
-    // The implementation should either block this or document why it doesn't
-    expect(result).toBeDefined();
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('loopback');
   });
 
-  it('should block ::ffff:0:0 (IPv4-mapped unspecified)', () => {
-    const result = checkSSRF('::ffff:0:0');
-    expect(result).toBeDefined();
+  it('should block ::ffff:10.0.0.1 with category private', () => {
+    const result = checkSSRF('::ffff:10.0.0.1');
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('private');
   });
 
-  // IPv4-compatible addresses (deprecated but still seen)
-  it('should block ::0.0.0.1 (IPv4-compatible loopback)', () => {
-    const result = checkSSRF('::0.0.0.1');
-    expect(result).toBeDefined();
+  it('should block ::ffff:192.168.1.1 with category private', () => {
+    const result = checkSSRF('::ffff:192.168.1.1');
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('private');
   });
 
-  // Well-known IPv6 addresses
-  it('should allow 64:ff9b:: (IPv4/IPv6 translation prefix)', () => {
+  it('should block ::ffff:172.16.0.1 with category private', () => {
+    const result = checkSSRF('::ffff:172.16.0.1');
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('private');
+  });
+
+  it('should block ::ffff:169.254.169.254 with category link-local (AWS metadata)', () => {
+    const result = checkSSRF('::ffff:169.254.169.254');
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('link-local');
+  });
+
+  it('should ALLOW ::ffff:8.8.8.8 (public IPv4 in mapped form)', () => {
+    // A public IP wrapped in IPv4-mapped form should be allowed, since the
+    // embedded IPv4 is public. Blocking it would be an over-block.
+    const result = checkSSRF('::ffff:8.8.8.8');
+    expect(result.allowed, `expected allowed, got: ${JSON.stringify(result)}`).toBe(true);
+  });
+
+  it('should block ::ffff:7f00:0001 (hex form of 127.0.0.1)', () => {
+    // Hex notation: 0x7f = 127, 0x00 = 0, 0x00 = 0, 0x01 = 1
+    const result = checkSSRF('::ffff:7f00:0001');
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('loopback');
+  });
+
+  it('should block ::ffff:c0a8:0101 (hex form of 192.168.1.1)', () => {
+    // 0xc0 = 192, 0xa8 = 168, 0x01 = 1, 0x01 = 1
+    const result = checkSSRF('::ffff:c0a8:0101');
+    expect(result.allowed, `expected blocked, got: ${JSON.stringify(result)}`).toBe(false);
+    expect(result.blockedCategory).toBe('private');
+  });
+
+  it('uppercase ::FFFF:127.0.0.1 should also be blocked', () => {
+    const result = checkSSRF('::FFFF:127.0.0.1');
+    expect(result.allowed).toBe(false);
+    expect(result.blockedCategory).toBe('loopback');
+  });
+
+  // Well-known IPv6 addresses unrelated to IPv4-mapped
+  it('should allow 64:ff9b:: (IPv4/IPv6 translation prefix, RFC 6052)', () => {
     const result = checkSSRF('64:ff9b::');
-    // This is allowed as it's a translation prefix, not private
     expect(result.allowed).toBe(true);
   });
 
-  it('should allow 2001::/32 (Teredo tunnel)', () => {
+  it('should allow 2001::1 (Teredo tunnel, RFC 4380)', () => {
     const result = checkSSRF('2001::1');
-    // Teredo addresses - current impl treats as allowed
     expect(result.allowed).toBe(true);
   });
 
-  it('should allow 2001:db8::/32 (documentation prefix)', () => {
+  it('should allow 2001:db8::1 (documentation prefix, RFC 3849)', () => {
     const result = checkSSRF('2001:db8::1');
-    // Documentation prefix - not currently in blocklist
     expect(result.allowed).toBe(true);
   });
 });
@@ -568,8 +606,34 @@ describe('SSRF Guard - IPv6 Blocked', () => {
     expect(result.blockedCategory).toBe('link-local');
   });
 
-  it('should block fc00::1 (unique local)', () => {
+  it('should block fc00::1 (unique local, start of fc00::/7)', () => {
     const result = checkSSRF('fc00::1');
+    expect(result.allowed).toBe(false);
+    expect(result.blockedCategory).toBe('private');
+  });
+
+  it('should block fc10::1 (unique local — was missed by old fc00: prefix)', () => {
+    // fc00::/7 covers fc00:: through fdff:: (first byte 0xfc or 0xfd)
+    // Old prefix 'fc00:' would NOT catch fc10::1. Fixed in PR-06.
+    const result = checkSSRF('fc10::1');
+    expect(result.allowed).toBe(false);
+    expect(result.blockedCategory).toBe('private');
+  });
+
+  it('should block fcff::1 (unique local mid-range, previously uncovered)', () => {
+    const result = checkSSRF('fcff::1');
+    expect(result.allowed).toBe(false);
+    expect(result.blockedCategory).toBe('private');
+  });
+
+  it('should block fd00::1 (unique local, fd range)', () => {
+    const result = checkSSRF('fd00::1');
+    expect(result.allowed).toBe(false);
+    expect(result.blockedCategory).toBe('private');
+  });
+
+  it('should block fdff::ffff (unique local, end of fc00::/7)', () => {
+    const result = checkSSRF('fdff::ffff');
     expect(result.allowed).toBe(false);
     expect(result.blockedCategory).toBe('private');
   });

@@ -17,6 +17,9 @@ export {
 export type { MTASTSPolicy, MTASTSProbeResult } from './mta-sts.js';
 // MTA-STS Probe
 export { fetchMTASTSPolicy, validateMTASTSTxtRecord } from './mta-sts.js';
+export type {} from './semaphore.js';
+// Probe Semaphore (concurrency control)
+export { getProbeSemaphore, resetProbeSemaphore, Semaphore } from './semaphore.js';
 export type { SMTPProbeResult } from './smtp-starttls.js';
 // SMTP STARTTLS Probe
 export { probeMXHosts, probeSMTPStarttls } from './smtp-starttls.js';

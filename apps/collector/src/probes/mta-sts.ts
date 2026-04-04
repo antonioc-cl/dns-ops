@@ -128,6 +128,11 @@ export async function fetchMTASTSPolicy(
 
     const response = await fetch(policyUrl, {
       signal: controller.signal,
+      // SECURITY: reject all redirects — a redirect to http://127.0.0.1/...
+      // would bypass the SSRF guard because the SSRF check runs on the original
+      // URL, not on the redirect target. With 'error', the fetch throws on any
+      // 3xx response and we never follow it. See: docs/security/probe-sandbox-review.md
+      redirect: 'error',
       headers: {
         'User-Agent': 'DNS-Ops-Probe/1.0',
       },

@@ -34,8 +34,13 @@ import {
   probeSMTPStarttls,
   validateMTASTSTxtRecord,
 } from '../probes/index.js';
+import { getProbeSemaphore, initProbeSemaphore } from '../probes/semaphore.js';
 import type { SMTPProbeResult } from '../probes/smtp-starttls.js';
 import type { Env } from '../types.js';
+
+// Initialise the global probe semaphore from env config at module load time.
+// This ensures the configured PROBE_CONCURRENCY is used, not the default.
+initProbeSemaphore(getEnvConfig().probes.concurrency);
 
 export const probeRoutes = new Hono<Env>();
 
@@ -111,11 +116,14 @@ probeRoutes.post('/mta-sts', async (c) => {
     .getTenantAllowlist(tenantId)
     .addCustomEntry(`mta-sts.${domain}`, 443, 'probe-api', `MTA-STS policy fetch for ${domain}`);
 
-  // Fetch policy
-  const result = await fetchMTASTSPolicy(domain, tenantId, {
-    timeoutMs: 15000,
-    checkAllowlist: true,
-  });
+  // Fetch policy — run under global semaphore to enforce PROBE_CONCURRENCY
+  const config = getEnvConfig();
+  const result = await getProbeSemaphore().run(() =>
+    fetchMTASTSPolicy(domain, tenantId, {
+      timeoutMs: config.probes.timeoutMs,
+      checkAllowlist: true,
+    })
+  );
 
   return c.json({
     ...result,
@@ -158,11 +166,15 @@ probeRoutes.post('/smtp-starttls', async (c) => {
         .generateFromDnsResults(hostname, mockResults);
     }
 
-    const result = await probeSMTPStarttls(hostname, tenantId, {
-      port: port || 25,
-      timeoutMs: 30000,
-      checkAllowlist: true,
-    });
+    // Run under global semaphore to enforce PROBE_CONCURRENCY
+    const smtpConfig = getEnvConfig();
+    const result = await getProbeSemaphore().run(() =>
+      probeSMTPStarttls(hostname, tenantId, {
+        port: port || 25,
+        timeoutMs: smtpConfig.probes.timeoutMs,
+        checkAllowlist: true,
+      })
+    );
 
     return c.json(result);
   }
@@ -197,9 +209,11 @@ probeRoutes.post('/smtp-starttls', async (c) => {
     ];
     probeAllowlistManager.getTenantAllowlist(tenantId).generateFromDnsResults('probe', mockResults);
 
+    // Use configured timeout and concurrency (not hardcoded values)
+    const batchConfig = getEnvConfig();
     const results = await probeMXHosts(hosts, tenantId, {
-      timeoutMs: 30000,
-      concurrency: 3,
+      timeoutMs: batchConfig.probes.timeoutMs,
+      concurrency: batchConfig.probes.concurrency,
     });
 
     return c.json({

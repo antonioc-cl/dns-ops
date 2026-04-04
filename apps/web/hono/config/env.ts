@@ -1,4 +1,7 @@
+import { createLogger } from '@dns-ops/logging';
 import type { Env } from '../types.js';
+
+const logger = createLogger({ service: 'dns-ops-web', version: '1.0.0', minLevel: 'info' });
 
 interface EnvVarDef {
   name:
@@ -212,15 +215,18 @@ export function assertEnvValid(processEnv: Record<string, string | undefined> = 
   const result = validateEnv(processEnv);
 
   if (result.warnings.length > 0) {
-    console.warn('[ENV] Warnings:');
-    for (const warn of result.warnings) {
-      console.warn(`  ⚠ ${warn}`);
-    }
+    logger.warn('Environment validation warnings', {
+      warnings: result.warnings,
+    });
   }
 
   if (!result.valid) {
-    const message = formatValidationErrors(result);
-    console.error(message);
+    const formatted = formatValidationErrors(result);
+    logger.error('Environment validation failed', undefined, {
+      errorCount: result.errors.length,
+      errors: result.errors.map((e) => `${e.name}: ${e.error}`),
+      formatted,
+    });
     throw new Error(`Environment validation failed: ${result.errors.length} error(s)`);
   }
 }

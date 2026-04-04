@@ -1,8 +1,11 @@
 import type { IDatabaseAdapter } from '@dns-ops/db';
 import { createPostgresAdapter } from '@dns-ops/db';
+import { createLogger } from '@dns-ops/logging';
 import { createMiddleware } from 'hono/factory';
 import { getEnvConfig } from '../config/env.js';
 import type { Env } from '../types.js';
+
+const logger = createLogger({ service: 'dns-ops-web', version: '1.0.0', minLevel: 'info' });
 
 let pgAdapter: IDatabaseAdapter | null = null;
 let currentConnectionString: string | null = null;
@@ -39,9 +42,11 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
 
   // Development mode: fail fast if DATABASE_URL is missing
   if (isDevelopment && !databaseUrl) {
-    console.error('[DB] CRITICAL: DATABASE_URL is required in development mode');
-    console.error('[DB] Set DATABASE_URL environment variable to your PostgreSQL instance');
-    console.error('[DB] Example: postgresql://user:pass@localhost:5432/dns_ops');
+    logger.error('DATABASE_URL is required in development mode', undefined, {
+      hint: 'Set DATABASE_URL environment variable to your PostgreSQL instance',
+      example: 'postgresql://user:pass@localhost:5432/dns_ops',
+      code: 'DB_CONFIG_MISSING',
+    });
 
     // For API routes, return 503 Service Unavailable
     if (c.req.path.startsWith('/api/')) {
@@ -62,8 +67,10 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
   if (!databaseUrl && isCloudflareWorkers(c.env)) {
     if (!hasLoggedDbWarning) {
       hasLoggedDbWarning = true;
-      console.warn('[DB] WARNING: No database connection available (HYPERDRIVE or DATABASE_URL)');
-      console.warn('[DB] API routes will return 503 until database is available');
+      logger.warn('No database connection available (HYPERDRIVE or DATABASE_URL)', {
+        impact: 'API routes will return 503 until database is available',
+        code: 'DB_UNAVAILABLE',
+      });
     }
 
     // API routes (except health) return 503

@@ -107,8 +107,10 @@ const ENV_VARS: EnvVarDef[] = [
   {
     name: 'ENABLE_ACTIVE_PROBES',
     required: false,
+    // Security review and threat model: docs/security/probe-sandbox-review.md
+    // Disabled by default — read the review before enabling in production.
     description:
-      'Enable active probing (MTA-STS, SMTP STARTTLS). Optional feature, disabled by default.',
+      'Enable active probing (MTA-STS, SMTP STARTTLS). Optional feature, disabled by default. See docs/security/probe-sandbox-review.md before enabling.',
     validate: (v) => {
       const valid = ['true', 'false', '1', '0'];
       return valid.includes(v.toLowerCase()) ? null : 'Must be true/false or 1/0';

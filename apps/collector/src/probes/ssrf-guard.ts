@@ -7,6 +7,9 @@
  * - Link-local addresses
  * - Multicast addresses
  * - Reserved addresses
+ * - IPv4-mapped IPv6 addresses that embed private/loopback IPv4
+ *
+ * Security review: docs/security/probe-sandbox-review.md
  */
 
 export interface SSRFCheckResult {
@@ -30,11 +33,17 @@ const BLOCKED_IPV4_RANGES = [
   { start: 0xcb007100, end: 0xcb0071ff, name: '203.0.113.0/24 (TEST-NET-3)' },
 ];
 
-// IPv6 blocked ranges
+// IPv6 blocked ranges (prefix-based).
+//
+// fc00::/7 (unique local, RFC 4193) spans fc00:: through fdff::.
+// In hex, the first byte is 0xfc or 0xfd — so we need BOTH 'fc' and 'fd'
+// as prefixes. The original 'fc00:' prefix only covered the first /12 and
+// missed fc01::, fc10::, fd00::, etc. Fixed in PR-06.
 const BLOCKED_IPV6_PREFIXES = [
   { prefix: '::1', name: '::1/128 (loopback)' },
   { prefix: 'fe80:', name: 'fe80::/10 (link-local)' },
-  { prefix: 'fc00:', name: 'fc00::/7 (unique local)' },
+  { prefix: 'fc', name: 'fc00::/7 part fc (unique local)' },
+  { prefix: 'fd', name: 'fc00::/7 part fd (unique local)' },
   { prefix: 'ff00:', name: 'ff00::/8 (multicast)' },
   { prefix: '::', name: '::/128 (unspecified)' },
 ];
@@ -85,16 +94,72 @@ function checkIPv4(ip: string): SSRFCheckResult {
 }
 
 /**
- * Normalize and check IPv6 address
+ * Extract the embedded IPv4 address from an IPv4-mapped IPv6 address.
+ *
+ * IPv4-mapped IPv6 format: ::ffff:a.b.c.d  (RFC 4291 §2.5.5.2)
+ *
+ * These addresses represent IPv4 nodes in an IPv6 address space. An SSRF
+ * bypass would occur if we checked the outer IPv6 form and missed that the
+ * embedded IPv4 is private/loopback. We extract and check through checkIPv4.
+ *
+ * @returns The dotted-decimal IPv4 string, or null if not IPv4-mapped.
+ */
+function extractIPv4FromMapped(normalized: string): string | null {
+  // ::ffff:a.b.c.d  (most common notation)
+  const dotDecimalMatch = normalized.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  if (dotDecimalMatch) {
+    return dotDecimalMatch[1];
+  }
+
+  // ::ffff:hhhh:hhhh  (hex notation, e.g. ::ffff:7f00:0001 = ::ffff:127.0.0.1)
+  const hexMatch = normalized.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (hexMatch) {
+    const high = parseInt(hexMatch[1], 16);
+    const low = parseInt(hexMatch[2], 16);
+    const a = (high >> 8) & 0xff;
+    const b = high & 0xff;
+    const c = (low >> 8) & 0xff;
+    const d = low & 0xff;
+    return `${a}.${b}.${c}.${d}`;
+  }
+
+  return null;
+}
+
+/**
+ * Normalize and check IPv6 address.
+ *
+ * SECURITY: IPv4-mapped IPv6 (::ffff:x.x.x.x) is handled first by extracting
+ * the embedded IPv4 and running it through checkIPv4. This ensures correct
+ * classification (loopback/private/public) rather than a blanket "unspecified"
+ * block.
  */
 function checkIPv6(ip: string): SSRFCheckResult {
-  // Normalize IPv6 (expand ::, lowercase)
-  // Strip brackets if present (e.g., [::1] from URL parsing)
+  // Normalize IPv6 (lowercase, strip brackets)
   const normalized = ip
     .toLowerCase()
     .trim()
     .replace(/^\[|\]$/g, '');
 
+  // --- IPv4-mapped IPv6 (::ffff:a.b.c.d or ::ffff:hhhh:hhhh) ---
+  // Must be checked BEFORE the generic prefix list because ::ffff: starts
+  // with :: and would otherwise be caught as "unspecified" with wrong category.
+  const embeddedIPv4 = extractIPv4FromMapped(normalized);
+  if (embeddedIPv4 !== null) {
+    const ipv4Result = checkIPv4(embeddedIPv4);
+    if (!ipv4Result.allowed) {
+      // Preserve exact category from the IPv4 check (loopback, private, etc.)
+      return {
+        allowed: false,
+        reason: `Blocked: IPv4-mapped IPv6 embeds blocked IPv4 – ${ipv4Result.reason}`,
+        blockedCategory: ipv4Result.blockedCategory,
+      };
+    }
+    // Embedded IPv4 is public — allow the mapped address
+    return { allowed: true };
+  }
+
+  // --- Standard IPv6 prefix checks ---
   for (const blocked of BLOCKED_IPV6_PREFIXES) {
     if (normalized.startsWith(blocked.prefix)) {
       return {
