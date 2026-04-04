@@ -15,7 +15,10 @@
       "!**/sessions/**",
       "!packages/contracts/contracts",
       "!packages/db/db",
-      "!packages/parsing/parsing"
+      "!packages/parsing/parsing",
+      "!**/playwright-report/**",
+      "!**/test-results/**",
+      "!**/app.config.timestamp_*.js"
     ]
   },
   "linter": {

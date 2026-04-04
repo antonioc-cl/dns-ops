@@ -48,7 +48,14 @@ export {
   runWithContext,
   toLogContext,
 } from './context.js';
-export { createErrorReporter, type ErrorReporter } from './error-reporting.js';
+export {
+  CompositeErrorReporter,
+  ConsoleErrorReporter,
+  type CreateErrorReporterOptions,
+  createErrorReporter,
+  type ErrorReporter,
+  HttpErrorReporter,
+} from './error-reporting.js';
 export {
   createLogger,
   type LogContext,

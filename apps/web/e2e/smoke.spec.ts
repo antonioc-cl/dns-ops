@@ -3,6 +3,7 @@
  */
 
 import { expect, test } from '@playwright/test';
+import { waitForDomainPageReady } from './support/domain-fixtures.js';
 
 const TEST_DOMAIN = 'google.com';
 
@@ -30,7 +31,8 @@ test.describe('Homepage', () => {
 test.describe('DNS Domain Flow', () => {
   test('shows current tabs and operator context on the domain page', async ({ page }) => {
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    // Wait for React hydration + client-side data load to complete
+    await waitForDomainPageReady(page);
 
     await expect(page.getByRole('tab', { name: /overview/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /^dns$/i })).toBeVisible();
@@ -45,18 +47,21 @@ test.describe('DNS Domain Flow', () => {
 
   test('PR-05.3: delegation tab renders panel on click', async ({ page }) => {
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    // Wait for React hydration + client-side data load to complete
+    await waitForDomainPageReady(page);
 
     // Click delegation tab
     const delegationTab = page.getByRole('tab', { name: /delegation/i });
     await delegationTab.click();
 
-    // Should show delegation panel (may be empty state or have content)
-    // Verify either delegation data or empty state is visible
-    const delegationContent = page.locator(
-      'text=/Parent Zone Delegation|No delegation data available/i'
+    // Verify tab is selected
+    await expect(delegationTab).toHaveAttribute('aria-selected', 'true');
+
+    // Wait for delegation panel to render (any state)
+    const delegationPanel = page.locator(
+      '[data-testid="delegation-no-snapshot-state"], [data-testid="delegation-loading-state"], [data-testid="delegation-no-data-state"], [data-testid="delegation-panel"], [data-testid="delegation-error-state"]'
     );
-    await expect(delegationContent.first()).toBeVisible();
+    await expect(delegationPanel.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('refresh control is reachable', async ({ page }) => {

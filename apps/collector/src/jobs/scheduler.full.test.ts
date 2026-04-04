@@ -462,16 +462,21 @@ describe('Job Scheduler - Bead 19', () => {
   });
 
   describe('cleanupSchedules', () => {
-    it('should remove all schedules', async () => {
+    it('should clear in-memory state without removing BullMQ repeatables', async () => {
       await setupSchedule('hourly');
       await setupSchedule('daily');
       await setupSchedule('weekly');
 
       expect(_getActiveScheduleCount()).toBe(3);
 
+      // Reset mock call count from setup
+      mockQueue.removeRepeatable.mockClear();
+
       await cleanupSchedules();
 
-      expect(mockQueue.removeRepeatable).toHaveBeenCalledTimes(3);
+      // Should NOT call removeRepeatable — repeatables survive restart
+      expect(mockQueue.removeRepeatable).not.toHaveBeenCalled();
+      // In-memory state should be cleared
       expect(_getActiveScheduleCount()).toBe(0);
     });
 

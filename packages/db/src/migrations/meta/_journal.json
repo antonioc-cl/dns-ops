@@ -64,6 +64,13 @@
       "when": 1774970923429,
       "tag": "0008_moaning_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1775347200000,
+      "tag": "0009_drop_vantage_points",
+      "breakpoints": true
     }
   ]
 }

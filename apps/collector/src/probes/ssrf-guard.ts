@@ -89,7 +89,11 @@ function checkIPv4(ip: string): SSRFCheckResult {
  */
 function checkIPv6(ip: string): SSRFCheckResult {
   // Normalize IPv6 (expand ::, lowercase)
-  const normalized = ip.toLowerCase().trim();
+  // Strip brackets if present (e.g., [::1] from URL parsing)
+  const normalized = ip
+    .toLowerCase()
+    .trim()
+    .replace(/^\[|\]$/g, '');
 
   for (const blocked of BLOCKED_IPV6_PREFIXES) {
     if (normalized.startsWith(blocked.prefix)) {

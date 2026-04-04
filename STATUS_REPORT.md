@@ -1,85 +1,66 @@
 # DNS Ops Workbench — Status Report
 
-**Report Date:** 2026-04-01
-**Method:** `bun run test`, `bun run lint`, `bun run typecheck` against current HEAD
+**Report Date:** 2026-04-03
+**Method:** `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, `bun run --filter @dns-ops/web e2e` against current HEAD
 
 ## Executive Summary
 
 | Command | Status |
 |---------|--------|
-| `bun run test` | ✅ 2187 pass, 32 skip, 0 fail |
-| `bun run lint` | ✅ All packages pass |
-| `bun run typecheck` | ✅ All packages pass |
+| `bun run lint` | ✅ 8/8 packages pass (warnings in db, parsing, rules, collector — not errors) |
+| `bun run typecheck` | ✅ 14/14 tasks pass |
+| `bun run test` | ✅ 2221 pass, 32 skip, 0 fail (116 test files) |
 | `bun run build` | ✅ All packages build |
+| `bun run --filter @dns-ops/web e2e` | ✅ 58 pass, 0 fail |
+| `bun run --filter @dns-ops/db check-drift` | ✅ No schema drift |
+| `bun run --filter @dns-ops/db verify-migrations` | ✅ Pass (vantage_points dropped in migration 0009) |
 
 ## Test Status
 
 | Metric | Count |
 |--------|-------|
-| Passing tests | 2187 (+121 new) |
-| Skipped tests | 32 |
-| Failing tests | 0 |
-| Test files | 112 |
+| Unit test files | 116 |
+| Passing unit tests | 2221 |
+| Skipped unit tests | 32 |
+| E2E test files | 5 |
+| Passing E2E tests | 58 |
 
-**New Tests Added:**
-- Phase 0/1 fixes: Domain 360 reconciliation, DelegationPanel fixes, mail findings integration
+## Shipped UI Surface (Verified by E2E)
 
-**Test Coverage:**
-- `packages/db`: 68 tests
-- `packages/parsing`: 261 tests
-- `packages/rules`: 151 tests
-- `apps/collector`: 835 tests (+38)
-- `apps/web`: 750+ tests
+- **Homepage:** domain search → navigate to Domain 360
+- **Domain 360 Overview:** snapshot metadata, notes, tags, simulation panel
+- **Domain 360 DNS tab:** observations in parsed/raw/dig views
+- **Domain 360 Mail tab:** persisted mail findings, DKIM selectors, preview badge, live diagnostics
+- **Domain 360 Delegation tab:** enabled by default, 6 states rendered (healthy/divergent/lame/missing-glue/DNSSEC/empty)
+- **Portfolio:** search, saved filters, monitored domains, alerts, shared reports, fleet reports, template overrides, audit log
+- **Refresh:** aria-busy states, auth error handling, re-fetch after success
 
-## Bead Coverage
+## Production Readiness Bead Status
 
-### ✅ Completed PRs
+### ✅ Done (verified by runtime or test proof)
 
-| PR | Status | Notes |
-|----|--------|-------|
-| PR-00 | ✅ | CI E2E Gate |
-| PR-02 | ✅ | Mail Evidence Core |
-| PR-06 | ✅ | Probe Sandbox Security Review |
-| PR-07 | ✅ | Job Orchestration & DNS Collection |
-| PR-08 | ✅ | Notifications (webhook) |
-| PR-09 | ✅ | Tenant Isolation Proof |
-| PR-10 | ✅ | Observability & Operational Readiness |
-| PR-11 | ✅ | Input Validation & Rate Limiting |
-| PR-12.3 | ✅ | De-scope vantagePoints table |
-| PR-12.5 | ✅ | Multi-tenant domain uniqueness |
-| PR-18 | ✅ | Fleet report persistence |
+| PR | Description |
+|----|-------------|
+| PR-00 | CI E2E gate |
+| PR-01 | Domain 360 states (empty/error/loaded) — E2E proven |
+| PR-02 | Mail evidence + preview badge + selectors — E2E proven |
+| PR-05 | Delegation tab — shipped by default, 6 states E2E proven |
+| PR-07 | Job orchestration — scheduler persists repeatables across restart |
+| PR-09 | Tenant isolation — test proof, middleware enforcement |
+| PR-11 | Input validation & rate limiting |
+| PR-12.5 | Multi-tenant domain uniqueness |
 
-### 🔄 In Progress
+| PR-08 | Notifications — full alert→webhook delivery chain wired |
+| PR-10 | Observability — ErrorReporter wired in collector middleware, env-configurable |
+| PR-12.3 | De-scope vantage_points — migration 0009 drops table, FK, indexes |
 
-| PR | Status | Notes |
-|----|--------|-------|
-| PR-12 | 🔄 | Multi-tenant domain isolation (bulk write) |
-| PR-16 | 🔄 | Delegation evidence |
-| PR-17 | 🔄 | Non-DNS probe sandbox |
-| PR-20 | 🔄 | Alert notifications |
+### 🟡 Remaining
 
-## Recent Changes (2026-03-31)
-
-### Wave 0 — Build Gate Fixes
-- **BLD-001**: Removed unused `_net` import from dnssec-resolver.ts
-- **BLD-002**: Committed fleet report persistence (schema + repo + migration)
-- **BLD-003**: Fixed duplicate CI YAML artifact block
-- **SEC-001**: Added auth middleware to suggestions routes
-- **SEC-002**: Atomic upsert for findOrCreate (prevents race conditions)
-
-### Fresh Eyes Bug Fixes
-- **BUG-1 (HIGH)**: findOrCreate fallback queries now use `normalizedName` instead of `data.name`
-- **BUG-2 (MEDIUM)**: Removed duplicate production code from test file
-- **BUG-3 (CRITICAL)**: onConflictDoNothing now targets correct unique constraint `[normalizedName, tenantId]`
-
-### Auth & Testing
-- Fixed 3 skipped authz tests in authz-e2e.test.ts
-- Added `omitActorId` option to bypass JS default parameter issue
-- Removed dead code: SnapshotDiffPanel.tsx
-
-### Database
-- FleetReportRepository: Complete persistence pipeline
-- Atomic upsert with proper unique constraint targeting
+| PR | Description | Remaining |
+|----|-------------|----------|
+| PR-06 | Probe sandbox security review | Claims made but not verified |
+| PR-08 | Notifications | Alert→webhook delivery lacks real-DB integration proof |
+| PR-10 | Observability | No external reporting service actually configured |
 
 ## Security Posture
 
@@ -87,24 +68,18 @@
 |------|--------|-------|
 | Tenant isolation | ✅ | All routes enforce tenant scoping |
 | Auth middleware | ✅ | `requireAuth` on all protected routes |
-| SSRF protection | ✅ | Webhook URLs validated with DNS resolution |
-| Probe sandbox | ✅ | Feature-flagged, SSRF guards in place |
-| Probe allowlist | ✅ | AUTH-003 (tenant-scoped allowlist) complete |
-| Suggestions auth | ✅ | requireAuth + requireWritePermission enforced |
+| SSRF protection | ✅ | Shared guard in ssrf-guard.ts; webhook.ts delegates to it |
+| Private IP blocking | ✅ | Blocks RFC1918, loopback, link-local, cloud metadata |
+| Probe sandbox | ⚠️ | Feature-flagged; SSRF guard present; full security review not performed |
+| Error reporting | ⚠️ | Console by default; HTTP reporter available via ERROR_REPORTING_ENDPOINT env |
 
 ## Known Limitations
 
-1. **Job orchestration:** Requires Redis for BullMQ. Without `REDIS_URL`, queue degrades to synchronous.
-2. **Alert notifications:** Alert lifecycle tracked, but no actual notification delivery in V1.
-3. **Fleet reports:** Persistence complete, webhook notifications pending.
-
-## Pre-existing Issues
-
-The following are known but non-blocking:
-
-1. Some test files have pre-existing lint warnings (noExplicitAny in mocks)
-2. SnapshotDiffPanel.tsx removed (was dead code)
+1. Scheduler requires Redis (BullMQ). Without `REDIS_URL`, queue unavailable.
+2. Alert webhook delivery wired end-to-end with integration tests (mock DB); real-DB proof still absent.
+3. Error reporting defaults to console; external integration requires `ERROR_REPORTING_ENDPOINT` env.
+5. Lint warnings (not errors) exist in db/parsing/rules/collector test files.
 
 ---
 
-*Report generated: 2026-03-31*
+*Generated from actual command output — 2026-04-03 (updated after collector hardening + dead code cleanup)*

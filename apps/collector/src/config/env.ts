@@ -129,6 +129,20 @@ const ENV_VARS: EnvVarDef[] = [
     default: '30000',
   },
   {
+    name: 'ERROR_REPORTING_ENDPOINT',
+    required: false,
+    description:
+      'Optional HTTP endpoint for centralised error reporting (e.g. Sentry ingest, internal collector)',
+    validate: (v) => {
+      try {
+        new URL(v);
+        return null;
+      } catch {
+        return 'Must be a valid URL';
+      }
+    },
+  },
+  {
     name: 'PROBE_CONCURRENCY',
     required: false,
     description: 'Maximum concurrent probe connections (default: 5)',
@@ -308,6 +322,7 @@ export function getEnvConfig(processEnv: Record<string, string | undefined> = pr
   internalSecret: string | undefined;
   apiKeySecret: string | undefined;
   collectorUrl: string;
+  errorReportingEndpoint: string | undefined;
   isDevelopment: boolean;
   isProduction: boolean;
   features: FeatureFlags;
@@ -331,6 +346,7 @@ export function getEnvConfig(processEnv: Record<string, string | undefined> = pr
     internalSecret: processEnv.INTERNAL_SECRET,
     apiKeySecret: processEnv.API_KEY_SECRET,
     collectorUrl: processEnv.COLLECTOR_URL || 'http://localhost:3001',
+    errorReportingEndpoint: processEnv.ERROR_REPORTING_ENDPOINT,
     isDevelopment: nodeEnv === 'development',
     isProduction: nodeEnv === 'production',
     features: {

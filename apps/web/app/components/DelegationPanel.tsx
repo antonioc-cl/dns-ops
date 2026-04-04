@@ -96,35 +96,47 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
   // Early return for no snapshot - AFTER all hooks are called
   if (!snapshotId) {
     return (
-      <EmptyState
-        icon="globe"
-        title="No delegation data available"
-        description="Collect a DNS snapshot to view delegation analysis."
-        size="sm"
-      />
+      <div data-testid="delegation-no-snapshot-state">
+        <EmptyState
+          icon="globe"
+          title="No delegation data available"
+          description="Collect a DNS snapshot to view delegation analysis."
+          size="sm"
+        />
+      </div>
     );
   }
 
   if (loading) {
-    return <LoadingState message="Loading delegation data..." />;
+    return (
+      <div data-testid="delegation-loading-state">
+        <LoadingState message="Loading delegation data..." />
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorState message={error} />;
+    return (
+      <div data-testid="delegation-error-state">
+        <ErrorState message={error} />
+      </div>
+    );
   }
 
   if (!delegation) {
     return (
-      <EmptyState
-        icon="globe"
-        title="No delegation data available"
-        description="Delegation collection may not have been enabled for this snapshot."
-      />
+      <div data-testid="delegation-no-data-state">
+        <EmptyState
+          icon="globe"
+          title="No delegation data available"
+          description="Delegation collection may not have been enabled for this snapshot."
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="delegation-panel">
       {issues.length > 0 && (
         <div className="space-y-3">
           {issues.map((issue) => (

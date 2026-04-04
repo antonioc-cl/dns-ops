@@ -1,5 +1,5 @@
 import type { Observation, Snapshot } from '@dns-ops/db/schema';
-import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DiscoveredSelectors } from '../../components/DiscoveredSelectors.js';
@@ -50,56 +50,11 @@ export const Route = createFileRoute('/domain/$domain')({
       tab: tab && VALID_TABS.includes(tab as DomainTabId) ? (tab as DomainTabId) : undefined,
     };
   },
-  loader: async ({ params }): Promise<DomainLoaderData> => {
-    if (typeof window === 'undefined') {
-      return { domain: params.domain, snapshot: null, observations: [] };
-    }
-
-    try {
-      const snapshotResponse = await fetch(`/api/domain/${params.domain}/latest`);
-
-      if (!snapshotResponse.ok) {
-        if (snapshotResponse.status === 404) {
-          // 404 is a valid "no data yet" state, not an error
-          return { domain: params.domain, snapshot: null, observations: [] };
-        }
-        // Other non-ok statuses - treat as fetch error
-        return {
-          domain: params.domain,
-          snapshot: null,
-          observations: [],
-          error: {
-            type: 'fetch_error',
-            message: `Failed to load domain data: ${snapshotResponse.status} ${snapshotResponse.statusText}`,
-          },
-        };
-      }
-
-      const snapshot = (await snapshotResponse.json()) as { id: string } & Snapshot;
-
-      let observations: Observation[] = [];
-      try {
-        const observationResponse = await fetch(`/api/snapshot/${snapshot.id}/observations`);
-        if (observationResponse.ok) {
-          observations = (await observationResponse.json()) as Observation[];
-        }
-      } catch {
-        // Observation fetch failed but we still have snapshot - not critical
-      }
-
-      return { domain: params.domain, snapshot, observations };
-    } catch (err) {
-      // Network error or other unexpected failure
-      return {
-        domain: params.domain,
-        snapshot: null,
-        observations: [],
-        error: {
-          type: 'api_unreachable',
-          message: err instanceof Error ? err.message : 'Unable to reach the API server',
-        },
-      };
-    }
+  loader: ({ params }): DomainLoaderData => {
+    // Loader only provides the domain name from route params.
+    // Data fetching happens client-side via useEffect to remain
+    // interceptable by Playwright and avoid server-side fetch issues.
+    return { domain: params.domain, snapshot: null, observations: [] };
   },
 });
 
@@ -113,44 +68,91 @@ const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
 
 function Domain360Page() {
   const loaderData = Route.useLoaderData() as DomainLoaderData;
-  const { domain, snapshot, observations, error: loaderError } = loaderData;
+  const { domain } = loaderData;
   const { tab: urlTab } = Route.useSearch();
-  const navigate = useNavigate();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<DomainTabId>(urlTab || 'overview');
+  // Local state for immediate tab switch; URL search initializes.
+  const [activeTab, setActiveTab] = useState<DomainTabId>(urlTab ?? 'overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
-  const [didHydrateReload, setDidHydrateReload] = useState(false);
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [observations, setObservations] = useState<Observation[]>([]);
+  const [loaderError, setLoaderError] = useState<LoaderError | undefined>(undefined);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const tabDomIdPrefix = useId();
 
+  // Client-side data fetching (interceptable by Playwright E2E mocks)
   useEffect(() => {
-    const nextTab = urlTab ?? 'overview';
-    if (nextTab !== activeTab) {
-      setActiveTab(nextTab);
+    console.log('[Domain360] loadData effect', {
+      domain,
+      dataLoaded,
+      isWindow: typeof window !== 'undefined',
+    });
+    if (typeof window === 'undefined' || dataLoaded) return;
+
+    let cancelled = false;
+    async function loadData() {
+      try {
+        const snapshotResponse = await fetch(`/api/domain/${domain}/latest`);
+
+        if (cancelled) return;
+
+        if (!snapshotResponse.ok) {
+          if (snapshotResponse.status === 404) {
+            setDataLoaded(true);
+            return;
+          }
+          setLoaderError({
+            type: 'fetch_error',
+            message: `Failed to load domain data: ${snapshotResponse.status} ${snapshotResponse.statusText}`,
+          });
+          setDataLoaded(true);
+          return;
+        }
+
+        const snap = (await snapshotResponse.json()) as { id: string } & Snapshot;
+        if (cancelled) return;
+        setSnapshot(snap);
+
+        try {
+          const obsResponse = await fetch(`/api/snapshot/${snap.id}/observations`);
+          if (!cancelled && obsResponse.ok) {
+            setObservations((await obsResponse.json()) as Observation[]);
+          }
+        } catch {
+          // Observation fetch failed but we still have snapshot - not critical
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setLoaderError({
+          type: 'api_unreachable',
+          message: err instanceof Error ? err.message : 'Unable to reach the API server',
+        });
+      } finally {
+        if (!cancelled) setDataLoaded(true);
+      }
     }
-  }, [activeTab, urlTab]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || didHydrateReload || snapshot) {
-      return;
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, [domain, dataLoaded]);
+
+  const handleTabChange = useCallback((newTab: DomainTabId) => {
+    // Immediate local state update for responsive UI
+    setActiveTab(newTab);
+    // Sync URL for bookmarkability via history API (avoids TanStack Router
+    // re-render which can reset component state before search params commit).
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (newTab === 'overview') {
+        url.searchParams.delete('tab');
+      } else {
+        url.searchParams.set('tab', newTab);
+      }
+      window.history.replaceState(window.history.state, '', url.toString());
     }
-
-    setDidHydrateReload(true);
-    void router.invalidate();
-  }, [didHydrateReload, router, snapshot]);
-
-  const handleTabChange = useCallback(
-    (newTab: DomainTabId) => {
-      setActiveTab(newTab);
-      navigate({
-        to: '/domain/$domain',
-        params: { domain },
-        search: { tab: newTab === 'overview' ? undefined : newTab },
-        replace: true,
-      });
-    },
-    [domain, navigate]
-  );
+  }, []);
 
   const getTabId = (tabId: DomainTabId) => `${tabDomIdPrefix}-domain-tab-${tabId}`;
   const getPanelId = (tabId: DomainTabId) => `${tabDomIdPrefix}-domain-panel-${tabId}`;
@@ -216,14 +218,15 @@ function Domain360Page() {
         return;
       }
 
-      await router.invalidate();
+      // Re-trigger client-side data loading
+      setDataLoaded(false);
     } finally {
       setIsRefreshing(false);
     }
   };
 
   return (
-    <div>
+    <div data-loaded={dataLoaded || undefined}>
       <div className="mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold text-gray-900 break-all">{domain}</h1>
@@ -264,7 +267,10 @@ function Domain360Page() {
             </p>
           </div>
         ) : (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div
+            className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+            data-testid="domain-no-data-banner"
+          >
             <p className="text-yellow-800">
               No DNS snapshot is available for {domain} yet. Use an operator session to refresh and
               collect new DNS evidence.
@@ -273,7 +279,11 @@ function Domain360Page() {
         )}
 
         {refreshError ? (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div
+            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            data-testid="domain-refresh-error-banner"
+            role="alert"
+          >
             {refreshError}
           </div>
         ) : null}
@@ -314,6 +324,7 @@ function Domain360Page() {
           id={getPanelId('overview')}
           aria-labelledby={getTabId('overview')}
           hidden={activeTab !== 'overview'}
+          data-testid="domain-tabpanel-overview"
         >
           {activeTab === 'overview' && (
             <OverviewTab domain={domain} snapshot={snapshot} observations={observations} />
@@ -325,6 +336,7 @@ function Domain360Page() {
           id={getPanelId('dns')}
           aria-labelledby={getTabId('dns')}
           hidden={activeTab !== 'dns'}
+          data-testid="domain-tabpanel-dns"
         >
           {activeTab === 'dns' && <DnsTab observations={observations} />}
         </div>
@@ -334,6 +346,7 @@ function Domain360Page() {
           id={getPanelId('mail')}
           aria-labelledby={getTabId('mail')}
           hidden={activeTab !== 'mail'}
+          data-testid="domain-tabpanel-mail"
         >
           {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id} />}
         </div>
@@ -345,6 +358,7 @@ function Domain360Page() {
             id={getPanelId('delegation')}
             aria-labelledby={getTabId('delegation')}
             hidden={activeTab !== 'delegation'}
+            data-testid="domain-tabpanel-delegation"
           >
             {activeTab === 'delegation' && (
               <DelegationTab domain={domain} snapshotId={snapshot?.id} />
@@ -500,7 +514,7 @@ function DnsTab({ observations }: { observations: Observation[] }) {
 function MailTab({ domain, snapshotId }: { domain: string; snapshotId?: string }) {
   if (!snapshotId) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12" data-testid="mail-no-snapshot-state">
         <p className="text-gray-500">
           No DNS evidence available yet for {domain}. Refresh to collect mail data.
         </p>
@@ -510,6 +524,26 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId?: string }
 
   return (
     <div className="space-y-6">
+      {/* Preview badge and disclaimer for mail analysis */}
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900">Mail Analysis</h3>
+        <span
+          className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 border border-purple-200"
+          data-testid="mail-preview-badge"
+        >
+          Preview
+        </span>
+      </div>
+      <div
+        className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800"
+        data-testid="mail-preview-disclaimer"
+      >
+        <p>
+          <strong>Preview:</strong> These mail security findings are generated from DNS
+          observations. For authoritative results, use the legacy DMARC/DKIM tools linked below.
+        </p>
+      </div>
+
       {/* Persisted mail findings - canonical read path */}
       <section>
         <div className="mb-4">

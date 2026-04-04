@@ -38,8 +38,8 @@ dns-ops/
 ### Domain 360 (`/domain/:domain`)
 
 - **Overview** — stat cards, query scope, notes, tags, DNS change simulation panel
-- **DNS** — delegation, snapshots, findings, selectors, record diffs, shadow comparison
-- **Mail** — mail diagnostics, mail findings, remediation tracking
+- **DNS** — delegation evidence, snapshots, findings, selectors
+- **Mail** — mail findings (persisted), DKIM selectors with provider detection, preview badge, live diagnostics
 
 ### Portfolio (`/portfolio`)
 
@@ -75,7 +75,8 @@ The simulation engine closes the operational loop: **finding detected → fix pr
 
 ### Test coverage
 
-- **2187 tests** (112 test files) — tenant isolation, auth, and integration tests comprehensive
+- **2212 tests** (114 test files) — tenant isolation, auth, and integration tests comprehensive
+- **58 E2E tests** (5 spec files) — Domain 360 states, delegation, selectors, write flows, smoke
 - Well-covered: rules engine, auth, monitoring, alerts, portfolio, parsing
 - All write paths require auth with tenant isolation enforced at schema, repository, and route layers
 - Runtime route tests follow mock-DB + `app.request()` pattern
@@ -156,7 +157,7 @@ Live DNS fixture env vars:
 | Alerts | `/api/alerts` | Tenant-scoped | Alert lifecycle (ack/resolve/suppress) |
 | Portfolio | `/api/portfolio` | Tenant-scoped | Search, filters, tags, reports, overrides, audit |
 | Fleet reports | `/api/fleet-report` | Tenant-scoped | Collector proxy for fleet reports |
-| Shadow comparison | `/api/shadow` | Tenant-scoped | Provider shadow comparison |
+| Shadow comparison | `/api/shadow` | Tenant-scoped | Provider shadow comparison (API only, no UI) |
 | Legacy tools | `/api/legacy-tools` | Tenant-scoped | DMARC/DKIM deeplinks, shadow stats |
 | Delegation | `/api/delegation` | Public reads | NS delegation + DNSSEC evidence |
 | Domain reads | `/api/snapshots`, `/api/findings` | Public reads | Unscoped domain reads |

@@ -25,7 +25,15 @@ vi.mock('@dns-ops/logging', () => ({
 // Mock webhook module
 vi.mock('../notifications/webhook.js', () => ({
   buildWebhookPayload: vi.fn((data) => data),
-  sendAlertWebhook: vi.fn().mockResolvedValue(undefined),
+  sendAlertWebhook: vi.fn().mockResolvedValue({
+    success: true,
+    resolvedHostname: 'webhook.example.com',
+  }),
+  sendAlertNotification: vi.fn().mockResolvedValue({
+    success: true,
+    webhookHost: 'webhook.example.com',
+    statusUpdated: true,
+  }),
 }));
 
 describe('generateAlertsFromFindings', () => {
@@ -504,7 +512,7 @@ describe('generateAlertsFromFindings', () => {
 
     it('should send webhook when alerts are generated', async () => {
       const { generateAndSendFindingAlerts } = await import('./alert-from-findings.js');
-      const { sendAlertWebhook } = await import('../notifications/webhook.js');
+      const { sendAlertNotification } = await import('../notifications/webhook.js');
 
       mockData.findings.push(createMockFinding({ severity: 'high', id: 'finding-1' }));
 
@@ -521,12 +529,13 @@ describe('generateAlertsFromFindings', () => {
 
       expect(result.alerts).toHaveLength(1);
       expect(result.webhookSent).toBe(true);
-      expect(sendAlertWebhook).toHaveBeenCalledWith(webhookUrl, expect.any(Object));
+      // Verify sendAlertNotification was called
+      expect(sendAlertNotification).toHaveBeenCalled();
     });
 
     it('should not send webhook when no alerts generated', async () => {
       const { generateAndSendFindingAlerts } = await import('./alert-from-findings.js');
-      const { sendAlertWebhook } = await import('../notifications/webhook.js');
+      const { sendAlertNotification } = await import('../notifications/webhook.js');
 
       // No findings
 
@@ -541,16 +550,20 @@ describe('generateAlertsFromFindings', () => {
 
       expect(result.alerts).toHaveLength(0);
       expect(result.webhookSent).toBe(false);
-      expect(sendAlertWebhook).not.toHaveBeenCalled();
+      expect(sendAlertNotification).not.toHaveBeenCalled();
     });
 
     it('should handle webhook send failure gracefully', async () => {
       const { generateAndSendFindingAlerts } = await import('./alert-from-findings.js');
-      const { sendAlertWebhook } = await import('../notifications/webhook.js');
+      const { sendAlertNotification } = await import('../notifications/webhook.js');
 
       mockData.findings.push(createMockFinding({ severity: 'high' }));
 
-      (sendAlertWebhook as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
+      (sendAlertNotification as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: false,
+        error: 'Network error',
+        webhookHost: 'webhook.example.com',
+      });
 
       const result = await generateAndSendFindingAlerts(
         mockDb,
@@ -568,7 +581,7 @@ describe('generateAlertsFromFindings', () => {
 
     it('should not send webhook when no webhookUrl provided', async () => {
       const { generateAndSendFindingAlerts } = await import('./alert-from-findings.js');
-      const { sendAlertWebhook } = await import('../notifications/webhook.js');
+      const { sendAlertNotification } = await import('../notifications/webhook.js');
 
       mockData.findings.push(createMockFinding({ severity: 'high' }));
 
@@ -582,7 +595,7 @@ describe('generateAlertsFromFindings', () => {
 
       expect(result.alerts).toHaveLength(1);
       expect(result.webhookSent).toBe(false);
-      expect(sendAlertWebhook).not.toHaveBeenCalled();
+      expect(sendAlertNotification).not.toHaveBeenCalled();
     });
   });
 });

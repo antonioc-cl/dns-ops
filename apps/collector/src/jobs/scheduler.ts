@@ -336,20 +336,18 @@ export async function initializeSchedules(): Promise<void> {
 }
 
 /**
- * Clean up all schedules
- * Call this on graceful shutdown
+ * Clean up in-memory schedule state on graceful shutdown.
+ *
+ * IMPORTANT: This does NOT remove repeatable jobs from BullMQ.
+ * Repeatable jobs must survive restarts so monitoring continues
+ * after deploy/restart without re-initialization race conditions.
+ * Only the in-memory tracking map is cleared.
  */
 export async function cleanupSchedules(): Promise<void> {
-  schedulerLogger.info('Cleaning up schedules...');
-
-  const scheduleTypes: ScheduleType[] = ['hourly', 'daily', 'weekly'];
-
-  for (const schedule of scheduleTypes) {
-    await removeSchedule(schedule);
-  }
+  schedulerLogger.info('Cleaning up schedule state (preserving BullMQ repeatables)...');
 
   activeSchedules.clear();
-  schedulerLogger.info('Cleanup complete');
+  schedulerLogger.info('Schedule state cleared — repeatable jobs preserved in Redis');
 }
 
 // =============================================================================

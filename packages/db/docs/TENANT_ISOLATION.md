@@ -9,10 +9,10 @@ This document describes the multi-tenancy approach for DNS Ops Workbench.
 **Status:** Application-level tenant isolation (no PostgreSQL RLS)
 
 **Rationale:**
-1. **Runtime Diversity**: Production uses Cloudflare D1 which doesn't support PostgreSQL RLS
-2. **Development Flexibility**: PostgreSQL is only used in local development
+1. **Runtime Simplicity**: PostgreSQL is the production database; application-level isolation avoids RLS complexity
+2. **Cross-Adapter Consistency**: Same isolation model works across dev and production
 3. **Performance**: Application-level filtering avoids RLS overhead
-4. **Simplicity**: Single isolation model across all database adapters
+4. **Simplicity**: Single isolation model, no database-specific policies
 
 ### Architecture
 
@@ -128,14 +128,7 @@ If RLS is needed for PostgreSQL deployments:
    SET app.current_tenant = '<tenant-uuid>';
    ```
 
-3. This would be PostgreSQL-specific and wouldn't apply to D1
-
-### D1 Considerations
-
-Cloudflare D1 doesn't support RLS. For D1 deployments:
-- Continue using application-level isolation
-- Consider separate D1 databases per tenant for strict isolation
-- Use Cloudflare Workers isolation for request-level tenant context
+3. This would add PostgreSQL-specific overhead and complexity
 
 ---
 
@@ -188,5 +181,4 @@ When adding new tenant-aware features:
 
 ---
 
-**Document Updated:** 2026-03-24
-**Decision Owner:** dns-ops-1j4.4.4
+**Document Updated:** 2026-04-03

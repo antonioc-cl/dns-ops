@@ -8,7 +8,7 @@ import { AlertRepository, DomainRepository, MonitoredDomainRepository } from '@d
 import { createLogger } from '@dns-ops/logging';
 import { Hono } from 'hono';
 import { internalOnlyMiddleware, requireServiceAuthMiddleware } from '../middleware/auth.js';
-import { buildWebhookPayload, sendAlertWebhook } from '../notifications/webhook.js';
+import { sendAlertNotification } from '../notifications/webhook.js';
 import type { Env } from '../types.js';
 
 const monitoringLogger = createLogger({
@@ -103,11 +103,14 @@ monitoringRoutes.post('/check', internalOnlyMiddleware, async (c) => {
           tenantId: monitored.tenantId,
         });
 
-        // PR-08.2: Fire-and-forget webhook notification
+        // ONE notification path: Use unified sendAlertNotification
+        // This ensures: SSRF guard, status tracking, proper logging
         const webhookUrl = monitored.alertChannels?.webhook;
         if (webhookUrl && alert) {
-          // Don't await - fire and forget
-          const payload = buildWebhookPayload(
+          // Fire and forget - but with proper status tracking
+          sendAlertNotification(
+            alert.id,
+            webhookUrl,
             {
               id: alert.id,
               title: alert.title,
@@ -116,43 +119,15 @@ monitoringRoutes.post('/check', internalOnlyMiddleware, async (c) => {
               domain: domain.name,
               tenantId: alert.tenantId,
             },
+            db,
             process.env.WEB_APP_URL
-          );
-
-          sendAlertWebhook(webhookUrl, payload)
-            .then((result) => {
-              // Log delivery attempt with alertId and webhook host (not full URL)
-              try {
-                const host = new URL(webhookUrl).hostname;
-                if (result.success) {
-                  monitoringLogger.info('Alert notification sent', {
-                    alertId: alert.id,
-                    webhookHost: host,
-                    status: 'success',
-                  });
-                } else {
-                  monitoringLogger.warn('Alert notification failed', {
-                    alertId: alert.id,
-                    webhookHost: host,
-                    status: 'failed',
-                    error: result.error,
-                  });
-                }
-              } catch {
-                monitoringLogger.warn('Alert notification failed - invalid webhook URL', {
-                  alertId: alert.id,
-                  webhookHost: 'invalid',
-                  status: 'failed',
-                });
-              }
-            })
-            .catch((err) => {
-              monitoringLogger.error(
-                'Alert notification error',
-                err instanceof Error ? err : new Error(String(err)),
-                { alertId: alert.id }
-              );
-            });
+          ).catch((err) => {
+            monitoringLogger.error(
+              'Alert notification error',
+              err instanceof Error ? err : new Error(String(err)),
+              { alertId: alert.id }
+            );
+          });
         }
       }
 

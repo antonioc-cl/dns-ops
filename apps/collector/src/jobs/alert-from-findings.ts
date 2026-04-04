@@ -7,7 +7,7 @@
 
 import { AlertRepository, FindingRepository, MonitoredDomainRepository } from '@dns-ops/db';
 import { createLogger } from '@dns-ops/logging';
-import { buildWebhookPayload, sendAlertWebhook } from '../notifications/webhook.js';
+import { sendAlertNotification } from '../notifications/webhook.js';
 import type { Env } from '../types.js';
 
 const logger = createLogger({
@@ -160,21 +160,34 @@ export async function generateAndSendFindingAlerts(
 
   if (webhookUrl && alerts.length > 0) {
     try {
-      // Send individual webhook for each alert
+      // ONE notification path: Use unified sendAlertNotification
+      // This ensures: SSRF guard, status tracking (pending → sent), proper logging
       for (const { alertId, findingId } of alerts) {
-        const payload = buildWebhookPayload({
-          id: alertId,
-          title: 'High Severity Finding Alert',
-          description: `Finding ${findingId} requires attention`,
-          severity: 'high',
-          domain: domainName,
-          tenantId,
-        });
+        const result = await sendAlertNotification(
+          alertId,
+          webhookUrl,
+          {
+            id: alertId,
+            title: 'High Severity Finding Alert',
+            description: `Finding ${findingId} requires attention`,
+            severity: 'high',
+            domain: domainName,
+            tenantId,
+          },
+          db,
+          process.env.WEB_APP_URL
+        );
 
-        await sendAlertWebhook(webhookUrl, payload);
+        if (result.success) {
+          webhookSent = true;
+        } else {
+          logger.warn('Finding alert webhook delivery failed', {
+            alertId,
+            webhookHost: result.webhookHost,
+            error: result.error,
+          });
+        }
       }
-
-      webhookSent = true;
     } catch (error) {
       logger.error('Failed to send finding alerts webhook', { error });
     }

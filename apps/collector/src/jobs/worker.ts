@@ -27,7 +27,7 @@ import {
   trackJobStart,
 } from '../middleware/error-tracking.js';
 import { getJobMetrics } from '../middleware/job-metrics.js';
-import { generateAlertsFromFindings } from './alert-from-findings.js';
+import { generateAndSendFindingAlerts } from './alert-from-findings.js';
 import {
   type CollectDomainJobData,
   type FleetReportJobData,
@@ -90,21 +90,31 @@ export async function processCollectDomain(job: Job<CollectDomainJobData>): Prom
     const collector = new DNSCollector(config, db);
     const result = await collector.collect();
 
-    // JOB-002: Generate alerts from high-severity findings post-collection
+    // JOB-002: Generate alerts from high-severity findings and deliver via webhook
     // Alerts only apply to monitored domains — the function handles the lookup
     try {
       const domainRecord = await new DomainRepository(db).findByNameForTenant(domain, tenantId);
       if (domainRecord) {
-        const alerts = await generateAlertsFromFindings(
+        // Look up monitored domain to get configured webhook URL
+        const monitored = await new MonitoredDomainRepository(db).findByDomainId(
+          domainRecord.id,
+          tenantId
+        );
+        const webhookUrl = monitored?.alertChannels?.webhook;
+
+        const { alerts, webhookSent } = await generateAndSendFindingAlerts(
           db,
           result.snapshotId,
           tenantId,
-          domainRecord.id
+          domainRecord.id,
+          domain,
+          webhookUrl
         );
         if (alerts.length > 0) {
           logger.info('Generated alerts from findings', {
             snapshotId: result.snapshotId,
             alertCount: alerts.length,
+            webhookSent,
             domain,
           });
         }

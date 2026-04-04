@@ -43,7 +43,7 @@ vi.mock('../middleware/error-tracking.js', () => ({
 }));
 
 vi.mock('./alert-from-findings.js', () => ({
-  generateAlertsFromFindings: vi.fn().mockResolvedValue([]),
+  generateAndSendFindingAlerts: vi.fn().mockResolvedValue({ alerts: [], webhookSent: false }),
 }));
 
 vi.mock('./queue.js', () => ({

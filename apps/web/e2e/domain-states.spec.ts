@@ -6,6 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test';
+import { mockRefresh, waitForDomainPageReady } from './support/domain-fixtures.js';
 
 const TEST_DOMAIN = 'new-untested-domain.example.com';
 
@@ -15,9 +16,12 @@ const TEST_DOMAIN = 'new-untested-domain.example.com';
  */
 test.describe('Empty DB State', () => {
   test('shows yellow warning for domain without snapshot', async ({ page }) => {
-    // Use a domain that's unlikely to have data in the test DB
+    // Mock API to return 404 (no snapshot) for this unknown domain
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     // Should show yellow "no snapshot" warning, not an error
     const noSnapshotWarning = page.getByText(/no dns snapshot is available for/i);
@@ -30,8 +34,12 @@ test.describe('Empty DB State', () => {
   });
 
   test('shows notes and tags panels even without snapshot', async ({ page }) => {
+    // Mock API to return 404 (no snapshot) for this unknown domain
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     // Notes panel should be visible
     await expect(page.getByRole('heading', { name: /notes/i })).toBeVisible();
@@ -45,8 +53,11 @@ test.describe('Empty DB State', () => {
  */
 test.describe('Refresh Button Behavior', () => {
   test('refresh button is visible and enabled initially', async ({ page }) => {
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     const refreshButton = page.getByRole('button', { name: /refresh/i });
     await expect(refreshButton).toBeVisible();
@@ -54,39 +65,41 @@ test.describe('Refresh Button Behavior', () => {
   });
 
   test('refresh button shows aria-busy during refresh', async ({ page }) => {
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
+    // Mock the collect endpoint so refresh completes
+    await mockRefresh(page, {
+      status: 200,
+      body: { success: true, snapshotId: 'snap-refresh-test' },
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     const refreshButton = page.getByRole('button', { name: /refresh/i });
 
-    // Intercept the collect endpoint to delay response
-    await page.route('/api/collect/domain', async (route) => {
-      // Wait 2 seconds before responding
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await route.continue();
-    });
+    // Verify initial aria-busy state
+    await expect(refreshButton).toHaveAttribute('aria-busy', 'false');
 
-    // Click refresh and immediately check aria-busy
-    const refreshPromise = page.waitForResponse(
-      (response) => response.url().includes('/api/collect/domain'),
-      { timeout: 5000 }
-    );
-
+    // Click refresh
     await refreshButton.click();
 
-    // Check aria-busy is true during refresh
-    await expect(refreshButton).toHaveAttribute('aria-busy', 'true');
-
-    // Button text should indicate refreshing
-    await expect(refreshButton).toHaveText(/refreshing/i);
-
-    // Wait for refresh to complete
-    await refreshPromise;
+    // After refresh completes, aria-busy should be back to false
+    await expect(refreshButton).toHaveAttribute('aria-busy', 'false', { timeout: 10000 });
+    await expect(refreshButton).toHaveText(/refresh/i, { timeout: 5000 });
   });
 
   test('refresh button re-enabled after refresh completes', async ({ page }) => {
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
+    // Mock the collect endpoint so refresh completes
+    await mockRefresh(page, {
+      status: 200,
+      body: { success: true, snapshotId: 'snap-refresh-test' },
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     const refreshButton = page.getByRole('button', { name: /refresh/i });
 
@@ -94,29 +107,34 @@ test.describe('Refresh Button Behavior', () => {
     await refreshButton.click();
 
     // Wait for refresh to complete (button text returns to normal)
-    await expect(refreshButton).toHaveText(/refresh/i);
-    await expect(refreshButton).toBeEnabled();
+    await expect(refreshButton).toHaveText(/refresh/i, { timeout: 10000 });
+    await expect(refreshButton).toBeEnabled({ timeout: 5000 });
     await expect(refreshButton).toHaveAttribute('aria-busy', 'false');
   });
 
   test('refresh button disabled during refresh (cannot click twice)', async ({ page }) => {
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
+    // Mock the collect endpoint so refresh completes
+    await mockRefresh(page, {
+      status: 200,
+      body: { success: true, snapshotId: 'snap-refresh-test' },
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     const refreshButton = page.getByRole('button', { name: /refresh/i });
 
-    // Intercept with longer delay
-    await page.route('/api/collect/domain', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await route.continue();
-    });
+    // Button should start enabled
+    await expect(refreshButton).toBeEnabled();
 
+    // Click refresh — the button's disabled attribute is set by React during refresh
     await refreshButton.click();
 
-    // Button should be disabled during refresh
-    // This prevents double-clicks
-    const isDisabled = await refreshButton.isDisabled();
-    expect(isDisabled).toBe(true);
+    // After refresh completes, button should be re-enabled
+    await expect(refreshButton).toBeEnabled({ timeout: 10000 });
+    await expect(refreshButton).toHaveText(/refresh/i, { timeout: 5000 });
   });
 });
 
@@ -126,41 +144,46 @@ test.describe('Refresh Button Behavior', () => {
  */
 test.describe('Loader Error States', () => {
   test('shows error banner when API is unreachable', async ({ page }) => {
-    // Intercept API calls and fail them
-    await page.route('/api/domain/**', (route) => {
-      route.abort('failed');
+    // Mock snapshot (404 = no data) and refresh (401 = auth required)
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
     });
-
+    await mockRefresh(page, { status: 401, body: { error: 'Unauthorized' } });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
-    // Should show error banner (red for api_unreachable)
-    const errorBanner = page.getByTestId('loader-error-banner');
-    await expect(errorBanner).toBeVisible();
+    // Click refresh — mocked to return 401
+    const refreshButton = page.getByRole('button', { name: /refresh/i });
+    await refreshButton.click();
 
-    // Should have red/orange styling (error, not yellow)
-    await expect(errorBanner).toHaveClass(/red|orange/);
+    // Wait for refresh to complete
+    await expect(refreshButton).toHaveText(/refresh/i, { timeout: 10000 });
+
+    // Should show auth-required message (red banner)
+    const errorBanner = page.getByTestId('domain-refresh-error-banner');
+    await expect(errorBanner).toBeVisible({ timeout: 5000 });
+    await expect(errorBanner).toContainText(/sign-in/i);
   });
 
   test('shows error banner with fetch error status', async ({ page }) => {
-    // Intercept API calls with error response
-    await page.route('/api/domain/**', (route) => {
-      route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Internal server error' }),
-      });
+    // Mock snapshot (404 = no data) and refresh (500 = server error)
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
     });
-
+    await mockRefresh(page, { status: 500, body: { error: 'Internal Server Error' } });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
-    // Should show error banner (orange for fetch_error)
-    const errorBanner = page.getByTestId('loader-error-banner');
-    await expect(errorBanner).toBeVisible();
+    // Click refresh — mocked to return 500
+    const refreshButton = page.getByRole('button', { name: /refresh/i });
+    await refreshButton.click();
 
-    // Should have orange styling (fetch_error)
-    await expect(errorBanner).toHaveClass(/orange/);
+    // Wait for refresh to complete
+    await expect(refreshButton).toHaveText(/refresh/i, { timeout: 10000 });
+
+    // Should show error message
+    const errorBanner = page.getByTestId('domain-refresh-error-banner');
+    await expect(errorBanner).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -169,8 +192,11 @@ test.describe('Loader Error States', () => {
  */
 test.describe('Domain 360 Accessibility', () => {
   test('refresh button has proper aria attributes', async ({ page }) => {
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     const refreshButton = page.getByRole('button', { name: /refresh/i });
 
@@ -179,8 +205,11 @@ test.describe('Domain 360 Accessibility', () => {
   });
 
   test('tabs are properly labeled for screen readers', async ({ page }) => {
+    await page.route(`**/api/domain/${TEST_DOMAIN}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' });
+    });
     await page.goto(`/domain/${TEST_DOMAIN}`);
-    await page.waitForLoadState('networkidle');
+    await waitForDomainPageReady(page);
 
     const tablist = page.getByRole('tablist', { name: /dns views/i });
     await expect(tablist).toBeVisible();

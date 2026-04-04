@@ -2,18 +2,24 @@
  * Notification Routes
  *
  * API endpoints for webhook notifications.
+ * All webhooks go through the unified sendAlertNotification path.
  */
 
 import { Hono } from 'hono';
 import { getCollectorLogger } from '../middleware/error-tracking.js';
 import type { Env } from '../types.js';
-import { buildWebhookPayload, sendAlertWebhook } from './webhook.js';
+import { sendAlertNotification } from './webhook.js';
 
 export const notificationRoutes = new Hono<Env>();
 
 /**
  * POST /api/notify/webhook
  * Send an alert notification via webhook
+ *
+ * Uses the ONE unified notification path with:
+ * - SSRF protection via shared guard
+ * - Alert status tracking (pending → sent)
+ * - Proper logging
  *
  * Body: {
  *   webhookUrl: string;
@@ -70,27 +76,30 @@ notificationRoutes.post('/webhook', async (c) => {
       }
     }
 
-    // Build payload and send webhook
-    const payload = buildWebhookPayload(alert, baseUrl);
-    const result = await sendAlertWebhook(webhookUrl, payload);
+    const db = c.get('db');
+
+    // Use the unified notification path
+    const result = await sendAlertNotification(alert.id, webhookUrl, alert, db, baseUrl);
 
     if (result.success) {
       return c.json(
         {
           success: true,
-          statusCode: result.statusCode,
           message: 'Webhook sent successfully',
+          webhookHost: result.webhookHost,
+          statusUpdated: result.statusUpdated,
         },
         200
       );
     }
 
-    // Return error but still 200 since this is best-effort
+    // Return error response
     return c.json(
       {
         success: false,
         error: result.error,
         message: 'Webhook delivery failed',
+        webhookHost: result.webhookHost,
       },
       502
     );

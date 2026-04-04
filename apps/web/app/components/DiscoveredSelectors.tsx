@@ -62,7 +62,8 @@ export function DiscoveredSelectors({ snapshotId }: DiscoveredSelectorsProps) {
   if (selectors.length === 0) {
     return (
       <div className="text-sm text-gray-500">
-        No DKIM selectors discovered. This may indicate:
+        <p>No DKIM selectors discovered yet.</p>
+        <p className="mt-1">This may indicate:</p>
         <ul className="list-disc ml-5 mt-1">
           <li>No DKIM configured for this domain</li>
           <li>Selectors use non-standard names</li>

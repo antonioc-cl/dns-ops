@@ -7,8 +7,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const E2E_DEV_TENANT = process.env.E2E_DEV_TENANT;
-const E2E_DEV_ACTOR = process.env.E2E_DEV_ACTOR;
+// Default dev auth for deterministic E2E runs.
+// Override with env vars or set E2E_DISABLE_DEV_AUTH=1 for anonymous tests.
+const devAuthEnabled = process.env.E2E_DISABLE_DEV_AUTH !== '1';
+const E2E_DEV_TENANT = process.env.E2E_DEV_TENANT || (devAuthEnabled ? 'dns-ops-e2e' : '');
+const E2E_DEV_ACTOR = process.env.E2E_DEV_ACTOR || (devAuthEnabled ? 'e2e-bot' : '');
 
 const extraHTTPHeaders = {};
 if (E2E_DEV_TENANT && E2E_DEV_ACTOR) {

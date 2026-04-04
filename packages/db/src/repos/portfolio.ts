@@ -367,8 +367,9 @@ function canTransitionAlert(currentStatus: AlertStatus, nextStatus: AlertStatus)
       return ['pending', 'sent', 'acknowledged', 'suppressed'].includes(currentStatus);
     case 'suppressed':
       return ['pending', 'sent', 'acknowledged'].includes(currentStatus);
-    case 'pending':
     case 'sent':
+      return currentStatus === 'pending'; // webhook delivery marks pending → sent
+    case 'pending':
       return false;
     default:
       return false;

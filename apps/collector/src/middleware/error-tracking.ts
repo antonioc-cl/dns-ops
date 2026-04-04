@@ -5,7 +5,13 @@
  * Provides structured logging with context for debugging and monitoring.
  */
 
-import { createLogger, createLoggingMiddleware, type Logger } from '@dns-ops/logging';
+import {
+  createErrorReporter,
+  createLogger,
+  createLoggingMiddleware,
+  type ErrorReporter,
+  type Logger,
+} from '@dns-ops/logging';
 import type { ErrorHandler, NotFoundHandler } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types.js';
@@ -87,6 +93,9 @@ export function createRequestLoggingMiddleware(config: ErrorTrackingConfig = {})
  */
 export function createErrorTrackingMiddleware(config: ErrorTrackingConfig = {}) {
   const logger = getCollectorLogger();
+  // Lazily created per-instance; reads ERROR_REPORTING_ENDPOINT at first error
+  let defaultReporter: ErrorReporter | undefined;
+  const getReporter = () => (defaultReporter ??= createErrorReporter());
 
   return createMiddleware<Env>(async (c, next) => {
     const requestId =
@@ -121,6 +130,13 @@ export function createErrorTrackingMiddleware(config: ErrorTrackingConfig = {}) 
               hookError: hookError instanceof Error ? hookError.message : String(hookError),
             });
           }
+        } else {
+          // Default: forward to centralised error reporter
+          try {
+            await getReporter().report(error, { ...context, durationMs });
+          } catch {
+            // reporter failures are non-fatal
+          }
         }
       } else {
         logger.error('Request failed with non-Error', undefined, {
@@ -141,6 +157,9 @@ export function createErrorTrackingMiddleware(config: ErrorTrackingConfig = {}) 
  */
 export function createErrorHandler(config: ErrorTrackingConfig = {}): ErrorHandler<Env> {
   const logger = getCollectorLogger();
+  // Lazily created per-instance; reads ERROR_REPORTING_ENDPOINT at first error
+  let defaultReporter: ErrorReporter | undefined;
+  const getReporter = () => (defaultReporter ??= createErrorReporter());
 
   return (error, c) => {
     const requestId = c.req.header('X-Request-Id') || 'unknown';
@@ -164,6 +183,9 @@ export function createErrorHandler(config: ErrorTrackingConfig = {}): ErrorHandl
             hookError: hookError instanceof Error ? hookError.message : String(hookError),
           });
         });
+      } else {
+        // Default: forward to centralised error reporter (fire-and-forget)
+        void getReporter().report(error, context);
       }
     } else {
       logger.info(`Client error: ${error.message}`, context);

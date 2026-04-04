@@ -112,6 +112,26 @@ jobs:
         run: bunx drizzle-kit push --force
         working-directory: packages/db
 
+      - name: Start Collector
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dns_ops_ci
+          PORT: "3001"
+          NODE_ENV: development
+          WORKER_ENABLED: "false"
+        run: |
+          node apps/collector/dist/index.js &
+          echo "Waiting for collector to become ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3001/healthz > /dev/null 2>&1; then
+              echo "Collector is ready (attempt $i)"
+              exit 0
+            fi
+            echo "  attempt $i/30 — sleeping 2s"
+            sleep 2
+          done
+          echo "ERROR: collector did not start within 60s"
+          exit 1
+
       - name: E2E Tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/dns_ops_ci

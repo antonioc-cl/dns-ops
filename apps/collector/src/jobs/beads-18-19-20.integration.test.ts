@@ -12,11 +12,7 @@
 
 import type { Job } from 'bullmq';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  CollectDomainJobData,
-  FleetReportJobData,
-  MonitoringRefreshJobData,
-} from './queue.js';
+import type { CollectDomainJobData, FleetReportJobData } from './queue.js';
 import { processCollectDomain, processFleetReport, processMonitoringRefresh } from './worker.js';
 
 // Set up test environment
