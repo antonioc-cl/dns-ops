@@ -146,6 +146,23 @@ describe('legacyToolsRoutes runtime', () => {
       expect(json.dmarc.available).toBe(false);
       expect(json.dkim.available).toBe(false);
     });
+
+    it('reports partial availability when only DMARC configured', async () => {
+      process.env.VITE_DKIM_TOOL_URL = '';
+      const app = createApp(emptyState);
+
+      const response = await app.request('/api/legacy-tools/config');
+
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as {
+        dmarc: { available: boolean; supportDeepLink: boolean };
+        dkim: { available: boolean; supportDeepLink: boolean };
+      };
+      expect(json.dmarc.available).toBe(true);
+      expect(json.dmarc.supportDeepLink).toBe(true);
+      expect(json.dkim.available).toBe(false);
+      expect(json.dkim.supportDeepLink).toBe(false);
+    });
   });
 
   describe('GET /dmarc/deeplink', () => {
@@ -462,6 +479,151 @@ describe('legacyToolsRoutes runtime', () => {
       };
       expect(json.domain).toBe('all');
       expect(json.durable).toBe(true);
+    });
+  });
+
+  // ===========================================================================
+  // PR-03.2: Spec-required test cases (exact inputs from PR-03 spec)
+  // ===========================================================================
+  describe('PR-03.2 spec: Query param injection via domain', () => {
+    it('rejects domain with ?evil=true&redirect=http://attacker.com (PR-03.2a)', async () => {
+      const app = createApp(emptyState);
+      // When a domain like "example.com?evil=true&redirect=http://attacker.com"
+      // is passed as a query param, the URL parser splits on & so domain becomes
+      // "example.com?evil=true" and "redirect" becomes a separate query param.
+      // Either way the domain is invalid (contains ?) and must be rejected.
+      const maliciousDomain = 'example.com?evil=true';
+      const response = await app.request(
+        `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent(maliciousDomain)}`
+      );
+      expect(response.status).toBe(400);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toContain('Invalid domain');
+    });
+
+    it('extra query params from injection attempt are NOT forwarded to deep link (PR-03.2a)', async () => {
+      const app = createApp(emptyState);
+      // If attacker crafts URL with &redirect=http://attacker.com, the
+      // "redirect" query param is separate from domain and must not appear
+      // in any deep link output. Test with a valid domain to verify.
+      const response = await app.request(
+        '/api/legacy-tools/dmarc/deeplink?domain=example.com&redirect=http://attacker.com'
+      );
+      // The valid domain should work (200)
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { url: string };
+      // But the injected redirect param must NOT appear in the output URL
+      expect(json.url).not.toContain('redirect=http://attacker.com');
+      expect(json.url).not.toContain('evil=');
+      // Verify the domain in the deep link is only "example.com"
+      const parsedUrl = new URL(json.url);
+      expect(parsedUrl.searchParams.get('domain')).toBe('example.com');
+      expect(parsedUrl.searchParams.has('redirect')).toBe(false);
+    });
+
+    it('fully encoded injection domain is also rejected (PR-03.2a)', async () => {
+      const app = createApp(emptyState);
+      // The full malicious string URL-encoded: ? and & and = are all encoded
+      const fullyEncoded = 'example.com%3Fevil%3Dtrue%26redirect%3Dhttp%3A%2F%2Fattacker.com';
+      const response = await app.request(`/api/legacy-tools/dmarc/deeplink?domain=${fullyEncoded}`);
+      // After URL decoding by Hono, domain = "example.com?evil=true&redirect=http://attacker.com"
+      // The ? makes it invalid
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe('PR-03.2 spec: XSS via domain attribute injection', () => {
+    it('rejects domain with "><script>alert(1)</script> (PR-03.2b)', async () => {
+      const app = createApp(emptyState);
+      const xssDomain = 'example.com"><script>alert(1)</script>';
+      const response = await app.request(
+        `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent(xssDomain)}`
+      );
+      // Domain contains ", >, < — all invalid for DNS names
+      expect(response.status).toBe(400);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toContain('Invalid domain');
+    });
+
+    it('rejects URL-variant XSS domain via direct query (no encoding) (PR-03.2b)', async () => {
+      const app = createApp(emptyState);
+      // Without encodeURIComponent, the raw " character in the URL is invalid
+      // but Hono includes it in the domain value, so domain validation rejects it.
+      // This is the safe behavior: no XSS content ever reaches deep link output.
+      const response = await app.request(
+        '/api/legacy-tools/dmarc/deeplink?domain=example.com"><script>alert(1)</script>'
+      );
+      // Domain validation rejects the " character — output is safe
+      expect(response.status).toBe(400);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toContain('Invalid domain');
+    });
+  });
+
+  describe('PR-03.2 spec: IDN domain münchen.de', () => {
+    it('rejects münchen.de — non-ASCII domain (PR-03.2c)', async () => {
+      const app = createApp(emptyState);
+      const idnDomain = 'münchen.de';
+      const response = await app.request(
+        `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent(idnDomain)}`
+      );
+      // Legacy tools don't support IDN; non-ASCII chars are rejected
+      expect(response.status).toBe(400);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toContain('Invalid domain');
+    });
+
+    it('rejects münchen.de for DKIM deep link as well (PR-03.2c)', async () => {
+      const app = createApp(emptyState);
+      const response = await app.request(
+        `/api/legacy-tools/dkim/deeplink?domain=${encodeURIComponent('münchen.de')}&selector=google`
+      );
+      expect(response.status).toBe(400);
+      const json = (await response.json()) as { error: string };
+      expect(json.error).toContain('Invalid domain');
+    });
+  });
+
+  describe('PR-03.2 spec: Deep link output URL well-formedness', () => {
+    it('produces a valid, parseable URL for a normal domain (PR-03.2d)', async () => {
+      const app = createApp(emptyState);
+      const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=example.com');
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { url: string };
+      // Must be a parseable URL
+      const parsed = new URL(json.url);
+      expect(parsed.protocol).toBe('https:');
+      expect(parsed.hostname).toBe('dmarc.example.com');
+      expect(parsed.searchParams.get('domain')).toBe('example.com');
+    });
+
+    it('produces a valid URL for DKIM with selector (PR-03.2d)', async () => {
+      const app = createApp(emptyState);
+      const response = await app.request(
+        '/api/legacy-tools/dkim/deeplink?domain=example.com&selector=google'
+      );
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { url: string };
+      const parsed = new URL(json.url);
+      expect(parsed.protocol).toBe('https:');
+      expect(parsed.searchParams.get('domain')).toBe('example.com');
+      expect(parsed.searchParams.get('selector')).toBe('google');
+    });
+
+    it('domain param in deep link is properly URL-encoded (PR-03.2d)', async () => {
+      const app = createApp(emptyState);
+      const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=example.com');
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { url: string };
+      // The URL should be parseable and domain param clean
+      const parsed = new URL(json.url);
+      // No double-encoding — domain=example.com not domain=example%2Ecom
+      expect(parsed.searchParams.get('domain')).toBe('example.com');
+      // No injection characters in the URL
+      expect(json.url).not.toContain('<');
+      expect(json.url).not.toContain('>');
+      expect(json.url).not.toContain('"');
+      expect(json.url).not.toContain('javascript:');
     });
   });
 

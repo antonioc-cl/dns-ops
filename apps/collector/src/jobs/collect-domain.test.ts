@@ -67,6 +67,7 @@ describe('VAL-003: Collection Deduplication Logic', () => {
 
   describe('Dedup response format', () => {
     it('should have correct structure for dedup response', () => {
+      const createdAt = new Date();
       const dedupResponse = {
         success: false,
         reason: 'recent_collection_exists' as const,
@@ -74,6 +75,7 @@ describe('VAL-003: Collection Deduplication Logic', () => {
           'Collection skipped - a snapshot was created 30 seconds ago. Wait at least 60 seconds between collections.',
         snapshotId: 'existing-snapshot-123',
         queued: false as const,
+        lastCollectionAt: createdAt.toISOString(),
       };
 
       expect(dedupResponse.success).toBe(false);
@@ -81,18 +83,23 @@ describe('VAL-003: Collection Deduplication Logic', () => {
       expect(dedupResponse.queued).toBe(false);
       expect(dedupResponse.snapshotId).toBeDefined();
       expect(dedupResponse.message).toContain('60 seconds');
+      expect(dedupResponse.lastCollectionAt).toBe(createdAt.toISOString());
     });
 
-    it('should include snapshotId in dedup response', () => {
+    it('should include lastCollectionAt in dedup response', () => {
       const snapshotId = 'snap-abc-123';
+      const createdAt = new Date();
       const response = {
         success: false,
         reason: 'recent_collection_exists',
         snapshotId,
         queued: false,
+        lastCollectionAt: createdAt.toISOString(),
       };
 
       expect(response.snapshotId).toBe(snapshotId);
+      expect(response.lastCollectionAt).toBe(createdAt.toISOString());
+      expect(response.queued).toBe(false);
     });
   });
 

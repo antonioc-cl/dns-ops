@@ -7,13 +7,15 @@
  * - Unicode/IDN rejection
  * - Injection character rejection
  * - Valid domain acceptance
+ * - PR-03.1: Not configured behavior (503 + INFRA_CONFIG_MISSING)
+ * - PR-03.2: Specific malicious inputs from spec
  *
- * These tests verify the security hardening from DX-004 consolidation.
+ * These tests verify the security hardening from DX-004 consolidation and PR-03.
  */
 
 import type { IDatabaseAdapter } from '@dns-ops/db';
 import { Hono } from 'hono';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../types.js';
 import { legacyToolsRoutes } from './legacy-tools.js';
 
@@ -57,12 +59,14 @@ function createMockDb(state: MockState): IDatabaseAdapter {
   } as unknown as IDatabaseAdapter;
 }
 
-function createApp(state: MockState = {}) {
+function createApp(state: MockState = {}, skipEnvSetup = false) {
   const app = new Hono<Env>();
 
-  // Set environment variables for legacy tools
-  process.env.VITE_DMARC_TOOL_URL = 'https://dmarc.example.com';
-  process.env.VITE_DKIM_TOOL_URL = 'https://dkim.example.com';
+  // Set environment variables for legacy tools (unless caller manages them)
+  if (!skipEnvSetup) {
+    process.env.VITE_DMARC_TOOL_URL = 'https://dmarc.example.com';
+    process.env.VITE_DKIM_TOOL_URL = 'https://dkim.example.com';
+  }
 
   const mockDb = createMockDb(state);
 
@@ -81,14 +85,8 @@ function createApp(state: MockState = {}) {
 
 describe('Legacy Tools Domain Validation E2E', () => {
   describe('IP Address Rejection', () => {
-    /**
-     * SECURITY: Reject IPv4 addresses
-     * DNS lookups should use domain names, not IP addresses.
-     * Allowing IPs could bypass network-based access controls.
-     */
     it('should reject IPv4 addresses in query domain', async () => {
       const app = createApp();
-      // Common public DNS server IPs
       const ipv4Addresses = [
         '8.8.8.8',
         '1.1.1.1',
@@ -102,14 +100,10 @@ describe('Legacy Tools Domain Validation E2E', () => {
         const response = await app.request(
           `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent(ip)}`
         );
-        // Should reject with 400 Bad Request
         expect(response.status, `Expected 400 for IPv4: ${ip}`).toBe(400);
       }
     });
 
-    /**
-     * SECURITY: Reject IPv6 addresses in bracket notation [::1]
-     */
     it('should reject IPv6 addresses in bracket notation', async () => {
       const app = createApp();
       const ipv6Addresses = ['[::1]', '[::127.0.0.1]', '[2001:db8::1]', '[::ffff:127.0.0.1]'];
@@ -122,9 +116,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
       }
     });
 
-    /**
-     * SECURITY: Reject raw IPv6 addresses (no brackets)
-     */
     it('should reject raw IPv6 addresses', async () => {
       const app = createApp();
       const rawIpv6Addresses = ['::1', '::127.0.0.1', '2001:db8::1', 'fe80::1'];
@@ -139,9 +130,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
   });
 
   describe('URL Scheme Rejection', () => {
-    /**
-     * SECURITY: Reject URLs with schemes
-     */
     it('should reject HTTP URLs', async () => {
       const app = createApp();
       const response = await app.request(
@@ -172,9 +160,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
   });
 
   describe('Unicode/IDN Rejection', () => {
-    /**
-     * SECURITY: Legacy tools don't support IDN (Internationalized Domain Names)
-     */
     it('should reject punycode domains (xn-- prefix)', async () => {
       const app = createApp();
       const punycodeDomains = ['xn--nxasmq5b.com', 'xn--bcher-kva.com'];
@@ -189,19 +174,16 @@ describe('Legacy Tools Domain Validation E2E', () => {
 
     it('should reject Unicode domains', async () => {
       const app = createApp();
-      // Greek alpha (looks like 'a')
       const response1 = await app.request(
         `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent('αxample.com')}`
       );
       expect(response1.status).toBe(400);
 
-      // Cyrillic 'а' (looks identical to Latin 'a')
       const response2 = await app.request(
         `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent('exаmple.com')}`
       );
       expect(response2.status).toBe(400);
 
-      // Emoji domain
       const response3 = await app.request(
         `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent('😀example.com')}`
       );
@@ -210,7 +192,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
 
     it('should reject mixed script domains (IDN homograph attack)', async () => {
       const app = createApp();
-      // PayPal with Cyrillic 'а' instead of Latin 'a'
       const response = await app.request(
         `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent('pаypal.com')}`
       );
@@ -219,9 +200,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
   });
 
   describe('Injection Character Rejection', () => {
-    /**
-     * SECURITY: Reject injection characters
-     */
     it('should reject domain with hash (fragment identifier)', async () => {
       const app = createApp();
       const response = await app.request(
@@ -248,9 +226,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
   });
 
   describe('Blocked Hostname Rejection', () => {
-    /**
-     * SECURITY: Reject internal/loopback hostnames
-     */
     it('should reject localhost variants', async () => {
       const app = createApp();
       const localhostVariants = ['localhost', 'LOCALHOST', 'localhost.localdomain', 'localhost.'];
@@ -265,13 +240,9 @@ describe('Legacy Tools Domain Validation E2E', () => {
   });
 
   describe('Valid Domain Acceptance', () => {
-    /**
-     * POSITIVE TESTS: Ensure valid domains still work
-     */
     it('should accept valid simple domain', async () => {
       const app = createApp();
       const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=example.com');
-      // Should not be 400 (could be 200 if tool available, or 503 if not configured)
       expect(response.status).not.toBe(400);
     });
 
@@ -300,7 +271,6 @@ describe('Legacy Tools Domain Validation E2E', () => {
  */
 describe('DX-004 Regression Tests', () => {
   it('should use canonical domain validation from @dns-ops/parsing', () => {
-    // This test documents the consolidation
     expect(true).toBe(true);
   });
 
@@ -324,5 +294,130 @@ describe('DX-004 Regression Tests', () => {
         expect(response.status, `Expected 400 for: ${input}`).toBe(400);
       }
     }
+  });
+});
+
+/**
+ * PR-03.1: E2E tests for "not configured" behavior
+ */
+describe('Legacy Tools Not Configured E2E (PR-03.1)', () => {
+  const originalDmarc = process.env.VITE_DMARC_TOOL_URL;
+  const originalDkim = process.env.VITE_DKIM_TOOL_URL;
+
+  afterEach(() => {
+    process.env.VITE_DMARC_TOOL_URL = originalDmarc;
+    process.env.VITE_DKIM_TOOL_URL = originalDkim;
+  });
+
+  it('DMARC deeplink returns 503 when VITE_DMARC_TOOL_URL not set', async () => {
+    process.env.VITE_DMARC_TOOL_URL = '';
+    process.env.VITE_DKIM_TOOL_URL = '';
+    const app = createApp({}, true);
+
+    const response = await app.request(
+      `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent('example.com')}`
+    );
+    expect(response.status).toBe(503);
+    const json = (await response.json()) as {
+      ok: boolean;
+      code: string;
+      error: string;
+      details?: { hint: string };
+    };
+    expect(json.ok).toBe(false);
+    expect(json.code).toBe('INFRA_CONFIG_MISSING');
+    expect(json.error).toContain('DMARC');
+    expect(json.details?.hint).toContain('VITE_DMARC_TOOL_URL');
+  });
+
+  it('DKIM deeplink returns 503 when VITE_DKIM_TOOL_URL not set', async () => {
+    process.env.VITE_DMARC_TOOL_URL = '';
+    process.env.VITE_DKIM_TOOL_URL = '';
+    const app = createApp({}, true);
+
+    const response = await app.request(
+      `/api/legacy-tools/dkim/deeplink?domain=${encodeURIComponent('example.com')}&selector=google`
+    );
+    expect(response.status).toBe(503);
+    const json = (await response.json()) as {
+      ok: boolean;
+      code: string;
+      error: string;
+    };
+    expect(json.ok).toBe(false);
+    expect(json.code).toBe('INFRA_CONFIG_MISSING');
+    expect(json.error).toContain('DKIM');
+  });
+
+  it('config endpoint reports both unavailable when env vars not set', async () => {
+    process.env.VITE_DMARC_TOOL_URL = '';
+    process.env.VITE_DKIM_TOOL_URL = '';
+    const app = createApp({}, true);
+
+    const response = await app.request('/api/legacy-tools/config');
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as {
+      dmarc: { available: boolean; disclaimer: string };
+      dkim: { available: boolean; disclaimer: string };
+    };
+    expect(json.dmarc.available).toBe(false);
+    expect(json.dkim.available).toBe(false);
+    expect(json.dmarc.disclaimer).toContain('informational');
+  });
+});
+
+/**
+ * PR-03.2: E2E tests for specific malicious domain inputs from spec
+ */
+describe('Legacy Tools Malicious Input E2E (PR-03.2)', () => {
+  it('rejects example.com?evil=true query param injection (PR-03.2a)', async () => {
+    const app = createApp();
+    const maliciousDomain = 'example.com?evil=true&redirect=http://attacker.com';
+    const response = await app.request(
+      `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent(maliciousDomain)}`
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects example.com"><script>alert(1)</script> XSS (PR-03.2b)', async () => {
+    const app = createApp();
+    const xssDomain = 'example.com"><script>alert(1)</script>';
+    const response = await app.request(
+      `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent(xssDomain)}`
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects münchen.de IDN domain (PR-03.2c)', async () => {
+    const app = createApp();
+    const response = await app.request(
+      `/api/legacy-tools/dmarc/deeplink?domain=${encodeURIComponent('münchen.de')}`
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it('produces well-formed URL for valid domain (PR-03.2d)', async () => {
+    const app = createApp();
+    const response = await app.request('/api/legacy-tools/dmarc/deeplink?domain=example.com');
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { url: string };
+    const parsed = new URL(json.url);
+    expect(parsed.hostname).toBeTruthy();
+    expect(parsed.searchParams.get('domain')).toBe('example.com');
+    expect(json.url).not.toContain('<');
+    expect(json.url).not.toContain('>');
+    expect(json.url).not.toContain('"');
+  });
+
+  it('injected extra query params do not leak into deep link (PR-03.2a)', async () => {
+    const app = createApp();
+    const response = await app.request(
+      '/api/legacy-tools/dmarc/deeplink?domain=example.com&redirect=http://attacker.com'
+    );
+    expect(response.status).toBe(200);
+    const json = (await response.json()) as { url: string };
+    const parsed = new URL(json.url);
+    expect(parsed.searchParams.get('domain')).toBe('example.com');
+    expect(parsed.searchParams.has('redirect')).toBe(false);
   });
 });

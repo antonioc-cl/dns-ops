@@ -479,7 +479,7 @@ portfolioRoutes.post('/domains/:domainId/tags', requireWritePermission, async (c
   const validation = await validateBody(c, {
     tag: requiredString('tag', {
       minLength: 1,
-      maxLength: 64,
+      maxLength: 50,
       pattern: /^[a-zA-Z0-9_-]+$/,
       patternMessage: 'tag must contain only letters, numbers, underscores, and hyphens',
     }),

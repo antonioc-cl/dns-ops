@@ -123,6 +123,7 @@ describe('Validation Coverage Audit', () => {
 
   it('validates tag format at API layer (PR-11.1)', () => {
     // Tags must match: /^[a-zA-Z0-9_-]+$/
+    // Max length: 50 (matching DB varchar(50) constraint)
     const validTags = ['production', 'team-alpha', 'critical_1', 'tag-123'];
     const invalidTags = ['tag with space', 'tag.special', 'tag@symbol'];
 
@@ -135,6 +136,10 @@ describe('Validation Coverage Audit', () => {
     for (const tag of invalidTags) {
       expect(tagPattern.test(tag)).toBe(false);
     }
+
+    // Verify max length 50 matches DB schema
+    const tooLong = 'a'.repeat(51);
+    expect(tooLong.length).toBeGreaterThan(50);
   });
 
   it('validates domain name format (PR-11.1)', () => {

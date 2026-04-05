@@ -969,6 +969,52 @@ describe('Portfolio Routes', () => {
       expect(body.error).toBeDefined();
     });
 
+    it('should reject tag exceeding max length 50 (PR-11.1)', async () => {
+      const longTag = 'a'.repeat(51);
+      const res = await app.request('/api/portfolio/domains/domain-1/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: longTag }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as JsonBody;
+      expect(body.error).toBeDefined();
+    });
+
+    it('should accept tag at exactly max length 50 (PR-11.1)', async () => {
+      const maxTag = 'a'.repeat(50);
+      const res = await app.request('/api/portfolio/domains/domain-1/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: maxTag }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = (await res.json()) as JsonBody;
+      expect((body.tag as JsonBody).tag).toBe(maxTag);
+    });
+
+    it('should reject empty tag (PR-11.1)', async () => {
+      const res = await app.request('/api/portfolio/domains/domain-1/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: '' }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should reject tag with special characters (PR-11.1)', async () => {
+      const res = await app.request('/api/portfolio/domains/domain-1/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: 'tag.with.dots' }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     it('should remove a tag from a domain', async () => {
       const res = await app.request('/api/portfolio/domains/domain-1/tags/production', {
         method: 'DELETE',

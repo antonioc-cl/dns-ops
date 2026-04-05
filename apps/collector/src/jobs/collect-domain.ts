@@ -156,6 +156,7 @@ collectDomainRoutes.post('/domain', async (c) => {
             message: `Collection skipped - a snapshot was created ${Math.round((Date.now() - latestSnapshot.createdAt.getTime()) / 1000)} seconds ago. Wait at least 60 seconds between collections.`,
             snapshotId: latestSnapshot.id,
             queued: false,
+            lastCollectionAt: latestSnapshot.createdAt.toISOString(),
           },
           429
         );

@@ -25,7 +25,11 @@
  * 2. Full collection as part of a snapshot workflow
  */
 
-import { type CollectMailRequest, validateCollectMailRequest } from '@dns-ops/contracts';
+import {
+  type CollectMailRequest,
+  KNOWN_MAIL_PROVIDERS,
+  validateCollectMailRequestDetailed,
+} from '@dns-ops/contracts';
 import {
   createPostgresAdapter,
   DkimSelectorRepository,
@@ -52,9 +56,12 @@ export const collectMailRoutes = new Hono<Env>();
 collectMailRoutes.post('/mail', async (c) => {
   const body = await c.req.json();
 
-  // Validate request using shared validation
-  if (!validateCollectMailRequest(body)) {
-    return c.json({ error: 'Invalid request', message: 'Domain is required' }, 400);
+  // Validate request using shared validation (PR-11.1)
+  // Validates: domain (required), preferredProvider (optional enum),
+  // explicitSelectors (optional array, max 20 items)
+  const validation = validateCollectMailRequestDetailed(body);
+  if (!validation.valid) {
+    return c.json({ error: 'Invalid request', message: validation.errors.join('; ') }, 400);
   }
 
   const req = body as CollectMailRequest;
@@ -167,13 +174,46 @@ collectMailRoutes.post('/mail', async (c) => {
  */
 collectMailRoutes.post('/mail/check', async (c) => {
   const body = await c.req.json();
-  const { domain, preferredProvider, explicitSelectors } = body;
 
-  if (!domain || typeof domain !== 'string') {
+  // Validate domain
+  if (!body.domain || typeof body.domain !== 'string') {
     return c.json({ error: 'Domain is required' }, 400);
   }
 
-  const normalizedDomain = domain.toLowerCase().trim().replace(/\.$/, '');
+  // Validate preferredProvider if provided (PR-11.1)
+  if (
+    body.preferredProvider !== undefined &&
+    body.preferredProvider !== null &&
+    typeof body.preferredProvider === 'string' &&
+    body.preferredProvider.length > 0
+  ) {
+    const knownProviders = KNOWN_MAIL_PROVIDERS;
+    if (!knownProviders.includes(body.preferredProvider)) {
+      return c.json(
+        { error: `preferredProvider must be one of: ${knownProviders.join(', ')}` },
+        400
+      );
+    }
+  }
+
+  // Validate explicitSelectors if provided (PR-11.1)
+  if (body.explicitSelectors !== undefined && body.explicitSelectors !== null) {
+    if (!Array.isArray(body.explicitSelectors)) {
+      return c.json({ error: 'explicitSelectors must be an array' }, 400);
+    }
+    if (body.explicitSelectors.length > 20) {
+      return c.json({ error: 'explicitSelectors must have at most 20 items' }, 400);
+    }
+    for (let i = 0; i < body.explicitSelectors.length; i++) {
+      if (typeof body.explicitSelectors[i] !== 'string') {
+        return c.json({ error: `explicitSelectors[${i}] must be a string` }, 400);
+      }
+    }
+  }
+
+  const { preferredProvider, explicitSelectors } = body;
+
+  const normalizedDomain = body.domain.toLowerCase().trim().replace(/\.$/, '');
 
   if (!isValidDomain(normalizedDomain)) {
     return c.json({ error: 'Invalid domain format' }, 400);

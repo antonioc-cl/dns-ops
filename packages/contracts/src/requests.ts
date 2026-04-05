@@ -361,10 +361,82 @@ export function validateLookupDomainRequest(req: unknown): req is LookupDomainRe
 }
 
 /**
- * Validate a CollectMailRequest
+ * Known mail providers for preferredProvider validation
+ */
+export const KNOWN_MAIL_PROVIDERS = [
+  'google',
+  'google-workspace',
+  'microsoft',
+  'microsoft-365',
+  'outlook',
+  'zoho',
+] as const;
+
+export type KnownMailProvider = (typeof KNOWN_MAIL_PROVIDERS)[number];
+
+/**
+ * Validation details for a CollectMailRequest
+ */
+export interface MailValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+/**
+ * Validate a CollectMailRequest with full field validation
  */
 export function validateCollectMailRequest(req: unknown): req is CollectMailRequest {
-  if (!req || typeof req !== 'object') return false;
+  const result = validateCollectMailRequestDetailed(req);
+  return result.valid;
+}
+
+/**
+ * Detailed validation for CollectMailRequest
+ *
+ * Validates:
+ * - domain: required string
+ * - preferredProvider: optional, must be a known provider if provided
+ * - explicitSelectors: optional array of strings, max 20 items
+ */
+export function validateCollectMailRequestDetailed(req: unknown): MailValidationResult {
+  const errors: string[] = [];
+
+  if (!req || typeof req !== 'object') {
+    return { valid: false, errors: ['Request body must be a JSON object'] };
+  }
+
   const r = req as Record<string, unknown>;
-  return typeof r.domain === 'string' && r.domain.length > 0;
+
+  // domain: required string
+  if (typeof r.domain !== 'string' || r.domain.length === 0) {
+    errors.push('Domain is required and must be a non-empty string');
+  }
+
+  // preferredProvider: optional, must be known provider if provided
+  if (r.preferredProvider !== undefined && r.preferredProvider !== null) {
+    if (typeof r.preferredProvider !== 'string') {
+      errors.push('preferredProvider must be a string');
+    } else if (!KNOWN_MAIL_PROVIDERS.includes(r.preferredProvider as KnownMailProvider)) {
+      errors.push(`preferredProvider must be one of: ${KNOWN_MAIL_PROVIDERS.join(', ')}`);
+    }
+  }
+
+  // explicitSelectors: optional array of strings, max 20 items
+  if (r.explicitSelectors !== undefined && r.explicitSelectors !== null) {
+    if (!Array.isArray(r.explicitSelectors)) {
+      errors.push('explicitSelectors must be an array');
+    } else {
+      if (r.explicitSelectors.length > 20) {
+        errors.push('explicitSelectors must have at most 20 items');
+      }
+      for (let i = 0; i < r.explicitSelectors.length; i++) {
+        if (typeof r.explicitSelectors[i] !== 'string') {
+          errors.push(`explicitSelectors[${i}] must be a string`);
+          break; // Report first non-string only
+        }
+      }
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
 }
