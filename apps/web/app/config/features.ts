@@ -16,27 +16,6 @@ export function isDelegationTabEnabled(): boolean {
 }
 
 /**
- * Enable experimental mail diagnostics features
- */
-export function isMailDiagnosticsEnabled(): boolean {
-  return process.env.VITE_FEATURE_MAIL_DIAGNOSTICS === 'true';
-}
-
-/**
- * Enable fleet-wide reporting features
- */
-export function isFleetReportingEnabled(): boolean {
-  return process.env.VITE_FEATURE_FLEET_REPORTING === 'true';
-}
-
-/**
- * Enable shadow comparison features
- */
-export function isShadowComparisonEnabled(): boolean {
-  return process.env.VITE_FEATURE_SHADOW_COMPARISON === 'true';
-}
-
-/**
  * Enable the simulation panel in Domain 360 overview
  * Requires SEC-002 (simulation route auth) to be implemented
  */
@@ -54,24 +33,7 @@ export const FEATURE_FLAGS = {
     description: 'Enable the Delegation tab showing parent zone and NS delegation data',
     enabled: isDelegationTabEnabled(),
   },
-  mailDiagnostics: {
-    name: 'Mail Diagnostics',
-    envVar: 'VITE_FEATURE_MAIL_DIAGNOSTICS',
-    description: 'Enable experimental mail diagnostic features',
-    enabled: isMailDiagnosticsEnabled(),
-  },
-  fleetReporting: {
-    name: 'Fleet Reporting',
-    envVar: 'VITE_FEATURE_FLEET_REPORTING',
-    description: 'Enable fleet-wide reporting and analysis',
-    enabled: isFleetReportingEnabled(),
-  },
-  shadowComparison: {
-    name: 'Shadow Comparison',
-    envVar: 'VITE_FEATURE_SHADOW_COMPARISON',
-    description: 'Enable legacy tool vs new findings comparison',
-    enabled: isShadowComparisonEnabled(),
-  },
+
   simulation: {
     name: 'Fix Simulation',
     envVar: 'VITE_FEATURE_SIMULATION',

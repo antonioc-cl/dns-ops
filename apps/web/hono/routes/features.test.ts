@@ -60,20 +60,10 @@ describe('Feature flags', () => {
   it('all non-delegation flags default to false', async () => {
     delete process.env.VITE_FEATURE_SIMULATION;
     delete process.env.VITE_FEATURE_DELEGATION;
-    delete process.env.VITE_FEATURE_MAIL_DIAGNOSTICS;
-    delete process.env.VITE_FEATURE_FLEET_REPORTING;
-    delete process.env.VITE_FEATURE_SHADOW_COMPARISON;
-    const {
-      isSimulationEnabled,
-      isDelegationTabEnabled,
-      isMailDiagnosticsEnabled,
-      isFleetReportingEnabled,
-      isShadowComparisonEnabled,
-    } = await import('../../app/config/features.js');
+    const { isSimulationEnabled, isDelegationTabEnabled } = await import(
+      '../../app/config/features.js'
+    );
     expect(isSimulationEnabled()).toBe(false);
     expect(isDelegationTabEnabled()).toBe(true); // Shipped by default
-    expect(isMailDiagnosticsEnabled()).toBe(false);
-    expect(isFleetReportingEnabled()).toBe(false);
-    expect(isShadowComparisonEnabled()).toBe(false);
   });
 });

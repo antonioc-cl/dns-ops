@@ -8,11 +8,12 @@ import { MailFindingsPanel } from '../../components/MailFindingsPanel.js';
 import { MailDiagnostics } from '../../components/mail/index.js';
 import { NotesPanel } from '../../components/NotesPanel.js';
 import { SimulationPanel } from '../../components/SimulationPanel.js';
+import { SnapshotHistoryPanel } from '../../components/SnapshotHistoryPanel.js';
 import { ResultStateBadge, ZoneManagementBadge } from '../../components/StatusBadges.js';
 import { TagsPanel } from '../../components/TagsPanel.js';
 import { isDelegationTabEnabled, isSimulationEnabled } from '../../config/features.js';
 
-type DomainTabId = 'overview' | 'dns' | 'mail' | 'delegation';
+type DomainTabId = 'overview' | 'dns' | 'mail' | 'history' | 'delegation';
 
 /**
  * Loader error types for differentiated error handling
@@ -38,7 +39,7 @@ interface DomainSearchParams {
 // Delegation tab is controlled by feature flag (shipped by default)
 const DELEGATION_ENABLED = isDelegationTabEnabled();
 const SIMULATION_ENABLED = isSimulationEnabled();
-const BASE_TABS: DomainTabId[] = ['overview', 'dns', 'mail'];
+const BASE_TABS: DomainTabId[] = ['overview', 'dns', 'mail', 'history'];
 const ALL_TABS: DomainTabId[] = DELEGATION_ENABLED ? [...BASE_TABS, 'delegation'] : BASE_TABS;
 const VALID_TABS: DomainTabId[] = ALL_TABS;
 
@@ -62,6 +63,7 @@ const DOMAIN_TABS: { id: DomainTabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'dns', label: 'DNS' },
   { id: 'mail', label: 'Mail' },
+  { id: 'history', label: 'History' },
   // Delegation tab controlled by feature flag
   ...(DELEGATION_ENABLED ? [{ id: 'delegation' as const, label: 'Delegation' }] : []),
 ];
@@ -351,6 +353,16 @@ function Domain360Page() {
           {activeTab === 'mail' && <MailTab domain={domain} snapshotId={snapshot?.id} />}
         </div>
 
+        <div
+          role="tabpanel"
+          id={getPanelId('history')}
+          aria-labelledby={getTabId('history')}
+          hidden={activeTab !== 'history'}
+          data-testid="domain-tabpanel-history"
+        >
+          {activeTab === 'history' && <HistoryTab domain={domain} />}
+        </div>
+
         {/* Delegation panel - shipped by default */}
         {DELEGATION_ENABLED && (
           <div
@@ -576,6 +588,20 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId?: string }
         </div>
         <MailDiagnostics domain={domain} snapshotId={snapshotId} />
       </section>
+    </div>
+  );
+}
+
+function HistoryTab({ domain }: { domain: string }) {
+  return (
+    <div>
+      <div className="mb-4">
+        <h3 className="font-semibold text-gray-900">Snapshot History</h3>
+        <p className="text-sm text-gray-500">
+          View and compare past DNS snapshots to track changes over time for {domain}.
+        </p>
+      </div>
+      <SnapshotHistoryPanel domain={domain} />
     </div>
   );
 }

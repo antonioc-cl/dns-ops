@@ -39,7 +39,7 @@ test.describe('DNS Domain Flow', () => {
     await expect(page.getByRole('tab', { name: /mail/i })).toBeVisible();
     // PR-05.3: Delegation tab is now visible (was previously hidden)
     await expect(page.getByRole('tab', { name: /delegation/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /history/i })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: /history/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /notes/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /tags/i })).toBeVisible();
     // Simulation panel is present but may show empty state without a snapshot
