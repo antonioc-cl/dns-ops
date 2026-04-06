@@ -76,7 +76,7 @@ describe('domain normalization', () => {
     });
 
     it('should reject domains exceeding 253 characters', () => {
-      const longDomain = 'a'.repeat(250) + '.com';
+      const longDomain = `${'a'.repeat(250)}.com`;
       expect(() => normalizeDomain(longDomain)).toThrow();
     });
 
@@ -143,7 +143,7 @@ describe('domain normalization', () => {
     });
 
     it('should return false for domains exceeding 253 characters', () => {
-      const longDomain = 'a'.repeat(250) + '.com';
+      const longDomain = `${'a'.repeat(250)}.com`;
       expect(isValidDomain(longDomain)).toBe(false);
     });
 

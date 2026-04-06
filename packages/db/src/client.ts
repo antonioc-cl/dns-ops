@@ -65,10 +65,67 @@ export function createClient(config: DBConfig): Database {
 
   const pool = new Pool({
     connectionString: config.connectionString,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: parseSSLConfig(config.connectionString),
   });
 
   return drizzlePg(pool, { schema });
+}
+
+/**
+ * Parse SSL configuration from connection string and environment.
+ *
+ * Connection string `?sslmode=` takes precedence when present:
+ *   disable     → false (no SSL)
+ *   require     → { rejectUnauthorized: false }
+ *   verify-ca   → { rejectUnauthorized: true }
+ *   verify-full → { rejectUnauthorized: true }
+ *
+ * Otherwise falls back to environment-based defaults:
+ *   Production  → SSL ON; cert verification controlled by `strictDefault`
+ *   Development → false (no SSL — local pg servers often lack SSL)
+ *
+ * @param connectionString  PostgreSQL connection URL
+ * @param options.strictDefault  When true, production defaults to
+ *   rejectUnauthorized=true (collector). When false (default), production
+ *   defaults to rejectUnauthorized=false (web/Workers — Hyperdrive may
+ *   use self-signed certs). Both respect DB_TLS_REJECT_UNAUTHORIZED.
+ */
+/** @internal Exported for testing only */
+export function parseSSLConfig(
+  connectionString: string,
+  options?: { strictDefault?: boolean }
+): boolean | { rejectUnauthorized?: boolean } {
+  // Parse sslmode from connection string (takes precedence)
+  try {
+    const url = new URL(connectionString);
+    const sslmode = url.searchParams.get('sslmode');
+
+    if (sslmode === 'disable') return false;
+    if (sslmode === 'require') return { rejectUnauthorized: false };
+    if (sslmode === 'verify-ca' || sslmode === 'verify-full') {
+      return { rejectUnauthorized: true };
+    }
+  } catch {
+    // Malformed URL — fall through to environment defaults
+  }
+
+  // Environment-based defaults
+  if (process.env.NODE_ENV === 'production') {
+    // Explicit env override always wins
+    if (process.env.DB_TLS_REJECT_UNAUTHORIZED === 'false') {
+      return { rejectUnauthorized: false };
+    }
+    if (process.env.DB_TLS_REJECT_UNAUTHORIZED === 'true') {
+      return { rejectUnauthorized: true };
+    }
+    // No explicit override → use caller-specific default
+    // Web/Workers (strictDefault=false): rejectUnauthorized=false (lenient, matches original)
+    // Collector (strictDefault=true): rejectUnauthorized=true (strict, matches original)
+    return { rejectUnauthorized: options?.strictDefault ?? false };
+  }
+
+  // Development: no SSL to avoid pg-pool SSL errors with local dev servers
+  return false;
 }
 
 /**
@@ -77,19 +134,7 @@ export function createClient(config: DBConfig): Database {
 export function createPostgresClient(connectionString: string): NodePgDatabase<typeof schema> {
   const pool = new Pool({
     connectionString,
-    // TLS configuration:
-    //   Production: Validates server certificates by default (rejectUnauthorized=true).
-    //     - DB_TLS_REJECT_UNAUTHORIZED: Set to 'false' to disable cert validation (NOT recommended).
-    //     - For custom CA/mTLS, extend ssl config with ca/key/cert from env-provided file paths.
-    //   Development: Self-signed certificates are accepted.
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? {
-            rejectUnauthorized: process.env.DB_TLS_REJECT_UNAUTHORIZED !== 'false',
-          }
-        : {
-            rejectUnauthorized: false,
-          },
+    ssl: parseSSLConfig(connectionString, { strictDefault: true }),
   });
 
   return drizzlePg(pool, { schema });
@@ -128,7 +173,7 @@ export function createAdapterFromConfig(config: DBConfig): IDatabaseAdapter {
 
   const pool = new Pool({
     connectionString: config.connectionString,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: parseSSLConfig(config.connectionString),
   });
 
   const db = drizzlePg(pool, { schema });
@@ -141,19 +186,7 @@ export function createAdapterFromConfig(config: DBConfig): IDatabaseAdapter {
 export function createPostgresAdapter(connectionString: string): IDatabaseAdapter {
   const pool = new Pool({
     connectionString,
-    // TLS configuration:
-    //   Production: Validates server certificates by default (rejectUnauthorized=true).
-    //     - DB_TLS_REJECT_UNAUTHORIZED: Set to 'false' to disable cert validation (NOT recommended).
-    //     - For custom CA/mTLS, extend ssl config with ca/key/cert from env-provided file paths.
-    //   Development: Self-signed certificates are accepted.
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? {
-            rejectUnauthorized: process.env.DB_TLS_REJECT_UNAUTHORIZED !== 'false',
-          }
-        : {
-            rejectUnauthorized: false,
-          },
+    ssl: parseSSLConfig(connectionString, { strictDefault: true }),
   });
 
   const db = drizzlePg(pool, { schema });

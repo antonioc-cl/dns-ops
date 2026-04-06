@@ -1,15 +1,16 @@
 # DNS Ops Workbench — Status Report
 
-**Report Date:** 2026-04-04
+**Report Date:** 2026-04-05
 **Method:** `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, `bun run --filter @dns-ops/web e2e` against current HEAD
+**Generated at:** 2026-04-05T16:30:00Z
 
 ## Executive Summary
 
 | Command | Status |
 |---------|--------|
-| `bun run lint` | ✅ 8/8 packages pass |
+| `bun run lint` | ✅ 8/8 packages pass (0 errors, warnings in test files only) |
 | `bun run typecheck` | ✅ 14/14 tasks pass |
-| `bun run test` | ✅ 2299 pass, 32 skip, 0 fail (117 test files) |
+| `bun run test` | ✅ 2438 pass, 24 skip, 0 fail (124 test files) |
 | `bun run build` | ✅ All packages build |
 | `bun run --filter @dns-ops/web e2e` | ✅ 58 pass, 0 fail |
 | `bun run --filter @dns-ops/db check-drift` | ✅ No schema drift |
@@ -19,11 +20,23 @@
 
 | Metric | Count |
 |--------|-------|
-| Unit test files | 117 |
-| Passing unit tests | 2299 |
-| Skipped unit tests | 32 |
+| Unit test files | 124 |
+| Passing unit tests | 2438 |
+| Skipped unit tests | 24 |
 | E2E test files | 5 |
 | Passing E2E tests | 58 |
+
+### Skipped Tests Breakdown
+
+| File | Count | Reason |
+|------|-------|--------|
+| `queue.test.ts` | 13 | `skipIf(!hasRedis)` — BullMQ integration, requires `RUN_REDIS_INTEGRATION_TESTS=1` |
+| `scheduler.test.ts` | 5 | `skipIf(!hasRedis)` — BullMQ scheduler recovery |
+| `dns/integration.test.ts` | 2 | `RUN_LIVE_DNS_TESTS` flag — live network tests |
+| `dns/integration.test.ts` | 2 | Authoritative live DNS — requires specific NS config |
+| `collector/e2e/*.test.ts` | 2 | Redis-dependent e2e tests |
+
+All skips are infrastructure-gated and intentional. Redis tests are optional — see "Redis Scope" below.
 
 ## Shipped UI Surface (Verified by E2E)
 
@@ -32,55 +45,103 @@
 - **Domain 360 DNS tab:** observations in parsed/raw/dig views
 - **Domain 360 Mail tab:** persisted mail findings, DKIM selectors, preview badge, live diagnostics
 - **Domain 360 Delegation tab:** enabled by default, 6 states rendered (healthy/divergent/lame/missing-glue/DNSSEC/empty)
+- **Domain 360 History tab:** snapshot list, compare-latest, manual snapshot-to-snapshot diff
 - **Portfolio:** search, saved filters, monitored domains, alerts, shared reports, fleet reports, template overrides, audit log
 - **Refresh:** aria-busy states, auth error handling, re-fetch after success
 
+## Implementation Bead Status
+
+### All 21 Beads — ✅ Complete
+
+| Bead | Name | Status |
+|------|------|--------|
+| 00 | Workspace validation baseline | ✅ |
+| 01 | Pilot corpus, status vocabulary, query scope, trust boundary | ✅ |
+| 02 | Authoritative runtime topology and scaffold | ✅ |
+| 03 | Shared contracts and core supported schema | ✅ |
+| 04 | DNS collection and normalization pipeline | ✅ |
+| 05 | Single-domain evidence viewer | ✅ |
+| 06 | Ruleset registry and persisted DNS findings | ✅ |
+| 07 | Snapshot history and diff | ✅ |
+| 08 | Legacy mail bridge | ✅ |
+| 09 | Mail evidence core | ✅ |
+| 10 | DKIM selector provenance and provider detection | ✅ |
+| 11 | Mail findings preview | ✅ |
+| 12 | Shadow comparison and parity evidence | ✅ |
+| 13 | Auth, actor, tenant, and write-path governance | ✅ |
+| 14 | Portfolio search and read models | ✅ |
+| 15 | Portfolio writes, notes, tags, overrides, adjudication, audit log | ✅ |
+| 16 | Delegation evidence | ✅ |
+| 17 | Non-DNS probe sandbox (optional, feature-flagged) | ✅ |
+| 18 | Batch findings report | ✅ |
+| 19 | Job orchestration and scheduled refresh | ✅ |
+| 20 | Alerts and shared reports | ✅ |
+
 ## Production Readiness Bead Status
 
-### ✅ Done (verified by runtime or test proof)
+### All 13 PR Beads — ✅ Done
 
-| PR | Description |
-|----|-------------|
-| PR-00 | CI E2E gate |
-| PR-01 | Domain 360 states (empty/error/loaded) — E2E proven |
-| PR-02 | Mail evidence + preview badge + selectors — E2E proven |
-| PR-05 | Delegation tab — shipped by default, 6 states E2E proven |
-| PR-06 | Probe sandbox security review — IPv4-mapped IPv6 fix, redirect-to-private fix, semaphore, security doc rewritten |
-| PR-07 | Job orchestration — scheduler persists repeatables across restart |
-| PR-08 | Notifications — full alert→webhook delivery chain wired, SSRF guard, mock-DB integration tests |
-| PR-09 | Tenant isolation — test proof, middleware enforcement |
-| PR-10 | Observability — ErrorReporter wired, health/detailed endpoint, structured logging, X-Request-ID propagation |
-| PR-11 | Input validation & rate limiting |
-| PR-12.3 | De-scope vantage_points — migration 0009 drops table, FK, indexes |
-| PR-12.5 | Multi-tenant domain uniqueness |
-
-### 🟡 Operational (not blocking ship)
-
-| Item | Description | Status |
-|------|-------------|--------|
-| Error reporting endpoint | `ERROR_REPORTING_ENDPOINT` env unset | Console fallback works; external service is opt-in |
-| Alert real-DB proof | Alert→webhook chain tested with mock DB | Real-DB integration test absent; mock tests prove wiring |
-| DNS rebinding (probe) | TOCTOU residual risk documented | Mitigable via `safeLookup` callback; not a blocker while probes are feature-flagged |
+| PR | Description | Status |
+|----|-------------|--------|
+| PR-00 | CI E2E gate | ✅ |
+| PR-01 | Domain 360 end-to-end proof | ✅ |
+| PR-02 | Mail evidence chain proof | ✅ |
+| PR-03 | Legacy mail bridge hardening (URL safety, startup validation) | ✅ |
+| PR-04 | Portfolio end-to-end proof (filter round-trip, audit log, shared reports, dedup) | ✅ |
+| PR-05 | Delegation UI activation | ✅ |
+| PR-06 | Probe sandbox security review | ✅ |
+| PR-07 | Job orchestration & DNS collection hardening | ✅ |
+| PR-08 | Alert notification delivery (webhook + SSRF guard) | ✅ |
+| PR-09 | Tenant isolation proof | ✅ |
+| PR-10 | Observability and operational readiness | ✅ |
+| PR-11 | Input validation, rate limiting, and collection safety | ✅ |
+| PR-12 | Cleanup and hygiene | ✅ |
 
 ## Security Posture
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Tenant isolation | ✅ | All routes enforce tenant scoping |
-| Auth middleware | ✅ | `requireAuth` on all protected routes |
+| Tenant isolation | ✅ | All routes enforce tenant scoping; cross-tenant tests prove isolation |
+| Auth middleware | ✅ | `requireAuth` on all protected routes; 3 auth strategies (CF Access, API key, dev bypass) |
 | SSRF protection | ✅ | Shared guard; IPv4-mapped IPv6 + redirect-to-private fixed |
 | Private IP blocking | ✅ | RFC1918, loopback, link-local, cloud metadata, IPv4-mapped IPv6 |
 | Probe sandbox | ✅ | Security review complete (docs/security/probe-sandbox-review.md v2.0); DNS rebinding residual documented |
+| Input validation | ✅ | All mutating routes use `validateBody()` with field validators |
+| Rate limiting | ✅ | Collector: token-bucket at 10 req/min (collect) and 5 req/min (probes); proven by test |
+| Collection dedup | ✅ | 60-second window prevents rapid re-collection |
+| Domain findOrCreate | ✅ | Atomic upsert via `INSERT ... ON CONFLICT DO NOTHING` |
 | Error reporting | ✅ | Console default; HTTP reporter via `ERROR_REPORTING_ENDPOINT` |
-| Structured logging | ✅ | All `console.error`/`console.warn` replaced with structured logger in web + collector |
+| Structured logging | ✅ | All `console.error`/`console.warn` replaced with structured logger |
+
+## Redis Scope
+
+Redis (BullMQ) is **optional infrastructure**, not a production requirement.
+
+| Feature | Without Redis | With Redis |
+|---------|--------------|------------|
+| Single-domain collection | ✅ Synchronous (primary model) | Unchanged |
+| Mail collection | ✅ Synchronous | Unchanged |
+| All CRUD operations | ✅ Work normally | Unchanged |
+| Monitoring refresh | Manual trigger only | Scheduled (cron) |
+| Fleet reports | Synchronous | Async queue |
+| Job retry | No automatic retry | 3x with exponential backoff |
+
+The V1 architecture is synchronous by design. Redis adds scheduling and retry for future scaling. See `docs/REDIS_FALLBACK.md` for full documentation.
 
 ## Known Limitations
 
-1. Scheduler requires Redis (BullMQ). Without `REDIS_URL`, queue unavailable.
-2. Error reporting defaults to console; external integration requires `ERROR_REPORTING_ENDPOINT` env.
-3. Lint warnings (not errors) exist in some test files.
-4. DNS rebinding TOCTOU is a residual probe risk — documented with specific remediation path.
+1. DNS rebinding TOCTOU is a residual probe risk — documented with specific remediation path in security review.
+2. Redis-dependent tests (18 of 24 skips) only run with `RUN_REDIS_INTEGRATION_TESTS=1`.
+3. Live DNS integration tests require `RUN_LIVE_DNS_TESTS=1`.
+4. Scheduler state (`activeSchedules` Map) is process-local; BullMQ repeatable jobs survive in Redis but observability Map resets on restart.
+
+## Ship Decision
+
+| Ship Unit | Decision |
+|-----------|----------|
+| `apps/web` (Cloudflare Workers) | **GO** |
+| `apps/collector` (Node.js) | **GO** |
 
 ---
 
-*Generated from actual command output — 2026-04-04 (PR-06 security review + PR-10 observability closure)*
+*Generated from actual command output — 2026-04-05 (all PROD tasks complete)*

@@ -84,11 +84,6 @@ function Domain360Page() {
 
   // Client-side data fetching (interceptable by Playwright E2E mocks)
   useEffect(() => {
-    console.log('[Domain360] loadData effect', {
-      domain,
-      dataLoaded,
-      isWindow: typeof window !== 'undefined',
-    });
     if (typeof window === 'undefined' || dataLoaded) return;
 
     let cancelled = false;

@@ -79,7 +79,7 @@ describe('Domain Result Utilities', () => {
     });
 
     it('should return Err for domain too long', () => {
-      const longDomain = 'a'.repeat(254) + '.com';
+      const longDomain = `${'a'.repeat(254)}.com`;
       const result = normalizeDomainResult(longDomain);
 
       expect(result.isErr()).toBe(true);

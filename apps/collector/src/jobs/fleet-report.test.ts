@@ -6,7 +6,7 @@
  */
 
 import { Hono } from 'hono';
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { Env } from '../types.js';
 import { fleetReportRoutes } from './fleet-report.js';
 
@@ -212,97 +212,198 @@ describe('Fleet Report Routes', () => {
 });
 
 // =============================================================================
-// FLEET REPORT WORKER INTEGRATION TESTS (PR-07.5)
+// FLEET REPORT LOGIC TESTS (PR-07.5)
 // =============================================================================
 
 /**
- * PR-07.5: Fleet Report Worker Integration Tests
+ * PR-07.5: Fleet Report Processing Logic Tests
  *
- * These tests verify the fleet report worker processing logic.
- * They require a real database connection and will be skipped if DATABASE_URL is not set.
- *
- * To run these tests:
- *   DATABASE_URL=postgresql://user@localhost:5432/dns_ops_test bun test fleet-report.test.ts
+ * Tests the exported helper functions (findingsToCheckResults,
+ * mapSeverityToStatus, generateSummary) that drive fleet report output.
+ * These are pure functions — no DB needed.
  */
-describe('Fleet Report Worker (Integration)', () => {
-  const hasDb = process.env.DATABASE_URL !== undefined;
-
-  beforeAll(() => {
-    if (!hasDb) {
-      console.log('Skipping fleet report worker tests - DATABASE_URL not set');
-    }
-  });
-
-  describe('processFleetReport Logic', () => {
-    it.skipIf(!hasDb)('should process fleet report with 3 domains/snapshots/findings', async () => {
-      // This test would:
-      // 1. Set up test DB with 3 domains, each with a snapshot and findings
-      // 2. Call processFleetReport with inventory of those domains
-      // 3. Verify correct finding counts and severity distributions
-      //
-      // Implementation:
-      // const db = createPostgresAdapter(process.env.DATABASE_URL!);
-      // const domainRepo = new DomainRepository(db);
-      // const snapshotRepo = new SnapshotRepository(db);
-      // const findingRepo = new FindingRepository(db);
-      //
-      // Create test data...
-      // Call processFleetReport...
-      // Verify results.summary.totalDomains === 3
-      // Verify results.summary.processedDomains === 3
-      // Verify severity counts are correct
+describe('Fleet Report Processing Logic (PR-07.5)', () => {
+  describe('findingsToCheckResults', () => {
+    it('returns pass for check type with no matching findings', () => {
+      const results = findingsToCheckResults([], ['spf', 'dmarc']);
+      expect(results).toHaveLength(2);
+      expect(results[0]).toEqual({
+        check: 'spf',
+        status: 'pass',
+        severity: 'ok',
+        message: 'No SPF issues detected',
+      });
+      expect(results[1]).toEqual({
+        check: 'dmarc',
+        status: 'pass',
+        severity: 'ok',
+        message: 'No DMARC issues detected',
+      });
     });
 
-    it.skipIf(!hasDb)('should skip missing domains gracefully', async () => {
-      // Test with inventory containing:
-      // - 1 existing domain
-      // - 1 non-existent domain
-      //
-      // Verify:
-      // - processedDomains === 1 (not 2)
-      // - No error thrown
-      // - Report still succeeds
+    it('maps SPF findings to spf check results with correct severity', () => {
+      const findings = [makeFinding('mail.no-spf-record', 'high', 'No SPF record found')];
+      const results = findingsToCheckResults(findings, ['spf']);
+      expect(results.length).toBeGreaterThanOrEqual(1);
+      const spfResult = results.find((r) => r.check === 'spf' && r.status !== 'pass');
+      expect(spfResult, 'expected an SPF fail result').toBeDefined();
+      if (!spfResult) throw new Error('unreachable');
+      expect(spfResult.status).toBe('fail');
+      expect(spfResult.severity).toBe('high');
     });
 
-    it.skipIf(!hasDb)('should handle empty inventory', async () => {
-      // Test with empty inventory array
-      //
-      // Verify:
-      // - Report succeeds (not error)
-      // - totalDomains === 0
-      // - processedDomains === 0
-      // - totalFindings === 0
+    it('maps DMARC findings to dmarc check results', () => {
+      const findings = [makeFinding('mail.dmarc-policy-none', 'medium', 'DMARC policy is none')];
+      const results = findingsToCheckResults(findings, ['dmarc']);
+      const dmarcResult = results.find((r) => r.check === 'dmarc' && r.status !== 'pass');
+      expect(dmarcResult, 'expected a DMARC warning result').toBeDefined();
+      if (!dmarcResult) throw new Error('unreachable');
+      expect(dmarcResult.status).toBe('warning');
     });
 
-    it.skipIf(!hasDb)('should handle domain without snapshot', async () => {
-      // Test with domain that exists but has no snapshot
-      //
-      // Verify:
-      // - Domain is skipped (not counted in processedDomains)
-      // - No error thrown
+    it('handles multiple findings across multiple check types', () => {
+      const findings = [
+        makeFinding('mail.no-spf-record', 'high', 'No SPF'),
+        makeFinding('mail.no-dmarc-record', 'high', 'No DMARC'),
+        makeFinding('mail.mx-present', 'info', 'MX present'),
+      ];
+      const results = findingsToCheckResults(findings, ['spf', 'dmarc', 'mx']);
+      // spf: at least one fail, dmarc: at least one fail, mx: should have a result
+      expect(results.some((r) => r.check === 'spf')).toBe(true);
+      expect(results.some((r) => r.check === 'dmarc')).toBe(true);
+      expect(results.some((r) => r.check === 'mx')).toBe(true);
     });
 
-    it.skipIf(!hasDb)('should calculate severity counts correctly', async () => {
-      // Set up domain with findings of different severities:
-      // - 2 critical
-      // - 3 high
-      // - 1 medium
-      //
-      // Verify severityCounts in result matches expected distribution
+    it('infrastructure findings map to infrastructure check', () => {
+      const findings = [makeFinding('dns.authoritative-timeout', 'critical', 'NS timeout')];
+      const results = findingsToCheckResults(findings, ['infrastructure']);
+      const infraResult = results.find((r) => r.check === 'infrastructure' && r.status !== 'pass');
+      expect(infraResult, 'expected an infrastructure fail result').toBeDefined();
+      if (!infraResult) throw new Error('unreachable');
+      expect(infraResult.severity).toBe('critical');
+      expect(infraResult.status).toBe('fail');
     });
   });
 
-  describe('Report Progress Tracking', () => {
-    it.skipIf(!hasDb)('should update job progress during processing', async () => {
-      // Verify job.updateProgress is called with correct percentage
-      // For 3 domains: 33%, 66%, 100%
+  describe('mapSeverityToStatus', () => {
+    it('maps critical and high to fail', () => {
+      expect(mapSeverityToStatus('critical')).toBe('fail');
+      expect(mapSeverityToStatus('high')).toBe('fail');
+    });
+
+    it('maps medium to warning', () => {
+      expect(mapSeverityToStatus('medium')).toBe('warning');
+    });
+
+    it('maps low and info to pass', () => {
+      expect(mapSeverityToStatus('low')).toBe('pass');
+      expect(mapSeverityToStatus('info')).toBe('pass');
+    });
+
+    it('maps unknown severity to pass', () => {
+      expect(mapSeverityToStatus('unknown')).toBe('pass');
     });
   });
 
-  describe('Error Handling', () => {
-    it.skipIf(!hasDb)('should return error on database failure', async () => {
-      // Simulate database error during processing
-      // Verify error is captured and returned in result
+  describe('generateSummary', () => {
+    it('returns correct totals for empty results', () => {
+      const summary = generateSummary([], ['spf', 'dmarc']);
+      expect(summary.totalDomains).toBe(0);
+      expect(summary.domainsWithIssues).toBe(0);
+      expect(summary.issueSeverity).toEqual({
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+      });
+    });
+
+    it('counts domains with issues correctly', () => {
+      const results = [
+        makeFleetResult('a.com', [
+          { check: 'spf', status: 'fail', severity: 'high', message: 'No SPF' },
+        ]),
+        makeFleetResult('b.com', [
+          { check: 'spf', status: 'pass', severity: 'ok', message: 'SPF OK' },
+        ]),
+        makeFleetResult('c.com', [
+          { check: 'dmarc', status: 'fail', severity: 'critical', message: 'No DMARC' },
+          { check: 'spf', status: 'warning', severity: 'medium', message: 'SPF weak' },
+        ]),
+      ];
+      const summary = generateSummary(results, ['spf', 'dmarc']);
+      expect(summary.totalDomains).toBe(3);
+      expect(summary.domainsWithIssues).toBe(2); // a.com and c.com
+    });
+
+    it('calculates severity breakdown correctly', () => {
+      const results = [
+        makeFleetResult('a.com', [
+          { check: 'spf', status: 'fail', severity: 'critical', message: 'x' },
+          { check: 'spf', status: 'fail', severity: 'critical', message: 'y' },
+        ]),
+        makeFleetResult('b.com', [
+          { check: 'dmarc', status: 'fail', severity: 'high', message: 'z' },
+          { check: 'mx', status: 'warning', severity: 'medium', message: 'w' },
+        ]),
+      ];
+      const summary = generateSummary(results, ['spf', 'dmarc', 'mx']);
+      const severity = summary.issueSeverity as Record<string, number>;
+      expect(severity.critical).toBe(2);
+      expect(severity.high).toBe(1);
+      expect(severity.medium).toBe(1);
+      expect(severity.low).toBe(0);
     });
   });
 });
+
+// -- Test data helpers --------------------------------------------------------
+
+import type { Finding } from '@dns-ops/db';
+import { findingsToCheckResults, generateSummary, mapSeverityToStatus } from './fleet-report.js';
+
+function makeFinding(type: string, severity: string, title: string): Finding {
+  return {
+    id: `finding-${Math.random().toString(36).slice(2, 8)}`,
+    snapshotId: 'snap-1',
+    type,
+    title,
+    description: title,
+    severity,
+    confidence: 'high',
+    ruleId: `rule-${type}`,
+    evidenceRef: null,
+    suggestion: null,
+    metadata: null,
+    createdAt: new Date(),
+  } as Finding;
+}
+
+interface CheckResultLike {
+  check: string;
+  status: string;
+  severity: string;
+  message: string;
+}
+
+function makeFleetResult(domain: string, checks: CheckResultLike[]) {
+  return {
+    domain,
+    snapshotId: `snap-${domain}`,
+    collectedAt: new Date(),
+    rulesetVersion: 'v1',
+    findingsCount: checks.length,
+    checks: checks as Array<{
+      check: string;
+      status: 'pass' | 'fail' | 'warning' | 'missing';
+      severity: 'ok' | 'low' | 'medium' | 'high' | 'critical';
+      message: string;
+    }>,
+    issues: checks.filter((c) => c.severity !== 'ok') as Array<{
+      check: string;
+      status: 'pass' | 'fail' | 'warning' | 'missing';
+      severity: 'ok' | 'low' | 'medium' | 'high' | 'critical';
+      message: string;
+    }>,
+  };
+}

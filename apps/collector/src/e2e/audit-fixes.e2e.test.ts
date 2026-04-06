@@ -217,14 +217,10 @@ describe('Rate limiter', () => {
     expect(denied.allowed).toBe(false);
   });
 
-  // Skipped: vi.resetModules() in beforeEach causes module isolation issues
-  // where checkRateLimit and middleware use different rateLimitStore instances
-  it.skip('rateLimitMiddleware returns 429 with Retry-After header', async () => {
-    const { rateLimitMiddleware, checkRateLimit, resetRateLimit } = await import(
-      '../middleware/rate-limit.js'
-    );
+  it('rateLimitMiddleware returns 429 with Retry-After header', async () => {
+    const { rateLimitMiddleware, resetRateLimit } = await import('../middleware/rate-limit.js');
 
-    resetRateLimit(TENANT_A, '/api/probe');
+    resetRateLimit();
 
     const app = new Hono<Env>();
     app.use('*', async (c, next) => {
@@ -234,10 +230,13 @@ describe('Rate limiter', () => {
     app.use('/api/*', rateLimitMiddleware('probes'));
     app.get('/api/probe', (c) => c.json({ ok: true }));
 
+    // Exhaust the 5 req/min probe limit through actual HTTP requests
     for (let i = 0; i < 5; i++) {
-      checkRateLimit('probes', TENANT_A, '/api/probe');
+      const res = await app.request('/api/probe');
+      expect(res.status).toBe(200);
     }
 
+    // 6th request should be rate limited
     const res = await app.request('/api/probe');
     expect(res.status).toBe(429);
     const json = (await res.json()) as { error: string; retryAfter: number };
