@@ -531,26 +531,6 @@ function MailTab({ domain, snapshotId }: { domain: string; snapshotId?: string }
 
   return (
     <div className="space-y-6">
-      {/* Preview badge and disclaimer for mail analysis */}
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Mail Analysis</h3>
-        <span
-          className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 border border-purple-200"
-          data-testid="mail-preview-badge"
-        >
-          Preview
-        </span>
-      </div>
-      <div
-        className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800"
-        data-testid="mail-preview-disclaimer"
-      >
-        <p>
-          <strong>Preview:</strong> These mail security findings are generated from DNS
-          observations. For authoritative results, use the legacy DMARC/DKIM tools linked below.
-        </p>
-      </div>
-
       {/* Persisted mail findings - canonical read path */}
       <section>
         <div className="mb-4">

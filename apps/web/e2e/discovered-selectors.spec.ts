@@ -35,11 +35,8 @@ function mailFindingsPayload(snapshotId: string) {
   };
 }
 
-test.describe('PR-02.5: Mail Findings Preview Label', () => {
-  test.describe.configure({ mode: 'serial' });
-
-  test.beforeEach(async ({ page }) => {
-    // Install ALL mocks BEFORE navigation (avoids hydration race)
+test.describe('Mail tab renders native analysis (no preview badge)', () => {
+  test('should NOT show preview badge or legacy disclaimer', async ({ page }) => {
     await mockDomainSnapshot(page, {
       domain: TEST_DOMAIN,
       snapshotId: SNAPSHOT_ID_PREVIEW,
@@ -51,33 +48,14 @@ test.describe('PR-02.5: Mail Findings Preview Label', () => {
     });
 
     await page.goto(`/domain/${TEST_DOMAIN}?tab=mail`);
-    // Verify the mail tab is selected
     const mailTab = page.getByRole('tab', { name: /mail/i });
     await expect(mailTab).toHaveAttribute('aria-selected', 'true', { timeout: 10000 });
-    // Wait for mail tab content to render (preview badge proves snapshot loaded)
-    await page.getByTestId('mail-preview-badge').waitFor({ state: 'visible', timeout: 15000 });
-  });
+    // Wait for mail content to render
+    await page.getByRole('heading', { name: /mail security analysis/i }).waitFor({ state: 'visible', timeout: 15000 });
 
-  test('should display preview badge in mail findings section', async ({ page }) => {
-    const previewBadge = page.getByTestId('mail-preview-badge');
-    await expect(previewBadge).toBeVisible({ timeout: 10000 });
-    await expect(previewBadge).toHaveText('Preview');
-  });
-
-  test('should display preview disclaimer referencing legacy tools', async ({ page }) => {
-    const disclaimer = page.getByTestId('mail-preview-disclaimer');
-    await expect(disclaimer).toBeVisible({ timeout: 10000 });
-    await expect(disclaimer).toContainText('Preview');
-    await expect(disclaimer).toContainText('authoritative results');
-    await expect(disclaimer).toContainText('legacy');
-  });
-
-  test('should show preview badge styling', async ({ page }) => {
-    const previewBadge = page.getByTestId('mail-preview-badge');
-    await expect(previewBadge).toBeVisible({ timeout: 10000 });
-    const classes = await previewBadge.getAttribute('class');
-    // Badge should have purple styling to indicate preview/experimental
-    expect(classes).toContain('purple');
+    // Preview badge and legacy disclaimer must NOT be present
+    await expect(page.getByTestId('mail-preview-badge')).toHaveCount(0);
+    await expect(page.getByTestId('mail-preview-disclaimer')).toHaveCount(0);
   });
 });
 
@@ -99,8 +77,8 @@ test.describe('DiscoveredSelectors Component', () => {
     // Verify the mail tab is selected
     const mailTab = page.getByRole('tab', { name: /mail/i });
     await expect(mailTab).toHaveAttribute('aria-selected', 'true', { timeout: 10000 });
-    // Wait for mail tab content to render (preview badge proves snapshot loaded)
-    await page.getByTestId('mail-preview-badge').waitFor({ state: 'visible', timeout: 15000 });
+    // Wait for mail tab content to render
+    await page.getByRole('heading', { name: /dkim selectors/i }).waitFor({ state: 'visible', timeout: 15000 });
   }
 
   test.describe('Confidence Badge Rendering', () => {
