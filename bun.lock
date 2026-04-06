@@ -86,6 +86,7 @@
       "name": "@dns-ops/db",
       "version": "0.1.0",
       "dependencies": {
+        "@dns-ops/contracts": "workspace:*",
         "better-result": "^2.7.0",
         "drizzle-orm": "^0.29.0",
         "pg": "^8.11.0",
@@ -118,7 +119,6 @@
       "dependencies": {
         "@dns-ops/contracts": "workspace:*",
         "@dns-ops/db": "workspace:*",
-        "@dns-ops/rules": "workspace:*",
         "better-result": "^2.7.0",
         "punycode": "^2.3.1",
       },
