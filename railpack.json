@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "deploy": {
+    "startCommand": "node apps/collector/dist/index.js"
+  },
+  "steps": {
+    "build": {
+      "commands": [
+        "bun install --frozen-lockfile",
+        "bun run build --filter=@dns-ops/collector..."
+      ]
+    }
+  }
+}
