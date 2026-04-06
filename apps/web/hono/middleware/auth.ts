@@ -209,7 +209,7 @@ export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
     return c.json(
       {
         error: 'Unauthorized',
-        message: 'Authentication required. Provide CF-Access headers, X-API-Key, or dev headers.',
+        message: 'Authentication required.',
       },
       401
     );

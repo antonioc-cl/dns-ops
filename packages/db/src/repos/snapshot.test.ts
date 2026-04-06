@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SnapshotRepository } from './snapshot.js';
 
 // Mock the database adapter
-function createMockDb(snapshots: any[] = []) {
+function createMockDb(snapshots: Record<string, unknown>[] = []) {
   return {
     selectOne: vi.fn(async () => {
       return snapshots[0] || null;
@@ -14,15 +14,17 @@ function createMockDb(snapshots: any[] = []) {
     selectWhere: vi.fn(async () => {
       return snapshots;
     }),
-    insert: vi.fn(async (_table: any, data: any) => ({
+    insert: vi.fn(async (_table: unknown, data: Record<string, unknown>) => ({
       ...data,
       id: 'snapshot-new',
       createdAt: new Date(),
     })),
-    updateOne: vi.fn(async (_table: any, data: any, _condition: any) => ({
-      ...snapshots[0],
-      ...data,
-    })),
+    updateOne: vi.fn(
+      async (_table: unknown, data: Record<string, unknown>, _condition: unknown) => ({
+        ...snapshots[0],
+        ...data,
+      })
+    ),
     delete: vi.fn(async () => true),
   };
 }
@@ -31,7 +33,9 @@ describe('SnapshotRepository', () => {
   describe('findRecentByDomain', () => {
     it('returns undefined when no snapshots exist', async () => {
       const mockDb = createMockDb([]);
-      const repo = new SnapshotRepository(mockDb as any);
+      const repo = new SnapshotRepository(
+        mockDb as unknown as import('../database/simple-adapter.js').IDatabaseAdapter
+      );
 
       const result = await repo.findRecentByDomain('domain-1');
       expect(result).toBeUndefined();
@@ -45,7 +49,9 @@ describe('SnapshotRepository', () => {
         createdAt: oldDate,
       };
       const mockDb = createMockDb([mockSnapshot]);
-      const repo = new SnapshotRepository(mockDb as any);
+      const repo = new SnapshotRepository(
+        mockDb as unknown as import('../database/simple-adapter.js').IDatabaseAdapter
+      );
 
       const result = await repo.findRecentByDomain('domain-1');
       expect(result).toBeUndefined();
@@ -59,7 +65,9 @@ describe('SnapshotRepository', () => {
         createdAt: recentDate,
       };
       const mockDb = createMockDb([mockSnapshot]);
-      const repo = new SnapshotRepository(mockDb as any);
+      const repo = new SnapshotRepository(
+        mockDb as unknown as import('../database/simple-adapter.js').IDatabaseAdapter
+      );
 
       const result = await repo.findRecentByDomain('domain-1');
       expect(result).toBeDefined();
@@ -74,7 +82,9 @@ describe('SnapshotRepository', () => {
         createdAt: boundaryDate,
       };
       const mockDb = createMockDb([mockSnapshot]);
-      const repo = new SnapshotRepository(mockDb as any);
+      const repo = new SnapshotRepository(
+        mockDb as unknown as import('../database/simple-adapter.js').IDatabaseAdapter
+      );
 
       const result = await repo.findRecentByDomain('domain-1');
       expect(result).toBeDefined();
@@ -88,7 +98,9 @@ describe('SnapshotRepository', () => {
         createdAt: fiveMinutesAgo,
       };
       const mockDb = createMockDb([mockSnapshot]);
-      const repo = new SnapshotRepository(mockDb as any);
+      const repo = new SnapshotRepository(
+        mockDb as unknown as import('../database/simple-adapter.js').IDatabaseAdapter
+      );
 
       // With 10-minute window, snapshot should be recent
       const result = await repo.findRecentByDomain('domain-1', 600_000);

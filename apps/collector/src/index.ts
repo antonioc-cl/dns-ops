@@ -115,6 +115,7 @@ app.use('/api/*', requireServiceAuthMiddleware);
 
 app.use('/api/collect/*', rateLimitMiddleware('collect'));
 app.use('/api/probe/*', rateLimitMiddleware('probes'));
+app.use('/api/notify/*', rateLimitMiddleware('collect'));
 
 app.route('/api/collect', collectDomainRoutes);
 app.route('/api/collect', collectMailRoutes);

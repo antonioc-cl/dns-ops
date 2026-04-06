@@ -14,7 +14,6 @@
  * Each section documents the original gap and the mitigating test.
  */
 
-import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DNSQueryResult } from '../dns/types.js';
 import { probeAllowlistManager } from '../probes/allowlist.js';

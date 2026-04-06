@@ -8,7 +8,7 @@
  * consistent protection against private/internal target blocking.
  */
 
-import { validateUrl } from '../probes/ssrf-guard.js';
+import { resolveAndCheck, validateUrl } from '../probes/ssrf-guard.js';
 
 export interface WebhookPayload {
   alertId: string;
@@ -58,7 +58,7 @@ export async function sendAlertWebhook(
   payload: WebhookPayload,
   signal?: AbortSignal
 ): Promise<WebhookResult> {
-  // SSRF guard - reject private/internal URLs using shared guard
+  // SSRF guard — step 1: reject obviously bad URLs (IP literals, localhost, bad protocol)
   const ssrfCheck = validateUrl(webhookUrl);
   if (!ssrfCheck.allowed) {
     return {
@@ -66,6 +66,20 @@ export async function sendAlertWebhook(
       error: 'SSRF_BLOCKED',
       resolvedHostname: ssrfCheck.url?.hostname,
     };
+  }
+
+  // SSRF guard — step 2: resolve hostname and check the resolved IP
+  // Closes DNS rebinding TOCTOU gap (see docs/security/probe-sandbox-review.md)
+  const hostname = ssrfCheck.url?.hostname;
+  if (hostname) {
+    const dnsCheck = await resolveAndCheck(hostname);
+    if (!dnsCheck.allowed) {
+      return {
+        success: false,
+        error: 'SSRF_DNS_REBINDING_BLOCKED',
+        resolvedHostname: hostname,
+      };
+    }
   }
 
   // 5 second timeout

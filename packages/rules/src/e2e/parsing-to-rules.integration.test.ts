@@ -368,7 +368,9 @@ describe('Integration: Parsing → Database → Rules', () => {
 
         const [ok, err] = Result.partition(records);
         if (err.length > 0) {
-          return Result.err(err[0]!);
+          const firstErr = err[0];
+          if (!firstErr) throw new Error('unreachable');
+          return Result.err(firstErr);
         }
 
         // Step 3: Would store to DB

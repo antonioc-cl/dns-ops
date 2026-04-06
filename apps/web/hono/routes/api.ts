@@ -175,6 +175,9 @@ apiRoutes.route('/fleet-report', fleetReportRoutes);
 apiRoutes.route('/simulate', simulationRoutes);
 apiRoutes.route('/suggestions', suggestionsRoutes);
 
+// NOTE: This route intentionally does NOT use requireAuth.
+// Unscoped domains (tenantId=NULL) are public-readable. Tenant-owned
+// domains return 404 to unauthenticated callers (no existence leak).
 apiRoutes.get('/domain/:domain/latest', async (c) => {
   const tenantId = c.get('tenantId');
   const db = c.get('db');

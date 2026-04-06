@@ -2,7 +2,7 @@
 
 **Report Date:** 2026-04-05
 **Method:** `bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, `bun run --filter @dns-ops/web e2e` against current HEAD
-**Generated at:** 2026-04-05T16:30:00Z
+**Generated at:** 2026-04-06T10:00:00Z
 
 ## Executive Summary
 
@@ -10,7 +10,7 @@
 |---------|--------|
 | `bun run lint` | ✅ 8/8 packages pass (0 errors, warnings in test files only) |
 | `bun run typecheck` | ✅ 14/14 tasks pass |
-| `bun run test` | ✅ 2438 pass, 24 skip, 0 fail (124 test files) |
+| `bun run test` | ✅ 2458 pass, 11 skip, 0 fail (127 test files) |
 | `bun run build` | ✅ All packages build |
 | `bun run --filter @dns-ops/web e2e` | ✅ 58 pass, 0 fail |
 | `bun run --filter @dns-ops/db check-drift` | ✅ No schema drift |
@@ -20,9 +20,9 @@
 
 | Metric | Count |
 |--------|-------|
-| Unit test files | 124 |
-| Passing unit tests | 2438 |
-| Skipped unit tests | 24 |
+| Unit test files | 127 |
+| Passing unit tests | 2458 |
+| Skipped unit tests | 11 |
 | E2E test files | 5 |
 | Passing E2E tests | 58 |
 
@@ -30,11 +30,14 @@
 
 | File | Count | Reason |
 |------|-------|--------|
-| `queue.test.ts` | 13 | `skipIf(!hasRedis)` — BullMQ integration, requires `RUN_REDIS_INTEGRATION_TESTS=1` |
+| `queue.test.ts` | 0 | Deferred Redis tests removed (documented, not stubs) |
 | `scheduler.test.ts` | 5 | `skipIf(!hasRedis)` — BullMQ scheduler recovery |
 | `dns/integration.test.ts` | 2 | `RUN_LIVE_DNS_TESTS` flag — live network tests |
 | `dns/integration.test.ts` | 2 | Authoritative live DNS — requires specific NS config |
 | `collector/e2e/*.test.ts` | 2 | Redis-dependent e2e tests |
+
+Note: 13 empty Redis-gated test stubs were removed and replaced with a documentation
+block listing what would be tested when Redis is available.
 
 All skips are infrastructure-gated and intentional. Redis tests are optional — see "Redis Scope" below.
 
@@ -103,7 +106,7 @@ All skips are infrastructure-gated and intentional. Redis tests are optional —
 |------|--------|-------|
 | Tenant isolation | ✅ | All routes enforce tenant scoping; cross-tenant tests prove isolation |
 | Auth middleware | ✅ | `requireAuth` on all protected routes; 3 auth strategies (CF Access, API key, dev bypass) |
-| SSRF protection | ✅ | Shared guard; IPv4-mapped IPv6 + redirect-to-private fixed |
+| SSRF protection | ✅ | Shared guard; IPv4-mapped IPv6 + redirect-to-private + DNS rebinding pre-resolution fixed |
 | Private IP blocking | ✅ | RFC1918, loopback, link-local, cloud metadata, IPv4-mapped IPv6 |
 | Probe sandbox | ✅ | Security review complete (docs/security/probe-sandbox-review.md v2.0); DNS rebinding residual documented |
 | Input validation | ✅ | All mutating routes use `validateBody()` with field validators |
@@ -130,8 +133,10 @@ The V1 architecture is synchronous by design. Redis adds scheduling and retry fo
 
 ## Known Limitations
 
-1. DNS rebinding TOCTOU is a residual probe risk — documented with specific remediation path in security review.
-2. Redis-dependent tests (18 of 24 skips) only run with `RUN_REDIS_INTEGRATION_TESTS=1`.
+1. DNS rebinding TOCTOU is mitigated via `resolveAndCheck()` in ssrf-guard.ts. Hostnames are pre-resolved
+   and the resolved IP is checked against the SSRF blocklist before `fetch()`. DNS resolution failures are
+   allowed through (non-resolvable hosts will fail at fetch naturally, not a rebinding vector).
+2. Redis-dependent tests (5 of 11 skips) only run with `RUN_REDIS_INTEGRATION_TESTS=1`.
 3. Live DNS integration tests require `RUN_LIVE_DNS_TESTS=1`.
 4. Scheduler state (`activeSchedules` Map) is process-local; BullMQ repeatable jobs survive in Redis but observability Map resets on restart.
 

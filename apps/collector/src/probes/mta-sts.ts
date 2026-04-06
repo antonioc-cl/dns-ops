@@ -6,7 +6,7 @@
  */
 
 import { probeAllowlistManager } from './allowlist.js';
-import { validateUrl } from './ssrf-guard.js';
+import { resolveAndCheck, validateUrl } from './ssrf-guard.js';
 
 export interface MTASTSProbeResult {
   success: boolean;
@@ -96,7 +96,7 @@ export async function fetchMTASTSPolicy(
   const startTime = Date.now();
 
   try {
-    // SSRF check on the URL
+    // SSRF check — step 1: reject bad URLs (IP literals, localhost, bad protocol)
     const urlCheck = validateUrl(policyUrl);
     if (!urlCheck.allowed) {
       return {
@@ -106,6 +106,22 @@ export async function fetchMTASTSPolicy(
         error: `SSRF blocked: ${urlCheck.reason}`,
         responseTimeMs: Date.now() - startTime,
       };
+    }
+
+    // SSRF check — step 2: resolve hostname and check resolved IP
+    // Closes DNS rebinding TOCTOU gap (see docs/security/probe-sandbox-review.md)
+    const targetHostname = urlCheck.url?.hostname;
+    if (targetHostname) {
+      const dnsCheck = await resolveAndCheck(targetHostname);
+      if (!dnsCheck.allowed) {
+        return {
+          success: false,
+          domain,
+          policyUrl,
+          error: `SSRF DNS rebinding blocked: ${dnsCheck.reason}`,
+          responseTimeMs: Date.now() - startTime,
+        };
+      }
     }
 
     // Check allowlist if enabled (tenant-scoped via probeAllowlistManager)

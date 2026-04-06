@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { SimulationError, validateSimulationContext } from '../simulation/result.js';
+import { validateSimulationContext } from '../simulation/result.js';
 
 describe('E2E: Simulation Context Type Validation', () => {
   describe('Basic Validation', () => {

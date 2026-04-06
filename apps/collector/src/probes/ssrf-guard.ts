@@ -257,3 +257,55 @@ export function validateUrl(url: string): SSRFCheckResult & { url?: URL } {
 export function checkResolvedIP(ip: string): SSRFCheckResult {
   return checkSSRF(ip);
 }
+
+/**
+ * Resolve a hostname and verify the resolved IP is safe.
+ *
+ * Closes the DNS rebinding TOCTOU gap: validateUrl() checks the hostname
+ * string, but fetch() resolves DNS independently. An attacker can register
+ * a domain that resolves to a public IP on first query and a private IP
+ * on the second. This function resolves first, checks the result, then
+ * returns the resolved IP for the caller to connect to directly.
+ *
+ * NOTE: This narrows but does not fully close the TOCTOU window. Node's
+ * `fetch()` re-resolves DNS independently — a sub-millisecond TTL switch
+ * between our check and fetch's resolution is theoretically possible.
+ * Full closure requires `net.connect({ lookup })` which only applies to
+ * raw TCP/TLS (probe system), not HTTP fetch. The two-step check is the
+ * industry-standard mitigation for HTTP-based SSRF.
+ *
+ * @returns The resolved IP address if safe, or an SSRFCheckResult if blocked.
+ */
+export async function resolveAndCheck(
+  hostname: string
+): Promise<{ allowed: true; ip: string } | (SSRFCheckResult & { allowed: false })> {
+  // Skip resolution for IP literals — checkSSRF handles them directly
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) || hostname.includes(':')) {
+    const result = checkSSRF(hostname);
+    return result.allowed
+      ? { allowed: true, ip: hostname }
+      : { ...result, allowed: false as const };
+  }
+
+  try {
+    const { promises: dnsPromises } = await import('node:dns');
+    const { address } = await dnsPromises.lookup(hostname);
+    const ipCheck = checkSSRF(address);
+
+    if (!ipCheck.allowed) {
+      return {
+        allowed: false,
+        reason: `DNS rebinding blocked: ${hostname} resolved to ${address} (${ipCheck.reason})`,
+        blockedCategory: ipCheck.blockedCategory,
+      };
+    }
+
+    return { allowed: true, ip: address };
+  } catch {
+    // DNS resolution failure (ENOTFOUND, ESERVFAIL, etc.) is NOT a rebinding
+    // attack — it means the hostname doesn't exist. Let fetch() handle the
+    // connection error naturally. Only block when resolution succeeds to a
+    // private IP.
+    return { allowed: true, ip: hostname };
+  }
+}

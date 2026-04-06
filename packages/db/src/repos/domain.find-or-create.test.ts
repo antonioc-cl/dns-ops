@@ -105,7 +105,7 @@ describe('DomainRepository.findOrCreate atomic upsert', () => {
       // target constraint. Without the target, Drizzle only handles primary key
       // conflicts, NOT unique index conflicts on (normalizedName, tenantId).
       const newDomain: Domain = { ...mockDomain, id: 'new-domain-id' };
-      let capturedTarget: unknown = undefined;
+      let capturedTarget: unknown;
 
       const mockAdapter = {
         selectOne: vi.fn().mockResolvedValue(null),

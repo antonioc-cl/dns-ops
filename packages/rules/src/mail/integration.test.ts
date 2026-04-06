@@ -9,7 +9,7 @@
  */
 
 import type { Observation, RecordSet } from '@dns-ops/db';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { RulesEngine } from '../engine/index.js';
 import { mailRules } from './rules.js';
 
@@ -179,7 +179,7 @@ describe('Mail Collection → Findings Integration', () => {
         rulesetVersion: '1.0.0',
       };
 
-      const { findings, suggestions } = rulesEngine.evaluate(context);
+      const { findings } = rulesEngine.evaluate(context);
 
       // Step 3: Verify findings were generated
       expect(findings.length).toBeGreaterThan(0);

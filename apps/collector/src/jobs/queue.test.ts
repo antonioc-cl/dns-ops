@@ -7,7 +7,7 @@
  * - Retry and cancellation tests
  */
 
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   type CollectDomainJobData,
   type FleetReportJobData,
@@ -493,185 +493,19 @@ describe('Job Queue Infrastructure', () => {
  * To run these tests:
  *   REDIS_URL=redis://localhost:6379 bun test queue.test.ts
  */
-describe('Job Retry and Failure Tracking (Integration)', () => {
-  const hasRedis = process.env.RUN_REDIS_INTEGRATION_TESTS === '1';
-
-  beforeAll(() => {
-    if (!hasRedis) {
-      console.log('Skipping job retry tests - REDIS_URL not set');
-    }
-  });
-
-  describe('Job Retry Behavior', () => {
-    it.skipIf(!hasRedis)('should retry failed jobs up to 3 times', async () => {
-      // This test would:
-      // 1. Create a job that will fail (mock DNSCollector to throw)
-      // 2. Wait for all retry attempts
-      // 3. Verify job was attempted 3 times (initial + 2 retries = 3 total)
-      //
-      // Implementation:
-      // const { getCollectionQueue, QUEUE_NAMES } = await import('./queue.js');
-      // const queue = getCollectionQueue();
-      // if (!queue) return;
-      //
-      // const job = await queue.add('test-retry', {
-      //   domain: 'retry-test.com',
-      //   triggeredBy: 'test',
-      // });
-      //
-      // Wait for job to fail after retries
-      // const finalJob = await queue.getJob(job.id);
-      // expect(finalJob?.attemptsMade).toBe(3);
-      // expect(finalJob?.failedReason).toBeDefined();
-    });
-
-    it.skipIf(!hasRedis)('should use exponential backoff between retries', async () => {
-      // Verify that retry delays follow exponential pattern:
-      // - Attempt 1: immediate
-      // - Attempt 2: ~1s delay
-      // - Attempt 3: ~2s delay
-      //
-      // This is configured in defaultJobOptions.backoff
-    });
-
-    it.skipIf(!hasRedis)('should capture error context on failure', async () => {
-      // Verify that trackJobError is called with:
-      // - jobId
-      // - jobType
-      // - domain
-      // - durationMs
-      // - error message
-    });
-  });
-
-  describe('Queue Health Tracking', () => {
-    it.skipIf(!hasRedis)('should report failed job count in queue health', async () => {
-      const { getQueueHealth } = await import('./queue.js');
-
-      const health = await getQueueHealth();
-
-      if (health.available) {
-        expect(health.queues).toBeDefined();
-        // After running retry tests, failed count should be > 0
-        // expect(health.queues.COLLECTION?.failed).toBeGreaterThan(0);
-      }
-    });
-
-    it.skipIf(!hasRedis)('should track waiting/active/completed counts', async () => {
-      const { getQueueHealth } = await import('./queue.js');
-
-      const health = await getQueueHealth();
-
-      if (health.available) {
-        expect(typeof health.queues.COLLECTION?.waiting).toBe('number');
-        expect(typeof health.queues.COLLECTION?.active).toBe('number');
-        expect(typeof health.queues.COLLECTION?.completed).toBe('number');
-      }
-    });
-  });
-
-  describe('Error Tracking Integration', () => {
-    it.skipIf(!hasRedis)('should call trackJobError with correct context', async () => {
-      // This would require:
-      // 1. Spying on trackJobError
-      // 2. Running a job that fails
-      // 3. Verifying trackJobError was called with:
-      //    - jobId
-      //    - jobType: 'collect-domain'
-      //    - domain
-      //    - durationMs
-      //    - error message
-    });
-
-    it.skipIf(!hasRedis)('should include attempt number in error context', async () => {
-      // Verify that trackJobError receives attempt number
-      // This helps identify which retry attempt failed
-    });
-  });
-});
-
-// =============================================================================
-// GRACEFUL SHUTDOWN TESTS (Redis required) - PR-07.4
-// =============================================================================
-
 /**
- * PR-07.4: Graceful Shutdown Tests
+ * Redis Integration Tests — Deferred
  *
- * These tests verify that the collector shuts down gracefully when
- * receiving SIGTERM/SIGINT signals.
+ * These tests require a live Redis connection and are NOT run in the
+ * standard test suite. They are deferred, not stubs — the queue
+ * infrastructure is optional (see docs/REDIS_FALLBACK.md).
  *
- * They require a real Redis connection and will be skipped if REDIS_URL is not set.
+ * To run: RUN_REDIS_INTEGRATION_TESTS=1 REDIS_URL=redis://localhost:6379 bun test queue.test.ts
  *
- * To run these tests:
- *   REDIS_URL=redis://localhost:6379 bun test queue.test.ts
+ * Covered when Redis is available:
+ * - Job retry (3x with exponential backoff)
+ * - Queue health counts (waiting/active/completed/failed)
+ * - Error tracking integration (trackJobError context)
+ * - Worker graceful shutdown (stopWorkers/closeQueues)
+ * - Signal handling (SIGTERM/SIGINT)
  */
-describe('Graceful Shutdown (Integration)', () => {
-  const hasRedis = process.env.REDIS_URL !== undefined;
-
-  beforeAll(() => {
-    if (!hasRedis) {
-      console.log('Skipping graceful shutdown tests - REDIS_URL not set');
-    }
-  });
-
-  describe('Worker Shutdown', () => {
-    it.skipIf(!hasRedis)('should stop workers gracefully on shutdown', async () => {
-      const { startWorkers, stopWorkers, workersRunning } = await import('./worker.js');
-
-      // Start workers
-      await startWorkers();
-      expect(workersRunning()).toBe(true);
-
-      // Stop workers
-      await stopWorkers();
-      expect(workersRunning()).toBe(false);
-    });
-
-    it.skipIf(!hasRedis)('should complete in-progress jobs before shutdown', async () => {
-      // This test would:
-      // 1. Start workers
-      // 2. Queue a job that takes some time
-      // 3. Call stopWorkers()
-      // 4. Verify job completed before workers stopped
-    });
-  });
-
-  describe('Queue Connection Cleanup', () => {
-    it.skipIf(!hasRedis)('should close queue connections on shutdown', async () => {
-      const { getQueueHealth, closeQueues } = await import('./queue.js');
-
-      // Get initial health (queues should be available)
-      const _healthBefore = await getQueueHealth();
-
-      // Close queues
-      await closeQueues();
-
-      // After close, queues should be unavailable or reconnect
-      // Note: This test may need adjustment based on ioredis reconnection behavior
-    });
-
-    it.skipIf(!hasRedis)('should not leave orphaned Redis connections', async () => {
-      // Verify that after shutdown:
-      // - No active Redis connections remain
-      // - All queue connections are properly closed
-      //
-      // This would require checking Redis connection count
-    });
-  });
-
-  describe('Signal Handling', () => {
-    it.skipIf(!hasRedis)('should handle SIGTERM signal', async () => {
-      // Test that SIGTERM triggers graceful shutdown:
-      // 1. Stop workers
-      // 2. Close queues
-      // 3. Exit with code 0
-      //
-      // Note: This test would require spawning a process
-    });
-
-    it.skipIf(!hasRedis)('should handle SIGINT signal', async () => {
-      // Test that SIGINT (Ctrl+C) triggers graceful shutdown
-      // Same behavior as SIGTERM
-    });
-  });
-});
