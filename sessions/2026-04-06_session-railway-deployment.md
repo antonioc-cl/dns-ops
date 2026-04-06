@@ -100,3 +100,128 @@ bun run smoke-test
 
 **Dashboard URL:**
 https://railway.com/project/47a76356-daa1-4409-8578-338550d64a23
+
+---
+
+# Session Update — 2026-04-06 — Cloudflare Pages Deployment
+
+## 1) TL;DR
+
+- Successfully deployed web app to Cloudflare Pages: **https://dns-ops-web.pages.dev/**
+- Fixed CSS not loading by manually adding `<link rel="stylesheet">` in `__root.tsx`
+- **TEMPORARY FIX**: Hardcoded CSS filename with build hash - needs dynamic solution
+
+## 2) Current Status
+
+| Service | Platform | URL | Status |
+|---------|----------|-----|--------|
+| collector | Railway | https://dns-ops-production.up.railway.app | ✅ Running |
+| web | Cloudflare Pages | https://dns-ops-web.pages.dev | ✅ CSS working (temp fix) |
+| Postgres | Railway | Internal | ✅ Running |
+
+## 3) CSS Fix Applied
+
+**Problem:** TanStack Start with `cloudflare-pages` preset wasn't injecting CSS link tag into HTML head. The CSS file was generated but not referenced.
+
+**Temporary Fix (HARDcoded):**
+```tsx
+// apps/web/app/routes/__root.tsx
+export const Route = createRootRoute({
+  head: () => ({
+    links: [
+      { rel: 'stylesheet', href: '/_build/assets/client-qVzWjHAT.css' },
+    ],
+  }),
+});
+```
+
+**Why this breaks:** The CSS filename hash (`qVzWjHAT`) changes on every build.
+
+## 4) Long-Term Solutions (TODO)
+
+### Option A: Post-Build Script (Recommended)
+Create a script that runs after build to inject the correct CSS filename:
+
+```bash
+# scripts/inject-css.sh
+#!/bin/bash
+CSS_FILE=$(ls apps/web/dist/_build/assets/*.css | head -1)
+CSS_FILENAME=$(basename $CSS_FILE)
+# Update __root.tsx or inject into HTML directly
+```
+
+### Option B: TanStack Start Manifest
+Use the router manifest to dynamically get the CSS path:
+
+```tsx
+import { getRouterManifest } from '@tanstack/react-start/router-manifest';
+
+// Access manifest.assets for the root route
+const assets = getRouterManifest().routes.__root__.assets;
+const cssAsset = assets.find(a => a.attrs?.href?.endsWith('.css'));
+```
+
+### Option C: Vite Plugin
+Create a custom Vite plugin that writes the CSS path to a JSON file during build:
+
+```typescript
+// vite-plugin-css-manifest.ts
+export function cssManifestPlugin() {
+  return {
+    name: 'css-manifest',
+    generateBundle(options, bundle) {
+      const cssFiles = Object.keys(bundle).filter(f => f.endsWith('.css'));
+      this.emitFile({
+        type: 'asset',
+        fileName: 'css-manifest.json',
+        source: JSON.stringify({ css: cssFiles }),
+      });
+    },
+  };
+}
+```
+
+## 5) Immediate Action Required
+
+**Before next deployment:**
+1. Check current CSS filename: `ls apps/web/dist/_build/assets/*.css`
+2. Update `apps/web/app/routes/__root.tsx` with new hash
+3. Commit and push
+
+**Or implement Option A/B/C for permanent fix.**
+
+## 6) Files Modified
+
+- `apps/web/app/routes/__root.tsx` - Added hardcoded CSS link (TEMPORARY)
+- `apps/web/app/client.tsx` - Added CSS import (correct but insufficient alone)
+
+## 7) Next Steps
+
+| Task | Owner | Priority | Notes |
+|------|-------|----------|-------|
+| Implement dynamic CSS injection | dev | P1 | Option A (script) is fastest |
+| Set Cloudflare secrets | user | P0 | COLLECTOR_URL, INTERNAL_SECRET, DATABASE_URL |
+| Redeploy with secrets | user | P0 | `wrangler pages deploy` |
+| Test domain search | user | P1 | Verify collector API connection |
+| Run smoke tests | user | P1 | Full e2e validation |
+
+## 8) Secret Values Needed
+
+```bash
+cd apps/web
+
+wrangler pages secret put COLLECTOR_URL
+# Value: https://dns-ops-production.up.railway.app
+
+wrangler pages secret put INTERNAL_SECRET
+# Value: d7345262e993c4e98762e07154500af1
+
+wrangler pages secret put DATABASE_URL
+# Value: (from Railway dashboard → Postgres → Variables)
+```
+
+## 9) Key URLs
+
+- **Railway Dashboard:** https://railway.com/project/47a76356-daa1-4409-8578-338550d64a23
+- **Live Web App:** https://dns-ops-web.pages.dev/
+- **Collector Health:** https://dns-ops-production.up.railway.app/healthz
