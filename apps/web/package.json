@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "DNS Ops Workbench Web App - TanStack Start + Hono on Cloudflare Workers",
   "type": "module",
+  "packageManager": "bun@1.3.11",
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
