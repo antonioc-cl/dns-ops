@@ -1,10 +1,8 @@
 import { defineConfig } from '@tanstack/react-start/config';
 
-const preset = process.env.RAILWAY_ENVIRONMENT ? 'node-server' : 'cloudflare-pages';
-
 export default defineConfig({
   server: {
-    preset,
+    preset: 'cloudflare-pages',
     // pg's optional native binding is unavailable in CF Workers — stub it so
     // the bundle doesn't fail. The production app still uses PostgreSQL, but
     // Workers receive the connection string from runtime bindings/env instead of
@@ -21,6 +19,22 @@ export default defineConfig({
           },
         },
       ],
+    },
+  },
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          // Disable CSS filename hashing for predictable asset URLs
+          // This allows hardcoding the CSS path in __root.tsx
+          assetFileNames: (assetInfo) => {
+            if (assetInfo.name?.endsWith('.css')) {
+              return 'assets/[name].[ext]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
+        },
+      },
     },
   },
   tsr: {
