@@ -1,9 +1,13 @@
 # Railway deployment configuration for web app
+# Uses railway.app.config.ts which targets node-server preset
+
 [build]
-buildCommand = "bun install --frozen-lockfile && bun run build --filter=@dns-ops/web"
+# Build using the Railway-specific config (node-server preset)
+buildCommand = "bun install --frozen-lockfile && bunx vinxi build --config railway.app.config.ts"
 
 [deploy]
-startCommand = "node apps/web/dist/server.js"
+# Node-server preset outputs to .output/server/index.mjs
+startCommand = "node apps/web/.output/server/index.mjs"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
