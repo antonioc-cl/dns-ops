@@ -45,3 +45,4 @@ coverage/
 Thumbs.db
 .wrangler/
 contracts
+db
