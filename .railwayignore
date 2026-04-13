@@ -1,0 +1,10 @@
+# Exclude only large unnecessary files
+*.db
+*.db-shm
+*.db-wal
+.dolt/
+.turbo/
+.vinxi/
+node_modules/
+dist/
+*.tsbuildinfo
