@@ -2,8 +2,8 @@
 # This is for the web service
 
 [build]
-# Build using Bun workspaces - install all deps then build web
-buildCommand = "bun install && bun run build --filter=@dns-ops/web"
+builder = "DOCKERFILE"
+dockerfilePath = "apps/web/Dockerfile"
 
 [deploy]
 startCommand = "node apps/web/.output/server/index.mjs"
