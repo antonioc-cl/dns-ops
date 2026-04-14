@@ -4,7 +4,7 @@ import type { Env } from '../types.js';
 
 const migrateRoutes = new Hono<Env>();
 
-// Check migration status - try to query domains table
+// Check migration status
 migrateRoutes.get('/status', async (c) => {
   const db = c.get('db');
   if (!db) {
@@ -12,23 +12,21 @@ migrateRoutes.get('/status', async (c) => {
   }
 
   try {
-    // Try to query domains table using the adapter's select method
-    const result = await db.select(domains).limit(1);
-    return c.json({ status: 'migrated', domainCount: 'unknown (adapter returns array)' });
+    // Try to query domains table
+    await db.select(domains);
+    return c.json({ status: 'migrated', message: 'Database tables exist' });
   } catch (err: any) {
-    // If domains table doesn't exist, this will fail
     if (err.message?.includes('does not exist') || err.message?.includes('relation')) {
       return c.json({ 
         status: 'not_migrated', 
-        error: 'domains table does not exist',
-        message: 'Run drizzle-kit push:pg to create tables'
+        error: 'domains table does not exist'
       }, 200);
     }
     return c.json({ status: 'error', message: err.message }, 500);
   }
 });
 
-// Run migration - this will just verify the database is accessible
+// Run migration check
 migrateRoutes.post('/run', async (c) => {
   const db = c.get('db');
   if (!db) {
@@ -36,16 +34,15 @@ migrateRoutes.post('/run', async (c) => {
   }
 
   try {
-    // Just try to query - if this works, db is accessible
-    await db.select(domains).limit(1);
+    await db.select(domains);
     return c.json({ 
-      status: 'db_accessible',
-      message: 'Database is accessible. Full migration must be done via drizzle-kit push:pg'
+      status: 'migrated',
+      message: 'Database is accessible and migrated'
     });
   } catch (err: any) {
     if (err.message?.includes('does not exist')) {
       return c.json({ 
-        status: 'tables_missing',
+        status: 'needs_migration',
         error: err.message,
         solution: 'Run: cd packages/db && DATABASE_URL=<url> npx drizzle-kit push:pg'
       }, 200);
