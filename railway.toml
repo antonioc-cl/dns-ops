@@ -2,8 +2,8 @@
 # This is for the web service
 
 [build]
-# Build using Bun workspaces - install all deps then build web
-buildCommand = "bun install && bun run build --filter=@dns-ops/web"
+# Build web, then run migrations
+buildCommand = "bun install && bun run build --filter=@dns-ops/web && cd packages/db && DATABASE_URL=$DATABASE_URL bunx drizzle-kit push:pg"
 
 [deploy]
 startCommand = "node apps/web/.output/server/index.mjs"
