@@ -1,3 +1,4 @@
+import migrateRoutes from './migrate.js';
 import {
   DomainRepository,
   type IDatabaseAdapter,
@@ -167,6 +168,7 @@ apiRoutes.route('/', mailRoutes);
 apiRoutes.route('/shadow-comparison', shadowComparisonRoutes);
 apiRoutes.route('/mail', providerTemplateRoutes);
 apiRoutes.route('/snapshots', snapshotRoutes);
+apiRoutes.route('/migrate', migrateRoutes);
 apiRoutes.route('/portfolio', portfolioRoutes);
 apiRoutes.route('/ruleset-versions', rulesetVersionRoutes);
 apiRoutes.route('/monitoring', monitoringRoutes);
