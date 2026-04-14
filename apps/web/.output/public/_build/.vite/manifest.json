@@ -1,13 +1,13 @@
 {
-  "_StateDisplay-sQOuadC0.js": {
-    "file": "assets/StateDisplay-sQOuadC0.js",
+  "_StateDisplay-BHlPgxXd.js": {
+    "file": "assets/StateDisplay-BHlPgxXd.js",
     "name": "StateDisplay",
     "imports": [
-      "_client-Dd_j-Wel.js"
+      "_client-QsoI9g__.js"
     ]
   },
-  "_client-Dd_j-Wel.js": {
-    "file": "assets/client-Dd_j-Wel.js",
+  "_client-QsoI9g__.js": {
+    "file": "assets/client-QsoI9g__.js",
     "name": "client",
     "dynamicImports": [
       "app/routes/portfolio.tsx?tsr-split=component",
@@ -23,60 +23,60 @@
     "file": "assets/client.css",
     "src": "_client.css"
   },
-  "_index-Cok5kjGm.js": {
-    "file": "assets/index-Cok5kjGm.js",
+  "_index-HxqwleHZ.js": {
+    "file": "assets/index-HxqwleHZ.js",
     "name": "index",
     "imports": [
-      "_client-Dd_j-Wel.js"
+      "_client-QsoI9g__.js"
     ]
   },
   "app/routes/domain/$domain.tsx?tsr-split=component": {
-    "file": "assets/_domain-k_5UKLDv.js",
+    "file": "assets/_domain-DoNOnH1N.js",
     "name": "_domain",
     "src": "app/routes/domain/$domain.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_client-Dd_j-Wel.js",
-      "_StateDisplay-sQOuadC0.js",
-      "_index-Cok5kjGm.js"
+      "_client-QsoI9g__.js",
+      "_StateDisplay-BHlPgxXd.js",
+      "_index-HxqwleHZ.js"
     ]
   },
   "app/routes/index.tsx?tsr-split=component": {
-    "file": "assets/index-5fV1SFue.js",
+    "file": "assets/index-B_n-IoW7.js",
     "name": "index",
     "src": "app/routes/index.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_client-Dd_j-Wel.js",
-      "_index-Cok5kjGm.js"
+      "_client-QsoI9g__.js",
+      "_index-HxqwleHZ.js"
     ]
   },
   "app/routes/login.tsx?tsr-split=component": {
-    "file": "assets/login-DSBaRAbk.js",
+    "file": "assets/login-CTRg4Uig.js",
     "name": "login",
     "src": "app/routes/login.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_client-Dd_j-Wel.js"
+      "_client-QsoI9g__.js"
     ]
   },
   "app/routes/portfolio.tsx?tsr-split=component": {
-    "file": "assets/portfolio-CjRIup1h.js",
+    "file": "assets/portfolio-BROneaZm.js",
     "name": "portfolio",
     "src": "app/routes/portfolio.tsx?tsr-split=component",
     "isDynamicEntry": true,
     "imports": [
-      "_client-Dd_j-Wel.js",
-      "_StateDisplay-sQOuadC0.js"
+      "_client-QsoI9g__.js",
+      "_StateDisplay-BHlPgxXd.js"
     ]
   },
   "virtual:$vinxi/handler/client": {
-    "file": "assets/client-BRab3w3Z.js",
+    "file": "assets/client-DhTFGXcC.js",
     "name": "client",
     "src": "virtual:$vinxi/handler/client",
     "isEntry": true,
     "imports": [
-      "_client-Dd_j-Wel.js"
+      "_client-QsoI9g__.js"
     ]
   }
 }

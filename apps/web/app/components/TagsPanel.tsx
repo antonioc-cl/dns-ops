@@ -43,7 +43,8 @@ export function TagsPanel({ domainId, isDomainName = false, onTagsChange }: Tags
       setError(null);
       try {
         const response = await fetch(
-          `/api/portfolio/domains/by-name/${encodeURIComponent(domainId)}`
+          `/api/portfolio/domains/by-name/${encodeURIComponent(domainId)}`,
+          { credentials: 'include' }
         );
         if (response.status === 401) {
           setAuthRequired(true);
@@ -99,7 +100,7 @@ export function TagsPanel({ domainId, isDomainName = false, onTagsChange }: Tags
   useEffect(() => {
     async function fetchAllTags() {
       try {
-        const response = await fetch('/api/portfolio/tags');
+        const response = await fetch('/api/portfolio/tags', { credentials: 'include' });
         if (response.status === 401) {
           setAuthRequired(true);
           setAllTags([]);
@@ -131,7 +132,7 @@ export function TagsPanel({ domainId, isDomainName = false, onTagsChange }: Tags
     setError(null);
 
     try {
-      const response = await fetch(`/api/portfolio/domains/${resolvedDomainId}/tags`);
+      const response = await fetch(`/api/portfolio/domains/${resolvedDomainId}/tags`, { credentials: 'include' });
       if (!response.ok) {
         if (response.status === 401) {
           setAuthRequired(true);
@@ -172,6 +173,7 @@ export function TagsPanel({ domainId, isDomainName = false, onTagsChange }: Tags
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tag: trimmedTag }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -204,7 +206,7 @@ export function TagsPanel({ domainId, isDomainName = false, onTagsChange }: Tags
     try {
       const response = await fetch(
         `/api/portfolio/domains/${resolvedDomainId}/tags/${encodeURIComponent(tag)}`,
-        { method: 'DELETE' }
+        { method: 'DELETE', credentials: 'include' }
       );
 
       if (!response.ok) {

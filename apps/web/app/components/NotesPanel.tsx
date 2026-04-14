@@ -52,7 +52,8 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
       setError(null);
       try {
         const response = await fetch(
-          `/api/portfolio/domains/by-name/${encodeURIComponent(domainId)}`
+          `/api/portfolio/domains/by-name/${encodeURIComponent(domainId)}`,
+          { credentials: 'include' }
         );
         if (response.status === 401) {
           setAuthRequired(true);
@@ -115,7 +116,7 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
     setError(null);
 
     try {
-      const response = await fetch(`/api/portfolio/domains/${resolvedDomainId}/notes`);
+      const response = await fetch(`/api/portfolio/domains/${resolvedDomainId}/notes`, { credentials: "include" });
       if (!response.ok) {
         if (response.status === 401) {
           setAuthRequired(true);
@@ -159,6 +160,7 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newNoteContent }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -193,6 +195,7 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: editContent }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -224,6 +227,7 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
     try {
       const response = await fetch(`/api/portfolio/notes/${noteId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) {

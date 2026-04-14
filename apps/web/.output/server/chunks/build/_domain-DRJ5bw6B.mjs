@@ -442,7 +442,7 @@ function ne({ domainId: t, isDomainName: a = false }) {
       var _a;
       l(false), m(null);
       try {
-        const E = await fetch(`/api/portfolio/domains/by-name/${encodeURIComponent(t)}`);
+        const E = await fetch(`/api/portfolio/domains/by-name/${encodeURIComponent(t)}`, { credentials: "include" });
         if (E.status === 401) {
           S(true), o(null), p(false), l(true);
           return;
@@ -476,7 +476,7 @@ function ne({ domainId: t, isDomainName: a = false }) {
     }
     p(true), m(null);
     try {
-      const b = await fetch(`/api/portfolio/domains/${n}/notes`);
+      const b = await fetch(`/api/portfolio/domains/${n}/notes`, { credentials: "include" });
       if (!b.ok) {
         if (b.status === 401) {
           S(true), d([]);
@@ -500,7 +500,7 @@ function ne({ domainId: t, isDomainName: a = false }) {
     if (!(!A.trim() || !n)) {
       x(true);
       try {
-        const b = await fetch(`/api/portfolio/domains/${n}/notes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: A }) });
+        const b = await fetch(`/api/portfolio/domains/${n}/notes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: A }), credentials: "include" });
         if (!b.ok) throw b.status === 401 ? (S(true), new Error("Operator sign-in is required to create notes.")) : b.status === 403 ? (w(true), new Error("You do not have permission to create tenant notes.")) : new Error("Failed to create note");
         S(false), g(""), k(false), await I();
       } catch (b) {
@@ -513,7 +513,7 @@ function ne({ domainId: t, isDomainName: a = false }) {
     if (N.trim()) {
       x(true);
       try {
-        const E = await fetch(`/api/portfolio/notes/${b}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: N }) });
+        const E = await fetch(`/api/portfolio/notes/${b}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: N }), credentials: "include" });
         if (!E.ok) throw E.status === 401 ? (S(true), new Error("Operator sign-in is required to update notes.")) : E.status === 403 ? (w(true), new Error("You do not have permission to update tenant notes.")) : new Error("Failed to update note");
         S(false), D(null), $(""), await I();
       } catch (E) {
@@ -524,7 +524,7 @@ function ne({ domainId: t, isDomainName: a = false }) {
     }
   }, B = async (b) => {
     if (confirm("Are you sure you want to delete this note?")) try {
-      const E = await fetch(`/api/portfolio/notes/${b}`, { method: "DELETE" });
+      const E = await fetch(`/api/portfolio/notes/${b}`, { method: "DELETE", credentials: "include" });
       if (!E.ok) throw E.status === 401 ? (S(true), new Error("Operator sign-in is required to delete notes.")) : E.status === 403 ? (w(true), new Error("You do not have permission to delete tenant notes.")) : new Error("Failed to delete note");
       S(false), await I();
     } catch (E) {
@@ -679,7 +679,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
       var _a;
       O(false), c(null);
       try {
-        const T = await fetch(`/api/portfolio/domains/by-name/${encodeURIComponent(t)}`);
+        const T = await fetch(`/api/portfolio/domains/by-name/${encodeURIComponent(t)}`, { credentials: "include" });
         if (T.status === 401) {
           y(true), f(null), s(false), O(true);
           return;
@@ -708,7 +708,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
   }, [t, a]), useEffect(() => {
     async function R() {
       try {
-        const T = await fetch("/api/portfolio/tags");
+        const T = await fetch("/api/portfolio/tags", { credentials: "include" });
         if (T.status === 401) {
           y(true), u([]);
           return;
@@ -734,7 +734,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
     }
     s(true), c(null);
     try {
-      const R = await fetch(`/api/portfolio/domains/${g}/tags`);
+      const R = await fetch(`/api/portfolio/domains/${g}/tags`, { credentials: "include" });
       if (!R.ok) {
         if (R.status === 401) {
           y(true), i([]);
@@ -759,7 +759,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
     if (!(!T || !g || o.includes(T))) {
       A(true);
       try {
-        const b = await fetch(`/api/portfolio/domains/${g}/tags`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tag: T }) });
+        const b = await fetch(`/api/portfolio/domains/${g}/tags`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tag: T }), credentials: "include" });
         if (!b.ok) throw b.status === 401 ? (y(true), new Error("Operator sign-in is required to add tags.")) : b.status === 403 ? (C(true), new Error("You do not have permission to add tenant tags.")) : new Error("Failed to add tag");
         y(false), v(""), N(false), await x();
       } catch (b) {
@@ -770,7 +770,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
     }
   }, M = async (R) => {
     if (g) try {
-      const T = await fetch(`/api/portfolio/domains/${g}/tags/${encodeURIComponent(R)}`, { method: "DELETE" });
+      const T = await fetch(`/api/portfolio/domains/${g}/tags/${encodeURIComponent(R)}`, { method: "DELETE", credentials: "include" });
       if (!T.ok) throw T.status === 401 ? (y(true), new Error("Operator sign-in is required to remove tags.")) : T.status === 403 ? (C(true), new Error("You do not have permission to remove tenant tags.")) : new Error("Failed to remove tag");
       y(false), await x();
     } catch (T) {
@@ -859,4 +859,4 @@ const Ct = function() {
 };
 
 export { Ct as component };
-//# sourceMappingURL=_domain-DngjAaOt.mjs.map
+//# sourceMappingURL=_domain-DRJ5bw6B.mjs.map
