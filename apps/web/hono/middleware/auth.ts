@@ -18,12 +18,26 @@ function getRuntimeSecret(
 
 function parseCookies(cookieHeader: string | undefined): Record<string, string> {
   if (!cookieHeader) return {};
-  return Object.fromEntries(
-    cookieHeader.split(';').map(c => {
-      const [key, ...vals] = c.trim().split('=');
-      return [key, vals.join('=')];
-    })
-  );
+  
+  const result: Record<string, string> = {};
+  const parts = cookieHeader.split(';');
+  
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex === -1) continue;
+    
+    const key = trimmed.slice(0, eqIndex).trim();
+    const value = trimmed.slice(eqIndex + 1).trim();
+    
+    if (key) {
+      result[key] = value;
+    }
+  }
+  
+  return result;
 }
 
 function isValidIdentifier(id: string): boolean {
@@ -42,11 +56,15 @@ function extractCookieSession(c: Parameters<typeof createMiddleware<Env>>[0]): {
   
   if (!session) return null;
   
-  // Format: email:tenantDomain
-  const parts = session.split(':');
-  if (parts.length < 2) return null;
+  // Cookie value is URL encoded
+  const decodedSession = decodeURIComponent(session);
   
-  const [email, tenantDomain] = parts;
+  // Format: email:tenantDomain
+  const colonIndex = decodedSession.indexOf(':');
+  if (colonIndex === -1) return null;
+  
+  const email = decodedSession.slice(0, colonIndex);
+  const tenantDomain = decodedSession.slice(colonIndex + 1);
   
   if (!email || !tenantDomain) return null;
   if (!isValidIdentifier(tenantDomain)) return null;
