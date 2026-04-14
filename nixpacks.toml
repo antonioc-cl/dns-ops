@@ -1,0 +1,6 @@
+[start]
+command = """
+cd packages/db && DATABASE_URL=$DATABASE_URL bunx drizzle-kit push:pg || true
+cd ../..
+node apps/web/.output/server/index.mjs
+"""
