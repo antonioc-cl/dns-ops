@@ -6,8 +6,8 @@
 buildCommand = "bun install && bun run build --filter=@dns-ops/web"
 
 [deploy]
-# Node-server preset outputs to .output/server/index.mjs
-startCommand = "node apps/web/.output/server/index.mjs"
+# Run migrations first, then start the server
+startCommand = "cd packages/db && DATABASE_URL=$DATABASE_URL bunx drizzle-kit push:pg && cd ../.. && node apps/web/.output/server/index.mjs"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
