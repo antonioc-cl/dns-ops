@@ -41,6 +41,12 @@ function RootComponent() {
                   >
                     Portfolio
                   </Link>
+                  <Link
+                    to="/login"
+                    className="focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium"
+                  >
+                    Login
+                  </Link>
                 </nav>
               </div>
             </div>
