@@ -6,7 +6,7 @@
 buildCommand = "bun install && bun run build --filter=@dns-ops/web"
 
 [deploy]
-startCommand = "/app/scripts/migrate.sh"
+startCommand = "cd packages/db && DATABASE_URL=$DATABASE_URL npx drizzle-kit push:pg; cd ../.. && node apps/web/.output/server/index.mjs"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
