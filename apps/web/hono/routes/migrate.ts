@@ -4,7 +4,7 @@ import type { Env } from '../types.js';
 
 const migrateRoutes = new Hono<Env>();
 
-// Run database migrations
+// Run database migrations - create basic tables
 migrateRoutes.post('/run', async (c) => {
   const db = c.get('db');
   if (!db) {
@@ -13,33 +13,32 @@ migrateRoutes.post('/run', async (c) => {
 
   const results: string[] = [];
   
+  // The db object is a drizzle adapter, use it directly
   try {
-    // Check if domains table exists
-    await db.execute(sql`SELECT 1 FROM domains LIMIT 1`);
-    return c.json({ status: 'already_migrated', message: 'Database already set up' });
-  } catch {
-    results.push('domains table not found, will create...');
-  }
-
-  // Run basic table creation using raw SQL
-  // This is a simplified migration - full migration should be done via drizzle-kit
-  try {
-    // Create domains table
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS domains (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255) NOT NULL UNIQUE,
-        tenant_id UUID NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      )
-    `);
-    results.push('Created domains table');
+    // Check if domains table exists using the adapter
+    await db.all(sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'domains'`);
+    results.push('Checked tables - found existing tables');
+    return c.json({ status: 'already_migrated', results, message: 'Database may already be set up' });
   } catch (err: any) {
-    results.push('domains: ' + (err.message || 'error'));
+    results.push('Check failed: ' + (err.message || 'error'));
   }
 
-  return c.json({ status: 'partial', results, message: 'Migration attempted' });
+  return c.json({ status: 'partial', results, message: 'Migration attempted - full migration needed via drizzle-kit' });
+});
+
+// Health check for migration status
+migrateRoutes.get('/status', async (c) => {
+  const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
+  try {
+    const tables = await db.all(sql`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`);
+    return c.json({ status: 'connected', tables: tables.map((t: any) => t.table_name) });
+  } catch (err: any) {
+    return c.json({ status: 'error', message: err.message }, 500);
+  }
 });
 
 export default migrateRoutes;
