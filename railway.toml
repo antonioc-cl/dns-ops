@@ -1,10 +1,10 @@
 # Railway deployment configuration for DNS Ops monorepo
 
 [build]
-buildCommand = "bun install && bun run build --filter=@dns-ops/web && cd packages/db && DATABASE_URL=$DATABASE_URL bunx drizzle-kit push:pg"
+buildCommand = "bun install && bun run build --filter=@dns-ops/web"
 
 [deploy]
-startCommand = "node apps/web/.output/server/index.mjs"
+startCommand = "cd packages/db && DATABASE_URL=$DATABASE_URL bunx drizzle-kit push:pg; cd ../.. && node apps/web/.output/server/index.mjs"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
