@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as PortfolioImport } from './routes/portfolio'
+import { Route as LoginImport } from './routes/login'
 import { Route as IndexImport } from './routes/index'
 import { Route as DomainDomainImport } from './routes/domain/$domain'
 
@@ -20,6 +21,12 @@ import { Route as DomainDomainImport } from './routes/domain/$domain'
 const PortfolioRoute = PortfolioImport.update({
   id: '/portfolio',
   path: '/portfolio',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const LoginRoute = LoginImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -46,6 +53,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
     '/portfolio': {
       id: '/portfolio'
       path: '/portfolio'
@@ -67,12 +81,14 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/portfolio': typeof PortfolioRoute
   '/domain/$domain': typeof DomainDomainRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/portfolio': typeof PortfolioRoute
   '/domain/$domain': typeof DomainDomainRoute
 }
@@ -80,27 +96,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/portfolio': typeof PortfolioRoute
   '/domain/$domain': typeof DomainDomainRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/portfolio' | '/domain/$domain'
+  fullPaths: '/' | '/login' | '/portfolio' | '/domain/$domain'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/portfolio' | '/domain/$domain'
-  id: '__root__' | '/' | '/portfolio' | '/domain/$domain'
+  to: '/' | '/login' | '/portfolio' | '/domain/$domain'
+  id: '__root__' | '/' | '/login' | '/portfolio' | '/domain/$domain'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   PortfolioRoute: typeof PortfolioRoute
   DomainDomainRoute: typeof DomainDomainRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   PortfolioRoute: PortfolioRoute,
   DomainDomainRoute: DomainDomainRoute,
 }
@@ -116,12 +135,16 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/login",
         "/portfolio",
         "/domain/$domain"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/login": {
+      "filePath": "login.tsx"
     },
     "/portfolio": {
       "filePath": "portfolio.tsx"

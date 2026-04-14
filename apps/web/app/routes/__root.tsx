@@ -1,4 +1,5 @@
 import { createRootRoute, HeadContent, Link, Outlet, Scripts } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
 import '../styles/app.css';
 
 export const Route = createRootRoute({
@@ -15,6 +16,34 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    // Check auth status on mount
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+          setUserEmail(data.email || null);
+        }
+        setChecking(false);
+      })
+      .catch(() => setChecking(false));
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { 
+      method: 'POST',
+      credentials: 'include' 
+    });
+    setIsAuthenticated(false);
+    setUserEmail(null);
+    window.location.href = '/';
+  };
+
   return (
     <html lang="en">
       <head>
@@ -28,7 +57,7 @@ function RootComponent() {
                 <Link to="/" className="focus-ring text-xl font-bold text-gray-900 rounded">
                   DNS Ops Workbench
                 </Link>
-                <nav className="flex gap-6">
+                <nav className="flex gap-6 items-center">
                   <Link
                     to="/"
                     className="focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium"
@@ -41,12 +70,26 @@ function RootComponent() {
                   >
                     Portfolio
                   </Link>
-                  <Link
-                    to="/login"
-                    className="focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium"
-                  >
-                    Login
-                  </Link>
+                  {isAuthenticated ? (
+                    <>
+                      <span className="text-sm text-gray-500">
+                        {userEmail}
+                      </span>
+                      <button
+                        onClick={handleLogout}
+                        className="focus-ring rounded text-gray-600 hover:text-gray-900 text-sm"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium"
+                    >
+                      Login
+                    </Link>
+                  )}
                 </nav>
               </div>
             </div>

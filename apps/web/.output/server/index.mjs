@@ -30,6 +30,7 @@ import 'drizzle-orm/pg-core';
 import 'drizzle-orm';
 import '@tanstack/react-router';
 import 'react/jsx-runtime';
+import 'react';
 import '@tanstack/history';
 import 'node:stream';
 import 'react-dom/server';

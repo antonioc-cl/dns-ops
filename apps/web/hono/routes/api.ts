@@ -1,3 +1,4 @@
+import authRoutes from './auth.js';
 import migrateRoutes from './migrate.js';
 import {
   DomainRepository,
@@ -160,6 +161,7 @@ apiRoutes.get('/health/detailed', requireAdminAccess, async (c) => {
   });
 });
 
+apiRoutes.route('/auth', authRoutes);
 apiRoutes.route('/', findingsRoutes);
 apiRoutes.route('/', legacyToolsRoutes);
 apiRoutes.route('/', selectorRoutes);

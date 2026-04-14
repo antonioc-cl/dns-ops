@@ -9,40 +9,38 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!email) {
       setError('Email is required');
+      setLoading(false);
       return;
     }
 
-    // Store email in localStorage for dev mode
-    localStorage.setItem('dev-email', email);
-    
-    // For internal use, we'll use dev bypass headers
-    // In production, this should integrate with your auth provider
     try {
-      // Try to access portfolio to verify auth works
-      const response = await fetch('/api/portfolio', {
-        headers: {
-          'X-Dev-Tenant': email.split('@')[1] || 'internal',
-          'X-Dev-Actor': email,
-        },
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+        credentials: 'include', // Important: include cookies
       });
 
       if (response.ok) {
+        // Navigate to portfolio after successful login
         navigate({ to: '/portfolio' });
-      } else if (response.status === 401) {
-        // Dev bypass didn't work - might need different headers
-        // For now, just go to portfolio anyway
-        navigate({ to: '/portfolio' });
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Login failed');
       }
     } catch (err) {
-      // Network error - still try to navigate
-      navigate({ to: '/portfolio' });
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,9 +84,10 @@ function LoginPage() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={loading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
               >
-                Sign in
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>
