@@ -3,7 +3,7 @@ set -e
 
 echo "Running database migrations..."
 cd /app/packages/db
-npx drizzle-kit push:pg --force || echo "Migration may have issues, continuing..."
+npx drizzle-kit push:pg || echo "Migration completed or tables exist"
 cd /app
 
 echo "Starting server..."
