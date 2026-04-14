@@ -2,11 +2,11 @@
 # This is for the web service
 
 [build]
-# Build web, then run migrations
-buildCommand = "bun install && bun run build --filter=@dns-ops/web && cd packages/db && DATABASE_URL=$DATABASE_URL bunx drizzle-kit push:pg"
+# Build using Bun workspaces - install all deps then build web
+buildCommand = "bun install && bun run build --filter=@dns-ops/web"
 
 [deploy]
-startCommand = "node apps/web/.output/server/index.mjs"
+startCommand = "node scripts/run-migrations.mjs && node apps/web/.output/server/index.mjs"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
