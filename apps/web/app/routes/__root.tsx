@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Link, Outlet, Scripts, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import '../styles/app.css';
 
 export const Route = createRootRoute({
@@ -43,8 +44,10 @@ function AuthNav() {
       method: 'POST',
       credentials: 'include' 
     });
-    setIsAuthenticated(false);
-    setUserEmail(null);
+    flushSync(() => {
+      setIsAuthenticated(false);
+      setUserEmail(null);
+    });
     navigate({ to: '/' });
   };
 

@@ -1,7 +1,7 @@
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { useState, useId, useEffect, useCallback } from 'react';
 import { u, p, x } from './StateDisplay-DMFHryPA.mjs';
-import { aE as be$1, aF as ye$1, aG as Nt } from '../nitro/nitro.mjs';
+import { aE as be$1, aF as ye$1, aG as It } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -34,6 +34,7 @@ import 'string_decoder';
 import 'node:fs/promises';
 import '@node-rs/argon2';
 import '@tanstack/react-router';
+import 'react-dom';
 import '@tanstack/history';
 import 'node:stream';
 import 'react-dom/server';
@@ -785,7 +786,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
     N(false), v("");
   }, className: "px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-400", disabled: $ || m || S, children: "Cancel" })] }), B.length > 0 && jsxs("div", { className: "mt-3", children: [jsx("span", { className: "text-sm text-gray-500", children: "Suggestions:" }), jsx("div", { className: "flex flex-wrap gap-2 mt-2", children: B.slice(0, 10).map((R) => jsx("button", { type: "button", onClick: () => I(R), disabled: $ || m || S, className: "px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50", children: R }, R)) })] })] }), d ? jsx("div", { className: "text-center text-gray-500 py-4", children: "Loading tags..." }) : m ? jsx("div", { className: "text-center text-gray-500 py-4", children: "Sign in to view and manage tenant tags." }) : !g && k ? jsx("div", { className: "text-center text-gray-500 py-4", children: p || "Tags are unavailable until domain context can be resolved." }) : o.length === 0 ? jsxs("div", { className: "text-center text-gray-500 py-4", children: ["No tags yet.", " ", !D && jsx("button", { type: "button", onClick: () => N(true), className: "text-blue-600 hover:text-blue-700 disabled:text-gray-400", disabled: m || S, children: "Add one" })] }) : jsx("div", { className: "flex flex-wrap gap-2", children: o.map((R) => jsxs("span", { className: "inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm", children: [R, jsx("button", { type: "button", onClick: () => M(R), className: "hover:bg-blue-200 rounded-full p-0.5 disabled:text-gray-400 disabled:hover:bg-transparent", disabled: m || S, "aria-label": `Remove ${R} tag`, children: jsx("svg", { "aria-hidden": "true", className: "w-3.5 h-3.5", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", children: jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M6 18L18 6M6 6l12 12" }) }) })] }, R)) })] })] });
 }
-const de = ye$1(), st = Nt(), F = [{ id: "overview", label: "Overview" }, { id: "dns", label: "DNS" }, { id: "mail", label: "Mail" }, { id: "history", label: "History" }, ...de ? [{ id: "delegation", label: "Delegation" }] : []];
+const de = ye$1(), st = It(), F = [{ id: "overview", label: "Overview" }, { id: "dns", label: "DNS" }, { id: "mail", label: "Mail" }, { id: "history", label: "History" }, ...de ? [{ id: "delegation", label: "Delegation" }] : []];
 function it({ domain: t, snapshot: a, observations: n }) {
   if (!a) return jsxs("div", { className: "space-y-6", children: [jsx("div", { className: "text-center py-12", children: jsxs("p", { className: "text-gray-500", children: ["No DNS evidence available yet for ", t, "."] }) }), jsxs("div", { className: "space-y-4", children: [jsxs("div", { children: [jsx("h3", { className: "font-semibold text-gray-900", children: "Operator Context" }), jsx("p", { className: "text-sm text-gray-500", children: "Keep tenant-scoped notes and tags attached to the domain even before the next evidence refresh." })] }), jsxs("div", { className: "grid grid-cols-1 gap-6 xl:grid-cols-2", children: [jsx(ne, { domainId: t, isDomainName: true }), jsx(le, { domainId: t, isDomainName: true })] })] })] });
   const o = n.filter((l) => l.status === "success").length, i = n.length - o;
@@ -809,7 +810,7 @@ function ee({ label: t, value: a, color: n = "gray" }) {
 function te({ label: t, values: a }) {
   return jsxs("div", { children: [jsx("p", { className: "text-xs font-semibold uppercase tracking-wide text-blue-700", children: t }), a.length > 0 ? jsx("div", { className: "mt-1 flex flex-wrap gap-1.5", children: a.map((n) => jsx("span", { className: "rounded-full bg-white/80 border border-blue-200 px-2 py-0.5 text-xs text-blue-900", children: n }, `${t}-${n}`)) }) : jsx("p", { className: "mt-1 text-sm text-blue-800", children: "N/A" })] });
 }
-const Ct = function() {
+const kt = function() {
   const a = be$1.useLoaderData(), { domain: n } = a, { tab: o } = be$1.useSearch(), [i, l] = useState(o != null ? o : "overview"), [u, d] = useState(false), [s, p] = useState(null), [c, m] = useState(null), [y, S] = useState([]), [C, w] = useState(void 0), [v, D] = useState(false), N = useId();
   useEffect(() => {
     return;
@@ -860,5 +861,5 @@ const Ct = function() {
   }, disabled: u, "aria-busy": u, className: "focus-ring min-h-10 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400", children: u ? "Refreshing..." : "Refresh" })] }), c ? jsxs("div", { className: "mt-3 flex flex-wrap items-center gap-2", children: [jsx(at, { type: c.zoneManagement }), jsx(nt, { state: c.resultState }), jsxs("span", { className: "text-sm text-gray-500 tabular-nums", children: ["Last updated: ", new Date(c.createdAt).toLocaleString()] })] }) : C ? jsx("div", { className: `mt-4 p-4 rounded-lg border ${C.type === "api_unreachable" ? "bg-red-50 border-red-200" : "bg-orange-50 border-orange-200"}`, "data-testid": "loader-error-banner", children: jsx("p", { className: C.type === "api_unreachable" ? "text-red-800" : "text-orange-800", children: C.message }) }) : jsx("div", { className: "mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg", "data-testid": "domain-no-data-banner", children: jsxs("p", { className: "text-yellow-800", children: ["No DNS snapshot is available for ", n, " yet. Use an operator session to refresh and collect new DNS evidence."] }) }), s ? jsx("div", { className: "mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700", "data-testid": "domain-refresh-error-banner", role: "alert", children: s }) : null] }), jsx("div", { className: "border-b border-gray-200 mb-6 overflow-x-auto", children: jsx("div", { role: "tablist", "aria-label": "Domain DNS views", className: "-mb-px flex w-max min-w-full space-x-4 sm:space-x-8", children: F.map((x, I) => jsx("button", { type: "button", id: A(x.id), role: "tab", "aria-selected": i === x.id, "aria-controls": g(x.id), tabIndex: i === x.id ? 0 : -1, onClick: () => $(x.id), onKeyDown: (M) => k(M, I), className: `focus-ring min-h-10 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${i === x.id ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`, children: x.label }, x.id)) }) }), jsxs("div", { className: "bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6", children: [jsx("div", { role: "tabpanel", id: g("overview"), "aria-labelledby": A("overview"), hidden: i !== "overview", "data-testid": "domain-tabpanel-overview", children: i === "overview" && jsx(it, { domain: n, snapshot: c, observations: y }) }), jsx("div", { role: "tabpanel", id: g("dns"), "aria-labelledby": A("dns"), hidden: i !== "dns", "data-testid": "domain-tabpanel-dns", children: i === "dns" && jsx(lt, { observations: y }) }), jsx("div", { role: "tabpanel", id: g("mail"), "aria-labelledby": A("mail"), hidden: i !== "mail", "data-testid": "domain-tabpanel-mail", children: i === "mail" && jsx(ot, { domain: n, snapshotId: c == null ? void 0 : c.id }) }), jsx("div", { role: "tabpanel", id: g("history"), "aria-labelledby": A("history"), hidden: i !== "history", "data-testid": "domain-tabpanel-history", children: i === "history" && jsx(dt, { domain: n }) }), de && jsx("div", { role: "tabpanel", id: g("delegation"), "aria-labelledby": A("delegation"), hidden: i !== "delegation", "data-testid": "domain-tabpanel-delegation", children: i === "delegation" && jsx(ct, { domain: n, snapshotId: c == null ? void 0 : c.id }) })] })] });
 };
 
-export { Ct as component };
-//# sourceMappingURL=_domain-CZKTuSa8.mjs.map
+export { kt as component };
+//# sourceMappingURL=_domain-CgxAnUP6.mjs.map

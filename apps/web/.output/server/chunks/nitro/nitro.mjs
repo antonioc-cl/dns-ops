@@ -32,6 +32,7 @@ import { hash as hash$1, verify } from '@node-rs/argon2';
 import { RouterProvider, createRootRoute, HeadContent, Link, Outlet, Scripts, createFileRoute, lazyRouteComponent, redirect, useLocation, useNavigate, createRouter as createRouter$2 } from '@tanstack/react-router';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { createMemoryHistory } from '@tanstack/history';
 import { PassThrough, Readable } from 'node:stream';
 import G$2 from 'react-dom/server';
@@ -4299,7 +4300,7 @@ async function errorHandler(error, event) {
 }
 
 const appConfig = {"name":"vinxi","routers":[{"name":"public","type":"static","dir":"./public","base":"/","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","order":0,"outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/public"},{"name":"client","type":"client","target":"browser","handler":"app/client.tsx","base":"/_build","build":{"sourcemap":true},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/client","order":1},{"name":"ssr","type":"http","target":"server","handler":"app/ssr.tsx","link":{"client":"client"},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","base":"/","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/ssr","order":2},{"name":"server","type":"http","target":"server","base":"/_server","handler":"../../node_modules/.bun/@tanstack+start-server-functions-handler@1.120.19/node_modules/@tanstack/start-server-functions-handler/dist/esm/index.js","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/server","order":3},{"name":"api","base":"/api","type":"http","handler":"app/api.ts","target":"server","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/api","order":4}],"server":{"rollupConfig":{},"preset":"node-server","experimental":{"asyncContext":true}},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web"};
-				const buildManifest = {"client":{"_StateDisplay-0LIlrz23.js":{"file":"assets/StateDisplay-0LIlrz23.js","name":"StateDisplay","imports":["_client-CTuu5GZP.js"]},"_client-CTuu5GZP.js":{"file":"assets/client-CTuu5GZP.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-CgU_CiRy.js":{"file":"assets/index-CgU_CiRy.js","name":"index","imports":["_client-CTuu5GZP.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-BYHopRUv.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CTuu5GZP.js","_StateDisplay-0LIlrz23.js","_index-CgU_CiRy.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-D7nX5pwP.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CTuu5GZP.js","_index-CgU_CiRy.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-CS1CHE1m.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CTuu5GZP.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BHvp-A26.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CTuu5GZP.js","_StateDisplay-0LIlrz23.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-DaftaykD.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-CTuu5GZP.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-D54abodO.js":{"file":"assets/index-D54abodO.js","name":"index","imports":["_ssr-CdWluhp9.js"]},"_ssr-CdWluhp9.js":{"file":"assets/ssr-CdWluhp9.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-CZKTuSa8.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-D54abodO.js","_ssr-CdWluhp9.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-M1669HVv.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-D54abodO.js","_ssr-CdWluhp9.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-CdWluhp9.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-CmP4Xv-7.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-BMWKtk7w.js"]},"_api-BMWKtk7w.js":{"file":"assets/api-BMWKtk7w.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-BMWKtk7w.js"]}}};
+				const buildManifest = {"client":{"_StateDisplay-Cfa52fDl.js":{"file":"assets/StateDisplay-Cfa52fDl.js","name":"StateDisplay","imports":["_client-C6k1dB-Y.js"]},"_client-C6k1dB-Y.js":{"file":"assets/client-C6k1dB-Y.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-D1Z4fsZN.js":{"file":"assets/index-D1Z4fsZN.js","name":"index","imports":["_client-C6k1dB-Y.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-D7WlpRtU.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-C6k1dB-Y.js","_StateDisplay-Cfa52fDl.js","_index-D1Z4fsZN.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-BNoSYs37.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-C6k1dB-Y.js","_index-D1Z4fsZN.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-Tuy81FLt.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-C6k1dB-Y.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-DMQk0G7N.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-C6k1dB-Y.js","_StateDisplay-Cfa52fDl.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-CyMzWrb3.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-C6k1dB-Y.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-CpVQSMVx.js":{"file":"assets/index-CpVQSMVx.js","name":"index","imports":["_ssr-BvmkPQtS.js"]},"_ssr-BvmkPQtS.js":{"file":"assets/ssr-BvmkPQtS.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-CgxAnUP6.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-CpVQSMVx.js","_ssr-BvmkPQtS.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-CKfECdck.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-CpVQSMVx.js","_ssr-BvmkPQtS.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-BvmkPQtS.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-CmP4Xv-7.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-BMWKtk7w.js"]},"_api-BMWKtk7w.js":{"file":"assets/api-BMWKtk7w.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-BMWKtk7w.js"]}}};
 
 				const routeManifest = {"api":{}};
 
@@ -4560,82 +4561,82 @@ app
 ];
 
 const assets = {
-  "/_build/assets/StateDisplay-0LIlrz23.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"1496-shx9X97VXgrs7MIuDIB8/SiLtBs\"",
-    "mtime": "2026-04-15T23:23:36.964Z",
-    "size": 5270,
-    "path": "../public/_build/assets/StateDisplay-0LIlrz23.js"
-  },
   "/assets/ssr.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T23:23:36.969Z",
+    "mtime": "2026-04-15T23:29:22.929Z",
     "size": 29329,
     "path": "../public/assets/ssr.css"
   },
-  "/_build/.vite/manifest.json": {
-    "type": "application/json",
-    "etag": "\"867-4SU5BQt4olK1EXALMQpRK/vsWIE\"",
-    "mtime": "2026-04-15T23:23:36.965Z",
-    "size": 2151,
-    "path": "../public/_build/.vite/manifest.json"
-  },
-  "/_build/assets/client-DaftaykD.js": {
+  "/_build/assets/StateDisplay-Cfa52fDl.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"3f-m4dgyRjin5cc684P6HyRMPqF92s\"",
-    "mtime": "2026-04-15T23:23:36.964Z",
+    "etag": "\"1496-S2E82Wi3ejLb5fCe9t1cThYhwe8\"",
+    "mtime": "2026-04-15T23:29:22.925Z",
+    "size": 5270,
+    "path": "../public/_build/assets/StateDisplay-Cfa52fDl.js"
+  },
+  "/_build/assets/client-C6k1dB-Y.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"366f6-+1buTbupm15+RpZayCCvJVchVTc\"",
+    "mtime": "2026-04-15T23:29:22.926Z",
+    "size": 222966,
+    "path": "../public/_build/assets/client-C6k1dB-Y.js"
+  },
+  "/_build/assets/client-CyMzWrb3.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"3f-2tAkA8WsL/zvr40b6IbGVC/ynNM\"",
+    "mtime": "2026-04-15T23:29:22.925Z",
     "size": 63,
-    "path": "../public/_build/assets/client-DaftaykD.js"
+    "path": "../public/_build/assets/client-CyMzWrb3.js"
   },
-  "/_build/assets/_domain-BYHopRUv.js": {
+  "/_build/assets/index-D1Z4fsZN.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"164a5-UbIAdMLfBf7TLNCZbf7qYrgqi5Y\"",
-    "mtime": "2026-04-15T23:23:36.966Z",
-    "size": 91301,
-    "path": "../public/_build/assets/_domain-BYHopRUv.js"
+    "etag": "\"1507-5wu9gglQd61qcFmOy/ygH9s7c5s\"",
+    "mtime": "2026-04-15T23:29:22.925Z",
+    "size": 5383,
+    "path": "../public/_build/assets/index-D1Z4fsZN.js"
+  },
+  "/_build/assets/login-Tuy81FLt.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"10cf-Lo1cUUTL7f/MsY8y+C7fKxFpbmI\"",
+    "mtime": "2026-04-15T23:29:22.925Z",
+    "size": 4303,
+    "path": "../public/_build/assets/login-Tuy81FLt.js"
+  },
+  "/_build/assets/index-BNoSYs37.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"1da7-eqJmrx7KCCUM3opKxD+xK0BuoCs\"",
+    "mtime": "2026-04-15T23:29:22.925Z",
+    "size": 7591,
+    "path": "../public/_build/assets/index-BNoSYs37.js"
   },
   "/_build/assets/client.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T23:23:36.964Z",
+    "mtime": "2026-04-15T23:29:22.925Z",
     "size": 29329,
     "path": "../public/_build/assets/client.css"
   },
-  "/_build/assets/index-CgU_CiRy.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"1507-DUvOpflfshjXQ2Bt6EGqQVw4Ls4\"",
-    "mtime": "2026-04-15T23:23:36.964Z",
-    "size": 5383,
-    "path": "../public/_build/assets/index-CgU_CiRy.js"
+  "/_build/.vite/manifest.json": {
+    "type": "application/json",
+    "etag": "\"867-DerXAa30Xm5x8Y1VhX4kygsmwjE\"",
+    "mtime": "2026-04-15T23:29:22.924Z",
+    "size": 2151,
+    "path": "../public/_build/.vite/manifest.json"
   },
-  "/_build/assets/client-CTuu5GZP.js": {
+  "/_build/assets/portfolio-DMQk0G7N.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"366e2-DPdF0WXe0x5cY9ZT2g2HX66uhkg\"",
-    "mtime": "2026-04-15T23:23:36.965Z",
-    "size": 222946,
-    "path": "../public/_build/assets/client-CTuu5GZP.js"
-  },
-  "/_build/assets/index-D7nX5pwP.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"1da7-SWbtAqmUwzJYqBDLJK36k/LbPJM\"",
-    "mtime": "2026-04-15T23:23:36.965Z",
-    "size": 7591,
-    "path": "../public/_build/assets/index-D7nX5pwP.js"
-  },
-  "/_build/assets/login-CS1CHE1m.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"10cf-pVqJAi0PpGzgu/Ke1khAR+StOKw\"",
-    "mtime": "2026-04-15T23:23:36.965Z",
-    "size": 4303,
-    "path": "../public/_build/assets/login-CS1CHE1m.js"
-  },
-  "/_build/assets/portfolio-BHvp-A26.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"1311f-mwSeMINkUHsQcGSLt4W4yCOlfII\"",
-    "mtime": "2026-04-15T23:23:36.965Z",
+    "etag": "\"1311f-/SH7UNIhC6wM/2OfOAvP2JtB9bA\"",
+    "mtime": "2026-04-15T23:29:22.925Z",
     "size": 78111,
-    "path": "../public/_build/assets/portfolio-BHvp-A26.js"
+    "path": "../public/_build/assets/portfolio-DMQk0G7N.js"
+  },
+  "/_build/assets/_domain-D7WlpRtU.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"164a5-iH2muE3+NfpQ+8w/dk9k+n7aQ1E\"",
+    "mtime": "2026-04-15T23:29:22.926Z",
+    "size": 91301,
+    "path": "../public/_build/assets/_domain-D7WlpRtU.js"
   }
 };
 
@@ -4931,7 +4932,7 @@ function Z$1(e) {
   var _a;
   return (_a = e.web) != null ? _a : e.web = { request: Y(e), url: D(e) }, e.web.request;
 }
-function k$1() {
+function k() {
   return H();
 }
 const j = /* @__PURE__ */ Symbol("$HTTPEvent");
@@ -4945,7 +4946,7 @@ function E(e) {
     if (ee$1(r)) n[0] = r instanceof H3Event || r.__is_event__ ? r : r[j];
     else {
       if (!((t = globalThis.app.config.server.experimental) != null && t.asyncContext)) throw new Error("AsyncLocalStorage was not enabled. Use the `server.experimental.asyncContext: true` option in your app configuration to enable it. Or, pass the instance of HTTPEvent that you have as the first argument to the function.");
-      n.unshift(k$1());
+      n.unshift(k());
     }
     return e(...n);
   };
@@ -5207,7 +5208,7 @@ class nr {
     if (t) return t instanceof Error ? { name: t.name, message: t.message, stack: t.stack } : { name: "Unknown", message: String(t) };
   }
 }
-function rr$1(e) {
+function rr(e) {
   return new nr({ minLevel: process.env.LOG_LEVEL || "info", pretty: false, ...e });
 }
 class vo {
@@ -5301,7 +5302,7 @@ function _o(e, t) {
   const n = Io(e, t);
   return { remediation: n.createRemediationMetrics(), shadow: n.createShadowMetrics(), alerts: n.createAlertMetrics(), jobs: n.createJobMetrics() };
 }
-const Dr = rr$1({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" }), Hs = [{ name: "NODE_ENV", required: false, description: "Runtime environment (development/production/test)", validate: (e) => ["development", "production", "test"].includes(e) ? null : "Must be one of: development, production, test", default: "production" }, { name: "DATABASE_URL", required: "development", description: "PostgreSQL connection URL for local development or bound runtime", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "HYPERDRIVE_URL", required: false, description: "Optional Cloudflare-bound PostgreSQL/Hyperdrive connection URL", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "COLLECTOR_URL", required: true, description: "URL for the DNS collector service", validate: (e) => {
+const Dr = rr({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" }), Hs = [{ name: "NODE_ENV", required: false, description: "Runtime environment (development/production/test)", validate: (e) => ["development", "production", "test"].includes(e) ? null : "Must be one of: development, production, test", default: "production" }, { name: "DATABASE_URL", required: "development", description: "PostgreSQL connection URL for local development or bound runtime", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "HYPERDRIVE_URL", required: false, description: "Optional Cloudflare-bound PostgreSQL/Hyperdrive connection URL", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "COLLECTOR_URL", required: true, description: "URL for the DNS collector service", validate: (e) => {
   try {
     return new URL(e), null;
   } catch {
@@ -5368,12 +5369,12 @@ function To(e = process.env) {
     throw Dr.error("Environment validation failed", void 0, { errorCount: t.errors.length, errors: t.errors.map((r) => `${r.name}: ${r.error}`), formatted: n }), new Error(`Environment validation failed: ${t.errors.length} error(s)`);
   }
 }
-function sr(e, t = process.env) {
+function sr$1(e, t = process.env) {
   const n = lt$1("NODE_ENV", e, t) || "production";
   return { nodeEnv: n, databaseUrl: lt$1("DATABASE_URL", e, t), collectorUrl: lt$1("COLLECTOR_URL", e, t) || "http://localhost:3001", internalSecret: lt$1("INTERNAL_SECRET", e, t), apiKeySecret: lt$1("API_KEY_SECRET", e, t), isDevelopment: n === "development", isProduction: n === "production" };
 }
 function Ro(e, t = process.env) {
-  return sr(e, t);
+  return sr$1(e, t);
 }
 Hs.map((e) => e.name);
 function wt$1(e) {
@@ -8124,10 +8125,10 @@ function zt$1(e, t) {
 function nc(e) {
   if (e.d1Binding) return drizzle(e.d1Binding, { schema: We });
   if (!e.connectionString) throw new Error("Either d1Binding or connectionString must be provided");
-  const t = new Zt({ connectionString: e.connectionString, ssl: Jt(e.connectionString) });
+  const t = new Zt({ connectionString: e.connectionString, ssl: Jt$1(e.connectionString) });
   return drizzle$1(t, { schema: We });
 }
-function Jt(e, t) {
+function Jt$1(e, t) {
   var _a2;
   try {
     const r = new URL(e).searchParams.get("sslmode");
@@ -8139,7 +8140,7 @@ function Jt(e, t) {
   return process.env.DB_TLS_REJECT_UNAUTHORIZED === "false" ? { rejectUnauthorized: false } : process.env.DB_TLS_REJECT_UNAUTHORIZED === "true" ? { rejectUnauthorized: true } : { rejectUnauthorized: (_a2 = t == null ? void 0 : t.strictDefault) != null ? _a2 : false };
 }
 function rc(e) {
-  const t = new Zt({ connectionString: e, ssl: Jt(e, { strictDefault: true }) });
+  const t = new Zt({ connectionString: e, ssl: Jt$1(e, { strictDefault: true }) });
   return drizzle$1(t, { schema: We });
 }
 function sc(e) {
@@ -8151,11 +8152,11 @@ function ic(e) {
     return zt$1(r, "d1");
   }
   if (!e.connectionString) throw new Error("Either d1Binding or connectionString must be provided");
-  const t = new Zt({ connectionString: e.connectionString, ssl: Jt(e.connectionString) }), n = drizzle$1(t, { schema: We });
+  const t = new Zt({ connectionString: e.connectionString, ssl: Jt$1(e.connectionString) }), n = drizzle$1(t, { schema: We });
   return zt$1(n, "postgres");
 }
 function va(e) {
-  const t = new Zt({ connectionString: e, ssl: Jt(e, { strictDefault: true }) }), n = drizzle$1(t, { schema: We });
+  const t = new Zt({ connectionString: e, ssl: Jt$1(e, { strictDefault: true }) }), n = drizzle$1(t, { schema: We });
   return zt$1(n, "postgres");
 }
 function oc(e) {
@@ -9104,7 +9105,7 @@ async function xi(e) {
   }
   console.log(`[SchemaRepair] Applied ${n} column fixes`);
 }
-const Ta = Object.freeze(Object.defineProperty({ __proto__: null, repairSchema: xi }, Symbol.toStringTag, { value: "Module" })), Ft$1 = rr$1({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" });
+const Ta = Object.freeze(Object.defineProperty({ __proto__: null, repairSchema: xi }, Symbol.toStringTag, { value: "Module" })), Ft$1 = rr({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" });
 let Un = null, vs = null, Is = false, _s = false;
 function Ra(e) {
   return typeof (e == null ? void 0 : e.ASSETS) < "u" || !!(e == null ? void 0 : e.HYPERDRIVE);
@@ -9113,7 +9114,7 @@ function Ea(e) {
   return (!Un || vs !== e) && (Un = va(e), vs = e), Un;
 }
 const Da = createMiddleware(async (e, t) => {
-  const { databaseUrl: n, isDevelopment: r } = sr(e.env);
+  const { databaseUrl: n, isDevelopment: r } = sr$1(e.env);
   if (r && !n) return Ft$1.error("DATABASE_URL is required in development mode", void 0, { hint: "Set DATABASE_URL environment variable", code: "DB_CONFIG_MISSING" }), e.req.path.startsWith("/api/") ? e.json({ error: "Database configuration error", message: "DATABASE_URL is required in development mode", code: "DB_CONFIG_MISSING" }, 503) : await t();
   if (!n && Ra(e.env) && (Is || (Is = true, Ft$1.warn("No database connection available", { code: "DB_UNAVAILABLE" })), e.req.path.startsWith("/api/") && e.req.path !== "/api/health")) return e.json({ error: "Database unavailable", message: "Database connection not configured", code: "DB_UNAVAILABLE" }, 503);
   if (n) {
@@ -9131,7 +9132,7 @@ function P$1() {
   var _a2;
   if (!Vn) {
     const e = typeof process < "u" && ((_a2 = process.env) == null ? void 0 : _a2.NODE_ENV) === "development";
-    Vn = rr$1({ service: "dns-ops-web", version: "0.1.0", minLevel: e ? "debug" : "info", pretty: e });
+    Vn = rr({ service: "dns-ops-web", version: "0.1.0", minLevel: e ? "debug" : "info", pretty: e });
   }
   return Vn;
 }
@@ -9320,7 +9321,7 @@ const Je = new Ma();
 function xa(e, t) {
   const n = e.get("tenantId"), r = e.get("actorId");
   if (!n || !r) return e.json({ error: "Authenticated tenant and actor required" }, 401);
-  const { collectorUrl: s, internalSecret: i, isProduction: o } = sr(e.env), a = {};
+  const { collectorUrl: s, internalSecret: i, isProduction: o } = sr$1(e.env), a = {};
   return i ? (a["X-Internal-Secret"] = i, a["X-Tenant-Id"] = n, a["X-Actor-Id"] = r, { collectorUrl: s, headers: a }) : o ? e.json({ error: "Collector integration is not configured" }, 503) : (a["X-Dev-Tenant"] = n, a["X-Dev-Actor"] = r, { collectorUrl: s, headers: a });
 }
 async function gr(e, t) {
@@ -10851,8 +10852,8 @@ const Ms = ["open", "in-progress", "resolved", "closed"], xs = ["low", "medium",
     } else p === "in-progress" && Qe().remediation.started({ tenantId: n, domainId: a.domain, type: (_e2 = (_d2 = a.issues) == null ? void 0 : _d2.join(",")) != null ? _e2 : "unknown" });
   }
   return e.json({ remediation: d });
-}), Ye$1 = new Hono();
-Ye$1.use("*", $);
+}), Ye = new Hono();
+Ye.use("*", $);
 async function xt$1(e, t, n) {
   return (await e.findByTenant(t)).find((s) => s.id === n || s.domainId === n);
 }
@@ -10861,7 +10862,7 @@ function Dd(e, t) {
   const n = e.message.toLowerCase();
   return n.includes("duplicate key") || n.includes("unique constraint") || n.includes(t.toLowerCase());
 }
-Ye$1.get("/domains", async (e) => {
+Ye.get("/domains", async (e) => {
   const t = e.get("db"), n = e.get("tenantId");
   if (!t || !n) return e.json({ error: "Database or tenant context unavailable" }, 503);
   const r = new rt$1(t), s = new ne$1(t), i = await r.findByTenant(n), o = await Promise.all(i.map(async (a) => {
@@ -10870,7 +10871,7 @@ Ye$1.get("/domains", async (e) => {
   }));
   return e.json({ monitoredDomains: o });
 });
-Ye$1.get("/domains/:id", async (e) => {
+Ye.get("/domains/:id", async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.req.param("id");
   if (!t || !n) return e.json({ error: "Database or tenant context unavailable" }, 503);
   const s = new rt$1(t), i = new ne$1(t), o = await xt$1(s, n, r);
@@ -10878,7 +10879,7 @@ Ye$1.get("/domains/:id", async (e) => {
   const a = await i.findById(o.domainId);
   return e.json({ monitoredDomain: { ...o, domainName: (a == null ? void 0 : a.name) || "Unknown" } });
 });
-Ye$1.post("/domains", G, async (e) => {
+Ye.post("/domains", G, async (e) => {
   var _a2, _b;
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
@@ -10904,7 +10905,7 @@ Ye$1.post("/domains", G, async (e) => {
   }
   return await new ee(t).create({ action: "monitored_domain_created", entityType: "monitored_domain", entityId: l.id, actorId: r, tenantId: n, newValue: { domainId: l.domainId, domainName: u, schedule: l.schedule, isActive: l.isActive }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ monitoredDomain: l }, 201);
 });
-Ye$1.put("/domains/:id", G, async (e) => {
+Ye.put("/domains/:id", G, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
   const i = await e.req.json().catch(() => ({})), o = new rt$1(t), a = await xt$1(o, n, s);
@@ -10912,7 +10913,7 @@ Ye$1.put("/domains/:id", G, async (e) => {
   const u = await o.update(a.id, { ...i.schedule && { schedule: i.schedule }, ...i.alertChannels && { alertChannels: i.alertChannels }, ...i.maxAlertsPerDay !== void 0 && { maxAlertsPerDay: i.maxAlertsPerDay }, ...i.suppressionWindowMinutes !== void 0 && { suppressionWindowMinutes: i.suppressionWindowMinutes }, ...i.isActive !== void 0 && { isActive: i.isActive } });
   return u && await new ee(t).create({ action: "monitored_domain_updated", entityType: "monitored_domain", entityId: u.id, actorId: r, tenantId: n, previousValue: { schedule: a.schedule, isActive: a.isActive, alertChannels: a.alertChannels, maxAlertsPerDay: a.maxAlertsPerDay, suppressionWindowMinutes: a.suppressionWindowMinutes }, newValue: { schedule: u.schedule, isActive: u.isActive, alertChannels: u.alertChannels, maxAlertsPerDay: u.maxAlertsPerDay, suppressionWindowMinutes: u.suppressionWindowMinutes }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ monitoredDomain: u });
 });
-Ye$1.delete("/domains/:id", G, async (e) => {
+Ye.delete("/domains/:id", G, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
   const i = new rt$1(t), o = new ne$1(t), a = await xt$1(i, n, s);
@@ -10920,7 +10921,7 @@ Ye$1.delete("/domains/:id", G, async (e) => {
   const u = await o.findById(a.domainId);
   return await i.delete(a.id), await new ee(t).create({ action: "monitored_domain_deleted", entityType: "monitored_domain", entityId: a.id, actorId: r, tenantId: n, previousValue: { domainId: a.domainId, domainName: u == null ? void 0 : u.name, schedule: a.schedule, isActive: a.isActive }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ success: true, deletedId: a.id });
 });
-Ye$1.post("/domains/:id/toggle", G, async (e) => {
+Ye.post("/domains/:id/toggle", G, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
   const i = new rt$1(t), o = await xt$1(i, n, s);
@@ -11710,7 +11711,7 @@ Z.route("/snapshots", at$1);
 Z.route("/migrate", st$1);
 Z.route("/portfolio", ie);
 Z.route("/ruleset-versions", Nd);
-Z.route("/monitoring", Ye$1);
+Z.route("/monitoring", Ye);
 Z.route("/alerts", Ne);
 Z.route("/fleet-report", dn);
 Z.route("/simulate", Ir);
@@ -11775,24 +11776,24 @@ const yc = wo(({ request: e }) => {
   return cn.fetch(e, n != null ? n : {});
 });
 
-const Xe = () => ({ routes: { __root__: { filePath: "__root.tsx", children: ["/", "/login", "/portfolio", "/domain/$domain"], preloads: ["/_build/assets/client-DaftaykD.js", "/_build/assets/client-CTuu5GZP.js"] }, "/": { filePath: "index.tsx" }, "/login": { filePath: "login.tsx" }, "/portfolio": { filePath: "portfolio.tsx" }, "/domain/$domain": { filePath: "domain/$domain.tsx" } } });
-function Ye(e) {
+const Xe = () => ({ routes: { __root__: { filePath: "__root.tsx", children: ["/", "/login", "/portfolio", "/domain/$domain"], preloads: ["/_build/assets/client-CyMzWrb3.js", "/_build/assets/client-C6k1dB-Y.js"] }, "/": { filePath: "index.tsx" }, "/login": { filePath: "login.tsx" }, "/portfolio": { filePath: "portfolio.tsx" }, "/domain/$domain": { filePath: "domain/$domain.tsx" } } });
+function et(e) {
   return globalThis.MANIFEST[e];
 }
-var et = "Invariant failed";
-function tt(e, r) {
-  if (!e) throw new Error(et);
+var tt = "Invariant failed";
+function rt(e, r) {
+  if (!e) throw new Error(tt);
 }
-function rt() {
+function nt() {
   var _a;
   const e = Xe(), r = e.routes.__root__ = e.routes.__root__ || {};
   r.assets = r.assets || [];
   let t = "";
-  const s = Ye("client"), n = (_a = s.inputs[s.handler]) == null ? void 0 : _a.output.path;
-  return n || tt(n), r.assets.push({ tag: "script", attrs: { type: "module", suppressHydrationWarning: true, async: true }, children: `${t}import("${n}")` }), e;
+  const s = et("client"), n = (_a = s.inputs[s.handler]) == null ? void 0 : _a.output.path;
+  return n || rt(n), r.assets.push({ tag: "script", attrs: { type: "module", suppressHydrationWarning: true, async: true }, children: `${t}import("${n}")` }), e;
 }
-function nt() {
-  const e = rt();
+function st() {
+  const e = nt();
   return { ...e, routes: Object.fromEntries(Object.entries(e.routes).map(([r, t]) => {
     const { preloads: s, assets: n } = t;
     return [r, { preloads: s, assets: n }];
@@ -11801,27 +11802,27 @@ function nt() {
 function le(e) {
   return jsx(RouterProvider, { router: e.router });
 }
-var st = " daum[ /]| deusu/|(?:^|[^g])news(?!sapphire)|(?<! (?:channel/|google/))google(?!(app|/google| pixel))|(?<! cu)bots?(?:\\b|_)|(?<!(?:lib))http|(?<!cam)scan|24x7|@[a-z][\\w-]+\\.|\\(\\)|\\.com\\b|\\b\\w+\\.ai|\\bmanus-user/|\\bort/|\\bperl\\b|\\bsecurityheaders\\b|\\btime/|\\||^[\\w \\.\\-\\(?:\\):%]+(?:/v?\\d+(?:\\.\\d+)?(?:\\.\\d{1,10})*?)?(?:,|$)|^[^ ]{50,}$|^\\d+\\b|^\\W|^\\w*search\\b|^\\w+/[\\w\\(\\)]*$|^\\w+/\\d\\.\\d\\s\\([\\w@]+\\)$|^active|^ad muncher|^amaya|^apache/|^avsdevicesdk/|^azure|^biglotron|^bot|^bw/|^clamav[ /]|^client/|^cobweb/|^custom|^ddg[_-]android|^discourse|^dispatch/\\d|^downcast/|^duckduckgo|^email|^facebook|^getright/|^gozilla/|^hobbit|^hotzonu|^hwcdn/|^igetter/|^jeode/|^jetty/|^jigsaw|^microsoft bits|^movabletype|^mozilla/\\d\\.\\d\\s[\\w\\.-]+$|^mozilla/\\d\\.\\d\\s\\((?:compatible;)?(?:\\s?[\\w\\d-.]+\\/\\d+\\.\\d+)?\\)$|^navermailapp|^netsurf|^offline|^openai/|^owler|^php|^postman|^python|^rank|^read|^reed|^rest|^rss|^snapchat|^space bison|^svn|^swcd |^taringa|^thumbor/|^track|^w3c|^webbandit/|^webcopier|^wget|^whatsapp|^wordpress|^xenu link sleuth|^yahoo|^yandex|^zdm/\\d|^zoom marketplace/|advisor|agent\\b|analyzer|archive|ask jeeves/teoma|audit|bit\\.ly/|bluecoat drtr|browsex|burpcollaborator|capture|catch|check\\b|checker|chrome-lighthouse|chromeframe|classifier|cloudflare|convertify|crawl|cypress/|dareboost|datanyze|dejaclick|detect|dmbrowser|download|exaleadcloudview|feed|fetcher|firephp|functionize|grab|headless|httrack|hubspot marketing grader|ibisbrowser|infrawatch|insight|inspect|iplabel|java(?!;)|library|linkcheck|mail\\.ru/|manager|measure|monitor\\b|neustar wpm|node\\b|nutch|offbyone|onetrust|optimize|pageburst|pagespeed|parser|phantomjs|pingdom|powermarks|preview|proxy|ptst[ /]\\d|retriever|rexx;|rigor|rss\\b|scrape|server|sogou|sparkler/|speedcurve|spider|splash|statuscake|supercleaner|synapse|synthetic|tools|torrent|transcoder|url|validator|virtuoso|wappalyzer|webglance|webkit2png|whatcms/|xtate/", at = /bot|crawl|http|lighthouse|scan|search|spider/i, O;
-function ot() {
+var at = " daum[ /]| deusu/|(?:^|[^g])news(?!sapphire)|(?<! (?:channel/|google/))google(?!(app|/google| pixel))|(?<! cu)bots?(?:\\b|_)|(?<!(?:lib))http|(?<!cam)scan|24x7|@[a-z][\\w-]+\\.|\\(\\)|\\.com\\b|\\b\\w+\\.ai|\\bmanus-user/|\\bort/|\\bperl\\b|\\bsecurityheaders\\b|\\btime/|\\||^[\\w \\.\\-\\(?:\\):%]+(?:/v?\\d+(?:\\.\\d+)?(?:\\.\\d{1,10})*?)?(?:,|$)|^[^ ]{50,}$|^\\d+\\b|^\\W|^\\w*search\\b|^\\w+/[\\w\\(\\)]*$|^\\w+/\\d\\.\\d\\s\\([\\w@]+\\)$|^active|^ad muncher|^amaya|^apache/|^avsdevicesdk/|^azure|^biglotron|^bot|^bw/|^clamav[ /]|^client/|^cobweb/|^custom|^ddg[_-]android|^discourse|^dispatch/\\d|^downcast/|^duckduckgo|^email|^facebook|^getright/|^gozilla/|^hobbit|^hotzonu|^hwcdn/|^igetter/|^jeode/|^jetty/|^jigsaw|^microsoft bits|^movabletype|^mozilla/\\d\\.\\d\\s[\\w\\.-]+$|^mozilla/\\d\\.\\d\\s\\((?:compatible;)?(?:\\s?[\\w\\d-.]+\\/\\d+\\.\\d+)?\\)$|^navermailapp|^netsurf|^offline|^openai/|^owler|^php|^postman|^python|^rank|^read|^reed|^rest|^rss|^snapchat|^space bison|^svn|^swcd |^taringa|^thumbor/|^track|^w3c|^webbandit/|^webcopier|^wget|^whatsapp|^wordpress|^xenu link sleuth|^yahoo|^yandex|^zdm/\\d|^zoom marketplace/|advisor|agent\\b|analyzer|archive|ask jeeves/teoma|audit|bit\\.ly/|bluecoat drtr|browsex|burpcollaborator|capture|catch|check\\b|checker|chrome-lighthouse|chromeframe|classifier|cloudflare|convertify|crawl|cypress/|dareboost|datanyze|dejaclick|detect|dmbrowser|download|exaleadcloudview|feed|fetcher|firephp|functionize|grab|headless|httrack|hubspot marketing grader|ibisbrowser|infrawatch|insight|inspect|iplabel|java(?!;)|library|linkcheck|mail\\.ru/|manager|measure|monitor\\b|neustar wpm|node\\b|nutch|offbyone|onetrust|optimize|pageburst|pagespeed|parser|phantomjs|pingdom|powermarks|preview|proxy|ptst[ /]\\d|retriever|rexx;|rigor|rss\\b|scrape|server|sogou|sparkler/|speedcurve|spider|splash|statuscake|supercleaner|synapse|synthetic|tools|torrent|transcoder|url|validator|virtuoso|wappalyzer|webglance|webkit2png|whatcms/|xtate/", ot = /bot|crawl|http|lighthouse|scan|search|spider/i, O;
+function it() {
   if (O instanceof RegExp) return O;
   try {
-    O = new RegExp(st, "i");
+    O = new RegExp(at, "i");
   } catch {
-    O = at;
+    O = ot;
   }
   return O;
 }
 function de(e) {
-  return !!e && ot().test(e);
-}
-function it(e, r) {
-  return pe(e, r);
+  return !!e && it().test(e);
 }
 function ct(e, r) {
+  return pe(e, r);
+}
+function lt(e, r) {
   return Readable.fromWeb(pe(e, Readable.toWeb(r)));
 }
-const lt = /(<body)/, dt = /(<\/body>)/, ut = /(<\/html>)/, ft = /(<head.*?>)/, mt = /(<\/[a-zA-Z][\w:.-]*?>)/g, pt = new TextDecoder();
-function ht() {
+const dt = /(<body)/, ut = /(<\/body>)/, ft = /(<\/html>)/, mt = /(<head.*?>)/, pt = /(<\/[a-zA-Z][\w:.-]*?>)/g, ht = new TextDecoder();
+function gt() {
   let e;
   const r = new TextEncoder(), s = { stream: new ReadableStream$1({ start(n) {
     e = n;
@@ -11834,7 +11835,7 @@ function ht() {
   }, destroyed: false };
   return s;
 }
-async function gt(e, r) {
+async function St(e, r) {
   var t, s, n;
   try {
     const i = e.getReader();
@@ -11846,28 +11847,28 @@ async function gt(e, r) {
   }
 }
 function pe(e, r) {
-  const t = ht();
+  const t = gt();
   let s = true, n = "", i = "", l = false, d = false, c = "", f = "";
   function g() {
     const u = n;
     return n = "", u;
   }
   function H(u) {
-    return u instanceof Uint8Array ? pt.decode(u) : String(u);
+    return u instanceof Uint8Array ? ht.decode(u) : String(u);
   }
   const E = createControlledPromise();
   let w = 0;
   e.serverSsr.injectedHtml.forEach((u) => {
-    M(u);
+    k(u);
   });
-  const X = e.subscribe("onInjectedHtml", (u) => {
-    M(u.promise);
+  const Q = e.subscribe("onInjectedHtml", (u) => {
+    k(u.promise);
   });
-  function M(u) {
+  function k(u) {
     w++, u.then((j) => {
       l ? t.write(j) : n += j;
     }).catch(E.reject).finally(() => {
-      w--, !s && w === 0 && (X(), E.resolve());
+      w--, !s && w === 0 && (Q(), E.resolve());
     });
   }
   return E.then(() => {
@@ -11875,12 +11876,12 @@ function pe(e, r) {
     t.end(u);
   }).catch((u) => {
     console.error("Error reading routerStream:", u), t.destroy(u);
-  }), gt(r, { onData: (u) => {
+  }), St(r, { onData: (u) => {
     const j = H(u.value);
     let S = c + j;
-    const N = S.match(dt), B = S.match(ut);
-    if (l || S.match(lt) && (l = true), !d) {
-      const m = S.match(ft);
+    const N = S.match(ut), B = S.match(ft);
+    if (l || S.match(dt) && (l = true), !d) {
+      const m = S.match(mt);
       if (m) {
         d = true;
         const a = m.index, o = m[0], _ = S.slice(a + o.length);
@@ -11897,7 +11898,7 @@ function pe(e, r) {
       return;
     }
     let I, A = 0;
-    for (; (I = mt.exec(S)) !== null; ) A = I.index + I[0].length;
+    for (; (I = pt.exec(S)) !== null; ) A = I.index + I[0].length;
     if (A > 0) {
       const m = S.slice(0, A) + g() + f;
       t.write(m), c = S.slice(A);
@@ -11926,12 +11927,12 @@ function he(e) {
   }
   return r;
 }
-function St(e) {
+function _t(e) {
   return e instanceof Headers ? new Headers(e) : Array.isArray(e) ? new Headers(e) : typeof e == "object" ? new Headers(e) : new Headers();
 }
 function ue(...e) {
   return e.reduce((r, t) => {
-    const s = St(t);
+    const s = _t(t);
     for (const [n, i] of s.entries()) n === "set-cookie" ? he(i).forEach((d) => r.append("set-cookie", d)) : r.set(n, i);
     return r;
   }, new Headers());
@@ -11970,11 +11971,11 @@ const z = { stringify: (e) => JSON.stringify(e, function(t, s) {
     Array.isArray(s) ? s.forEach((n) => r.append(t, n)) : r.append(t, s);
   }), r;
 }), F("bigint", (e) => typeof e == "bigint", (e) => e.toString(), (e) => BigInt(e))];
-function _t(e) {
+function yt(e) {
   return e && e.__esModule && Object.prototype.hasOwnProperty.call(e, "default") ? e.default : e;
 }
 var re, fe;
-function yt() {
+function bt() {
   if (fe) return re;
   fe = 1;
   const e = {}, r = e.hasOwnProperty, t = (a, o) => {
@@ -11988,24 +11989,24 @@ function yt() {
   }, i = (a) => "\\u" + ("0000" + a).slice(-4), l = (a, o) => {
     let _ = a.toString(16);
     return o ? _ : _.toUpperCase();
-  }, d = e.toString, c = Array.isArray, f = (a) => typeof Buffer == "function" && Buffer.isBuffer(a), g = (a) => d.call(a) == "[object Object]", H = (a) => typeof a == "string" || d.call(a) == "[object String]", E = (a) => typeof a == "number" || d.call(a) == "[object Number]", w = (a) => typeof a == "bigint", X = (a) => typeof a == "function", M = (a) => d.call(a) == "[object Map]", u = (a) => d.call(a) == "[object Set]", j = { "\\": "\\\\", "\b": "\\b", "\f": "\\f", "\n": "\\n", "\r": "\\r", "	": "\\t" }, S = /[\\\b\f\n\r\t]/, N = /[0-9]/, B = /[\xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/, I = /([\uD800-\uDBFF][\uDC00-\uDFFF])|([\uD800-\uDFFF])|(['"`])|[^]/g, A = /([\uD800-\uDBFF][\uDC00-\uDFFF])|([\uD800-\uDFFF])|(['"`])|[^ !#-&\(-\[\]-_a-~]/g, m = (a, o) => {
+  }, d = e.toString, c = Array.isArray, f = (a) => typeof Buffer == "function" && Buffer.isBuffer(a), g = (a) => d.call(a) == "[object Object]", H = (a) => typeof a == "string" || d.call(a) == "[object String]", E = (a) => typeof a == "number" || d.call(a) == "[object Number]", w = (a) => typeof a == "bigint", Q = (a) => typeof a == "function", k = (a) => d.call(a) == "[object Map]", u = (a) => d.call(a) == "[object Set]", j = { "\\": "\\\\", "\b": "\\b", "\f": "\\f", "\n": "\\n", "\r": "\\r", "	": "\\t" }, S = /[\\\b\f\n\r\t]/, N = /[0-9]/, B = /[\xA0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/, I = /([\uD800-\uDBFF][\uDC00-\uDFFF])|([\uD800-\uDFFF])|(['"`])|[^]/g, A = /([\uD800-\uDBFF][\uDC00-\uDFFF])|([\uD800-\uDFFF])|(['"`])|[^ !#-&\(-\[\]-_a-~]/g, m = (a, o) => {
     const _ = () => {
-      Y = U, ++o.indentLevel, U = o.indent.repeat(o.indentLevel);
+      X = U, ++o.indentLevel, U = o.indent.repeat(o.indentLevel);
     }, x = { escapeEverything: false, minimal: false, isScriptContext: false, quotes: "single", wrap: false, es6: false, json: false, compact: true, lowercaseHex: false, numbers: "decimal", indent: "	", indentLevel: 0, __inline1__: false, __inline2__: false }, v = o && o.json;
     v && (x.quotes = "double", x.wrap = true), o = s(x, o), o.quotes != "single" && o.quotes != "double" && o.quotes != "backtick" && (o.quotes = "single");
     const q = o.quotes == "double" ? '"' : o.quotes == "backtick" ? "`" : "'", R = o.compact, C = o.lowercaseHex;
-    let U = o.indent.repeat(o.indentLevel), Y = "";
+    let U = o.indent.repeat(o.indentLevel), X = "";
     const we = o.__inline1__, W = o.__inline2__, T = R ? "" : `
 `;
     let y, J = true;
     const xe = o.numbers == "binary", ve = o.numbers == "octal", Re = o.numbers == "decimal", Ee = o.numbers == "hexadecimal";
-    if (v && a && X(a.toJSON) && (a = a.toJSON()), !H(a)) {
-      if (M(a)) return a.size == 0 ? "new Map()" : (R || (o.__inline1__ = true, o.__inline2__ = false), "new Map(" + m(Array.from(a), o) + ")");
+    if (v && a && Q(a.toJSON) && (a = a.toJSON()), !H(a)) {
+      if (k(a)) return a.size == 0 ? "new Map()" : (R || (o.__inline1__ = true, o.__inline2__ = false), "new Map(" + m(Array.from(a), o) + ")");
       if (u(a)) return a.size == 0 ? "new Set()" : "new Set(" + m(Array.from(a), o) + ")";
       if (f(a)) return a.length == 0 ? "Buffer.from([])" : "Buffer.from(" + m(Array.from(a), o) + ")";
       if (c(a)) return y = [], o.wrap = true, we && (o.__inline1__ = false, o.__inline2__ = true), W || _(), n(a, (h) => {
         J = false, W && (o.__inline2__ = false), y.push((R || W ? "" : U) + m(h, o));
-      }), J ? "[]" : W ? "[" + y.join(", ") + "]" : "[" + T + y.join("," + T) + T + (R ? "" : Y) + "]";
+      }), J ? "[]" : W ? "[" + y.join(", ") + "]" : "[" + T + y.join("," + T) + T + (R ? "" : X) + "]";
       if (E(a) || w(a)) {
         if (v) return JSON.stringify(Number(a));
         let h;
@@ -12017,7 +12018,7 @@ function yt() {
         return w(a) ? h + "n" : h;
       } else return w(a) ? v ? JSON.stringify(Number(a)) : a + "n" : g(a) ? (y = [], o.wrap = true, _(), t(a, (h, b) => {
         J = false, y.push((R ? "" : U) + m(h, o) + ":" + (R ? "" : " ") + m(b, o));
-      }), J ? "{}" : "{" + T + y.join("," + T) + T + (R ? "" : Y) + "}") : v ? JSON.stringify(a) || "null" : String(a);
+      }), J ? "{}" : "{" + T + y.join("," + T) + T + (R ? "" : X) + "}") : v ? JSON.stringify(a) || "null" : String(a);
     }
     const je = o.escapeEverything ? I : A;
     return y = a.replace(je, (h, b, ae, V, Ae, Ce) => {
@@ -12041,24 +12042,24 @@ function yt() {
   };
   return m.version = "3.0.2", re = m, re;
 }
-var bt = yt();
-const P = _t(bt), wt = `const __TSR_SSR__={matches:[],streamedValues:{},initMatch:o=>(__TSR_SSR__.matches.push(o),o.extracted?.forEach(l=>{if(l.type==="stream"){let r;l.value=new ReadableStream({start(e){r={enqueue:t=>{try{e.enqueue(t)}catch{}},close:()=>{try{e.close()}catch{}}}}}),l.value.controller=r}else{let r,e;l.value=new Promise((t,a)=>{e=a,r=t}),l.value.reject=e,l.value.resolve=r}}),!0),resolvePromise:({matchId:o,id:l,promiseState:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="promise"&&t.value&&r.status==="success")return t.value.resolve(r.data),!0}return!1},injectChunk:({matchId:o,id:l,chunk:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="stream"&&t.value?.controller)return t.value.controller.enqueue(new TextEncoder().encode(r.toString())),!0}return!1},closeStream:({matchId:o,id:l})=>{const r=__TSR_SSR__.matches.find(e=>e.id===o);if(r){const e=r.extracted?.[l];if(e&&e.type==="stream"&&e.value?.controller)return e.value.controller.close(),!0}return!1},cleanScripts:()=>{document.querySelectorAll(".tsr-once").forEach(o=>{o.remove()})}};window.__TSR_SSR__=__TSR_SSR__;
+var wt = bt();
+const P = yt(wt), xt = `const __TSR_SSR__={matches:[],streamedValues:{},initMatch:o=>(__TSR_SSR__.matches.push(o),o.extracted?.forEach(l=>{if(l.type==="stream"){let r;l.value=new ReadableStream({start(e){r={enqueue:t=>{try{e.enqueue(t)}catch{}},close:()=>{try{e.close()}catch{}}}}}),l.value.controller=r}else{let r,e;l.value=new Promise((t,a)=>{e=a,r=t}),l.value.reject=e,l.value.resolve=r}}),!0),resolvePromise:({matchId:o,id:l,promiseState:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="promise"&&t.value&&r.status==="success")return t.value.resolve(r.data),!0}return!1},injectChunk:({matchId:o,id:l,chunk:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="stream"&&t.value?.controller)return t.value.controller.enqueue(new TextEncoder().encode(r.toString())),!0}return!1},closeStream:({matchId:o,id:l})=>{const r=__TSR_SSR__.matches.find(e=>e.id===o);if(r){const e=r.extracted?.[l];if(e&&e.type==="stream"&&e.value?.controller)return e.value.controller.close(),!0}return!1},cleanScripts:()=>{document.querySelectorAll(".tsr-once").forEach(o=>{o.remove()})}};window.__TSR_SSR__=__TSR_SSR__;
 `;
-function xt(e, r) {
+function vt(e, r) {
   e.ssr = { manifest: r, serializer: z }, e.serverSsr = { injectedHtml: [], streamedKeys: /* @__PURE__ */ new Set(), injectHtml: (t) => {
     const s = Promise.resolve().then(t);
     return e.serverSsr.injectedHtml.push(s), e.emit({ type: "onInjectedHtml", promise: s }), s.then(() => {
     });
   }, injectScript: (t, s) => e.serverSsr.injectHtml(async () => `<script class='tsr-once'>${await t()}; if (typeof __TSR_SSR__ !== 'undefined') __TSR_SSR__.cleanScripts()<\/script>`), streamValue: (t, s) => {
     e.serverSsr.streamedKeys.has(t), e.serverSsr.streamedKeys.add(t), e.serverSsr.injectScript(() => `__TSR_SSR__.streamedValues['${t}'] = { value: ${P(e.ssr.serializer.stringify(s), { isScriptContext: true, wrap: true, json: true })}}`);
-  }, onMatchSettled: Et }, e.serverSsr.injectScript(() => wt, { logScript: false });
+  }, onMatchSettled: jt }, e.serverSsr.injectScript(() => xt, { logScript: false });
 }
-function vt(e) {
+function Rt(e) {
   var r, t;
   const s = { manifest: e.ssr.manifest, dehydratedData: (t = (r = e.options).dehydrate) == null ? void 0 : t.call(r) };
   e.serverSsr.injectScript(() => `__TSR_SSR__.dehydrated = ${P(e.ssr.serializer.stringify(s), { isScriptContext: true, wrap: true, json: true })}`);
 }
-function Rt(e, r) {
+function Et(e, r) {
   const t = [];
   return { replaced: se(e, (n, i) => {
     if (n instanceof ReadableStream) {
@@ -12071,11 +12072,11 @@ function Rt(e, r) {
     return n;
   }), extracted: t };
 }
-function Et(e) {
+function jt(e) {
   const { router: r, match: t } = e;
   let s, n;
   if (t.loaderData !== void 0) {
-    const c = Rt(t.loaderData, { match: t });
+    const c = Et(t.loaderData, { match: t });
     t.loaderData = c.replaced, s = c.extracted, n = s.reduce((f, g) => ne(f, ["temp", ...g.path], void 0), { temp: c.replaced }).temp;
   }
   const i = `__TSR_SSR__.initMatch(${P({ id: t.id, __beforeLoadContext: r.ssr.serializer.stringify(t.__beforeLoadContext), loaderData: r.ssr.serializer.stringify(n), error: r.ssr.serializer.stringify(t.error), extracted: s == null ? void 0 : s.map((c) => pick(c, ["type", "path"])), updatedAt: t.updatedAt, status: t.status }, { isScriptContext: true, wrap: true, json: true })})`;
@@ -12115,24 +12116,24 @@ function se(e, r, t = []) {
   const s = r(e, t);
   return s !== e ? s : e;
 }
-function jt({ createRouter: e, getRouterManifest: r }) {
+function At({ createRouter: e, getRouterManifest: r }) {
   return (t) => eventHandler(async (s) => {
     const n = toWebRequest(s), i = new URL(n.url), l = i.href.replace(i.origin, ""), d = createMemoryHistory({ initialEntries: [l] }), c = e();
-    xt(c, await (r == null ? void 0 : r())), c.update({ history: d }), await c.load(), vt(c);
-    const f = At({ event: s, router: c });
+    vt(c, await (r == null ? void 0 : r())), c.update({ history: d }), await c.load(), Rt(c);
+    const f = Ct({ event: s, router: c });
     return await t({ request: n, router: c, responseHeaders: f });
   });
 }
-function At(e) {
+function Ct(e) {
   let r = ue(getResponseHeaders(e.event), e.event.___ssrRpcResponseHeaders, { "Content-Type": "text/html; charset=UTF-8" }, ...e.router.state.matches.map((s) => s.headers));
   const { redirect: t } = e.router.state;
   return t && (r = ue(r, t.headers, { Location: t.href })), r;
 }
-const Ct = async ({ request: e, router: r, responseHeaders: t }) => {
+const Tt = async ({ request: e, router: r, responseHeaders: t }) => {
   if (typeof G$2.renderToReadableStream == "function") {
     const s = await G$2.renderToReadableStream(jsx(le, { router: r }), { signal: e.signal });
     de(e.headers.get("User-Agent")) && await s.allReady;
-    const n = it(r, s);
+    const n = ct(r, s);
     return new Response(n, { status: r.state.statusCode, headers: t });
   }
   if (typeof G$2.renderToPipeableStream == "function") {
@@ -12148,12 +12149,12 @@ const Ct = async ({ request: e, router: r, responseHeaders: t }) => {
     } catch (i) {
       console.error("Error in renderToPipeableStream:", i);
     }
-    const n = ct(r, s);
+    const n = lt(r, s);
     return new Response(n, { status: r.state.statusCode, headers: t });
   }
   throw new Error("No renderToReadableStream or renderToPipeableStream found in react-dom/server. Ensure you are using a version of react-dom that supports streaming.");
-}, k = createRootRoute({ component: $t, head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }], links: [{ rel: "stylesheet", href: "/_build/assets/client.css" }] }) });
-function Tt() {
+}, M = createRootRoute({ component: Dt, head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }], links: [{ rel: "stylesheet", href: "/_build/assets/client.css" }] }) });
+function $t() {
   const [e, r] = useState(false), [t, s] = useState(false), [n, i] = useState(null), l = useLocation(), d = useNavigate();
   useEffect(() => {
     r(true), fetch("/api/auth/me", { credentials: "include" }).then((f) => f.json()).then((f) => {
@@ -12162,37 +12163,39 @@ function Tt() {
     });
   }, [l.pathname]);
   const c = async () => {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" }), s(false), i(null), d({ to: "/" });
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" }), flushSync(() => {
+      s(false), i(null);
+    }), d({ to: "/" });
   };
   return e ? t ? jsxs(Fragment, { children: [jsx("span", { className: "text-sm text-gray-500", children: n }), jsx("button", { onClick: c, className: "focus-ring rounded text-gray-600 hover:text-gray-900 text-sm", children: "Logout" })] }) : jsx(Link, { to: "/login", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Login" }) : jsx(Link, { to: "/login", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Login" });
 }
-function $t() {
-  return jsxs("html", { lang: "en", children: [jsx("head", { children: jsx(HeadContent, {}) }), jsxs("body", { children: [jsxs("div", { className: "min-h-screen bg-gray-50", children: [jsx("header", { className: "bg-white border-b border-gray-200", children: jsx("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", children: jsxs("div", { className: "flex justify-between h-16 items-center", children: [jsx(Link, { to: "/", className: "focus-ring text-xl font-bold text-gray-900 rounded", children: "DNS Ops Workbench" }), jsxs("nav", { className: "flex gap-6 items-center", children: [jsx(Link, { to: "/", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Home" }), jsx(Link, { to: "/portfolio", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Portfolio" }), jsx(Tt, {})] })] }) }) }), jsx("main", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: jsx(Outlet, {}) })] }), jsx(Scripts, {})] })] });
+function Dt() {
+  return jsxs("html", { lang: "en", children: [jsx("head", { children: jsx(HeadContent, {}) }), jsxs("body", { children: [jsxs("div", { className: "min-h-screen bg-gray-50", children: [jsx("header", { className: "bg-white border-b border-gray-200", children: jsx("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", children: jsxs("div", { className: "flex justify-between h-16 items-center", children: [jsx(Link, { to: "/", className: "focus-ring text-xl font-bold text-gray-900 rounded", children: "DNS Ops Workbench" }), jsxs("nav", { className: "flex gap-6 items-center", children: [jsx(Link, { to: "/", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Home" }), jsx(Link, { to: "/portfolio", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Portfolio" }), jsx($t, {})] })] }) }) }), jsx("main", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: jsx(Outlet, {}) })] }), jsx(Scripts, {})] })] });
 }
-const Dt = () => import('../build/portfolio-BOrQ6SEm.mjs'), ge = createFileRoute("/portfolio")({ component: lazyRouteComponent(Dt, "component", () => ge.ssr) }), Pt = () => import('../build/login-DlihRwPd.mjs'), Se = createFileRoute("/login")({ component: lazyRouteComponent(Pt, "component", () => Se.ssr) }), Ht = () => import('../build/index-M1669HVv.mjs'), _e = createFileRoute("/")({ validateSearch: (e) => ({ domain: typeof e.domain == "string" && e.domain.length > 0 ? e.domain : void 0 }), beforeLoad: ({ search: e }) => {
+const Pt = () => import('../build/portfolio-BOrQ6SEm.mjs'), ge = createFileRoute("/portfolio")({ component: lazyRouteComponent(Pt, "component", () => ge.ssr) }), Ht = () => import('../build/login-DlihRwPd.mjs'), Se = createFileRoute("/login")({ component: lazyRouteComponent(Ht, "component", () => Se.ssr) }), Nt = () => import('../build/index-CKfECdck.mjs'), _e = createFileRoute("/")({ validateSearch: (e) => ({ domain: typeof e.domain == "string" && e.domain.length > 0 ? e.domain : void 0 }), beforeLoad: ({ search: e }) => {
   if (e.domain) throw redirect({ to: "/domain/$domain", params: { domain: e.domain } });
-}, component: lazyRouteComponent(Ht, "component", () => _e.ssr) });
+}, component: lazyRouteComponent(Nt, "component", () => _e.ssr) });
 function ye() {
   return process.env.VITE_FEATURE_DELEGATION !== "false";
 }
-function Nt() {
+function It() {
   return process.env.VITE_FEATURE_SIMULATION === "true";
 }
-ye(), Nt();
-const It = () => import('../build/_domain-CZKTuSa8.mjs'), Ot = ye(), me = ["overview", "dns", "mail", "history"], Ft = Ot ? [...me, "delegation"] : me, zt = Ft, be = createFileRoute("/domain/$domain")({ component: lazyRouteComponent(It, "component", () => be.ssr), validateSearch: (e) => {
+ye(), It();
+const Ot = () => import('../build/_domain-CgxAnUP6.mjs'), Ft = ye(), me = ["overview", "dns", "mail", "history"], zt = Ft ? [...me, "delegation"] : me, Lt = zt, be = createFileRoute("/domain/$domain")({ component: lazyRouteComponent(Ot, "component", () => be.ssr), validateSearch: (e) => {
   const r = e.tab;
-  return { tab: r && zt.includes(r) ? r : void 0 };
-}, loader: ({ params: e }) => ({ domain: e.domain, snapshot: null, observations: [] }) }), Lt = ge.update({ id: "/portfolio", path: "/portfolio", getParentRoute: () => k }), kt = Se.update({ id: "/login", path: "/login", getParentRoute: () => k }), Mt = _e.update({ id: "/", path: "/", getParentRoute: () => k }), Bt = be.update({ id: "/domain/$domain", path: "/domain/$domain", getParentRoute: () => k }), qt = { IndexRoute: Mt, LoginRoute: kt, PortfolioRoute: Lt, DomainDomainRoute: Bt }, Ut = k._addFileChildren(qt)._addFileTypes();
-function Wt() {
-  return createRouter$2({ routeTree: Ut, context: {}, defaultPreload: "intent" });
+  return { tab: r && Lt.includes(r) ? r : void 0 };
+}, loader: ({ params: e }) => ({ domain: e.domain, snapshot: null, observations: [] }) }), Mt = ge.update({ id: "/portfolio", path: "/portfolio", getParentRoute: () => M }), kt = Se.update({ id: "/login", path: "/login", getParentRoute: () => M }), Bt = _e.update({ id: "/", path: "/", getParentRoute: () => M }), qt = be.update({ id: "/domain/$domain", path: "/domain/$domain", getParentRoute: () => M }), Ut = { IndexRoute: Bt, LoginRoute: kt, PortfolioRoute: Mt, DomainDomainRoute: qt }, Wt = M._addFileChildren(Ut)._addFileTypes();
+function Jt() {
+  return createRouter$2({ routeTree: Wt, context: {}, defaultPreload: "intent" });
 }
-const rr = jt({ createRouter: Wt, getRouterManifest: nt })(Ct);
+const sr = At({ createRouter: Jt, getRouterManifest: st })(Tt);
 
 const handlers = [
   { route: '', handler: _MTmOo_, lazy: false, middleware: true, method: undefined },
   { route: '/_server', handler: le$1, lazy: false, middleware: true, method: undefined },
   { route: '/api', handler: yc, lazy: false, middleware: true, method: undefined },
-  { route: '/', handler: rr, lazy: false, middleware: true, method: undefined }
+  { route: '/', handler: sr, lazy: false, middleware: true, method: undefined }
 ];
 
 function createNitroApp() {
@@ -12615,5 +12618,5 @@ trapUnhandledNodeErrors();
 setupGracefulShutdown(listener, nitroApp);
 const nodeServer = {};
 
-export { Ce as $, cr as A, Bo as B, Ct$1 as C, ai as D, ii as E, Fo as F, ic as G, nc as H, It$1 as I, oc as J, sc as K, Le as L, Mi as M, Nt$1 as N, va as O, rc as P, zt$1 as Q, Ae as R, ke as S, Ie as T, Ue as U, z$1 as V, Oo as W, X, fi as Y, ac as Z, _t$1 as _, en as a, ni as a0, re$1 as a1, or as a2, _a as a3, pt$1 as a4, me$1 as a5, ci as a6, ze as a7, Jt as a8, lc as a9, Vt as aA, oi as aB, ur as aC, _t as aD, be as aE, ye as aF, Nt as aG, nodeServer as aH, hi as aa, mi as ab, Te as ac, de$1 as ad, Zs as ae, pe$1 as af, Ys as ag, si as ah, dr as ai, ue$1 as aj, Be as ak, ir as al, Js as am, $e as an, ar as ao, fe$1 as ap, ei as aq, pi as ar, li as as, Fe as at, K$1 as au, ge$1 as av, Me as aw, fc as ax, mc as ay, pc as az, ba as b, cc as c, dc as d, ee as e, fr as f, ut$1 as g, nn as h, nt$1 as i, rn as j, ki as k, ti as l, ui as m, ne$1 as n, _e$1 as o, pr as p, di as q, rt$1 as r, se$1 as s, tn as t, uc as u, vt$1 as v, ft$1 as w, xe as x, ye$1 as y, ri as z };
+export { Ce as $, cr as A, Bo as B, Ct$1 as C, ai as D, ii as E, Fo as F, ic as G, nc as H, It$1 as I, oc as J, sc as K, Le as L, Mi as M, Nt$1 as N, va as O, rc as P, zt$1 as Q, Ae as R, ke as S, Ie as T, Ue as U, z$1 as V, Oo as W, X, fi as Y, ac as Z, _t$1 as _, en as a, ni as a0, re$1 as a1, or as a2, _a as a3, pt$1 as a4, me$1 as a5, ci as a6, ze as a7, Jt$1 as a8, lc as a9, Vt as aA, oi as aB, ur as aC, yt as aD, be as aE, ye as aF, It as aG, nodeServer as aH, hi as aa, mi as ab, Te as ac, de$1 as ad, Zs as ae, pe$1 as af, Ys as ag, si as ah, dr as ai, ue$1 as aj, Be as ak, ir as al, Js as am, $e as an, ar as ao, fe$1 as ap, ei as aq, pi as ar, li as as, Fe as at, K$1 as au, ge$1 as av, Me as aw, fc as ax, mc as ay, pc as az, ba as b, cc as c, dc as d, ee as e, fr as f, ut$1 as g, nn as h, nt$1 as i, rn as j, ki as k, ti as l, ui as m, ne$1 as n, _e$1 as o, pr as p, di as q, rt$1 as r, se$1 as s, tn as t, uc as u, vt$1 as v, ft$1 as w, xe as x, ye$1 as y, ri as z };
 //# sourceMappingURL=nitro.mjs.map

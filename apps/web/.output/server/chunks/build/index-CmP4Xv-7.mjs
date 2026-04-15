@@ -35,6 +35,7 @@ import '@node-rs/argon2';
 import '@tanstack/react-router';
 import 'react/jsx-runtime';
 import 'react';
+import 'react-dom';
 import '@tanstack/history';
 import 'node:stream';
 import 'react-dom/server';

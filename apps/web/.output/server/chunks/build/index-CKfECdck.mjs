@@ -2,7 +2,7 @@ import { jsxs, jsx } from 'react/jsx-runtime';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { TaggedError } from 'better-result';
-import { aD as _t } from '../nitro/nitro.mjs';
+import { aD as yt } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -33,6 +33,7 @@ import 'stream';
 import 'string_decoder';
 import 'node:fs/promises';
 import '@node-rs/argon2';
+import 'react-dom';
 import '@tanstack/history';
 import 'node:stream';
 import 'react-dom/server';
@@ -50,10 +51,10 @@ L("TenantIsolationError")();
 L("DatabaseError")();
 L("ParseError")();
 L("NetworkError")();
-var S, j;
+var S, j$1;
 function X() {
-  if (j) return S;
-  j = 1;
+  if (j$1) return S;
+  j$1 = 1;
   const i = 2147483647, c = 36, D = 1, m = 26, O = 38, y = 700, F = 72, v = 128, N = "-", e = /^xn--/, E = /[^\0-\x7F]/, A = /[\x2E\u3002\uFF0E\uFF61]/g, R = { overflow: "Overflow: input needs wider integers to process", "not-basic": "Illegal input >= 0x80 (not a basic code point)", "invalid-input": "Invalid input" }, C = c - D, d = Math.floor, M = String.fromCharCode;
   function I(t) {
     throw new RangeError(R[t]);
@@ -150,7 +151,7 @@ function X() {
   } }, S;
 }
 var J = X();
-const q = _t(J), { toASCII: K, toUnicode: Q } = q, Z = "xn--";
+const q = yt(J), { toASCII: K, toUnicode: Q } = q, Z = "xn--";
 class h extends Error {
   constructor(c, D) {
     super(c);
@@ -221,12 +222,12 @@ const b = { globe: jsx("path", { strokeLinecap: "round", strokeLinejoin: "round"
 function n({ icon: o, title: i, description: r }) {
   return jsxs("div", { className: "bg-white rounded-lg shadow-sm border border-gray-200 p-4", children: [jsx("div", { className: "w-8 h-8 text-blue-500 mb-3", children: jsx("svg", { "aria-hidden": "true", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 1.5, children: b[o] }) }), jsx("h3", { className: "font-semibold text-gray-900 mb-2", children: i }), jsx("p", { className: "text-sm text-gray-600", children: r })] });
 }
-const T = function() {
+const j = function() {
   const i = useNavigate();
   return jsxs("div", { className: "max-w-4xl mx-auto", children: [jsxs("div", { className: "text-center mb-8", children: [jsx("h1", { className: "text-4xl font-bold text-gray-900 mb-4", children: "DNS Ops Workbench" }), jsx("p", { className: "text-lg text-gray-600 max-w-2xl mx-auto", children: "Professional DNS analysis and mail security diagnostics. Identify misconfigurations, validate delegation chains, and ensure mail deliverability." })] }), jsx("div", { className: "bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8", children: jsx("div", { className: "flex items-start gap-4", children: jsxs("div", { className: "flex-1", children: [jsx("p", { className: "block text-sm font-medium text-gray-700 mb-2", children: "Analyze any domain" }), jsx(f, { onSubmit: (l) => {
     i({ to: "/domain/$domain", params: { domain: l } });
   } }), jsx("div", { className: "mt-3 text-sm text-gray-500", children: jsx("p", { children: "Examples: example.com, google.com, your-domain.com" }) })] }) }) }), jsxs("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-4 mb-8", children: [jsx(n, { icon: "globe", title: "DNS Analysis", description: "Query A, AAAA, MX, TXT, NS, SOA, CAA, and DNSKEY records from multiple vantage points worldwide." }), jsx(n, { icon: "shield", title: "Mail Security", description: "Validate SPF, DMARC, DKIM, MTA-STS, and TLS-RPT. Get actionable recommendations." }), jsx(n, { icon: "chart", title: "Rules-Based Findings", description: "Review snapshot metadata, DNS evidence, and mail diagnostics with deterministic checks." })] }), jsxs("div", { className: "bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100 mb-8", children: [jsx("h2", { className: "font-semibold text-gray-900 mb-3", children: "How It Works" }), jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6", children: [jsxs("div", { children: [jsxs("h3", { className: "font-medium text-blue-800 mb-2 flex items-center gap-2", children: [jsx("span", { className: "w-2 h-2 rounded-full bg-blue-500" }), "Targeted Inspection"] }), jsx("p", { className: "text-sm text-gray-600", children: "Analyze any domain instantly. Review DNS evidence immediately, then use operator access for refreshes and deeper diagnostics." }), jsxs("ul", { className: "mt-2 text-sm text-gray-500 space-y-1", children: [jsx("li", { children: "\u2022 Point-in-time snapshots" }), jsx("li", { children: "\u2022 Multi-resolver verification" }), jsx("li", { children: "\u2022 Mail configuration checks" })] })] }), jsxs("div", { children: [jsxs("h3", { className: "font-medium text-green-800 mb-2 flex items-center gap-2", children: [jsx("span", { className: "w-2 h-2 rounded-full bg-green-500" }), "Managed Zones", " ", jsx("span", { className: "text-xs text-green-600 bg-green-100 px-1.5 py-0.5 rounded", children: "Portfolio" })] }), jsx("p", { className: "text-sm text-gray-600", children: "Add domains to your portfolio for monitoring, alert triage, shared reporting, and ongoing operator workflows. Ideal for domains you own or manage." }), jsxs("ul", { className: "mt-2 text-sm text-gray-500 space-y-1", children: [jsx("li", { children: "\u2022 Monitored domains and alert triage" }), jsx("li", { children: "\u2022 Shared reports for stakeholders" }), jsx("li", { children: "\u2022 Broader portfolio tooling phased in" })] }), jsx("div", { className: "mt-4", children: jsx(Link, { to: "/portfolio", className: "focus-ring inline-flex min-h-10 items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700", children: "Open Portfolio Workspace" }) })] })] })] }), jsxs("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4", children: [jsx(n, { icon: "folder", title: "Portfolio Workspace", description: "Open the operator workspace for monitoring, alert triage, shared reports, and later phased portfolio workflows." }), jsx(n, { icon: "document", title: "Rules Engine", description: "Deterministic analysis with versioned rulesets. Findings include evidence and remediation suggestions." })] })] });
 };
 
-export { T as component };
-//# sourceMappingURL=index-M1669HVv.mjs.map
+export { j as component };
+//# sourceMappingURL=index-CKfECdck.mjs.map
