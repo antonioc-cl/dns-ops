@@ -280,6 +280,25 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
       }
     }
     
+    // Add missing columns to existing tables
+    const alters = [
+      // Monitored domains - add missing columns
+      sql`ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS domain_id UUID`,
+      sql`ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)`,
+      sql`ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS last_check_at TIMESTAMP`,
+      sql`ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS last_alert_at TIMESTAMP`,
+      // Other tables that might need columns
+      sql`ALTER TABLE domains ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'`,
+    ];
+    
+    for (const alter of alters) {
+      try {
+        await db.getDrizzle().execute(alter);
+      } catch (err) {
+        // Ignore errors - column might already exist
+      }
+    }
+    
     logger.info('Database migrations complete');
   } catch (err: any) {
     logger.error('Database migration error:', err as Error);
