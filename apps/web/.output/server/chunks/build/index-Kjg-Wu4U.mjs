@@ -31,6 +31,7 @@ import 'tls';
 import 'path';
 import 'stream';
 import 'string_decoder';
+import 'node:fs/promises';
 import '@node-rs/argon2';
 import '@tanstack/history';
 import 'node:stream';
