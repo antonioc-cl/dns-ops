@@ -4,6 +4,7 @@ import { createLogger } from '@dns-ops/logging';
 import { createMiddleware } from 'hono/factory';
 import { getEnvConfig } from '../config/env.js';
 import { runMigrations } from '../lib/migrate.js';
+import { repairSchema } from '../lib/schema-repair.js';
 import type { Env } from '../types.js';
 
 const logger = createLogger({ service: 'dns-ops-web', version: '1.0.0', minLevel: 'info' });
@@ -74,7 +75,10 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
     // Run migrations in background - don't block startup
     if (!hasRunMigrations) {
       hasRunMigrations = true;
-      runMigrations(db).catch(err => {
+      runMigrations(db).then(() => {
+        // After migrations, repair any missing columns from broken early migrations
+        return repairSchema(db);
+      }).catch(err => {
         logger.error('Background migration failed:', err);
       });
     }
