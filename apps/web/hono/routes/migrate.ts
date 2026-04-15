@@ -108,6 +108,24 @@ migrateRoutes.get('/status', async (c) => {
 });
 
 /**
+ * POST /api/migrate/reset
+ * Reset migration tracker to force re-run all migrations
+ */
+migrateRoutes.post('/reset', async (c) => {
+  const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
+  try {
+    await db.getDrizzle().execute(sql`DROP TABLE IF EXISTS __drizzle_migrations;`);
+    return c.json({ status: 'reset', message: 'Migration tracker cleared. Migrations will re-run on next request.' });
+  } catch (err: any) {
+    return c.json({ status: 'error', message: err.message }, 500);
+  }
+});
+
+/**
  * GET /api/migrate/schema
  * Check schema for each table
  */
