@@ -1,4 +1,4 @@
-import { createRootRoute, HeadContent, Link, Outlet, Scripts, useLocation } from '@tanstack/react-router';
+import { createRootRoute, HeadContent, Link, Outlet, Scripts, useLocation, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import '../styles/app.css';
 
@@ -20,6 +20,7 @@ function AuthNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMounted(true);
@@ -44,7 +45,7 @@ function AuthNav() {
     });
     setIsAuthenticated(false);
     setUserEmail(null);
-    window.location.href = '/';
+    navigate({ to: '/' });
   };
 
   // During SSR and hydration, render a stable placeholder

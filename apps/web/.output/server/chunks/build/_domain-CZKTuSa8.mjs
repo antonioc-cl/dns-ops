@@ -1,7 +1,7 @@
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { useState, useId, useEffect, useCallback } from 'react';
 import { u, p, x } from './StateDisplay-DMFHryPA.mjs';
-import { aE as be$1, aF as ye$1, aG as Ht } from '../nitro/nitro.mjs';
+import { aE as be$1, aF as ye$1, aG as Nt } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -785,7 +785,7 @@ function le({ domainId: t, isDomainName: a = false, onTagsChange: n }) {
     N(false), v("");
   }, className: "px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-400", disabled: $ || m || S, children: "Cancel" })] }), B.length > 0 && jsxs("div", { className: "mt-3", children: [jsx("span", { className: "text-sm text-gray-500", children: "Suggestions:" }), jsx("div", { className: "flex flex-wrap gap-2 mt-2", children: B.slice(0, 10).map((R) => jsx("button", { type: "button", onClick: () => I(R), disabled: $ || m || S, className: "px-2 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50", children: R }, R)) })] })] }), d ? jsx("div", { className: "text-center text-gray-500 py-4", children: "Loading tags..." }) : m ? jsx("div", { className: "text-center text-gray-500 py-4", children: "Sign in to view and manage tenant tags." }) : !g && k ? jsx("div", { className: "text-center text-gray-500 py-4", children: p || "Tags are unavailable until domain context can be resolved." }) : o.length === 0 ? jsxs("div", { className: "text-center text-gray-500 py-4", children: ["No tags yet.", " ", !D && jsx("button", { type: "button", onClick: () => N(true), className: "text-blue-600 hover:text-blue-700 disabled:text-gray-400", disabled: m || S, children: "Add one" })] }) : jsx("div", { className: "flex flex-wrap gap-2", children: o.map((R) => jsxs("span", { className: "inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm", children: [R, jsx("button", { type: "button", onClick: () => M(R), className: "hover:bg-blue-200 rounded-full p-0.5 disabled:text-gray-400 disabled:hover:bg-transparent", disabled: m || S, "aria-label": `Remove ${R} tag`, children: jsx("svg", { "aria-hidden": "true", className: "w-3.5 h-3.5", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", children: jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M6 18L18 6M6 6l12 12" }) }) })] }, R)) })] })] });
 }
-const de = ye$1(), st = Ht(), F = [{ id: "overview", label: "Overview" }, { id: "dns", label: "DNS" }, { id: "mail", label: "Mail" }, { id: "history", label: "History" }, ...de ? [{ id: "delegation", label: "Delegation" }] : []];
+const de = ye$1(), st = Nt(), F = [{ id: "overview", label: "Overview" }, { id: "dns", label: "DNS" }, { id: "mail", label: "Mail" }, { id: "history", label: "History" }, ...de ? [{ id: "delegation", label: "Delegation" }] : []];
 function it({ domain: t, snapshot: a, observations: n }) {
   if (!a) return jsxs("div", { className: "space-y-6", children: [jsx("div", { className: "text-center py-12", children: jsxs("p", { className: "text-gray-500", children: ["No DNS evidence available yet for ", t, "."] }) }), jsxs("div", { className: "space-y-4", children: [jsxs("div", { children: [jsx("h3", { className: "font-semibold text-gray-900", children: "Operator Context" }), jsx("p", { className: "text-sm text-gray-500", children: "Keep tenant-scoped notes and tags attached to the domain even before the next evidence refresh." })] }), jsxs("div", { className: "grid grid-cols-1 gap-6 xl:grid-cols-2", children: [jsx(ne, { domainId: t, isDomainName: true }), jsx(le, { domainId: t, isDomainName: true })] })] })] });
   const o = n.filter((l) => l.status === "success").length, i = n.length - o;
@@ -861,4 +861,4 @@ const Ct = function() {
 };
 
 export { Ct as component };
-//# sourceMappingURL=_domain-CBnIhVv9.mjs.map
+//# sourceMappingURL=_domain-CZKTuSa8.mjs.map
