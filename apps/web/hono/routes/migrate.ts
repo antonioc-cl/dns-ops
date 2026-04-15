@@ -126,6 +126,26 @@ migrateRoutes.post('/reset', async (c) => {
 });
 
 /**
+ * POST /api/migrate/repair
+ * Run schema repair manually and return detailed results
+ */
+migrateRoutes.post('/repair', async (c) => {
+  const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
+  const { repairSchema } = await import('../lib/schema-repair.js');
+  
+  try {
+    await repairSchema(db);
+    return c.json({ status: 'repaired', message: 'Schema repair complete' });
+  } catch (err: any) {
+    return c.json({ status: 'error', message: err.message }, 500);
+  }
+});
+
+/**
  * GET /api/migrate/schema
  * Check schema for each table
  */
