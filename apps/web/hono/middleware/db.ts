@@ -72,14 +72,15 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
     const db = getSharedPgAdapter(databaseUrl);
     c.set('db', db);
     
-    // Run migrations in background - don't block startup
+    // Run migrations and schema repair in background - don't block startup
     if (!hasRunMigrations) {
       hasRunMigrations = true;
-      runMigrations(db).then(() => {
-        // After migrations, repair any missing columns from broken early migrations
-        return repairSchema(db);
-      }).catch(err => {
+      runMigrations(db).catch(err => {
         logger.error('Background migration failed:', err);
+      });
+      // Always run schema repair to fix any missing columns
+      repairSchema(db).catch(err => {
+        logger.error('Background schema repair failed:', err);
       });
     }
   }
