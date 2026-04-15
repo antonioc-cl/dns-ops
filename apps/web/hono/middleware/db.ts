@@ -61,6 +61,24 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
     `);
     
     logger.info('Sessions table created or already exists');
+    
+    // Create monitored_domains table if it doesn't exist
+    await db.getDrizzle().execute(sql`
+      CREATE TABLE IF NOT EXISTS monitored_domains (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        domain_id UUID NOT NULL,
+        schedule VARCHAR(20) DEFAULT 'daily',
+        alert_channels JSONB DEFAULT '{}',
+        max_alerts_per_day INTEGER DEFAULT 5,
+        suppression_window_minutes INTEGER DEFAULT 60,
+        is_active BOOLEAN DEFAULT true,
+        tenant_id UUID NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+    
+    logger.info('Monitored domains table created or already exists');
     logger.info('Database adapter initialized');
   } catch (err: any) {
     // Ignore "already exists" errors
