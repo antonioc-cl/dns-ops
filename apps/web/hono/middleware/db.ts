@@ -354,8 +354,10 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
     const db = getSharedPgAdapter(databaseUrl);
     c.set('db', db);
     
-    // Run migrations
-    await runMigrationsIfNeeded(db);
+    // Run migrations in the background - don't block startup
+    runMigrationsIfNeeded(db).catch(err => {
+      logger.error('Background migration failed:', err);
+    });
   }
 
   return await next();
