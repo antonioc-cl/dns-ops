@@ -4,8 +4,10 @@
  * Authentication for internal use with cookie-based sessions.
  */
 
+import { eq, and, gt } from 'drizzle-orm';
 import { getTenantUUID } from '@dns-ops/contracts';
 import { createMiddleware } from 'hono/factory';
+import { sessions } from '@dns-ops/db/schema';
 import type { Env } from '../types.js';
 
 function getRuntimeSecret(
@@ -47,10 +49,44 @@ function isValidIdentifier(id: string): boolean {
 }
 
 /**
- * Extract auth from session cookie
- * Format: dns_ops_session=<email>:<tenant>
+ * Extract auth from database session (session token stored in database)
  */
-function extractCookieSession(c: Parameters<typeof createMiddleware<Env>>[0]): { tenantId: string; actorId: string; actorEmail?: string } | null {
+async function extractDatabaseSession(
+  c: Parameters<typeof createMiddleware<Env>>[0]
+): Promise<{ tenantId: string; actorId: string; actorEmail?: string } | null> {
+  const db = c.get('db');
+  if (!db) return null;
+  
+  const cookies = parseCookies(c.req.header('Cookie'));
+  const token = cookies['dns_ops_session'];
+  
+  if (!token) return null;
+  
+  try {
+    // Look up session in database
+    const session = await db.getDrizzle().query.sessions.findFirst({
+      where: and(
+        eq(sessions.token, token),
+        gt(sessions.expiresAt, new Date())
+      ),
+    });
+    
+    if (!session) return null;
+    
+    return {
+      tenantId: session.tenantId,
+      actorId: session.userEmail,
+      actorEmail: session.userEmail,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extract auth from session cookie (legacy format: email:tenant)
+ */
+function extractLegacyCookieSession(c: Parameters<typeof createMiddleware<Env>>[0]): { tenantId: string; actorId: string; actorEmail?: string } | null {
   const cookies = parseCookies(c.req.header('Cookie'));
   const session = cookies['dns_ops_session'];
   
@@ -115,11 +151,21 @@ function extractDevBypass(c: Parameters<typeof createMiddleware<Env>>[0]): { ten
  * Auth middleware - populates auth context
  */
 export const authMiddleware = createMiddleware<Env>(async (c, next) => {
-  // Priority: cookie session > API key > dev bypass
-  const authContext = extractCookieSession(c) || extractApiKey(c) || extractDevBypass(c);
+  // Priority: database session > legacy cookie > API key > dev bypass
+  let authContext = await extractDatabaseSession(c);
+  
+  if (!authContext) {
+    authContext = extractLegacyCookieSession(c) || extractApiKey(c) || extractDevBypass(c);
+  }
 
   if (authContext) {
-    const tenantUUID = await getTenantUUID(authContext.tenantId);
+    // For database sessions, tenantId is already a UUID
+    // For legacy/API/dev, we need to convert domain to UUID
+    let tenantUUID = authContext.tenantId;
+    if (!isValidUUID(tenantUUID)) {
+      tenantUUID = await getTenantUUID(authContext.tenantId);
+    }
+    
     c.set('tenantId', tenantUUID);
     c.set('actorId', authContext.actorId);
     if (authContext.actorEmail) {
@@ -134,13 +180,21 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
  * Require auth middleware - rejects requests without authentication
  */
 export const requireAuthMiddleware = createMiddleware<Env>(async (c, next) => {
-  const authContext = extractCookieSession(c) || extractApiKey(c) || extractDevBypass(c);
+  let authContext = await extractDatabaseSession(c);
+  
+  if (!authContext) {
+    authContext = extractLegacyCookieSession(c) || extractApiKey(c) || extractDevBypass(c);
+  }
 
   if (!authContext) {
     return c.json({ error: 'Unauthorized', message: 'Authentication required.' }, 401);
   }
 
-  const tenantUUID = await getTenantUUID(authContext.tenantId);
+  let tenantUUID = authContext.tenantId;
+  if (!isValidUUID(tenantUUID)) {
+    tenantUUID = await getTenantUUID(authContext.tenantId);
+  }
+  
   c.set('tenantId', tenantUUID);
   c.set('actorId', authContext.actorId);
   if (authContext.actorEmail) {
@@ -167,3 +221,8 @@ export const internalOnlyMiddleware = createMiddleware<Env>(async (c, next) => {
 
   return c.json({ error: 'Forbidden', message: 'Internal access only.' }, 403);
 });
+
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
