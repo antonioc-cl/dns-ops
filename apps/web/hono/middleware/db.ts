@@ -66,15 +66,18 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
     await db.getDrizzle().execute(sql`
       CREATE TABLE IF NOT EXISTS monitored_domains (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        domain_id UUID NOT NULL,
-        schedule VARCHAR(20) DEFAULT 'daily',
-        alert_channels JSONB DEFAULT '{}',
-        max_alerts_per_day INTEGER DEFAULT 5,
-        suppression_window_minutes INTEGER DEFAULT 60,
-        is_active BOOLEAN DEFAULT true,
+        domain_id UUID NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
+        schedule VARCHAR(20) NOT NULL DEFAULT 'daily',
+        alert_channels JSONB NOT NULL DEFAULT '{}',
+        max_alerts_per_day INTEGER NOT NULL DEFAULT 5,
+        suppression_window_minutes INTEGER NOT NULL DEFAULT 60,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        last_check_at TIMESTAMP WITH TIME ZONE,
+        last_alert_at TIMESTAMP WITH TIME ZONE,
+        created_by VARCHAR(100) NOT NULL,
         tenant_id UUID NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       );
     `);
     

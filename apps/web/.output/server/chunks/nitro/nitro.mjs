@@ -4298,7 +4298,7 @@ async function errorHandler(error, event) {
 }
 
 const appConfig = {"name":"vinxi","routers":[{"name":"public","type":"static","dir":"./public","base":"/","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","order":0,"outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/public"},{"name":"client","type":"client","target":"browser","handler":"app/client.tsx","base":"/_build","build":{"sourcemap":true},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/client","order":1},{"name":"ssr","type":"http","target":"server","handler":"app/ssr.tsx","link":{"client":"client"},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","base":"/","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/ssr","order":2},{"name":"server","type":"http","target":"server","base":"/_server","handler":"../../node_modules/.bun/@tanstack+start-server-functions-handler@1.120.19/node_modules/@tanstack/start-server-functions-handler/dist/esm/index.js","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/server","order":3},{"name":"api","base":"/api","type":"http","handler":"app/api.ts","target":"server","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/api","order":4}],"server":{"rollupConfig":{},"preset":"node-server","experimental":{"asyncContext":true}},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web"};
-				const buildManifest = {"client":{"_StateDisplay-CnvOW3z9.js":{"file":"assets/StateDisplay-CnvOW3z9.js","name":"StateDisplay","imports":["_client-CkjywyCc.js"]},"_client-CkjywyCc.js":{"file":"assets/client-CkjywyCc.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-Bnc5Jkbz.js":{"file":"assets/index-Bnc5Jkbz.js","name":"index","imports":["_client-CkjywyCc.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-DroSxPHe.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js","_index-Bnc5Jkbz.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-COOAridH.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_index-Bnc5Jkbz.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-PmBuY3-1.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-DnJrzwtn.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-BmpqoPWy.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-CkjywyCc.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-CVlnnD8-.js":{"file":"assets/index-CVlnnD8-.js","name":"index","imports":["_ssr-CHtAOUeR.js"]},"_ssr-CHtAOUeR.js":{"file":"assets/ssr-CHtAOUeR.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-B6RX7dFy.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-Kjg-Wu4U.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-CHtAOUeR.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-CdeB-lLR.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-B8myq8sQ.js"]},"_api-B8myq8sQ.js":{"file":"assets/api-B8myq8sQ.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-B8myq8sQ.js"]}}};
+				const buildManifest = {"client":{"_StateDisplay-CnvOW3z9.js":{"file":"assets/StateDisplay-CnvOW3z9.js","name":"StateDisplay","imports":["_client-CkjywyCc.js"]},"_client-CkjywyCc.js":{"file":"assets/client-CkjywyCc.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-Bnc5Jkbz.js":{"file":"assets/index-Bnc5Jkbz.js","name":"index","imports":["_client-CkjywyCc.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-DroSxPHe.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js","_index-Bnc5Jkbz.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-COOAridH.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_index-Bnc5Jkbz.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-PmBuY3-1.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-DnJrzwtn.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-BmpqoPWy.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-CkjywyCc.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-CVlnnD8-.js":{"file":"assets/index-CVlnnD8-.js","name":"index","imports":["_ssr-CHtAOUeR.js"]},"_ssr-CHtAOUeR.js":{"file":"assets/ssr-CHtAOUeR.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-B6RX7dFy.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-Kjg-Wu4U.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-CHtAOUeR.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-ChORJRjU.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-xXKB-PLc.js"]},"_api-xXKB-PLc.js":{"file":"assets/api-xXKB-PLc.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-xXKB-PLc.js"]}}};
 
 				const routeManifest = {"api":{}};
 
@@ -4562,79 +4562,79 @@ const assets = {
   "/assets/ssr.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T15:14:51.614Z",
+    "mtime": "2026-04-15T15:18:15.591Z",
     "size": 29329,
     "path": "../public/assets/ssr.css"
-  },
-  "/_build/.vite/manifest.json": {
-    "type": "application/json",
-    "etag": "\"867-g33VoNVOh9J8U8RqVZ8lpuGHbA0\"",
-    "mtime": "2026-04-15T15:14:51.609Z",
-    "size": 2151,
-    "path": "../public/_build/.vite/manifest.json"
   },
   "/_build/assets/StateDisplay-CnvOW3z9.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1496-vRq4Gg4Qj3gqr2LETEfzgg6rk5Q\"",
-    "mtime": "2026-04-15T15:14:51.609Z",
+    "mtime": "2026-04-15T15:18:15.586Z",
     "size": 5270,
     "path": "../public/_build/assets/StateDisplay-CnvOW3z9.js"
   },
   "/_build/assets/client-BmpqoPWy.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"3f-9LvvSakYUu29qWUmrPEgWqglXyY\"",
-    "mtime": "2026-04-15T15:14:51.609Z",
+    "mtime": "2026-04-15T15:18:15.587Z",
     "size": 63,
     "path": "../public/_build/assets/client-BmpqoPWy.js"
+  },
+  "/_build/assets/_domain-DroSxPHe.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"164a5-Rxjt+Bjn426AB/P6+wUn/j7yymY\"",
+    "mtime": "2026-04-15T15:18:15.586Z",
+    "size": 91301,
+    "path": "../public/_build/assets/_domain-DroSxPHe.js"
+  },
+  "/_build/assets/client-CkjywyCc.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"365dc-pAnE/QixHUTinBe3FPL6KBIxROI\"",
+    "mtime": "2026-04-15T15:18:15.587Z",
+    "size": 222684,
+    "path": "../public/_build/assets/client-CkjywyCc.js"
   },
   "/_build/assets/client.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T15:14:51.610Z",
+    "mtime": "2026-04-15T15:18:15.587Z",
     "size": 29329,
     "path": "../public/_build/assets/client.css"
   },
   "/_build/assets/index-Bnc5Jkbz.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1507-FjOxzzlumNTvjkuFtSW2mJ0LSLc\"",
-    "mtime": "2026-04-15T15:14:51.610Z",
+    "mtime": "2026-04-15T15:18:15.587Z",
     "size": 5383,
     "path": "../public/_build/assets/index-Bnc5Jkbz.js"
   },
   "/_build/assets/index-COOAridH.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1da7-WInPiTalF+dBMdhyCsKbU+l0vC4\"",
-    "mtime": "2026-04-15T15:14:51.609Z",
+    "mtime": "2026-04-15T15:18:15.587Z",
     "size": 7591,
     "path": "../public/_build/assets/index-COOAridH.js"
   },
   "/_build/assets/login-PmBuY3-1.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"10cf-fYSSwOfCzSAbjykRV6IGJwessG8\"",
-    "mtime": "2026-04-15T15:14:51.610Z",
+    "mtime": "2026-04-15T15:18:15.588Z",
     "size": 4303,
     "path": "../public/_build/assets/login-PmBuY3-1.js"
   },
-  "/_build/assets/client-CkjywyCc.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"365dc-pAnE/QixHUTinBe3FPL6KBIxROI\"",
-    "mtime": "2026-04-15T15:14:51.610Z",
-    "size": 222684,
-    "path": "../public/_build/assets/client-CkjywyCc.js"
+  "/_build/.vite/manifest.json": {
+    "type": "application/json",
+    "etag": "\"867-g33VoNVOh9J8U8RqVZ8lpuGHbA0\"",
+    "mtime": "2026-04-15T15:18:15.587Z",
+    "size": 2151,
+    "path": "../public/_build/.vite/manifest.json"
   },
   "/_build/assets/portfolio-DnJrzwtn.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1311f-FJXmPWhisNxDEExinUgSBhCWPpw\"",
-    "mtime": "2026-04-15T15:14:51.610Z",
+    "mtime": "2026-04-15T15:18:15.587Z",
     "size": 78111,
     "path": "../public/_build/assets/portfolio-DnJrzwtn.js"
-  },
-  "/_build/assets/_domain-DroSxPHe.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"164a5-Rxjt+Bjn426AB/P6+wUn/j7yymY\"",
-    "mtime": "2026-04-15T15:14:51.610Z",
-    "size": 91301,
-    "path": "../public/_build/assets/_domain-DroSxPHe.js"
   }
 };
 
@@ -9081,15 +9081,18 @@ async function va(e) {
     `), $e.info("Sessions table created or already exists"), await e.getDrizzle().execute(sql`
       CREATE TABLE IF NOT EXISTS monitored_domains (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        domain_id UUID NOT NULL,
-        schedule VARCHAR(20) DEFAULT 'daily',
-        alert_channels JSONB DEFAULT '{}',
-        max_alerts_per_day INTEGER DEFAULT 5,
-        suppression_window_minutes INTEGER DEFAULT 60,
-        is_active BOOLEAN DEFAULT true,
+        domain_id UUID NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
+        schedule VARCHAR(20) NOT NULL DEFAULT 'daily',
+        alert_channels JSONB NOT NULL DEFAULT '{}',
+        max_alerts_per_day INTEGER NOT NULL DEFAULT 5,
+        suppression_window_minutes INTEGER NOT NULL DEFAULT 60,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        last_check_at TIMESTAMP WITH TIME ZONE,
+        last_alert_at TIMESTAMP WITH TIME ZONE,
+        created_by VARCHAR(100) NOT NULL,
         tenant_id UUID NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       );
     `), $e.info("Monitored domains table created or already exists"), $e.info("Database adapter initialized");
     } catch (t) {
@@ -11342,7 +11345,7 @@ we.post("/compare", async (e) => {
     if (!d) return e.json({ error: "Snapshot not found" }, 404);
     const c = e.get("tenantId");
     if (c) {
-      const { DomainRepository: y } = await import('../build/index-CdeB-lLR.mjs'), m = await new y(t).findById(d.domainId);
+      const { DomainRepository: y } = await import('../build/index-ChORJRjU.mjs'), m = await new y(t).findById(d.domainId);
       if (!m || m.tenantId && m.tenantId !== c) return e.json({ error: "Snapshot not found" }, 404);
     }
     const p = await t.selectWhere(Q, eq(Q.snapshotId, r));
