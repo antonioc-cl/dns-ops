@@ -62,31 +62,48 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
     
     logger.info('Sessions table created or already exists');
     
-    // Create monitored_domains table if it doesn't exist
-    await db.getDrizzle().execute(sql`
-      CREATE TABLE IF NOT EXISTS monitored_domains (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        domain_id UUID NOT NULL REFERENCES domains(id) ON DELETE CASCADE,
-        schedule VARCHAR(20) NOT NULL DEFAULT 'daily',
-        alert_channels JSONB NOT NULL DEFAULT '{}',
-        max_alerts_per_day INTEGER NOT NULL DEFAULT 5,
-        suppression_window_minutes INTEGER NOT NULL DEFAULT 60,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        last_check_at TIMESTAMP WITH TIME ZONE,
-        last_alert_at TIMESTAMP WITH TIME ZONE,
-        created_by VARCHAR(100) NOT NULL,
-        tenant_id UUID NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-      );
-    `);
+    // Create monitored_domains table - use DO block to handle existing table
+    try {
+      await db.getDrizzle().execute(sql`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'monitored_domains') THEN
+            CREATE TABLE monitored_domains (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              domain_id UUID NOT NULL,
+              schedule VARCHAR(20) NOT NULL DEFAULT 'daily',
+              alert_channels JSONB NOT NULL DEFAULT '{}',
+              max_alerts_per_day INTEGER NOT NULL DEFAULT 5,
+              suppression_window_minutes INTEGER NOT NULL DEFAULT 60,
+              is_active BOOLEAN NOT NULL DEFAULT true,
+              last_check_at TIMESTAMP WITH TIME ZONE,
+              last_alert_at TIMESTAMP WITH TIME ZONE,
+              created_by VARCHAR(100) NOT NULL,
+              tenant_id UUID NOT NULL,
+              created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+              updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+          ELSE
+            -- Add missing columns to existing table
+            ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS domain_id UUID;
+            ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS created_by VARCHAR(100);
+            ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS last_check_at TIMESTAMP WITH TIME ZONE;
+            ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS last_alert_at TIMESTAMP WITH TIME ZONE;
+            ALTER TABLE monitored_domains ALTER COLUMN created_by SET NOT NULL;
+          END IF;
+        END
+        $$;
+      `);
+      logger.info('Monitored domains table created/updated');
+    } catch (err) {
+      logger.debug('Monitored domains migration note:', err as Error);
+    }
     
-    logger.info('Monitored domains table created or already exists');
     logger.info('Database adapter initialized');
   } catch (err: any) {
     // Ignore "already exists" errors
     if (err.message?.includes('already exists')) {
-      logger.info('Users table already exists');
+      logger.info('Tables already exist');
       return;
     }
     logger.error('Database initialization error:', err as Error);
