@@ -5,6 +5,8 @@
  * and have the correct schema.
  */
 
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { Hono } from 'hono';
 import { sql } from 'drizzle-orm';
 import type { Env } from '../types.js';
@@ -236,6 +238,67 @@ migrateRoutes.post('/rebuild', async (c) => {
       status: 'rebuilt',
       dropped: tablesToDrop,
       message: 'Broken tables dropped. Real migrations will recreate them on next request.',
+    });
+  } catch (err: any) {
+    return c.json({ status: 'error', message: err.message }, 500);
+  }
+});
+
+/**
+ * POST /api/migrate/run-init
+ * Execute the full 0000_init migration directly
+ */
+migrateRoutes.post('/run-init', async (c) => {
+  const db = c.get('db');
+  if (!db) {
+    return c.json({ error: 'Database not available' }, 503);
+  }
+
+  try {
+    const migrationFile = join(process.cwd(), 'packages', 'db', 'src', 'migrations', '0000_nebulous_steve_rogers.sql');
+    const content = await readFile(migrationFile, 'utf-8');
+    const statements = content
+      .split('--> statement-breakpoint')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    const results: { statement: string; status: string; error?: string }[] = [];
+
+    for (const statement of statements) {
+      try {
+        await db.getDrizzle().execute(sql.raw(statement));
+        results.push({ statement: statement.slice(0, 60), status: 'ok' });
+      } catch (err: any) {
+        const errorMsg = err.message || String(err);
+        const skipErrors = [
+          'already exists',
+          'does not exist',
+          'cannot drop',
+          'DuplicateObject',
+          'duplicate_object',
+        ];
+        const isSkipped = skipErrors.some((e) => errorMsg.includes(e));
+        results.push({
+          statement: statement.slice(0, 60),
+          status: isSkipped ? 'skipped' : 'error',
+          error: isSkipped ? undefined : errorMsg,
+        });
+      }
+    }
+
+    const errors = results.filter((r) => r.status === 'error');
+    if (errors.length > 0) {
+      return c.json({
+        status: 'partial',
+        total: results.length,
+        errors: errors.map((e) => ({ statement: e.statement, error: e.error })),
+      }, 200);
+    }
+
+    return c.json({
+      status: 'complete',
+      total: results.length,
+      message: 'Init migration executed successfully',
     });
   } catch (err: any) {
     return c.json({ status: 'error', message: err.message }, 500);
