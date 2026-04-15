@@ -47,6 +47,20 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
     `);
     
     logger.info('Users table created or already exists');
+    
+    // Create sessions table if it doesn't exist
+    await db.getDrizzle().execute(sql`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        token VARCHAR(255) NOT NULL UNIQUE,
+        user_email VARCHAR(255) NOT NULL,
+        tenant_id UUID NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+    
+    logger.info('Sessions table created or already exists');
     logger.info('Database adapter initialized');
   } catch (err: any) {
     // Ignore "already exists" errors

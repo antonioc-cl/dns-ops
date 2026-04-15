@@ -1017,3 +1017,22 @@ export const users = pgTable(
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+// =============================================================================
+// SESSIONS
+// =============================================================================
+
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    token: varchar('token', { length: 255 }).notNull().unique(),
+    userEmail: varchar('user_email', { length: 255 }).notNull(),
+    tenantId: uuid('tenant_id').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  }
+);
+
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;

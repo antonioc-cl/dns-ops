@@ -2,7 +2,7 @@ import { jsxs, jsx } from 'react/jsx-runtime';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { TaggedError } from 'better-result';
-import { aC as St } from '../nitro/nitro.mjs';
+import { aD as St } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';

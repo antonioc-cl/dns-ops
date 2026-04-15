@@ -4,15 +4,16 @@
 
 import { Hono } from 'hono';
 import { hash, verify } from '@node-rs/argon2';
-import { eq } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import { getTenantUUID } from '@dns-ops/contracts';
-import { users } from '@dns-ops/db/schema';
+import { sessions, users } from '@dns-ops/db/schema';
 import type { Env } from '../types.js';
 
 const authRoutes = new Hono<Env>();
 
-// In-memory session store (use Redis in production)
-const sessions = new Map<string, { userId: string; email: string; tenantId: string }>();
+// Session expiry: 7 days
+const SESSION_EXPIRY_DAYS = 7;
+const SESSION_EXPIRY_MS = SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
 
 /**
  * Generate a secure session token
@@ -93,16 +94,19 @@ authRoutes.post('/signup', async (c) => {
 
   // Create session
   const token = generateToken();
-  sessions.set(token, {
-    userId: email.toLowerCase(),
-    email: email.toLowerCase(),
+  const expiresAt = new Date(Date.now() + SESSION_EXPIRY_MS);
+  
+  await db.getDrizzle().insert(sessions).values({
+    token,
+    userEmail: email.toLowerCase(),
     tenantId: tenantUUID,
+    expiresAt,
   });
 
-  // Set session cookie (7 days)
+  // Set session cookie
   c.header(
     'Set-Cookie',
-    `dns_ops_session=${token}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=Lax`
+    `dns_ops_session=${token}; Path=/; Max-Age=${SESSION_EXPIRY_DAYS * 24 * 60 * 60}; HttpOnly; SameSite=Lax`
   );
 
   return c.json({ success: true, email, tenant: tenantId });
@@ -139,18 +143,21 @@ authRoutes.post('/login', async (c) => {
     return c.json({ error: 'Invalid email or password' }, 401);
   }
 
-  // Create session
+  // Create session in database
   const token = generateToken();
-  sessions.set(token, {
-    userId: user.email,
-    email: user.email,
+  const expiresAt = new Date(Date.now() + SESSION_EXPIRY_MS);
+  
+  await db.getDrizzle().insert(sessions).values({
+    token,
+    userEmail: user.email,
     tenantId: user.tenantId,
+    expiresAt,
   });
 
-  // Set session cookie (7 days)
+  // Set session cookie
   c.header(
     'Set-Cookie',
-    `dns_ops_session=${token}; Path=/; Max-Age=${7 * 24 * 60 * 60}; HttpOnly; SameSite=Lax`
+    `dns_ops_session=${token}; Path=/; Max-Age=${SESSION_EXPIRY_DAYS * 24 * 60 * 60}; HttpOnly; SameSite=Lax`
   );
 
   return c.json({ success: true, email: user.email, tenant: email.split('@')[1] });
@@ -160,11 +167,13 @@ authRoutes.post('/login', async (c) => {
  * POST /api/auth/logout
  */
 authRoutes.post('/logout', async (c) => {
+  const db = c.get('db');
   const cookies = parseCookies(c.req.header('Cookie'));
   const token = cookies['dns_ops_session'];
 
-  if (token) {
-    sessions.delete(token);
+  if (token && db) {
+    // Delete session from database
+    await db.getDrizzle().delete(sessions).where(eq(sessions.token, token));
   }
 
   c.header('Set-Cookie', 'dns_ops_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax');
@@ -176,18 +185,34 @@ authRoutes.post('/logout', async (c) => {
  * Get current user info
  */
 authRoutes.get('/me', async (c) => {
+  const db = c.get('db');
+  if (!db) {
+    return c.json({ authenticated: false }, 401);
+  }
+  
   const cookies = parseCookies(c.req.header('Cookie'));
   const token = cookies['dns_ops_session'];
 
-  if (!token || !sessions.has(token)) {
+  if (!token) {
     return c.json({ authenticated: false }, 401);
   }
 
-  const session = sessions.get(token)!;
+  // Find valid session in database
+  const session = await db.getDrizzle().query.sessions.findFirst({
+    where: and(
+      eq(sessions.token, token),
+      gt(sessions.expiresAt, new Date())
+    ),
+  });
+
+  if (!session) {
+    return c.json({ authenticated: false }, 401);
+  }
+
   return c.json({
     authenticated: true,
-    email: session.email,
-    tenant: session.email.split('@')[1],
+    email: session.userEmail,
+    tenant: session.userEmail.split('@')[1],
   });
 });
 
