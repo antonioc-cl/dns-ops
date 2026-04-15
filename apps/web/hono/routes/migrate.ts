@@ -82,7 +82,8 @@ migrateRoutes.get('/status', async (c) => {
       WHERE table_schema = 'public'
     `);
     
-    const existingTables = (results as any[]).map((r: any) => r.table_name);
+    const rows = results as unknown as { table_name: string }[];
+    const existingTables = rows.map(r => r.table_name);
     const missingTables = REQUIRED_TABLES.filter(t => !existingTables.includes(t));
     
     if (missingTables.length > 0) {
@@ -118,13 +119,14 @@ migrateRoutes.get('/schema', async (c) => {
     const schemaResults: Record<string, { columns: string[]; missing: string[] }> = {};
     
     for (const [table, requiredCols] of Object.entries(CRITICAL_COLUMNS)) {
-      const results = await db.getDrizzle().execute(sql`
+      const colResults = await db.getDrizzle().execute(sql`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = ${table} AND table_schema = 'public'
       `);
       
-      const existingCols = (results as any[]).map((r: any) => r.column_name);
+      const colRows = colResults as unknown as { column_name: string }[];
+      const existingCols = colRows.map(r => r.column_name);
       const missing = requiredCols.filter(c => !existingCols.includes(c));
       
       schemaResults[table] = {
