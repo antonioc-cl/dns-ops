@@ -1,5 +1,5 @@
-import { r as re, t as tc, n as nc, w as we, e as ec, L as Lo, x as xo } from '../nitro/nitro.mjs';
-export { I as AlertRepository, a as AuditEventRepository, D as DkimSelectorRepository, b as DomainNoteRepository, q as DomainTagRepository, $ as FindingRepository, Z as LegacyAccessLogRepository, y as MailEvidenceRepository, c as MismatchReportRepository, d as MonitoredDomainRepository, P as ObservationRepository, l as ProviderBaselineRepository, C as RecordSetRepository, f as RemediationRepository, g as RulesetVersionRepository, h as SavedFilterRepository, i as ShadowComparisonRepository, j as SharedReportRepository, u as SimpleDatabaseAdapter, k as SnapshotRepository, _ as SuggestionRepository, v as TemplateOverrideRepository, J as adjudicationEnum, m as alertStatusEnum, o as alerts, p as auditActionEnum, s as auditEvents, z as baselineStatusEnum, A as blastRadiusEnum, B as collectionStatusEnum, E as confidenceEnum, Y as createAdapterFromConfig, X as createClient, F as createD1Adapter, G as createD1Client, H as createPostgresAdapter, K as createPostgresClient, V as createSimpleAdapter, M as dkimSelectors, N as domainNotes, O as domainTags, Q as domains, R as fieldComparisonStatusEnum, S as findings, T as fleetReportStatusEnum, U as isDbError, W as legacyAccessLogs, a0 as legacyToolTypeEnum, a1 as mailEvidence, a2 as mailProviderEnum, a3 as mapDatabaseError, a4 as mismatchReports, a5 as monitoredDomains, a6 as monitoringScheduleEnum, a7 as observations, a8 as parseSSLConfig, a9 as partitionDbResults, aa as probeStatusEnum, ab as probeTypeEnum, ac as providerBaselines, ad as recordSets, ae as remediationPriorityEnum, af as remediationRequests, ag as remediationStatusEnum, ah as resultStateEnum, ai as riskPostureEnum, aj as rulesetVersions, ak as savedFilters, al as selectorConfidenceEnum, am as selectorProvenanceEnum, an as sessions, ao as severityEnum, ap as shadowComparisons, aq as shadowStatusEnum, ar as sharedReportStatusEnum, as as sharedReportVisibilityEnum, at as sharedReports, au as snapshots, av as suggestions, aw as templateOverrides, ax as toNotFoundError, ay as toTenantIsolationError, az as unwrapDbResultOr, aA as users, aB as vantageTypeEnum, aC as zoneManagementEnum } from '../nitro/nitro.mjs';
+import { r as re, t as tc, n as nc, w as we, e as ec, M as Mo, x as xo } from '../nitro/nitro.mjs';
+export { I as AlertRepository, a as AuditEventRepository, D as DkimSelectorRepository, b as DomainNoteRepository, q as DomainTagRepository, $ as FindingRepository, Z as LegacyAccessLogRepository, y as MailEvidenceRepository, c as MismatchReportRepository, d as MonitoredDomainRepository, P as ObservationRepository, l as ProviderBaselineRepository, C as RecordSetRepository, f as RemediationRepository, g as RulesetVersionRepository, h as SavedFilterRepository, i as ShadowComparisonRepository, j as SharedReportRepository, u as SimpleDatabaseAdapter, k as SnapshotRepository, _ as SuggestionRepository, v as TemplateOverrideRepository, J as adjudicationEnum, m as alertStatusEnum, o as alerts, p as auditActionEnum, s as auditEvents, z as baselineStatusEnum, A as blastRadiusEnum, B as collectionStatusEnum, E as confidenceEnum, Y as createAdapterFromConfig, X as createClient, F as createD1Adapter, G as createD1Client, H as createPostgresAdapter, K as createPostgresClient, V as createSimpleAdapter, L as dkimSelectors, N as domainNotes, O as domainTags, Q as domains, R as fieldComparisonStatusEnum, S as findings, T as fleetReportStatusEnum, U as isDbError, W as legacyAccessLogs, a0 as legacyToolTypeEnum, a1 as mailEvidence, a2 as mailProviderEnum, a3 as mapDatabaseError, a4 as mismatchReports, a5 as monitoredDomains, a6 as monitoringScheduleEnum, a7 as observations, a8 as parseSSLConfig, a9 as partitionDbResults, aa as probeStatusEnum, ab as probeTypeEnum, ac as providerBaselines, ad as recordSets, ae as remediationPriorityEnum, af as remediationRequests, ag as remediationStatusEnum, ah as resultStateEnum, ai as riskPostureEnum, aj as rulesetVersions, ak as savedFilters, al as selectorConfidenceEnum, am as selectorProvenanceEnum, an as sessions, ao as severityEnum, ap as shadowComparisons, aq as shadowStatusEnum, ar as sharedReportStatusEnum, as as sharedReportVisibilityEnum, at as sharedReports, au as snapshots, av as suggestions, aw as templateOverrides, ax as toNotFoundError, ay as toTenantIsolationError, az as unwrapDbResultOr, aA as users, aB as vantageTypeEnum, aC as zoneManagementEnum } from '../nitro/nitro.mjs';
 import { Result } from 'better-result';
 export { Result } from 'better-result';
 import { eq } from 'drizzle-orm';
@@ -109,10 +109,10 @@ class W {
     this.db = e;
   }
   async findById(e) {
-    return await this.db.selectOne(Lo, eq(Lo.id, e)) || null;
+    return await this.db.selectOne(Mo, eq(Mo.id, e)) || null;
   }
   async findByTenant(e, t = 100) {
-    return (await this.db.selectWhere(Lo, eq(Lo.tenantId, e))).sort((a, o) => {
+    return (await this.db.selectWhere(Mo, eq(Mo.tenantId, e))).sort((a, o) => {
       const y = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       return (o.createdAt ? new Date(o.createdAt).getTime() : 0) - y;
     }).slice(0, t);
@@ -121,19 +121,19 @@ class W {
     return (await this.findByTenant(e, s * 2)).filter((o) => o.status === t).slice(0, s);
   }
   async create(e) {
-    return this.db.insert(Lo, e);
+    return this.db.insert(Mo, e);
   }
   async markProcessing(e) {
-    return await this.db.update(Lo, { status: "processing", startedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }, eq(Lo.id, e)), this.findById(e);
+    return await this.db.update(Mo, { status: "processing", startedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }, eq(Mo.id, e)), this.findById(e);
   }
   async complete(e, t, s) {
-    return await this.db.update(Lo, { status: "completed", summary: t, domainResults: s, completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }, eq(Lo.id, e)), this.findById(e);
+    return await this.db.update(Mo, { status: "completed", summary: t, domainResults: s, completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }, eq(Mo.id, e)), this.findById(e);
   }
   async markFailed(e, t) {
-    return await this.db.update(Lo, { status: "failed", errorMessage: t, completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }, eq(Lo.id, e)), this.findById(e);
+    return await this.db.update(Mo, { status: "failed", errorMessage: t, completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }, eq(Mo.id, e)), this.findById(e);
   }
   async delete(e) {
-    return await this.db.delete(Lo, eq(Lo.id, e)), true;
+    return await this.db.delete(Mo, eq(Mo.id, e)), true;
   }
   async countByStatus(e) {
     const t = await this.findByTenant(e, 1e3), s = { pending: 0, processing: 0, completed: 0, failed: 0 };
@@ -257,5 +257,5 @@ function q(p) {
   return new E(p);
 }
 
-export { we as DbError, re as DomainRepository, R as DomainRepositoryResults, W as FleetReportRepository, V as ProbeObservationRepository, E as SnapshotRepositoryResults, ec as dbResult, tc as dbResultOrNotFound, nc as ensureTenantIsolation, Lo as fleetReports, xo as probeObservations, Y as withDomainResults, q as withSnapshotResults };
-//# sourceMappingURL=index-B0g-u0v3.mjs.map
+export { we as DbError, re as DomainRepository, R as DomainRepositoryResults, W as FleetReportRepository, V as ProbeObservationRepository, E as SnapshotRepositoryResults, ec as dbResult, tc as dbResultOrNotFound, nc as ensureTenantIsolation, Mo as fleetReports, xo as probeObservations, Y as withDomainResults, q as withSnapshotResults };
+//# sourceMappingURL=index-Bp54iBXF.mjs.map

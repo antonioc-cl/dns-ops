@@ -282,6 +282,9 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
     
     // Add missing columns to existing tables
     const alters = [
+      // Snapshots - add missing columns
+      sql`ALTER TABLE snapshots ADD COLUMN IF NOT EXISTS tenant_id UUID`,
+      sql`ALTER TABLE snapshots ADD COLUMN IF NOT EXISTS collector VARCHAR(100)`,
       // Monitored domains - add missing columns
       sql`ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS domain_id UUID`,
       sql`ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)`,
