@@ -82,7 +82,9 @@ migrateRoutes.get('/status', async (c) => {
       WHERE table_schema = 'public'
     `);
     
-    const rows = results as unknown as { table_name: string }[];
+    // Drizzle returns { rows: [...] } for raw queries
+    const resultObj = results as unknown as { rows: { table_name: string }[] };
+    const rows = resultObj.rows || [];
     const existingTables = rows.map(r => r.table_name);
     const missingTables = REQUIRED_TABLES.filter(t => !existingTables.includes(t));
     
@@ -125,7 +127,8 @@ migrateRoutes.get('/schema', async (c) => {
         WHERE table_name = ${table} AND table_schema = 'public'
       `);
       
-      const colRows = colResults as unknown as { column_name: string }[];
+      const colResultObj = colResults as unknown as { rows: { column_name: string }[] };
+      const colRows = colResultObj.rows || [];
       const existingCols = colRows.map(r => r.column_name);
       const missing = requiredCols.filter(c => !existingCols.includes(c));
       
