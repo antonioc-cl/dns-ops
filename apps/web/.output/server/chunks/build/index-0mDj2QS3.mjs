@@ -1,5 +1,5 @@
-import { n as ne, e as ec, t as tc, y as ye, Z as Zd, k as ko, L as Lo } from '../nitro/nitro.mjs';
-export { v as AlertRepository, a as AuditEventRepository, R as DkimSelectorRepository, b as DomainNoteRepository, D as DomainTagRepository, B as FindingRepository, J as LegacyAccessLogRepository, h as MailEvidenceRepository, N as MismatchReportRepository, c as MonitoredDomainRepository, x as ObservationRepository, u as ProviderBaselineRepository, C as RecordSetRepository, d as RemediationRepository, f as RulesetVersionRepository, g as SavedFilterRepository, i as ShadowComparisonRepository, j as SharedReportRepository, l as SimpleDatabaseAdapter, s as SnapshotRepository, I as SuggestionRepository, w as TemplateOverrideRepository, G as adjudicationEnum, m as alertStatusEnum, _ as alerts, r as auditActionEnum, o as auditEvents, p as baselineStatusEnum, q as blastRadiusEnum, z as collectionStatusEnum, A as confidenceEnum, E as createAdapterFromConfig, X as createClient, Y as createD1Adapter, Q as createD1Client, F as createPostgresAdapter, H as createPostgresClient, $ as createSimpleAdapter, K as dkimSelectors, M as domainNotes, O as domainTags, V as domains, P as fieldComparisonStatusEnum, W as findings, S as fleetReportStatusEnum, T as isDbError, U as legacyAccessLogs, a0 as legacyToolTypeEnum, a1 as mailEvidence, a2 as mailProviderEnum, a3 as mapDatabaseError, a4 as mismatchReports, a5 as monitoredDomains, a6 as monitoringScheduleEnum, a7 as observations, a8 as parseSSLConfig, a9 as partitionDbResults, aa as probeStatusEnum, ab as probeTypeEnum, ac as providerBaselines, ad as recordSets, ae as remediationPriorityEnum, af as remediationRequests, ag as remediationStatusEnum, ah as resultStateEnum, ai as riskPostureEnum, aj as rulesetVersions, ak as savedFilters, al as selectorConfidenceEnum, am as selectorProvenanceEnum, an as sessions, ao as severityEnum, ap as shadowComparisons, aq as shadowStatusEnum, ar as sharedReportStatusEnum, as as sharedReportVisibilityEnum, at as sharedReports, au as snapshots, av as suggestions, aw as templateOverrides, ax as toNotFoundError, ay as toTenantIsolationError, az as unwrapDbResultOr, aA as users, aB as vantageTypeEnum, aC as zoneManagementEnum } from '../nitro/nitro.mjs';
+import { n as ne, e as ec, t as tc, w as we, Z as Zd, k as ko, L as Lo } from '../nitro/nitro.mjs';
+export { I as AlertRepository, a as AuditEventRepository, E as DkimSelectorRepository, b as DomainNoteRepository, q as DomainTagRepository, $ as FindingRepository, c as LegacyAccessLogRepository, h as MailEvidenceRepository, N as MismatchReportRepository, r as MonitoredDomainRepository, P as ObservationRepository, l as ProviderBaselineRepository, C as RecordSetRepository, d as RemediationRepository, M as RulesetVersionRepository, f as SavedFilterRepository, g as ShadowComparisonRepository, i as SharedReportRepository, u as SimpleDatabaseAdapter, s as SnapshotRepository, _ as SuggestionRepository, v as TemplateOverrideRepository, G as adjudicationEnum, j as alertStatusEnum, m as alerts, o as auditActionEnum, p as auditEvents, J as baselineStatusEnum, x as blastRadiusEnum, y as collectionStatusEnum, z as confidenceEnum, A as createAdapterFromConfig, W as createClient, Y as createD1Adapter, H as createD1Client, B as createPostgresAdapter, X as createPostgresClient, V as createSimpleAdapter, D as dkimSelectors, F as domainNotes, K as domainTags, O as domains, Q as fieldComparisonStatusEnum, R as findings, S as fleetReportStatusEnum, T as isDbError, U as legacyAccessLogs, a0 as legacyToolTypeEnum, a1 as mailEvidence, a2 as mailProviderEnum, a3 as mapDatabaseError, a4 as mismatchReports, a5 as monitoredDomains, a6 as monitoringScheduleEnum, a7 as observations, a8 as parseSSLConfig, a9 as partitionDbResults, aa as probeStatusEnum, ab as probeTypeEnum, ac as providerBaselines, ad as recordSets, ae as remediationPriorityEnum, af as remediationRequests, ag as remediationStatusEnum, ah as resultStateEnum, ai as riskPostureEnum, aj as rulesetVersions, ak as savedFilters, al as selectorConfidenceEnum, am as selectorProvenanceEnum, an as sessions, ao as severityEnum, ap as shadowComparisons, aq as shadowStatusEnum, ar as sharedReportStatusEnum, as as sharedReportVisibilityEnum, at as sharedReports, au as snapshots, av as suggestions, aw as templateOverrides, ax as toNotFoundError, ay as toTenantIsolationError, az as unwrapDbResultOr, aA as users, aB as vantageTypeEnum, aC as zoneManagementEnum } from '../nitro/nitro.mjs';
 import { Result } from 'better-result';
 export { Result } from 'better-result';
 import { eq } from 'drizzle-orm';
@@ -58,25 +58,25 @@ class R {
     const s = await this.repo.findByNameForTenant(e, t);
     if (!s) {
       const a = await this.repo.findByName(e);
-      return (a == null ? void 0 : a.tenantId) && a.tenantId !== t ? Result.err(ye.tenantIsolation("Domain", t, a.tenantId)) : Result.err(ye.notFound("Domain", `${e} (tenant: ${t})`));
+      return (a == null ? void 0 : a.tenantId) && a.tenantId !== t ? Result.err(we.tenantIsolation("Domain", t, a.tenantId)) : Result.err(we.notFound("Domain", `${e} (tenant: ${t})`));
     }
     return Result.ok(s);
   }
   async createResult(e) {
-    if (!e.name) return Result.err(new ye({ message: "Domain name is required", code: "CONSTRAINT_VIOLATION", table: "Domain", operation: "create" }));
+    if (!e.name) return Result.err(new we({ message: "Domain name is required", code: "CONSTRAINT_VIOLATION", table: "Domain", operation: "create" }));
     if (e.tenantId) {
-      if (await this.repo.findByNameAndTenant(e.name, e.tenantId)) return Result.err(ye.alreadyExists("Domain", `${e.name} (tenant: ${e.tenantId})`));
+      if (await this.repo.findByNameAndTenant(e.name, e.tenantId)) return Result.err(we.alreadyExists("Domain", `${e.name} (tenant: ${e.tenantId})`));
     } else {
       const t = await this.repo.findByName(e.name);
-      if (t && !t.tenantId) return Result.err(ye.alreadyExists("Domain", `${e.name} (global)`));
+      if (t && !t.tenantId) return Result.err(we.alreadyExists("Domain", `${e.name} (global)`));
     }
-    return Zd(() => this.repo.create(e), (t) => new ye({ message: t instanceof Error ? t.message : "Failed to create domain", code: "QUERY_FAILED", table: "Domain", operation: "create" }));
+    return Zd(() => this.repo.create(e), (t) => new we({ message: t instanceof Error ? t.message : "Failed to create domain", code: "QUERY_FAILED", table: "Domain", operation: "create" }));
   }
   async findOrCreateResult(e) {
-    return Zd(() => this.repo.findOrCreate(e), (t) => new ye({ message: t instanceof Error ? t.message : "Failed to find or create domain", code: "QUERY_FAILED", table: "Domain", operation: "findOrCreate" }));
+    return Zd(() => this.repo.findOrCreate(e), (t) => new we({ message: t instanceof Error ? t.message : "Failed to find or create domain", code: "QUERY_FAILED", table: "Domain", operation: "findOrCreate" }));
   }
   async updateResult(e, t) {
-    return await this.repo.findById(e) ? ec(() => this.repo.update(e, t), "Domain", e) : Result.err(ye.notFound("Domain", e));
+    return await this.repo.findById(e) ? ec(() => this.repo.update(e, t), "Domain", e) : Result.err(we.notFound("Domain", e));
   }
   async updateForTenantResult(e, t, s) {
     const a = await this.findByIdResult(e);
@@ -94,10 +94,10 @@ class R {
     return a.isErr() ? a : ec(() => this.repo.delete(e), "Domain", e);
   }
   async searchByNameResult(e, t) {
-    return Zd(() => this.repo.searchByName(e, t), (s) => new ye({ message: s instanceof Error ? s.message : "Search failed", code: "QUERY_FAILED", table: "Domain", operation: "search" }));
+    return Zd(() => this.repo.searchByName(e, t), (s) => new we({ message: s instanceof Error ? s.message : "Search failed", code: "QUERY_FAILED", table: "Domain", operation: "search" }));
   }
   async findAllResult(e, t) {
-    return Zd(() => this.repo.findAll(e, t), (s) => new ye({ message: s instanceof Error ? s.message : "Find all failed", code: "QUERY_FAILED", table: "Domain", operation: "findAll" }));
+    return Zd(() => this.repo.findAll(e, t), (s) => new we({ message: s instanceof Error ? s.message : "Find all failed", code: "QUERY_FAILED", table: "Domain", operation: "findAll" }));
   }
 }
 function Y(p) {
@@ -215,7 +215,7 @@ class E {
     return ec(() => this.repo.findById(e), "Snapshot", e);
   }
   async findByDomainResult(e, t) {
-    return Zd(() => this.repo.findByDomain(e, t), (s) => new ye({ message: s instanceof Error ? s.message : "Failed to find snapshots", code: "QUERY_FAILED", table: "Snapshot", operation: "findByDomain", identifier: e }));
+    return Zd(() => this.repo.findByDomain(e, t), (s) => new we({ message: s instanceof Error ? s.message : "Failed to find snapshots", code: "QUERY_FAILED", table: "Snapshot", operation: "findByDomain", identifier: e }));
   }
   async findLatestByDomainResult(e) {
     const t = await this.repo.findLatestByDomain(e);
@@ -223,13 +223,13 @@ class E {
   }
   async requireLatestByDomainResult(e) {
     const t = await this.repo.findLatestByDomain(e);
-    return t ? Result.ok(t) : Result.err(ye.notFound("Snapshot", `latest for domain: ${e}`));
+    return t ? Result.ok(t) : Result.err(we.notFound("Snapshot", `latest for domain: ${e}`));
   }
   async findRecentByDomainResult(e, t) {
-    return Zd(() => this.repo.findRecentByDomain(e, t), (s) => new ye({ message: s instanceof Error ? s.message : "Failed to check recent snapshot", code: "QUERY_FAILED", table: "Snapshot", operation: "findRecentByDomain", identifier: e }));
+    return Zd(() => this.repo.findRecentByDomain(e, t), (s) => new we({ message: s instanceof Error ? s.message : "Failed to check recent snapshot", code: "QUERY_FAILED", table: "Snapshot", operation: "findRecentByDomain", identifier: e }));
   }
   async createResult(e) {
-    return e.domainId ? Zd(() => this.repo.create(e), (t) => new ye({ message: t instanceof Error ? t.message : "Failed to create snapshot", code: "QUERY_FAILED", table: "Snapshot", operation: "create" })) : Result.err(new ye({ message: "Domain ID is required", code: "CONSTRAINT_VIOLATION", table: "Snapshot", operation: "create" }));
+    return e.domainId ? Zd(() => this.repo.create(e), (t) => new we({ message: t instanceof Error ? t.message : "Failed to create snapshot", code: "QUERY_FAILED", table: "Snapshot", operation: "create" })) : Result.err(new we({ message: "Domain ID is required", code: "CONSTRAINT_VIOLATION", table: "Snapshot", operation: "create" }));
   }
   async updateErrorResult(e, t) {
     const s = await this.findByIdResult(e);
@@ -244,18 +244,18 @@ class E {
     return s.isErr() ? s : ec(() => this.repo.updateRulesetVersion(e, t), "Snapshot", e);
   }
   async listResult(e) {
-    return Zd(() => this.repo.list(e), (t) => new ye({ message: t instanceof Error ? t.message : "Failed to list snapshots", code: "QUERY_FAILED", table: "Snapshot", operation: "list" }));
+    return Zd(() => this.repo.list(e), (t) => new we({ message: t instanceof Error ? t.message : "Failed to list snapshots", code: "QUERY_FAILED", table: "Snapshot", operation: "list" }));
   }
   async countByDomainResult(e) {
-    return Zd(() => this.repo.countByDomain(e), (t) => new ye({ message: t instanceof Error ? t.message : "Failed to count snapshots", code: "QUERY_FAILED", table: "Snapshot", operation: "countByDomain", identifier: e }));
+    return Zd(() => this.repo.countByDomain(e), (t) => new we({ message: t instanceof Error ? t.message : "Failed to count snapshots", code: "QUERY_FAILED", table: "Snapshot", operation: "countByDomain", identifier: e }));
   }
   async findNeedingBackfillResult(e, t) {
-    return Zd(() => this.repo.findNeedingBackfill(e, t), (s) => new ye({ message: s instanceof Error ? s.message : "Failed to find backfill candidates", code: "QUERY_FAILED", table: "Snapshot", operation: "findNeedingBackfill" }));
+    return Zd(() => this.repo.findNeedingBackfill(e, t), (s) => new we({ message: s instanceof Error ? s.message : "Failed to find backfill candidates", code: "QUERY_FAILED", table: "Snapshot", operation: "findNeedingBackfill" }));
   }
 }
 function q(p) {
   return new E(p);
 }
 
-export { ye as DbError, ne as DomainRepository, R as DomainRepositoryResults, W as FleetReportRepository, V as ProbeObservationRepository, E as SnapshotRepositoryResults, Zd as dbResult, ec as dbResultOrNotFound, tc as ensureTenantIsolation, ko as fleetReports, Lo as probeObservations, Y as withDomainResults, q as withSnapshotResults };
-//# sourceMappingURL=index-CAZe_NRe.mjs.map
+export { we as DbError, ne as DomainRepository, R as DomainRepositoryResults, W as FleetReportRepository, V as ProbeObservationRepository, E as SnapshotRepositoryResults, Zd as dbResult, ec as dbResultOrNotFound, tc as ensureTenantIsolation, ko as fleetReports, Lo as probeObservations, Y as withDomainResults, q as withSnapshotResults };
+//# sourceMappingURL=index-0mDj2QS3.mjs.map
