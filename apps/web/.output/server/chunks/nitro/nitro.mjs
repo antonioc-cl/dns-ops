@@ -11,7 +11,7 @@ import { virtualId, handlerModule, join as join$1 } from 'vinxi/lib/path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isRedirect, isNotFound, isPlainObject as isPlainObject$1, pick, TSR_DEFERRED_PROMISE, createControlledPromise, isPlainArray, defer as defer$1 } from '@tanstack/router-core';
 import { Hono } from 'hono';
-import { eq, and, gt as gt$1, or as or$1, like, inArray, desc, sql } from 'drizzle-orm';
+import { eq, and, gt as gt$1, sql, or as or$1, like, inArray, desc } from 'drizzle-orm';
 import { TaggedError, Result } from 'better-result';
 import { createMiddleware } from 'hono/factory';
 import { pgEnum, pgTable, timestamp, varchar, text, jsonb, uuid, index, boolean, uniqueIndex, integer } from 'drizzle-orm/pg-core';
@@ -20,13 +20,13 @@ import { drizzle as drizzle$1 } from 'drizzle-orm/node-postgres';
 import yt$1 from 'events';
 import gt$2 from 'util';
 import require$$1 from 'crypto';
-import Vi from 'dns';
-import Os from 'fs';
-import js from 'net';
+import Ki from 'dns';
+import Bs from 'fs';
+import Us from 'net';
 import require$$4 from 'tls';
-import Ki from 'path';
+import Wi from 'path';
 import require$$0$2 from 'stream';
-import Qi from 'string_decoder';
+import Xi from 'string_decoder';
 import { hash as hash$1, verify } from '@node-rs/argon2';
 import { RouterProvider, createRootRoute, HeadContent, Link, Outlet, Scripts, createFileRoute, lazyRouteComponent, redirect, createRouter as createRouter$2 } from '@tanstack/react-router';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
@@ -4298,7 +4298,7 @@ async function errorHandler(error, event) {
 }
 
 const appConfig = {"name":"vinxi","routers":[{"name":"public","type":"static","dir":"./public","base":"/","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","order":0,"outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/public"},{"name":"client","type":"client","target":"browser","handler":"app/client.tsx","base":"/_build","build":{"sourcemap":true},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/client","order":1},{"name":"ssr","type":"http","target":"server","handler":"app/ssr.tsx","link":{"client":"client"},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","base":"/","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/ssr","order":2},{"name":"server","type":"http","target":"server","base":"/_server","handler":"../../node_modules/.bun/@tanstack+start-server-functions-handler@1.120.19/node_modules/@tanstack/start-server-functions-handler/dist/esm/index.js","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/server","order":3},{"name":"api","base":"/api","type":"http","handler":"app/api.ts","target":"server","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/api","order":4}],"server":{"rollupConfig":{},"preset":"node-server","experimental":{"asyncContext":true}},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web"};
-				const buildManifest = {"client":{"_StateDisplay-CnvOW3z9.js":{"file":"assets/StateDisplay-CnvOW3z9.js","name":"StateDisplay","imports":["_client-CkjywyCc.js"]},"_client-CkjywyCc.js":{"file":"assets/client-CkjywyCc.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-Bnc5Jkbz.js":{"file":"assets/index-Bnc5Jkbz.js","name":"index","imports":["_client-CkjywyCc.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-DroSxPHe.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js","_index-Bnc5Jkbz.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-COOAridH.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_index-Bnc5Jkbz.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-PmBuY3-1.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-DnJrzwtn.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-BmpqoPWy.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-CkjywyCc.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-CVlnnD8-.js":{"file":"assets/index-CVlnnD8-.js","name":"index","imports":["_ssr-CHtAOUeR.js"]},"_ssr-CHtAOUeR.js":{"file":"assets/ssr-CHtAOUeR.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-B6RX7dFy.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-Kjg-Wu4U.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-CHtAOUeR.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-vkeogiSq.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-S22J3INT.js"]},"_api-S22J3INT.js":{"file":"assets/api-S22J3INT.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-S22J3INT.js"]}}};
+				const buildManifest = {"client":{"_StateDisplay-CnvOW3z9.js":{"file":"assets/StateDisplay-CnvOW3z9.js","name":"StateDisplay","imports":["_client-CkjywyCc.js"]},"_client-CkjywyCc.js":{"file":"assets/client-CkjywyCc.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-Bnc5Jkbz.js":{"file":"assets/index-Bnc5Jkbz.js","name":"index","imports":["_client-CkjywyCc.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-DroSxPHe.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js","_index-Bnc5Jkbz.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-COOAridH.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_index-Bnc5Jkbz.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-PmBuY3-1.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-DnJrzwtn.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CkjywyCc.js","_StateDisplay-CnvOW3z9.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-BmpqoPWy.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-CkjywyCc.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-CVlnnD8-.js":{"file":"assets/index-CVlnnD8-.js","name":"index","imports":["_ssr-CHtAOUeR.js"]},"_ssr-CHtAOUeR.js":{"file":"assets/ssr-CHtAOUeR.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-B6RX7dFy.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-Kjg-Wu4U.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-CVlnnD8-.js","_ssr-CHtAOUeR.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-CHtAOUeR.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-D7TwHSZ1.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-Byff3aQp.js"]},"_api-Byff3aQp.js":{"file":"assets/api-Byff3aQp.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-Byff3aQp.js"]}}};
 
 				const routeManifest = {"api":{}};
 
@@ -4562,77 +4562,77 @@ const assets = {
   "/_build/.vite/manifest.json": {
     "type": "application/json",
     "etag": "\"867-g33VoNVOh9J8U8RqVZ8lpuGHbA0\"",
-    "mtime": "2026-04-15T15:46:49.926Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 2151,
     "path": "../public/_build/.vite/manifest.json"
   },
   "/assets/ssr.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T15:46:49.932Z",
+    "mtime": "2026-04-15T15:49:44.279Z",
     "size": 29329,
     "path": "../public/assets/ssr.css"
   },
   "/_build/assets/StateDisplay-CnvOW3z9.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1496-vRq4Gg4Qj3gqr2LETEfzgg6rk5Q\"",
-    "mtime": "2026-04-15T15:46:49.927Z",
+    "mtime": "2026-04-15T15:49:44.270Z",
     "size": 5270,
     "path": "../public/_build/assets/StateDisplay-CnvOW3z9.js"
-  },
-  "/_build/assets/client-BmpqoPWy.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"3f-9LvvSakYUu29qWUmrPEgWqglXyY\"",
-    "mtime": "2026-04-15T15:46:49.927Z",
-    "size": 63,
-    "path": "../public/_build/assets/client-BmpqoPWy.js"
   },
   "/_build/assets/_domain-DroSxPHe.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"164a5-Rxjt+Bjn426AB/P6+wUn/j7yymY\"",
-    "mtime": "2026-04-15T15:46:49.926Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 91301,
     "path": "../public/_build/assets/_domain-DroSxPHe.js"
   },
   "/_build/assets/client.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T15:46:49.926Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 29329,
     "path": "../public/_build/assets/client.css"
   },
   "/_build/assets/index-Bnc5Jkbz.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1507-FjOxzzlumNTvjkuFtSW2mJ0LSLc\"",
-    "mtime": "2026-04-15T15:46:49.926Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 5383,
     "path": "../public/_build/assets/index-Bnc5Jkbz.js"
   },
   "/_build/assets/index-COOAridH.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1da7-WInPiTalF+dBMdhyCsKbU+l0vC4\"",
-    "mtime": "2026-04-15T15:46:49.926Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 7591,
     "path": "../public/_build/assets/index-COOAridH.js"
+  },
+  "/_build/assets/client-BmpqoPWy.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"3f-9LvvSakYUu29qWUmrPEgWqglXyY\"",
+    "mtime": "2026-04-15T15:49:44.271Z",
+    "size": 63,
+    "path": "../public/_build/assets/client-BmpqoPWy.js"
   },
   "/_build/assets/login-PmBuY3-1.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"10cf-fYSSwOfCzSAbjykRV6IGJwessG8\"",
-    "mtime": "2026-04-15T15:46:49.927Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 4303,
     "path": "../public/_build/assets/login-PmBuY3-1.js"
   },
   "/_build/assets/client-CkjywyCc.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"365dc-pAnE/QixHUTinBe3FPL6KBIxROI\"",
-    "mtime": "2026-04-15T15:46:49.927Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 222684,
     "path": "../public/_build/assets/client-CkjywyCc.js"
   },
   "/_build/assets/portfolio-DnJrzwtn.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"1311f-FJXmPWhisNxDEExinUgSBhCWPpw\"",
-    "mtime": "2026-04-15T15:46:49.927Z",
+    "mtime": "2026-04-15T15:49:44.271Z",
     "size": 78111,
     "path": "../public/_build/assets/portfolio-DnJrzwtn.js"
   }
@@ -4828,9 +4828,9 @@ const _MTmOo_ = eventHandler((event) => {
   return readAsset(id);
 });
 
-var B$1 = "Invariant failed";
+var B = "Invariant failed";
 function K$2(e, n) {
-  if (!e) throw new Error(B$1);
+  if (!e) throw new Error(B);
 }
 const l = { stringify: (e) => JSON.stringify(e, function(t, r) {
   const o = this[t], a = v.find((s) => s.stringifyCondition(o));
@@ -4866,7 +4866,7 @@ const l = { stringify: (e) => JSON.stringify(e, function(t, r) {
     Array.isArray(r) ? r.forEach((o) => n.append(t, o)) : n.append(t, r);
   }), n;
 }), g("bigint", (e) => typeof e == "bigint", (e) => e.toString(), (e) => BigInt(e))];
-function V$1(e = {}) {
+function V(e = {}) {
   let n, t = false;
   const r = (s) => {
     if (n && n !== s) throw new Error("Context conflict");
@@ -4915,7 +4915,7 @@ function V$1(e = {}) {
 function G(e = {}) {
   const n = {};
   return { get(t, r = {}) {
-    return n[t] || (n[t] = V$1({ ...e, ...r })), n[t];
+    return n[t] || (n[t] = V({ ...e, ...r })), n[t];
   } };
 }
 const C = typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : typeof global < "u" ? global : {}, L = "__unctx__", Q = C[L] || (C[L] = G()), X = (e, n = {}) => Q.get(e, n), q = "__unctx_async_handlers__", $ = C[q] || (C[q] = /* @__PURE__ */ new Set());
@@ -5013,10 +5013,10 @@ var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var Zn = typeof globalThis < "u" ? globalThis : typeof global < "u" ? global : typeof self < "u" ? self : {};
-function Bs(e) {
+function $s(e) {
   return e && e.__esModule && Object.prototype.hasOwnProperty.call(e, "default") ? e.default : e;
 }
-function Ji(e) {
+function eo(e) {
   if (Object.prototype.hasOwnProperty.call(e, "__esModule")) return e;
   var t = e.default;
   if (typeof t == "function") {
@@ -5032,7 +5032,7 @@ function Ji(e) {
     } });
   }), n;
 }
-function Zi(e = {}) {
+function to(e = {}) {
   let t, n = false;
   const r = (o) => {
     if (t && t !== o) throw new Error("Context conflict");
@@ -5078,61 +5078,61 @@ function Zi(e = {}) {
     }
   } };
 }
-function eo(e = {}) {
+function no(e = {}) {
   const t = {};
   return { get(n, r = {}) {
-    return t[n] || (t[n] = Zi({ ...e, ...r })), t[n];
+    return t[n] || (t[n] = to({ ...e, ...r })), t[n];
   } };
 }
-const Ft$1 = typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : typeof global < "u" ? global : {}, Sr = "__unctx__", to = Ft$1[Sr] || (Ft$1[Sr] = eo()), no = (e, t = {}) => to.get(e, t), Tr = "__unctx_async_handlers__", Ar = Ft$1[Tr] || (Ft$1[Tr] = /* @__PURE__ */ new Set());
-function ro(e) {
+const Ft$1 = typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : typeof global < "u" ? global : {}, Sr = "__unctx__", ro = Ft$1[Sr] || (Ft$1[Sr] = no()), so = (e, t = {}) => ro.get(e, t), Tr = "__unctx_async_handlers__", Ar = Ft$1[Tr] || (Ft$1[Tr] = /* @__PURE__ */ new Set());
+function io(e) {
   let t;
-  const n = Vs(e), r = { duplex: "half", method: e.method, headers: e.headers };
+  const n = Ks(e), r = { duplex: "half", method: e.method, headers: e.headers };
   return e.node.req.body instanceof ArrayBuffer ? new Request(n, { ...r, body: e.node.req.body }) : new Request(n, { ...r, get body() {
-    return t || (t = ao(e), t);
+    return t || (t = uo(e), t);
   } });
 }
-function so(e) {
-  var _a2;
-  return (_a2 = e.web) != null ? _a2 : e.web = { request: ro(e), url: Vs(e) }, e.web.request;
-}
-function io() {
-  return zs();
-}
-const Fs = /* @__PURE__ */ Symbol("$HTTPEvent");
 function oo(e) {
-  return typeof e == "object" && (e instanceof H3Event || (e == null ? void 0 : e[Fs]) instanceof H3Event || (e == null ? void 0 : e.__is_event__) === true);
+  var _a2;
+  return (_a2 = e.web) != null ? _a2 : e.web = { request: io(e), url: Ks(e) }, e.web.request;
 }
-function $s(e) {
+function ao() {
+  return Qs();
+}
+const Vs = /* @__PURE__ */ Symbol("$HTTPEvent");
+function co(e) {
+  return typeof e == "object" && (e instanceof H3Event || (e == null ? void 0 : e[Vs]) instanceof H3Event || (e == null ? void 0 : e.__is_event__) === true);
+}
+function zs(e) {
   return function(...t) {
     var n;
     const r = t[0];
-    if (oo(r)) t[0] = r instanceof H3Event || r.__is_event__ ? r : r[Fs];
+    if (co(r)) t[0] = r instanceof H3Event || r.__is_event__ ? r : r[Vs];
     else {
       if (!((n = globalThis.app.config.server.experimental) != null && n.asyncContext)) throw new Error("AsyncLocalStorage was not enabled. Use the `server.experimental.asyncContext: true` option in your app configuration to enable it. Or, pass the instance of HTTPEvent that you have as the first argument to the function.");
-      t.unshift(io());
+      t.unshift(ao());
     }
     return e(...t);
   };
 }
-const Vs = $s(getRequestURL), ao = $s(getRequestWebStream);
-function co() {
+const Ks = zs(getRequestURL), uo = zs(getRequestWebStream);
+function lo() {
   var e;
-  return no("nitro-app", { asyncContext: !!((e = globalThis.app.config.server.experimental) != null && e.asyncContext), AsyncLocalStorage: AsyncLocalStorage });
+  return so("nitro-app", { asyncContext: !!((e = globalThis.app.config.server.experimental) != null && e.asyncContext), AsyncLocalStorage: AsyncLocalStorage });
 }
-function zs() {
-  const e = co().use().event;
+function Qs() {
+  const e = lo().use().event;
   if (!e) throw new Error("No HTTPEvent found in AsyncLocalStorage. Make sure you are using the function within the server runtime.");
   return e;
 }
-const uo = [{ path: "/__root", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/__root.tsx" }, { path: "/", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/index.tsx" }, { path: "/login", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/login.tsx" }, { path: "/portfolio", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/portfolio.tsx" }, { path: "/domain/:$domain?", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/domain/$domain.tsx" }];
-function lo(e) {
+const po = [{ path: "/__root", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/__root.tsx" }, { path: "/", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/index.tsx" }, { path: "/login", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/login.tsx" }, { path: "/portfolio", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/portfolio.tsx" }, { path: "/domain/:$domain?", filePath: "/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/app/routes/domain/$domain.tsx" }];
+function fo(e) {
   return eventHandler(async (t) => {
-    const n = so(t);
+    const n = oo(t);
     return await e({ request: n });
   });
 }
-uo.filter((e) => e.$APIRoute);
+po.filter((e) => e.$APIRoute);
 new AsyncLocalStorage();
 const Rr = { debug: 0, info: 1, warn: 2, error: 3 };
 class er {
@@ -5209,7 +5209,7 @@ class er {
 function tr(e) {
   return new er({ minLevel: process.env.LOG_LEVEL || "info", pretty: false, ...e });
 }
-class po {
+class mo {
   constructor(t, n = "dns_ops") {
     __publicField(this, "logger");
     __publicField(this, "prefix");
@@ -5293,21 +5293,21 @@ class po {
     } };
   }
 }
-function fo(e, t) {
-  return new po(e, t);
+function ho(e, t) {
+  return new mo(e, t);
 }
-function mo(e, t) {
-  const n = fo(e, t);
+function go(e, t) {
+  const n = ho(e, t);
   return { remediation: n.createRemediationMetrics(), shadow: n.createShadowMetrics(), alerts: n.createAlertMetrics(), jobs: n.createJobMetrics() };
 }
-const Er = tr({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" }), Ks = [{ name: "NODE_ENV", required: false, description: "Runtime environment (development/production/test)", validate: (e) => ["development", "production", "test"].includes(e) ? null : "Must be one of: development, production, test", default: "production" }, { name: "DATABASE_URL", required: "development", description: "PostgreSQL connection URL for local development or bound runtime", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "HYPERDRIVE_URL", required: false, description: "Optional Cloudflare-bound PostgreSQL/Hyperdrive connection URL", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "COLLECTOR_URL", required: true, description: "URL for the DNS collector service", validate: (e) => {
+const Er = tr({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" }), Ws = [{ name: "NODE_ENV", required: false, description: "Runtime environment (development/production/test)", validate: (e) => ["development", "production", "test"].includes(e) ? null : "Must be one of: development, production, test", default: "production" }, { name: "DATABASE_URL", required: "development", description: "PostgreSQL connection URL for local development or bound runtime", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "HYPERDRIVE_URL", required: false, description: "Optional Cloudflare-bound PostgreSQL/Hyperdrive connection URL", validate: (e) => e.startsWith("postgresql://") || e.startsWith("postgres://") ? null : "Must be a valid PostgreSQL URL (postgresql://... or postgres://...)" }, { name: "COLLECTOR_URL", required: true, description: "URL for the DNS collector service", validate: (e) => {
   try {
     return new URL(e), null;
   } catch {
     return "Must be a valid URL";
   }
 }, default: "http://localhost:3001" }, { name: "INTERNAL_SECRET", required: "production", description: "Shared secret for internal web \u2192 collector authentication", validate: (e) => e.length >= 16 ? null : "Must be at least 16 characters for security" }, { name: "API_KEY_SECRET", required: false, description: "Shared secret for service API key authentication", validate: (e) => e.length >= 16 ? null : "Must be at least 16 characters for security" }];
-function ho(e, t) {
+function yo(e, t) {
   return e.required === true ? true : e.required === false ? false : e.required === t;
 }
 function ut$1(e, t, n = process.env) {
@@ -5327,11 +5327,11 @@ function ut$1(e, t, n = process.env) {
       return (_h = t == null ? void 0 : t.NODE_ENV) != null ? _h : n.NODE_ENV;
   }
 }
-function go(e = process.env) {
+function wo(e = process.env) {
   const t = [], n = [], r = e.NODE_ENV || "production";
-  for (const s of Ks) {
+  for (const s of Ws) {
     const i = ut$1(s.name, void 0, e);
-    if (ho(s, r) && !i) {
+    if (yo(s, r) && !i) {
       t.push({ name: s.name, error: "Required but not set", description: s.description });
       continue;
     }
@@ -5346,7 +5346,7 @@ function go(e = process.env) {
   }
   return { valid: t.length === 0, errors: t, warnings: n, environment: r };
 }
-function yo(e) {
+function vo(e) {
   const t = ["", "\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557", "\u2551           ENVIRONMENT CONFIGURATION ERROR                      \u2551", "\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D", "", `Environment: ${e.environment}`, ""];
   if (e.errors.length > 0) {
     t.push("ERRORS (startup blocked):"), t.push("\u2500".repeat(60));
@@ -5360,10 +5360,10 @@ function yo(e) {
   return t.push("\u2500".repeat(60)), t.push("Fix the errors above and restart the application."), t.push(""), t.join(`
 `);
 }
-function wo(e = process.env) {
-  const t = go(e);
+function Io(e = process.env) {
+  const t = wo(e);
   if (t.warnings.length > 0 && Er.warn("Environment validation warnings", { warnings: t.warnings }), !t.valid) {
-    const n = yo(t);
+    const n = vo(t);
     throw Er.error("Environment validation failed", void 0, { errorCount: t.errors.length, errors: t.errors.map((r) => `${r.name}: ${r.error}`), formatted: n }), new Error(`Environment validation failed: ${t.errors.length} error(s)`);
   }
 }
@@ -5371,23 +5371,23 @@ function nr(e, t = process.env) {
   const n = ut$1("NODE_ENV", e, t) || "production";
   return { nodeEnv: n, databaseUrl: ut$1("DATABASE_URL", e, t), collectorUrl: ut$1("COLLECTOR_URL", e, t) || "http://localhost:3001", internalSecret: ut$1("INTERNAL_SECRET", e, t), apiKeySecret: ut$1("API_KEY_SECRET", e, t), isDevelopment: n === "development", isProduction: n === "production" };
 }
-function vo(e, t = process.env) {
+function _o(e, t = process.env) {
   return nr(e, t);
 }
-Ks.map((e) => e.name);
+Ws.map((e) => e.name);
 function wt$1(e) {
   return TaggedError(e);
 }
 wt$1("ValidationError")();
-const Io = wt$1("NotFoundError")();
-class _o extends Io {
+const bo = wt$1("NotFoundError")();
+class So extends bo {
   constructor() {
     super(...arguments);
     __publicField(this, "statusCode", 404);
   }
 }
-const bo = wt$1("TenantIsolationError")();
-class So extends bo {
+const To = wt$1("TenantIsolationError")();
+class Ao extends To {
   constructor() {
     super(...arguments);
     __publicField(this, "statusCode", 403);
@@ -5396,43 +5396,43 @@ class So extends bo {
 wt$1("DatabaseError")();
 wt$1("ParseError")();
 wt$1("NetworkError")();
-const To = "6ba7b810-9dad-11d1-80b4-00c04fd430c8", Ao = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function Ro(e) {
-  return Ao.test(e);
+const Ro = "6ba7b810-9dad-11d1-80b4-00c04fd430c8", Eo = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function No(e) {
+  return Eo.test(e);
 }
-function Eo(e) {
+function Do(e) {
   const t = e.replace(/-/g, ""), n = new Uint8Array(16);
   for (let r = 0; r < 16; r++) n[r] = parseInt(t.substring(r * 2, r * 2 + 2), 16);
   return n;
 }
-function No(e) {
+function qo(e) {
   const t = Array.from(e).map((n) => n.toString(16).padStart(2, "0")).join("");
   return [t.substring(0, 8), t.substring(8, 12), t.substring(12, 16), t.substring(16, 20), t.substring(20, 32)].join("-");
 }
-async function Do(e, t = To) {
-  const n = Eo(t), r = new TextEncoder().encode(e), s = new Uint8Array(n.length + r.length);
+async function Co(e, t = Ro) {
+  const n = Do(t), r = new TextEncoder().encode(e), s = new Uint8Array(n.length + r.length);
   s.set(n), s.set(r, n.length);
   const i = await crypto.subtle.digest("SHA-1", s), o = new Uint8Array(i), a = new Uint8Array(16);
-  return a.set(o.slice(0, 16)), a[6] = a[6] & 15 | 80, a[8] = a[8] & 63 | 128, No(a);
+  return a.set(o.slice(0, 16)), a[6] = a[6] & 15 | 80, a[8] = a[8] & 63 | 128, qo(a);
 }
-async function qo(e) {
+async function ko(e) {
   if (!e) throw new Error("Tenant identifier is required");
-  return Ro(e) ? e.toLowerCase() : Do(e.toLowerCase());
+  return No(e) ? e.toLowerCase() : Co(e.toLowerCase());
 }
 const Nr = /* @__PURE__ */ new Map();
 async function Xt(e) {
   const t = e.toLowerCase(), n = Nr.get(t);
   if (n) return n;
-  const r = await qo(e);
+  const r = await ko(e);
   return Nr.set(t, r), r;
 }
-const Qs = pgEnum("remediation_status", ["open", "in-progress", "resolved", "closed"]), Ws = pgEnum("remediation_priority", ["low", "medium", "high", "critical"]), fe$1 = pgTable("remediation_requests", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id"), domain: varchar("domain", { length: 253 }).notNull(), contactEmail: varchar("contact_email", { length: 254 }).notNull(), contactName: varchar("contact_name", { length: 100 }).notNull(), contactPhone: varchar("contact_phone", { length: 20 }), tenantId: uuid("tenant_id").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), issues: jsonb("issues").notNull().$type(), priority: Ws("priority").notNull().default("medium"), notes: text("notes"), status: Qs("status").notNull().default("open"), assignedTo: varchar("assigned_to", { length: 100 }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(), resolvedAt: timestamp("resolved_at", { withTimezone: true }) }, (e) => ({ domainIdx: index("remediation_domain_idx").on(e.domain), statusIdx: index("remediation_status_idx").on(e.status), snapshotIdx: index("remediation_snapshot_idx").on(e.snapshotId), tenantIdx: index("remediation_tenant_idx").on(e.tenantId), createdByIdx: index("remediation_created_by_idx").on(e.createdBy), createdAtIdx: index("remediation_created_at_idx").on(e.createdAt) })), Xs = pgEnum("selector_provenance", ["managed-zone-config", "operator-supplied", "provider-heuristic", "common-dictionary", "not-found"]), rr = pgEnum("selector_confidence", ["certain", "high", "medium", "low", "heuristic"]), sr = pgEnum("mail_provider", ["google-workspace", "microsoft-365", "amazon-ses", "sendgrid", "mailgun", "mailchimp", "zoho", "fastmail", "protonmail", "custom", "unknown"]), Ae = pgTable("dkim_selectors", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), selector: varchar("selector", { length: 63 }).notNull(), domain: varchar("domain", { length: 253 }).notNull(), provenance: Xs("provenance").notNull(), confidence: rr("confidence").notNull(), provider: sr("provider"), found: boolean("found").notNull(), recordData: text("record_data"), keyType: varchar("key_type", { length: 10 }), keySize: varchar("key_size", { length: 10 }), hashAlgorithms: jsonb("hash_algorithms").$type(), flags: jsonb("flags").$type(), isValid: boolean("is_valid"), validationError: text("validation_error"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("dkim_selector_snapshot_idx").on(e.snapshotId), selectorIdx: index("dkim_selector_selector_idx").on(e.selector), domainIdx: index("dkim_selector_domain_idx").on(e.domain), providerIdx: index("dkim_selector_provider_idx").on(e.provider), provenanceIdx: index("dkim_selector_provenance_idx").on(e.provenance) })), se$1 = pgTable("mail_evidence", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), domain: varchar("domain", { length: 253 }).notNull(), detectedProvider: sr("detected_provider"), providerConfidence: rr("provider_confidence"), hasMx: boolean("has_mx").notNull().default(false), isNullMx: boolean("is_null_mx").notNull().default(false), mxHosts: jsonb("mx_hosts").$type(), hasSpf: boolean("has_spf").notNull().default(false), spfRecord: text("spf_record"), spfMechanisms: jsonb("spf_mechanisms").$type(), hasDmarc: boolean("has_dmarc").notNull().default(false), dmarcRecord: text("dmarc_record"), dmarcPolicy: varchar("dmarc_policy", { length: 20 }), dmarcSubdomainPolicy: varchar("dmarc_subdomain_policy", { length: 20 }), dmarcPercent: varchar("dmarc_percent", { length: 5 }), dmarcRua: jsonb("dmarc_rua").$type(), dmarcRuf: jsonb("dmarc_ruf").$type(), hasDkim: boolean("has_dkim").notNull().default(false), dkimSelectorsFound: jsonb("dkim_selectors_found").$type(), dkimSelectorCount: varchar("dkim_selector_count", { length: 5 }), hasMtaSts: boolean("has_mta_sts").notNull().default(false), mtaStsMode: varchar("mta_sts_mode", { length: 20 }), mtaStsVersion: varchar("mta_sts_version", { length: 10 }), mtaStsMaxAge: varchar("mta_sts_max_age", { length: 15 }), hasTlsRpt: boolean("has_tls_rpt").notNull().default(false), tlsRptRua: jsonb("tls_rpt_rua").$type(), hasBimi: boolean("has_bimi").notNull().default(false), bimiVersion: varchar("bimi_version", { length: 10 }), bimiLocation: text("bimi_location"), bimiAuthority: text("bimi_authority"), securityScore: varchar("security_score", { length: 5 }), scoreBreakdown: jsonb("score_breakdown").$type(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("mail_evidence_snapshot_idx").on(e.snapshotId), domainIdx: index("mail_evidence_domain_idx").on(e.domain), providerIdx: index("mail_evidence_provider_idx").on(e.detectedProvider), scoreIdx: index("mail_evidence_score_idx").on(e.securityScore) })), Hs = pgEnum("shadow_status", ["match", "mismatch", "partial-match", "error"]), Co = pgEnum("field_comparison_status", ["match", "mismatch", "missing-in-legacy", "missing-in-new", "not-comparable"]), Gs = pgEnum("adjudication_decision", ["new-correct", "legacy-correct", "both-wrong", "acceptable-difference"]), Ys = pgEnum("legacy_tool_type", ["dmarc-check", "dkim-check", "spf-check", "mx-check", "dns-check"]), Js = pgEnum("baseline_status", ["active", "deprecated", "draft"]), me$1 = pgTable("shadow_comparisons", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), domain: varchar("domain", { length: 253 }).notNull(), comparedAt: timestamp("compared_at", { withTimezone: true }).notNull().defaultNow(), status: Hs("status").notNull(), comparisons: jsonb("comparisons").notNull().$type(), metrics: jsonb("metrics").notNull().$type(), summary: text("summary").notNull(), legacyOutput: jsonb("legacy_output").notNull().$type(), acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }), acknowledgedBy: varchar("acknowledged_by", { length: 100 }), adjudication: Gs("adjudication"), adjudicationNotes: text("adjudication_notes"), tenantId: uuid("tenant_id"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("shadow_comparison_snapshot_idx").on(e.snapshotId), domainIdx: index("shadow_comparison_domain_idx").on(e.domain), statusIdx: index("shadow_comparison_status_idx").on(e.status), adjudicationIdx: index("shadow_comparison_adjudication_idx").on(e.adjudication), comparedAtIdx: index("shadow_comparison_compared_at_idx").on(e.comparedAt), tenantIdx: index("shadow_comparison_tenant_idx").on(e.tenantId) })), Ce = pgTable("legacy_access_logs", { id: uuid("id").primaryKey().defaultRandom(), toolType: Ys("tool_type").notNull(), toolEndpoint: varchar("tool_endpoint", { length: 500 }), domain: varchar("domain", { length: 253 }).notNull(), requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(), requestedBy: varchar("requested_by", { length: 100 }), requestSource: varchar("request_source", { length: 50 }), responseStatus: varchar("response_status", { length: 20 }), responseTimeMs: jsonb("response_time_ms").$type(), outputSummary: jsonb("output_summary").$type(), rawOutput: text("raw_output"), snapshotId: uuid("snapshot_id").references(() => W.id, { onDelete: "set null" }), tenantId: uuid("tenant_id"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ toolTypeIdx: index("legacy_access_tool_type_idx").on(e.toolType), domainIdx: index("legacy_access_domain_idx").on(e.domain), requestedAtIdx: index("legacy_access_requested_at_idx").on(e.requestedAt), snapshotIdx: index("legacy_access_snapshot_idx").on(e.snapshotId), tenantIdx: index("legacy_access_tenant_idx").on(e.tenantId) })), Re = pgTable("provider_baselines", { id: uuid("id").primaryKey().defaultRandom(), providerKey: varchar("provider_key", { length: 50 }).notNull(), providerName: varchar("provider_name", { length: 100 }).notNull(), status: Js("status").notNull().default("active"), baseline: jsonb("baseline").notNull().$type(), dkimSelectors: jsonb("dkim_selectors").$type(), mxPatterns: jsonb("mx_patterns").$type(), spfIncludes: jsonb("spf_includes").$type(), notes: text("notes"), documentationUrl: varchar("documentation_url", { length: 500 }), version: varchar("version", { length: 20 }).notNull().default("1.0.0"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ providerKeyIdx: index("provider_baseline_provider_key_idx").on(e.providerKey), statusIdx: index("provider_baseline_status_idx").on(e.status) })), lt$1 = pgTable("mismatch_reports", { id: uuid("id").primaryKey().defaultRandom(), domain: varchar("domain", { length: 253 }), tenantId: uuid("tenant_id"), periodStart: timestamp("period_start", { withTimezone: true }).notNull(), periodEnd: timestamp("period_end", { withTimezone: true }).notNull(), totalComparisons: jsonb("total_comparisons").$type().notNull(), matchCount: jsonb("match_count").$type().notNull(), mismatchCount: jsonb("mismatch_count").$type().notNull(), partialMatchCount: jsonb("partial_match_count").$type().notNull(), mismatchBreakdown: jsonb("mismatch_breakdown").$type(), adjudicatedCount: jsonb("adjudicated_count").$type(), pendingCount: jsonb("pending_count").$type(), matchRate: varchar("match_rate", { length: 10 }), cutoverReady: boolean("cutover_ready").notNull().default(false), cutoverNotes: text("cutover_notes"), generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(), generatedBy: varchar("generated_by", { length: 100 }) }, (e) => ({ domainIdx: index("mismatch_report_domain_idx").on(e.domain), tenantIdx: index("mismatch_report_tenant_idx").on(e.tenantId), periodIdx: index("mismatch_report_period_idx").on(e.periodStart, e.periodEnd), cutoverIdx: index("mismatch_report_cutover_idx").on(e.cutoverReady) })), Zs = pgEnum("result_state", ["complete", "partial", "failed"]), ir = pgEnum("severity", ["critical", "high", "medium", "low", "info"]), ei = pgEnum("confidence", ["certain", "high", "medium", "low", "heuristic"]), or = pgEnum("risk_posture", ["safe", "low", "medium", "high", "critical"]), ar = pgEnum("blast_radius", ["none", "single-domain", "subdomain-tree", "related-domains", "infrastructure", "organization-wide"]), dr = pgEnum("zone_management", ["managed", "unmanaged", "unknown"]), ti = pgEnum("vantage_type", ["public-recursive", "authoritative", "parent-zone", "probe"]), ni = pgEnum("collection_status", ["success", "timeout", "refused", "truncated", "nxdomain", "nodata", "error"]), V = pgTable("domains", { id: uuid("id").primaryKey().defaultRandom(), name: varchar("name", { length: 253 }).notNull(), normalizedName: varchar("normalized_name", { length: 253 }).notNull(), punycodeName: varchar("punycode_name", { length: 253 }), zoneManagement: dr("zone_management").notNull().default("unknown"), tenantId: uuid("tenant_id"), metadata: jsonb("metadata"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ nameTenantIdx: uniqueIndex("domain_name_tenant_idx").on(e.normalizedName, e.tenantId), tenantIdx: index("domain_tenant_idx").on(e.tenantId), zoneMgmtIdx: index("domain_zone_management_idx").on(e.zoneManagement) })), le$1 = pgTable("ruleset_versions", { id: uuid("id").primaryKey().defaultRandom(), version: varchar("version", { length: 50 }).notNull(), name: varchar("name", { length: 100 }).notNull(), description: text("description"), rules: jsonb("rules").notNull(), active: boolean("active").notNull().default(false), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), createdBy: varchar("created_by", { length: 100 }).notNull() }, (e) => ({ versionIdx: uniqueIndex("ruleset_version_idx").on(e.version), activeIdx: index("ruleset_active_idx").on(e.active) })), W = pgTable("snapshots", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => V.id, { onDelete: "cascade" }), domainName: varchar("domain_name", { length: 253 }).notNull(), resultState: Zs("result_state").notNull(), queriedNames: jsonb("queried_names").notNull().$type(), queriedTypes: jsonb("queried_types").notNull().$type(), vantages: jsonb("vantages").notNull().$type(), zoneManagement: dr("zone_management").notNull(), rulesetVersionId: uuid("ruleset_version_id").references(() => le$1.id), triggeredBy: varchar("triggered_by", { length: 100 }).notNull(), collectionDurationMs: integer("collection_duration_ms"), errorMessage: text("error_message"), metadata: jsonb("metadata").$type(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: index("snapshot_domain_idx").on(e.domainId), createdAtIdx: index("snapshot_created_at_idx").on(e.createdAt), domainCreatedIdx: index("snapshot_domain_created_idx").on(e.domainId, e.createdAt), stateIdx: index("snapshot_state_idx").on(e.resultState) })), ze = pgTable("observations", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), queryName: varchar("query_name", { length: 253 }).notNull(), queryType: varchar("query_type", { length: 10 }).notNull(), vantageType: ti("vantage_type").notNull(), vantageIdentifier: varchar("vantage_identifier", { length: 100 }), status: ni("status").notNull(), queriedAt: timestamp("queried_at", { withTimezone: true }).notNull().defaultNow(), responseTimeMs: integer("response_time_ms"), responseCode: integer("response_code"), flags: jsonb("flags").$type(), answerSection: jsonb("answer_section").$type(), authoritySection: jsonb("authority_section").$type(), additionalSection: jsonb("additional_section").$type(), errorMessage: text("error_message"), errorDetails: jsonb("error_details"), rawResponse: text("raw_response") }, (e) => ({ snapshotIdx: index("observation_snapshot_idx").on(e.snapshotId), queryIdx: index("observation_query_idx").on(e.queryName, e.queryType), statusIdx: index("observation_status_idx").on(e.status) })), ce = pgTable("record_sets", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), name: varchar("name", { length: 253 }).notNull(), type: varchar("type", { length: 10 }).notNull(), ttl: integer("ttl"), values: jsonb("values").notNull().$type(), sourceObservationIds: jsonb("source_observation_ids").notNull().$type(), sourceVantages: jsonb("source_vantages").notNull().$type(), isConsistent: boolean("is_consistent").notNull(), consolidationNotes: text("consolidation_notes"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("recordset_snapshot_idx").on(e.snapshotId), nameTypeIdx: index("recordset_name_type_idx").on(e.name, e.type) })), K$1 = pgTable("findings", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), type: varchar("type", { length: 100 }).notNull(), title: varchar("title", { length: 200 }).notNull(), description: text("description").notNull(), severity: ir("severity").notNull(), confidence: ei("confidence").notNull(), riskPosture: or("risk_posture").notNull(), blastRadius: ar("blast_radius").notNull(), reviewOnly: boolean("review_only").notNull().default(false), evidence: jsonb("evidence").notNull().$type(), ruleId: varchar("rule_id", { length: 100 }).notNull(), ruleVersion: varchar("rule_version", { length: 50 }).notNull(), rulesetVersionId: uuid("ruleset_version_id").references(() => le$1.id, { onDelete: "set null" }), acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }), acknowledgedBy: varchar("acknowledged_by", { length: 100 }), falsePositive: boolean("false_positive").default(false), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("finding_snapshot_idx").on(e.snapshotId), typeIdx: index("finding_type_idx").on(e.type), severityIdx: index("finding_severity_idx").on(e.severity), reviewOnlyIdx: index("finding_review_only_idx").on(e.reviewOnly), rulesetVersionIdx: index("finding_ruleset_version_idx").on(e.rulesetVersionId), uniqueFindingIdx: uniqueIndex("finding_unique_idx").on(e.snapshotId, e.ruleId, e.type, e.rulesetVersionId) })), ye$1 = pgTable("suggestions", { id: uuid("id").primaryKey().defaultRandom(), findingId: uuid("finding_id").notNull().references(() => K$1.id, { onDelete: "cascade" }), title: varchar("title", { length: 200 }).notNull(), description: text("description").notNull(), action: text("action").notNull(), riskPosture: or("risk_posture").notNull(), blastRadius: ar("blast_radius").notNull(), reviewOnly: boolean("review_only").notNull().default(false), appliedAt: timestamp("applied_at", { withTimezone: true }), appliedBy: varchar("applied_by", { length: 100 }), dismissedAt: timestamp("dismissed_at", { withTimezone: true }), dismissedBy: varchar("dismissed_by", { length: 100 }), dismissalReason: text("dismissal_reason"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ findingIdx: index("suggestion_finding_idx").on(e.findingId), reviewOnlyIdx: index("suggestion_review_only_idx").on(e.reviewOnly) })), ke = pgTable("domain_notes", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => V.id, { onDelete: "cascade" }), content: text("content").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: index("domain_note_domain_idx").on(e.domainId), tenantIdx: index("domain_note_tenant_idx").on(e.tenantId), createdIdx: index("domain_note_created_idx").on(e.createdAt) })), _e$1 = pgTable("domain_tags", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => V.id, { onDelete: "cascade" }), tag: varchar("tag", { length: 50 }).notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: index("domain_tag_domain_idx").on(e.domainId), tagIdx: index("domain_tag_tag_idx").on(e.tag), tenantIdx: index("domain_tag_tenant_idx").on(e.tenantId), uniqueTag: uniqueIndex("domain_tag_unique_idx").on(e.domainId, e.tag) })), Ue = pgTable("saved_filters", { id: uuid("id").primaryKey().defaultRandom(), name: varchar("name", { length: 100 }).notNull(), description: text("description"), criteria: jsonb("criteria").notNull().$type(), isShared: boolean("is_shared").notNull().default(false), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ tenantIdx: index("saved_filter_tenant_idx").on(e.tenantId), createdByIdx: index("saved_filter_created_by_idx").on(e.createdBy), sharedIdx: index("saved_filter_shared_idx").on(e.isShared) })), ri = pgEnum("audit_action", ["domain_note_created", "domain_note_updated", "domain_note_deleted", "domain_tag_added", "domain_tag_removed", "filter_created", "filter_updated", "filter_deleted", "template_override_created", "template_override_updated", "template_override_deleted", "remediation_request_created", "remediation_request_updated", "shared_report_created", "shared_report_expired", "monitored_domain_created", "monitored_domain_updated", "monitored_domain_deleted", "monitored_domain_toggled", "alert_acknowledged", "alert_resolved", "alert_suppressed"]), pt$1 = pgTable("audit_events", { id: uuid("id").primaryKey().defaultRandom(), action: ri("action").notNull(), entityType: varchar("entity_type", { length: 50 }).notNull(), entityId: uuid("entity_id").notNull(), previousValue: jsonb("previous_value"), newValue: jsonb("new_value"), actorId: varchar("actor_id", { length: 100 }).notNull(), actorEmail: varchar("actor_email", { length: 255 }), tenantId: uuid("tenant_id"), ipAddress: varchar("ip_address", { length: 45 }), userAgent: text("user_agent"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ entityIdx: index("audit_entity_idx").on(e.entityType, e.entityId), actorIdx: index("audit_actor_idx").on(e.actorId), tenantIdx: index("audit_tenant_idx").on(e.tenantId), actionIdx: index("audit_action_idx").on(e.action), createdIdx: index("audit_created_idx").on(e.createdAt) })), Le = pgTable("template_overrides", { id: uuid("id").primaryKey().defaultRandom(), providerKey: varchar("provider_key", { length: 50 }).notNull(), templateKey: varchar("template_key", { length: 50 }).notNull(), overrideData: jsonb("override_data").notNull(), appliesToDomains: jsonb("applies_to_domains").$type(), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ providerIdx: index("template_override_provider_idx").on(e.providerKey), tenantIdx: index("template_override_tenant_idx").on(e.tenantId), uniqueOverride: uniqueIndex("template_override_unique_idx").on(e.providerKey, e.templateKey, e.tenantId) })), si = pgEnum("monitoring_schedule", ["hourly", "daily", "weekly"]), he$1 = pgTable("monitored_domains", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => V.id, { onDelete: "cascade" }), schedule: si("schedule").notNull().default("daily"), alertChannels: jsonb("alert_channels").notNull().$type(), maxAlertsPerDay: integer("max_alerts_per_day").notNull().default(5), suppressionWindowMinutes: integer("suppression_window_minutes").notNull().default(60), isActive: boolean("is_active").notNull().default(true), lastCheckAt: timestamp("last_check_at", { withTimezone: true }), lastAlertAt: timestamp("last_alert_at", { withTimezone: true }), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: uniqueIndex("monitored_domain_unique_idx").on(e.domainId), tenantIdx: index("monitored_domain_tenant_idx").on(e.tenantId), activeIdx: index("monitored_domain_active_idx").on(e.isActive), scheduleIdx: index("monitored_domain_schedule_idx").on(e.schedule) })), ii = pgEnum("alert_status", ["pending", "sent", "suppressed", "acknowledged", "resolved"]), oi = pgEnum("shared_report_visibility", ["private", "tenant", "shared"]), ai = pgEnum("shared_report_status", ["generating", "ready", "expired", "error"]), be$1 = pgTable("alerts", { id: uuid("id").primaryKey().defaultRandom(), monitoredDomainId: uuid("monitored_domain_id").notNull().references(() => he$1.id, { onDelete: "cascade" }), title: varchar("title", { length: 200 }).notNull(), description: text("description").notNull(), severity: ir("severity").notNull(), triggeredByFindingId: uuid("triggered_by_finding_id").references(() => K$1.id), status: ii("status").notNull().default("pending"), dedupKey: varchar("dedup_key", { length: 200 }), acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }), acknowledgedBy: varchar("acknowledged_by", { length: 100 }), resolvedAt: timestamp("resolved_at", { withTimezone: true }), resolutionNote: text("resolution_note"), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ monitoredIdx: index("alert_monitored_idx").on(e.monitoredDomainId), statusIdx: index("alert_status_idx").on(e.status), tenantIdx: index("alert_tenant_idx").on(e.tenantId), dedupIdx: index("alert_dedup_idx").on(e.dedupKey), createdIdx: index("alert_created_idx").on(e.createdAt) })), Be = pgTable("shared_reports", { id: uuid("id").primaryKey().defaultRandom(), tenantId: uuid("tenant_id").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), title: varchar("title", { length: 200 }).notNull(), visibility: oi("visibility").notNull().default("shared"), status: ai("status").notNull().default("generating"), shareToken: varchar("share_token", { length: 128 }), expiresAt: timestamp("expires_at", { withTimezone: true }), summary: jsonb("summary").notNull(), alertSummary: jsonb("alert_summary").notNull().$type(), metadata: jsonb("metadata").$type(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ tenantIdx: index("shared_report_tenant_idx").on(e.tenantId), statusIdx: index("shared_report_status_idx").on(e.status), visibilityIdx: index("shared_report_visibility_idx").on(e.visibility), shareTokenIdx: uniqueIndex("shared_report_share_token_idx").on(e.shareToken), createdIdx: index("shared_report_created_idx").on(e.createdAt) })), di = pgEnum("fleet_report_status", ["pending", "processing", "completed", "failed"]), ko = pgTable("fleet_reports", { id: uuid("id").primaryKey().defaultRandom(), tenantId: uuid("tenant_id").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), status: di("status").notNull().default("pending"), inventory: jsonb("inventory").notNull().$type(), checks: jsonb("checks").notNull().$type(), format: varchar("format", { length: 20 }).notNull().default("summary"), summary: jsonb("summary").$type(), domainResults: jsonb("domain_results").$type(), errorMessage: text("error_message"), startedAt: timestamp("started_at", { withTimezone: true }), completedAt: timestamp("completed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ tenantIdx: index("fleet_report_tenant_idx").on(e.tenantId), statusIdx: index("fleet_report_status_idx").on(e.status), createdIdx: index("fleet_report_created_idx").on(e.createdAt) })), ci = pgEnum("probe_type", ["smtp_starttls", "mta_sts", "tls_cert", "http"]), ui = pgEnum("probe_status", ["success", "timeout", "refused", "ssrf_blocked", "allowlist_denied", "parse_error", "error"]), Lo = pgTable("probe_observations", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), probeType: ci("probe_type").notNull(), status: ui("status").notNull(), hostname: varchar("hostname", { length: 253 }).notNull(), port: integer("port"), success: boolean("success").notNull(), errorMessage: text("error_message"), probedAt: timestamp("probed_at", { withTimezone: true }).notNull().defaultNow(), responseTimeMs: integer("response_time_ms"), probeData: jsonb("probe_data").$type() }, (e) => ({ snapshotIdx: index("probe_observation_snapshot_idx").on(e.snapshotId), probeTypeIdx: index("probe_observation_type_idx").on(e.probeType), hostnameIdx: index("probe_observation_hostname_idx").on(e.hostname), statusIdx: index("probe_observation_status_idx").on(e.status), successIdx: index("probe_observation_success_idx").on(e.success) })), $t$1 = pgTable("users", { id: uuid("id").primaryKey().defaultRandom(), email: varchar("email", { length: 255 }).notNull().unique(), passwordHash: text("password_hash").notNull(), name: varchar("name", { length: 255 }), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at").defaultNow().notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull() }), Fe = pgTable("sessions", { id: uuid("id").primaryKey().defaultRandom(), token: varchar("token", { length: 255 }).notNull().unique(), userEmail: varchar("user_email", { length: 255 }).notNull(), tenantId: uuid("tenant_id").notNull(), expiresAt: timestamp("expires_at").notNull(), createdAt: timestamp("created_at").defaultNow().notNull() }), Xe$1 = Object.freeze(Object.defineProperty({ __proto__: null, adjudicationEnum: Gs, alertStatusEnum: ii, alerts: be$1, auditActionEnum: ri, auditEvents: pt$1, baselineStatusEnum: Js, blastRadiusEnum: ar, collectionStatusEnum: ni, confidenceEnum: ei, dkimSelectors: Ae, domainNotes: ke, domainTags: _e$1, domains: V, fieldComparisonStatusEnum: Co, findings: K$1, fleetReportStatusEnum: di, fleetReports: ko, legacyAccessLogs: Ce, legacyToolTypeEnum: Ys, mailEvidence: se$1, mailProviderEnum: sr, mismatchReports: lt$1, monitoredDomains: he$1, monitoringScheduleEnum: si, observations: ze, probeObservations: Lo, probeStatusEnum: ui, probeTypeEnum: ci, providerBaselines: Re, recordSets: ce, remediationPriorityEnum: Ws, remediationRequests: fe$1, remediationStatusEnum: Qs, resultStateEnum: Zs, riskPostureEnum: or, rulesetVersions: le$1, savedFilters: Ue, selectorConfidenceEnum: rr, selectorProvenanceEnum: Xs, sessions: Fe, severityEnum: ir, shadowComparisons: me$1, shadowStatusEnum: Hs, sharedReportStatusEnum: ai, sharedReportVisibilityEnum: oi, sharedReports: Be, snapshots: W, suggestions: ye$1, templateOverrides: Le, users: $t$1, vantageTypeEnum: ti, zoneManagementEnum: dr }, Symbol.toStringTag, { value: "Module" }));
-function li(e, t) {
+const Xs = pgEnum("remediation_status", ["open", "in-progress", "resolved", "closed"]), Hs = pgEnum("remediation_priority", ["low", "medium", "high", "critical"]), fe$1 = pgTable("remediation_requests", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id"), domain: varchar("domain", { length: 253 }).notNull(), contactEmail: varchar("contact_email", { length: 254 }).notNull(), contactName: varchar("contact_name", { length: 100 }).notNull(), contactPhone: varchar("contact_phone", { length: 20 }), tenantId: uuid("tenant_id").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), issues: jsonb("issues").notNull().$type(), priority: Hs("priority").notNull().default("medium"), notes: text("notes"), status: Xs("status").notNull().default("open"), assignedTo: varchar("assigned_to", { length: 100 }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(), resolvedAt: timestamp("resolved_at", { withTimezone: true }) }, (e) => ({ domainIdx: index("remediation_domain_idx").on(e.domain), statusIdx: index("remediation_status_idx").on(e.status), snapshotIdx: index("remediation_snapshot_idx").on(e.snapshotId), tenantIdx: index("remediation_tenant_idx").on(e.tenantId), createdByIdx: index("remediation_created_by_idx").on(e.createdBy), createdAtIdx: index("remediation_created_at_idx").on(e.createdAt) })), Gs = pgEnum("selector_provenance", ["managed-zone-config", "operator-supplied", "provider-heuristic", "common-dictionary", "not-found"]), rr = pgEnum("selector_confidence", ["certain", "high", "medium", "low", "heuristic"]), sr = pgEnum("mail_provider", ["google-workspace", "microsoft-365", "amazon-ses", "sendgrid", "mailgun", "mailchimp", "zoho", "fastmail", "protonmail", "custom", "unknown"]), Ae = pgTable("dkim_selectors", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), selector: varchar("selector", { length: 63 }).notNull(), domain: varchar("domain", { length: 253 }).notNull(), provenance: Gs("provenance").notNull(), confidence: rr("confidence").notNull(), provider: sr("provider"), found: boolean("found").notNull(), recordData: text("record_data"), keyType: varchar("key_type", { length: 10 }), keySize: varchar("key_size", { length: 10 }), hashAlgorithms: jsonb("hash_algorithms").$type(), flags: jsonb("flags").$type(), isValid: boolean("is_valid"), validationError: text("validation_error"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("dkim_selector_snapshot_idx").on(e.snapshotId), selectorIdx: index("dkim_selector_selector_idx").on(e.selector), domainIdx: index("dkim_selector_domain_idx").on(e.domain), providerIdx: index("dkim_selector_provider_idx").on(e.provider), provenanceIdx: index("dkim_selector_provenance_idx").on(e.provenance) })), se$1 = pgTable("mail_evidence", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), domain: varchar("domain", { length: 253 }).notNull(), detectedProvider: sr("detected_provider"), providerConfidence: rr("provider_confidence"), hasMx: boolean("has_mx").notNull().default(false), isNullMx: boolean("is_null_mx").notNull().default(false), mxHosts: jsonb("mx_hosts").$type(), hasSpf: boolean("has_spf").notNull().default(false), spfRecord: text("spf_record"), spfMechanisms: jsonb("spf_mechanisms").$type(), hasDmarc: boolean("has_dmarc").notNull().default(false), dmarcRecord: text("dmarc_record"), dmarcPolicy: varchar("dmarc_policy", { length: 20 }), dmarcSubdomainPolicy: varchar("dmarc_subdomain_policy", { length: 20 }), dmarcPercent: varchar("dmarc_percent", { length: 5 }), dmarcRua: jsonb("dmarc_rua").$type(), dmarcRuf: jsonb("dmarc_ruf").$type(), hasDkim: boolean("has_dkim").notNull().default(false), dkimSelectorsFound: jsonb("dkim_selectors_found").$type(), dkimSelectorCount: varchar("dkim_selector_count", { length: 5 }), hasMtaSts: boolean("has_mta_sts").notNull().default(false), mtaStsMode: varchar("mta_sts_mode", { length: 20 }), mtaStsVersion: varchar("mta_sts_version", { length: 10 }), mtaStsMaxAge: varchar("mta_sts_max_age", { length: 15 }), hasTlsRpt: boolean("has_tls_rpt").notNull().default(false), tlsRptRua: jsonb("tls_rpt_rua").$type(), hasBimi: boolean("has_bimi").notNull().default(false), bimiVersion: varchar("bimi_version", { length: 10 }), bimiLocation: text("bimi_location"), bimiAuthority: text("bimi_authority"), securityScore: varchar("security_score", { length: 5 }), scoreBreakdown: jsonb("score_breakdown").$type(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("mail_evidence_snapshot_idx").on(e.snapshotId), domainIdx: index("mail_evidence_domain_idx").on(e.domain), providerIdx: index("mail_evidence_provider_idx").on(e.detectedProvider), scoreIdx: index("mail_evidence_score_idx").on(e.securityScore) })), Ys = pgEnum("shadow_status", ["match", "mismatch", "partial-match", "error"]), Mo = pgEnum("field_comparison_status", ["match", "mismatch", "missing-in-legacy", "missing-in-new", "not-comparable"]), Js = pgEnum("adjudication_decision", ["new-correct", "legacy-correct", "both-wrong", "acceptable-difference"]), Zs = pgEnum("legacy_tool_type", ["dmarc-check", "dkim-check", "spf-check", "mx-check", "dns-check"]), ei = pgEnum("baseline_status", ["active", "deprecated", "draft"]), me$1 = pgTable("shadow_comparisons", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), domain: varchar("domain", { length: 253 }).notNull(), comparedAt: timestamp("compared_at", { withTimezone: true }).notNull().defaultNow(), status: Ys("status").notNull(), comparisons: jsonb("comparisons").notNull().$type(), metrics: jsonb("metrics").notNull().$type(), summary: text("summary").notNull(), legacyOutput: jsonb("legacy_output").notNull().$type(), acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }), acknowledgedBy: varchar("acknowledged_by", { length: 100 }), adjudication: Js("adjudication"), adjudicationNotes: text("adjudication_notes"), tenantId: uuid("tenant_id"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("shadow_comparison_snapshot_idx").on(e.snapshotId), domainIdx: index("shadow_comparison_domain_idx").on(e.domain), statusIdx: index("shadow_comparison_status_idx").on(e.status), adjudicationIdx: index("shadow_comparison_adjudication_idx").on(e.adjudication), comparedAtIdx: index("shadow_comparison_compared_at_idx").on(e.comparedAt), tenantIdx: index("shadow_comparison_tenant_idx").on(e.tenantId) })), Ce = pgTable("legacy_access_logs", { id: uuid("id").primaryKey().defaultRandom(), toolType: Zs("tool_type").notNull(), toolEndpoint: varchar("tool_endpoint", { length: 500 }), domain: varchar("domain", { length: 253 }).notNull(), requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(), requestedBy: varchar("requested_by", { length: 100 }), requestSource: varchar("request_source", { length: 50 }), responseStatus: varchar("response_status", { length: 20 }), responseTimeMs: jsonb("response_time_ms").$type(), outputSummary: jsonb("output_summary").$type(), rawOutput: text("raw_output"), snapshotId: uuid("snapshot_id").references(() => W.id, { onDelete: "set null" }), tenantId: uuid("tenant_id"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ toolTypeIdx: index("legacy_access_tool_type_idx").on(e.toolType), domainIdx: index("legacy_access_domain_idx").on(e.domain), requestedAtIdx: index("legacy_access_requested_at_idx").on(e.requestedAt), snapshotIdx: index("legacy_access_snapshot_idx").on(e.snapshotId), tenantIdx: index("legacy_access_tenant_idx").on(e.tenantId) })), Re = pgTable("provider_baselines", { id: uuid("id").primaryKey().defaultRandom(), providerKey: varchar("provider_key", { length: 50 }).notNull(), providerName: varchar("provider_name", { length: 100 }).notNull(), status: ei("status").notNull().default("active"), baseline: jsonb("baseline").notNull().$type(), dkimSelectors: jsonb("dkim_selectors").$type(), mxPatterns: jsonb("mx_patterns").$type(), spfIncludes: jsonb("spf_includes").$type(), notes: text("notes"), documentationUrl: varchar("documentation_url", { length: 500 }), version: varchar("version", { length: 20 }).notNull().default("1.0.0"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ providerKeyIdx: index("provider_baseline_provider_key_idx").on(e.providerKey), statusIdx: index("provider_baseline_status_idx").on(e.status) })), lt$1 = pgTable("mismatch_reports", { id: uuid("id").primaryKey().defaultRandom(), domain: varchar("domain", { length: 253 }), tenantId: uuid("tenant_id"), periodStart: timestamp("period_start", { withTimezone: true }).notNull(), periodEnd: timestamp("period_end", { withTimezone: true }).notNull(), totalComparisons: jsonb("total_comparisons").$type().notNull(), matchCount: jsonb("match_count").$type().notNull(), mismatchCount: jsonb("mismatch_count").$type().notNull(), partialMatchCount: jsonb("partial_match_count").$type().notNull(), mismatchBreakdown: jsonb("mismatch_breakdown").$type(), adjudicatedCount: jsonb("adjudicated_count").$type(), pendingCount: jsonb("pending_count").$type(), matchRate: varchar("match_rate", { length: 10 }), cutoverReady: boolean("cutover_ready").notNull().default(false), cutoverNotes: text("cutover_notes"), generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(), generatedBy: varchar("generated_by", { length: 100 }) }, (e) => ({ domainIdx: index("mismatch_report_domain_idx").on(e.domain), tenantIdx: index("mismatch_report_tenant_idx").on(e.tenantId), periodIdx: index("mismatch_report_period_idx").on(e.periodStart, e.periodEnd), cutoverIdx: index("mismatch_report_cutover_idx").on(e.cutoverReady) })), ti = pgEnum("result_state", ["complete", "partial", "failed"]), ir = pgEnum("severity", ["critical", "high", "medium", "low", "info"]), ni = pgEnum("confidence", ["certain", "high", "medium", "low", "heuristic"]), or = pgEnum("risk_posture", ["safe", "low", "medium", "high", "critical"]), ar = pgEnum("blast_radius", ["none", "single-domain", "subdomain-tree", "related-domains", "infrastructure", "organization-wide"]), dr = pgEnum("zone_management", ["managed", "unmanaged", "unknown"]), ri = pgEnum("vantage_type", ["public-recursive", "authoritative", "parent-zone", "probe"]), si = pgEnum("collection_status", ["success", "timeout", "refused", "truncated", "nxdomain", "nodata", "error"]), z$1 = pgTable("domains", { id: uuid("id").primaryKey().defaultRandom(), name: varchar("name", { length: 253 }).notNull(), normalizedName: varchar("normalized_name", { length: 253 }).notNull(), punycodeName: varchar("punycode_name", { length: 253 }), zoneManagement: dr("zone_management").notNull().default("unknown"), tenantId: uuid("tenant_id"), metadata: jsonb("metadata"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ nameTenantIdx: uniqueIndex("domain_name_tenant_idx").on(e.normalizedName, e.tenantId), tenantIdx: index("domain_tenant_idx").on(e.tenantId), zoneMgmtIdx: index("domain_zone_management_idx").on(e.zoneManagement) })), le$1 = pgTable("ruleset_versions", { id: uuid("id").primaryKey().defaultRandom(), version: varchar("version", { length: 50 }).notNull(), name: varchar("name", { length: 100 }).notNull(), description: text("description"), rules: jsonb("rules").notNull(), active: boolean("active").notNull().default(false), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), createdBy: varchar("created_by", { length: 100 }).notNull() }, (e) => ({ versionIdx: uniqueIndex("ruleset_version_idx").on(e.version), activeIdx: index("ruleset_active_idx").on(e.active) })), W = pgTable("snapshots", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => z$1.id, { onDelete: "cascade" }), domainName: varchar("domain_name", { length: 253 }).notNull(), resultState: ti("result_state").notNull(), queriedNames: jsonb("queried_names").notNull().$type(), queriedTypes: jsonb("queried_types").notNull().$type(), vantages: jsonb("vantages").notNull().$type(), zoneManagement: dr("zone_management").notNull(), rulesetVersionId: uuid("ruleset_version_id").references(() => le$1.id), triggeredBy: varchar("triggered_by", { length: 100 }).notNull(), collectionDurationMs: integer("collection_duration_ms"), errorMessage: text("error_message"), metadata: jsonb("metadata").$type(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: index("snapshot_domain_idx").on(e.domainId), createdAtIdx: index("snapshot_created_at_idx").on(e.createdAt), domainCreatedIdx: index("snapshot_domain_created_idx").on(e.domainId, e.createdAt), stateIdx: index("snapshot_state_idx").on(e.resultState) })), ze = pgTable("observations", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), queryName: varchar("query_name", { length: 253 }).notNull(), queryType: varchar("query_type", { length: 10 }).notNull(), vantageType: ri("vantage_type").notNull(), vantageIdentifier: varchar("vantage_identifier", { length: 100 }), status: si("status").notNull(), queriedAt: timestamp("queried_at", { withTimezone: true }).notNull().defaultNow(), responseTimeMs: integer("response_time_ms"), responseCode: integer("response_code"), flags: jsonb("flags").$type(), answerSection: jsonb("answer_section").$type(), authoritySection: jsonb("authority_section").$type(), additionalSection: jsonb("additional_section").$type(), errorMessage: text("error_message"), errorDetails: jsonb("error_details"), rawResponse: text("raw_response") }, (e) => ({ snapshotIdx: index("observation_snapshot_idx").on(e.snapshotId), queryIdx: index("observation_query_idx").on(e.queryName, e.queryType), statusIdx: index("observation_status_idx").on(e.status) })), ce = pgTable("record_sets", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), name: varchar("name", { length: 253 }).notNull(), type: varchar("type", { length: 10 }).notNull(), ttl: integer("ttl"), values: jsonb("values").notNull().$type(), sourceObservationIds: jsonb("source_observation_ids").notNull().$type(), sourceVantages: jsonb("source_vantages").notNull().$type(), isConsistent: boolean("is_consistent").notNull(), consolidationNotes: text("consolidation_notes"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("recordset_snapshot_idx").on(e.snapshotId), nameTypeIdx: index("recordset_name_type_idx").on(e.name, e.type) })), K$1 = pgTable("findings", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), type: varchar("type", { length: 100 }).notNull(), title: varchar("title", { length: 200 }).notNull(), description: text("description").notNull(), severity: ir("severity").notNull(), confidence: ni("confidence").notNull(), riskPosture: or("risk_posture").notNull(), blastRadius: ar("blast_radius").notNull(), reviewOnly: boolean("review_only").notNull().default(false), evidence: jsonb("evidence").notNull().$type(), ruleId: varchar("rule_id", { length: 100 }).notNull(), ruleVersion: varchar("rule_version", { length: 50 }).notNull(), rulesetVersionId: uuid("ruleset_version_id").references(() => le$1.id, { onDelete: "set null" }), acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }), acknowledgedBy: varchar("acknowledged_by", { length: 100 }), falsePositive: boolean("false_positive").default(false), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ snapshotIdx: index("finding_snapshot_idx").on(e.snapshotId), typeIdx: index("finding_type_idx").on(e.type), severityIdx: index("finding_severity_idx").on(e.severity), reviewOnlyIdx: index("finding_review_only_idx").on(e.reviewOnly), rulesetVersionIdx: index("finding_ruleset_version_idx").on(e.rulesetVersionId), uniqueFindingIdx: uniqueIndex("finding_unique_idx").on(e.snapshotId, e.ruleId, e.type, e.rulesetVersionId) })), ye$1 = pgTable("suggestions", { id: uuid("id").primaryKey().defaultRandom(), findingId: uuid("finding_id").notNull().references(() => K$1.id, { onDelete: "cascade" }), title: varchar("title", { length: 200 }).notNull(), description: text("description").notNull(), action: text("action").notNull(), riskPosture: or("risk_posture").notNull(), blastRadius: ar("blast_radius").notNull(), reviewOnly: boolean("review_only").notNull().default(false), appliedAt: timestamp("applied_at", { withTimezone: true }), appliedBy: varchar("applied_by", { length: 100 }), dismissedAt: timestamp("dismissed_at", { withTimezone: true }), dismissedBy: varchar("dismissed_by", { length: 100 }), dismissalReason: text("dismissal_reason"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ findingIdx: index("suggestion_finding_idx").on(e.findingId), reviewOnlyIdx: index("suggestion_review_only_idx").on(e.reviewOnly) })), ke = pgTable("domain_notes", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => z$1.id, { onDelete: "cascade" }), content: text("content").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: index("domain_note_domain_idx").on(e.domainId), tenantIdx: index("domain_note_tenant_idx").on(e.tenantId), createdIdx: index("domain_note_created_idx").on(e.createdAt) })), _e$1 = pgTable("domain_tags", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => z$1.id, { onDelete: "cascade" }), tag: varchar("tag", { length: 50 }).notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: index("domain_tag_domain_idx").on(e.domainId), tagIdx: index("domain_tag_tag_idx").on(e.tag), tenantIdx: index("domain_tag_tenant_idx").on(e.tenantId), uniqueTag: uniqueIndex("domain_tag_unique_idx").on(e.domainId, e.tag) })), Be = pgTable("saved_filters", { id: uuid("id").primaryKey().defaultRandom(), name: varchar("name", { length: 100 }).notNull(), description: text("description"), criteria: jsonb("criteria").notNull().$type(), isShared: boolean("is_shared").notNull().default(false), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ tenantIdx: index("saved_filter_tenant_idx").on(e.tenantId), createdByIdx: index("saved_filter_created_by_idx").on(e.createdBy), sharedIdx: index("saved_filter_shared_idx").on(e.isShared) })), ii = pgEnum("audit_action", ["domain_note_created", "domain_note_updated", "domain_note_deleted", "domain_tag_added", "domain_tag_removed", "filter_created", "filter_updated", "filter_deleted", "template_override_created", "template_override_updated", "template_override_deleted", "remediation_request_created", "remediation_request_updated", "shared_report_created", "shared_report_expired", "monitored_domain_created", "monitored_domain_updated", "monitored_domain_deleted", "monitored_domain_toggled", "alert_acknowledged", "alert_resolved", "alert_suppressed"]), pt$1 = pgTable("audit_events", { id: uuid("id").primaryKey().defaultRandom(), action: ii("action").notNull(), entityType: varchar("entity_type", { length: 50 }).notNull(), entityId: uuid("entity_id").notNull(), previousValue: jsonb("previous_value"), newValue: jsonb("new_value"), actorId: varchar("actor_id", { length: 100 }).notNull(), actorEmail: varchar("actor_email", { length: 255 }), tenantId: uuid("tenant_id"), ipAddress: varchar("ip_address", { length: 45 }), userAgent: text("user_agent"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ entityIdx: index("audit_entity_idx").on(e.entityType, e.entityId), actorIdx: index("audit_actor_idx").on(e.actorId), tenantIdx: index("audit_tenant_idx").on(e.tenantId), actionIdx: index("audit_action_idx").on(e.action), createdIdx: index("audit_created_idx").on(e.createdAt) })), Me = pgTable("template_overrides", { id: uuid("id").primaryKey().defaultRandom(), providerKey: varchar("provider_key", { length: 50 }).notNull(), templateKey: varchar("template_key", { length: 50 }).notNull(), overrideData: jsonb("override_data").notNull(), appliesToDomains: jsonb("applies_to_domains").$type(), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ providerIdx: index("template_override_provider_idx").on(e.providerKey), tenantIdx: index("template_override_tenant_idx").on(e.tenantId), uniqueOverride: uniqueIndex("template_override_unique_idx").on(e.providerKey, e.templateKey, e.tenantId) })), oi = pgEnum("monitoring_schedule", ["hourly", "daily", "weekly"]), he$1 = pgTable("monitored_domains", { id: uuid("id").primaryKey().defaultRandom(), domainId: uuid("domain_id").notNull().references(() => z$1.id, { onDelete: "cascade" }), schedule: oi("schedule").notNull().default("daily"), alertChannels: jsonb("alert_channels").notNull().$type(), maxAlertsPerDay: integer("max_alerts_per_day").notNull().default(5), suppressionWindowMinutes: integer("suppression_window_minutes").notNull().default(60), isActive: boolean("is_active").notNull().default(true), lastCheckAt: timestamp("last_check_at", { withTimezone: true }), lastAlertAt: timestamp("last_alert_at", { withTimezone: true }), createdBy: varchar("created_by", { length: 100 }).notNull(), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ domainIdx: uniqueIndex("monitored_domain_unique_idx").on(e.domainId), tenantIdx: index("monitored_domain_tenant_idx").on(e.tenantId), activeIdx: index("monitored_domain_active_idx").on(e.isActive), scheduleIdx: index("monitored_domain_schedule_idx").on(e.schedule) })), ai = pgEnum("alert_status", ["pending", "sent", "suppressed", "acknowledged", "resolved"]), di = pgEnum("shared_report_visibility", ["private", "tenant", "shared"]), ci = pgEnum("shared_report_status", ["generating", "ready", "expired", "error"]), be$1 = pgTable("alerts", { id: uuid("id").primaryKey().defaultRandom(), monitoredDomainId: uuid("monitored_domain_id").notNull().references(() => he$1.id, { onDelete: "cascade" }), title: varchar("title", { length: 200 }).notNull(), description: text("description").notNull(), severity: ir("severity").notNull(), triggeredByFindingId: uuid("triggered_by_finding_id").references(() => K$1.id), status: ai("status").notNull().default("pending"), dedupKey: varchar("dedup_key", { length: 200 }), acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }), acknowledgedBy: varchar("acknowledged_by", { length: 100 }), resolvedAt: timestamp("resolved_at", { withTimezone: true }), resolutionNote: text("resolution_note"), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ monitoredIdx: index("alert_monitored_idx").on(e.monitoredDomainId), statusIdx: index("alert_status_idx").on(e.status), tenantIdx: index("alert_tenant_idx").on(e.tenantId), dedupIdx: index("alert_dedup_idx").on(e.dedupKey), createdIdx: index("alert_created_idx").on(e.createdAt) })), Ue = pgTable("shared_reports", { id: uuid("id").primaryKey().defaultRandom(), tenantId: uuid("tenant_id").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), title: varchar("title", { length: 200 }).notNull(), visibility: di("visibility").notNull().default("shared"), status: ci("status").notNull().default("generating"), shareToken: varchar("share_token", { length: 128 }), expiresAt: timestamp("expires_at", { withTimezone: true }), summary: jsonb("summary").notNull(), alertSummary: jsonb("alert_summary").notNull().$type(), metadata: jsonb("metadata").$type(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ tenantIdx: index("shared_report_tenant_idx").on(e.tenantId), statusIdx: index("shared_report_status_idx").on(e.status), visibilityIdx: index("shared_report_visibility_idx").on(e.visibility), shareTokenIdx: uniqueIndex("shared_report_share_token_idx").on(e.shareToken), createdIdx: index("shared_report_created_idx").on(e.createdAt) })), ui = pgEnum("fleet_report_status", ["pending", "processing", "completed", "failed"]), Lo = pgTable("fleet_reports", { id: uuid("id").primaryKey().defaultRandom(), tenantId: uuid("tenant_id").notNull(), createdBy: varchar("created_by", { length: 100 }).notNull(), status: ui("status").notNull().default("pending"), inventory: jsonb("inventory").notNull().$type(), checks: jsonb("checks").notNull().$type(), format: varchar("format", { length: 20 }).notNull().default("summary"), summary: jsonb("summary").$type(), domainResults: jsonb("domain_results").$type(), errorMessage: text("error_message"), startedAt: timestamp("started_at", { withTimezone: true }), completedAt: timestamp("completed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (e) => ({ tenantIdx: index("fleet_report_tenant_idx").on(e.tenantId), statusIdx: index("fleet_report_status_idx").on(e.status), createdIdx: index("fleet_report_created_idx").on(e.createdAt) })), li = pgEnum("probe_type", ["smtp_starttls", "mta_sts", "tls_cert", "http"]), pi = pgEnum("probe_status", ["success", "timeout", "refused", "ssrf_blocked", "allowlist_denied", "parse_error", "error"]), xo = pgTable("probe_observations", { id: uuid("id").primaryKey().defaultRandom(), snapshotId: uuid("snapshot_id").notNull().references(() => W.id, { onDelete: "cascade" }), probeType: li("probe_type").notNull(), status: pi("status").notNull(), hostname: varchar("hostname", { length: 253 }).notNull(), port: integer("port"), success: boolean("success").notNull(), errorMessage: text("error_message"), probedAt: timestamp("probed_at", { withTimezone: true }).notNull().defaultNow(), responseTimeMs: integer("response_time_ms"), probeData: jsonb("probe_data").$type() }, (e) => ({ snapshotIdx: index("probe_observation_snapshot_idx").on(e.snapshotId), probeTypeIdx: index("probe_observation_type_idx").on(e.probeType), hostnameIdx: index("probe_observation_hostname_idx").on(e.hostname), statusIdx: index("probe_observation_status_idx").on(e.status), successIdx: index("probe_observation_success_idx").on(e.success) })), $t$1 = pgTable("users", { id: uuid("id").primaryKey().defaultRandom(), email: varchar("email", { length: 255 }).notNull().unique(), passwordHash: text("password_hash").notNull(), name: varchar("name", { length: 255 }), tenantId: uuid("tenant_id").notNull(), createdAt: timestamp("created_at").defaultNow().notNull(), updatedAt: timestamp("updated_at").defaultNow().notNull() }), Fe = pgTable("sessions", { id: uuid("id").primaryKey().defaultRandom(), token: varchar("token", { length: 255 }).notNull().unique(), userEmail: varchar("user_email", { length: 255 }).notNull(), tenantId: uuid("tenant_id").notNull(), expiresAt: timestamp("expires_at").notNull(), createdAt: timestamp("created_at").defaultNow().notNull() }), Xe$1 = Object.freeze(Object.defineProperty({ __proto__: null, adjudicationEnum: Js, alertStatusEnum: ai, alerts: be$1, auditActionEnum: ii, auditEvents: pt$1, baselineStatusEnum: ei, blastRadiusEnum: ar, collectionStatusEnum: si, confidenceEnum: ni, dkimSelectors: Ae, domainNotes: ke, domainTags: _e$1, domains: z$1, fieldComparisonStatusEnum: Mo, findings: K$1, fleetReportStatusEnum: ui, fleetReports: Lo, legacyAccessLogs: Ce, legacyToolTypeEnum: Zs, mailEvidence: se$1, mailProviderEnum: sr, mismatchReports: lt$1, monitoredDomains: he$1, monitoringScheduleEnum: oi, observations: ze, probeObservations: xo, probeStatusEnum: pi, probeTypeEnum: li, providerBaselines: Re, recordSets: ce, remediationPriorityEnum: Hs, remediationRequests: fe$1, remediationStatusEnum: Xs, resultStateEnum: ti, riskPostureEnum: or, rulesetVersions: le$1, savedFilters: Be, selectorConfidenceEnum: rr, selectorProvenanceEnum: Gs, sessions: Fe, severityEnum: ir, shadowComparisons: me$1, shadowStatusEnum: Ys, sharedReportStatusEnum: ci, sharedReportVisibilityEnum: di, sharedReports: Ue, snapshots: W, suggestions: ye$1, templateOverrides: Me, users: $t$1, vantageTypeEnum: ri, zoneManagementEnum: dr }, Symbol.toStringTag, { value: "Module" }));
+function fi(e, t) {
   var _a2;
   const n = (_a2 = e.env) == null ? void 0 : _a2[t];
   return typeof n == "string" ? n : process.env[t];
 }
-function pi(e) {
+function mi(e) {
   if (!e) return {};
   const t = {}, n = e.split(";");
   for (const r of n) {
@@ -5449,10 +5449,10 @@ function Qn(e) {
   const t = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, n = /^[a-zA-Z0-9_.-]{1,64}$/;
   return t.test(e) || n.test(e);
 }
-async function fi(e) {
+async function hi(e) {
   const t = e.get("db");
   if (!t) return null;
-  const r = pi(e.req.header("Cookie")).dns_ops_session;
+  const r = mi(e.req.header("Cookie")).dns_ops_session;
   if (!r) return null;
   try {
     const s = await t.getDrizzle().query.sessions.findFirst({ where: and(eq(Fe.token, r), gt$1(Fe.expiresAt, /* @__PURE__ */ new Date())) });
@@ -5461,41 +5461,41 @@ async function fi(e) {
     return null;
   }
 }
-function mi(e) {
-  const n = pi(e.req.header("Cookie")).dns_ops_session;
+function gi(e) {
+  const n = mi(e.req.header("Cookie")).dns_ops_session;
   if (!n) return null;
   const r = decodeURIComponent(n), s = r.indexOf(":");
   if (s === -1) return null;
   const i = r.slice(0, s), o = r.slice(s + 1);
   return !i || !o || !Qn(o) ? null : { tenantId: o, actorId: i, actorEmail: i };
 }
-function hi(e) {
+function yi(e) {
   const t = e.req.header("X-API-Key");
   if (!t) return null;
   const n = t.split(":");
   if (n.length < 3) return null;
-  const [r, s, i] = n, o = li(e, "API_KEY_SECRET");
+  const [r, s, i] = n, o = fi(e, "API_KEY_SECRET");
   return !o || i !== o || !r || !s || !Qn(r) || !Qn(s) ? null : { tenantId: r, actorId: s };
 }
-function gi(e) {
+function wi(e) {
   return null;
 }
-const Mo = createMiddleware(async (e, t) => {
-  let n = await fi(e);
-  if (n || (n = mi(e) || hi(e) || gi()), n) {
+const Po = createMiddleware(async (e, t) => {
+  let n = await hi(e);
+  if (n || (n = gi(e) || yi(e) || wi()), n) {
     let r = n.tenantId;
-    yi(r) || (r = await Xt(n.tenantId)), e.set("tenantId", r), e.set("actorId", n.actorId), n.actorEmail && e.set("actorEmail", n.actorEmail);
+    vi(r) || (r = await Xt(n.tenantId)), e.set("tenantId", r), e.set("actorId", n.actorId), n.actorEmail && e.set("actorEmail", n.actorEmail);
   }
   return t();
 });
 createMiddleware(async (e, t) => {
-  let n = await fi(e);
-  if (n || (n = mi(e) || hi(e) || gi()), !n) return e.json({ error: "Unauthorized", message: "Authentication required." }, 401);
+  let n = await hi(e);
+  if (n || (n = gi(e) || yi(e) || wi()), !n) return e.json({ error: "Unauthorized", message: "Authentication required." }, 401);
   let r = n.tenantId;
-  return yi(r) || (r = await Xt(n.tenantId)), e.set("tenantId", r), e.set("actorId", n.actorId), n.actorEmail && e.set("actorEmail", n.actorEmail), t();
+  return vi(r) || (r = await Xt(n.tenantId)), e.set("tenantId", r), e.set("actorId", n.actorId), n.actorEmail && e.set("actorEmail", n.actorEmail), t();
 });
 createMiddleware(async (e, t) => {
-  const n = e.req.header("X-Internal-Secret"), r = li(e, "INTERNAL_SECRET");
+  const n = e.req.header("X-Internal-Secret"), r = fi(e, "INTERNAL_SECRET");
   if (r && n === r) {
     const s = await Xt("system");
     e.set("tenantId", s), e.set("actorId", "internal-service"), await t();
@@ -5503,7 +5503,7 @@ createMiddleware(async (e, t) => {
   }
   return e.json({ error: "Forbidden", message: "Internal access only." }, 403);
 });
-function yi(e) {
+function vi(e) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(e);
 }
 const F$1 = createMiddleware(async (e, t) => {
@@ -5523,7 +5523,7 @@ createMiddleware(async (e, t) => {
   return n ? (e.set("tenantId", n), t()) : e.json({ error: "Unauthorized", message: "Tenant context required." }, 401);
 });
 var cn = { exports: {} }, un = { exports: {} }, dt$1 = {}, ln = {}, Dr;
-function wi() {
+function Ii() {
   if (Dr) return ln;
   Dr = 1, ln.parse = function(n, r) {
     return new e(n, r).parse();
@@ -5568,10 +5568,10 @@ function wi() {
   return ln;
 }
 var pn, qr;
-function vi() {
+function _i() {
   if (qr) return pn;
   qr = 1;
-  var e = wi();
+  var e = Ii();
   return pn = { create: function(t, n) {
     return { parse: function() {
       return e.parse(t, n);
@@ -5579,7 +5579,7 @@ function vi() {
   } }, pn;
 }
 var fn, Cr;
-function xo() {
+function Oo() {
   if (Cr) return fn;
   Cr = 1;
   var e = /(\d{1,})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})(\.\d{1,})?.*?( BC)?$/, t = /^(\d{1,})-(\d{2})-(\d{2})( BC)?$/, n = /([Z+-])(\d{2})?:?(\d{2})?:?(\d{2})?/, r = /^-?infinity$/;
@@ -5622,7 +5622,7 @@ function xo() {
   return fn;
 }
 var mn, kr;
-function Po() {
+function jo() {
   if (kr) return mn;
   kr = 1, mn = t;
   var e = Object.prototype.hasOwnProperty;
@@ -5635,11 +5635,11 @@ function Po() {
   }
   return mn;
 }
-var hn, Lr;
-function Oo() {
-  if (Lr) return hn;
-  Lr = 1;
-  var e = Po();
+var hn, Mr;
+function Bo() {
+  if (Mr) return hn;
+  Mr = 1;
+  var e = jo();
   hn = t;
   function t(v) {
     if (!(this instanceof t)) return new t(v);
@@ -5679,10 +5679,10 @@ function Oo() {
   }
   return hn;
 }
-var gn, Mr;
-function jo() {
-  if (Mr) return gn;
-  Mr = 1;
+var gn, Lr;
+function Uo() {
+  if (Lr) return gn;
+  Lr = 1;
   var e = Buffer.from || Buffer;
   return gn = function(n) {
     if (/^\\x/.test(n)) return e(n.substr(2), "hex");
@@ -5697,10 +5697,10 @@ function jo() {
   }, gn;
 }
 var yn, xr;
-function Uo() {
+function Fo() {
   if (xr) return yn;
   xr = 1;
-  var e = wi(), t = vi(), n = xo(), r = Oo(), s = jo();
+  var e = Ii(), t = _i(), n = Oo(), r = Bo(), s = Uo();
   function i(g) {
     return function(I) {
       return I === null ? I : g(I);
@@ -5764,12 +5764,12 @@ function Uo() {
     return g[0] !== "(" ? null : (g = g.substring(1, g.length - 1).split(","), { x: parseFloat(g[0]), y: parseFloat(g[1]) });
   }, D = function(g) {
     if (g[0] !== "<" && g[1] !== "(") return null;
-    for (var b = "(", I = "", E = false, M = 2; M < g.length - 1; M++) {
-      if (E || (b += g[M]), g[M] === ")") {
+    for (var b = "(", I = "", E = false, L = 2; L < g.length - 1; L++) {
+      if (E || (b += g[L]), g[L] === ")") {
         E = true;
         continue;
       } else if (!E) continue;
-      g[M] !== "," && (I += g[M]);
+      g[L] !== "," && (I += g[L]);
     }
     var k = T(b);
     return k.radius = parseFloat(I), k;
@@ -5779,7 +5779,7 @@ function Uo() {
   return yn = { init: R }, yn;
 }
 var wn, Pr;
-function Bo() {
+function $o() {
   if (Pr) return wn;
   Pr = 1;
   var e = 1e6;
@@ -5807,12 +5807,12 @@ function Bo() {
   return wn = t, wn;
 }
 var vn, Or;
-function Fo() {
+function Vo() {
   if (Or) return vn;
   Or = 1;
-  var e = Bo(), t = function(f, h, y, v, m) {
-    y = y || 0, v = v || false, m = m || function(E, M, k) {
-      return E * Math.pow(2, k) + M;
+  var e = $o(), t = function(f, h, y, v, m) {
+    y = y || 0, v = v || false, m = m || function(E, L, k) {
+      return E * Math.pow(2, k) + L;
     };
     var w = y >> 3, S = function(E) {
       return v ? ~E & 255 : E;
@@ -5886,14 +5886,14 @@ function Fo() {
   return vn = { init: l }, vn;
 }
 var In, jr;
-function $o() {
+function zo() {
   return jr || (jr = 1, In = { BOOL: 16, BYTEA: 17, CHAR: 18, INT8: 20, INT2: 21, INT4: 23, REGPROC: 24, TEXT: 25, OID: 26, TID: 27, XID: 28, CID: 29, JSON: 114, XML: 142, PG_NODE_TREE: 194, SMGR: 210, PATH: 602, POLYGON: 604, CIDR: 650, FLOAT4: 700, FLOAT8: 701, ABSTIME: 702, RELTIME: 703, TINTERVAL: 704, CIRCLE: 718, MACADDR8: 774, MONEY: 790, MACADDR: 829, INET: 869, ACLITEM: 1033, BPCHAR: 1042, VARCHAR: 1043, DATE: 1082, TIME: 1083, TIMESTAMP: 1114, TIMESTAMPTZ: 1184, INTERVAL: 1186, TIMETZ: 1266, BIT: 1560, VARBIT: 1562, NUMERIC: 1700, REFCURSOR: 1790, REGPROCEDURE: 2202, REGOPER: 2203, REGOPERATOR: 2204, REGCLASS: 2205, REGTYPE: 2206, UUID: 2950, TXID_SNAPSHOT: 2970, PG_LSN: 3220, PG_NDISTINCT: 3361, PG_DEPENDENCIES: 3402, TSVECTOR: 3614, TSQUERY: 3615, GTSVECTOR: 3642, REGCONFIG: 3734, REGDICTIONARY: 3769, JSONB: 3802, REGNAMESPACE: 4089, REGROLE: 4096 }), In;
 }
-var Ur;
+var Br;
 function Ht$1() {
-  if (Ur) return dt$1;
-  Ur = 1;
-  var e = Uo(), t = Fo(), n = vi(), r = $o();
+  if (Br) return dt$1;
+  Br = 1;
+  var e = Fo(), t = Vo(), n = _i(), r = zo();
   dt$1.getTypeParser = o, dt$1.setTypeParser = a, dt$1.arrayParser = n, dt$1.builtins = r;
   var s = { text: {}, binary: {} };
   function i(u) {
@@ -5911,9 +5911,9 @@ function Ht$1() {
     s.binary[u] = d;
   }), dt$1;
 }
-var Br;
+var Ur;
 function Gt() {
-  return Br || (Br = 1, (function(e) {
+  return Ur || (Ur = 1, (function(e) {
     let t;
     try {
       t = process.platform === "win32" ? process.env.USERNAME : process.env.USER;
@@ -5999,7 +5999,7 @@ function Dt$1() {
   } }, _n;
 }
 var Ot$1 = { exports: {} }, bn, $r;
-function Vo() {
+function Ko() {
   if ($r) return bn;
   $r = 1;
   const e = require$$1;
@@ -6025,7 +6025,7 @@ function Vo() {
   return bn = { postgresMd5PasswordHash: n, randomBytes: e.randomBytes, deriveKey: o, sha256: r, hashByName: s, hmacSha256: i, md5: t }, bn;
 }
 var Sn, Vr;
-function zo() {
+function Qo() {
   if (Vr) return Sn;
   Vr = 1;
   const e = require$$1;
@@ -6063,11 +6063,11 @@ function zo() {
   return Sn;
 }
 var zr;
-function Ii() {
-  return zr || (zr = 1, parseInt(process.versions && process.versions.node && process.versions.node.split(".")[0]) < 15 ? Ot$1.exports = Vo() : Ot$1.exports = zo()), Ot$1.exports;
+function bi() {
+  return zr || (zr = 1, parseInt(process.versions && process.versions.node && process.versions.node.split(".")[0]) < 15 ? Ot$1.exports = Ko() : Ot$1.exports = Qo()), Ot$1.exports;
 }
 var Tn, Kr;
-function Ko() {
+function Wo() {
   if (Kr) return Tn;
   Kr = 1;
   function e(i, o) {
@@ -6164,10 +6164,10 @@ function Ko() {
   return Tn = { signatureAlgorithmHashFromCertificate: s }, Tn;
 }
 var An, Qr;
-function Qo() {
+function Xo() {
   if (Qr) return An;
   Qr = 1;
-  const e = Ii(), { signatureAlgorithmHashFromCertificate: t } = Ko();
+  const e = bi(), { signatureAlgorithmHashFromCertificate: t } = Wo();
   function n(p, l) {
     const f = ["SCRAM-SHA-256"];
     l && f.unshift("SCRAM-SHA-256-PLUS");
@@ -6190,12 +6190,12 @@ function Qo() {
     let w = h ? "eSws" : "biws";
     if (p.mechanism === "SCRAM-SHA-256-PLUS") {
       const _ = h.getPeerCertificate().raw;
-      let L = t(_);
-      (L === "MD5" || L === "SHA-1") && (L = "SHA-256");
-      const q = await e.hashByName(L, _);
+      let M = t(_);
+      (M === "MD5" || M === "SHA-1") && (M = "SHA-256");
+      const q = await e.hashByName(M, _);
       w = Buffer.concat([Buffer.from("p=tls-server-end-point,,"), Buffer.from(q)]).toString("base64");
     }
-    const S = "c=" + w + ",r=" + y.nonce, T = v + "," + m + "," + S, D = Buffer.from(y.salt, "base64"), R = await e.deriveKey(l, D, y.iteration), g = await e.hmacSha256(R, "Client Key"), b = await e.sha256(g), I = await e.hmacSha256(b, T), E = c(Buffer.from(g), Buffer.from(I)).toString("base64"), M = await e.hmacSha256(R, "Server Key"), k = await e.hmacSha256(M, T);
+    const S = "c=" + w + ",r=" + y.nonce, T = v + "," + m + "," + S, D = Buffer.from(y.salt, "base64"), R = await e.deriveKey(l, D, y.iteration), g = await e.hmacSha256(R, "Client Key"), b = await e.sha256(g), I = await e.hmacSha256(b, T), E = c(Buffer.from(g), Buffer.from(I)).toString("base64"), L = await e.hmacSha256(R, "Server Key"), k = await e.hmacSha256(L, T);
     p.message = "SASLResponse", p.serverSignature = Buffer.from(k).toString("base64"), p.response = S + ",p=" + E;
   }
   function s(p, l) {
@@ -6275,7 +6275,7 @@ function cr() {
   }, Rn = t, Rn;
 }
 var En, Xr;
-function Wo() {
+function Ho() {
   if (Xr) return En;
   Xr = 1;
   function e(i, o = {}) {
@@ -6301,7 +6301,7 @@ function Wo() {
     a.host ? c && /^%2f/i.test(c) && (u.pathname = c + u.pathname) : a.host = decodeURIComponent(c), a.port || (a.port = u.port);
     const p = u.pathname.slice(1) || null;
     a.database = p ? decodeURI(p) : null, (a.ssl === "true" || a.ssl === "1") && (a.ssl = true), a.ssl === "0" && (a.ssl = false), (a.sslcert || a.sslkey || a.sslrootcert || a.sslmode) && (a.ssl = {});
-    const l = a.sslcert || a.sslkey || a.sslrootcert ? Os : null;
+    const l = a.sslcert || a.sslkey || a.sslrootcert ? Bs : null;
     if (a.sslcert && (a.ssl.cert = l.readFileSync(a.sslcert).toString()), a.sslkey && (a.ssl.key = l.readFileSync(a.sslkey).toString()), a.sslrootcert && (a.ssl.ca = l.readFileSync(a.sslrootcert).toString()), o.useLibpqCompat && a.uselibpqcompat) throw new Error("Both useLibpqCompat and uselibpqcompat are set. Please use only one of them.");
     if (a.uselibpqcompat === "true" || o.useLibpqCompat) switch (a.sslmode) {
       case "disable": {
@@ -6377,10 +6377,10 @@ See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode de
   return En = e, e.parse = e, e.toClientConfig = n, e.parseIntoClientConfig = r, En;
 }
 var Nn, Hr;
-function _i() {
+function Si() {
   if (Hr) return Nn;
   Hr = 1;
-  const e = Vi, t = Gt(), n = Wo().parse, r = function(u, d, c) {
+  const e = Ki, t = Gt(), n = Ho().parse, r = function(u, d, c) {
     return d[u] ? d[u] : (c === void 0 ? c = process.env["PG" + u.toUpperCase()] : c === false || (c = process.env[c]), c || t[u]);
   }, s = function() {
     switch (process.env.PGSSLMODE) {
@@ -6418,7 +6418,7 @@ function _i() {
   return Nn = a, Nn;
 }
 var Dn, Gr;
-function bi() {
+function Ti() {
   if (Gr) return Dn;
   Gr = 1;
   const e = Ht$1(), t = /^([A-Za-z]+)(?: (\d+))?(?: (\d+))?/;
@@ -6465,10 +6465,10 @@ function bi() {
   return Dn = n, Dn;
 }
 var qn, Yr;
-function Xo() {
+function Go() {
   if (Yr) return qn;
   Yr = 1;
-  const { EventEmitter: e } = yt$1, t = bi(), n = Dt$1();
+  const { EventEmitter: e } = yt$1, t = Ti(), n = Dt$1();
   class r extends e {
     constructor(i, o, a) {
       super(), i = n.normalizeQueryConfig(i, o, a), this.text = i.text, this.values = i.values, this.rows = i.rows, this.types = i.types, this.name = i.name, this.queryMode = i.queryMode, this.binary = i.binary, this.portal = i.portal || "", this.callback = i.callback, this._rowMode = i.rowMode, process.domain && i.callback && (this.callback = process.domain.bind(i.callback)), this._result = new t(this._rowMode, this.types), this._results = this._result, this._canceledDueToError = false;
@@ -6557,97 +6557,97 @@ function Xo() {
   }
   return qn = r, qn;
 }
-var Cn = {}, B = {}, Jr;
-function Si() {
-  if (Jr) return B;
-  Jr = 1, Object.defineProperty(B, "__esModule", { value: true }), B.NoticeMessage = B.DataRowMessage = B.CommandCompleteMessage = B.ReadyForQueryMessage = B.NotificationResponseMessage = B.BackendKeyDataMessage = B.AuthenticationMD5Password = B.ParameterStatusMessage = B.ParameterDescriptionMessage = B.RowDescriptionMessage = B.Field = B.CopyResponse = B.CopyDataMessage = B.DatabaseError = B.copyDone = B.emptyQuery = B.replicationStart = B.portalSuspended = B.noData = B.closeComplete = B.bindComplete = B.parseComplete = void 0, B.parseComplete = { name: "parseComplete", length: 5 }, B.bindComplete = { name: "bindComplete", length: 5 }, B.closeComplete = { name: "closeComplete", length: 5 }, B.noData = { name: "noData", length: 5 }, B.portalSuspended = { name: "portalSuspended", length: 5 }, B.replicationStart = { name: "replicationStart", length: 4 }, B.emptyQuery = { name: "emptyQuery", length: 4 }, B.copyDone = { name: "copyDone", length: 4 };
+var Cn = {}, U = {}, Jr;
+function Ai() {
+  if (Jr) return U;
+  Jr = 1, Object.defineProperty(U, "__esModule", { value: true }), U.NoticeMessage = U.DataRowMessage = U.CommandCompleteMessage = U.ReadyForQueryMessage = U.NotificationResponseMessage = U.BackendKeyDataMessage = U.AuthenticationMD5Password = U.ParameterStatusMessage = U.ParameterDescriptionMessage = U.RowDescriptionMessage = U.Field = U.CopyResponse = U.CopyDataMessage = U.DatabaseError = U.copyDone = U.emptyQuery = U.replicationStart = U.portalSuspended = U.noData = U.closeComplete = U.bindComplete = U.parseComplete = void 0, U.parseComplete = { name: "parseComplete", length: 5 }, U.bindComplete = { name: "bindComplete", length: 5 }, U.closeComplete = { name: "closeComplete", length: 5 }, U.noData = { name: "noData", length: 5 }, U.portalSuspended = { name: "portalSuspended", length: 5 }, U.replicationStart = { name: "replicationStart", length: 4 }, U.emptyQuery = { name: "emptyQuery", length: 4 }, U.copyDone = { name: "copyDone", length: 4 };
   class e extends Error {
     constructor(y, v, m) {
       super(y), this.length = v, this.name = m;
     }
   }
-  B.DatabaseError = e;
+  U.DatabaseError = e;
   class t {
     constructor(y, v) {
       this.length = y, this.chunk = v, this.name = "copyData";
     }
   }
-  B.CopyDataMessage = t;
+  U.CopyDataMessage = t;
   class n {
     constructor(y, v, m, w) {
       this.length = y, this.name = v, this.binary = m, this.columnTypes = new Array(w);
     }
   }
-  B.CopyResponse = n;
+  U.CopyResponse = n;
   class r {
     constructor(y, v, m, w, S, T, D) {
       this.name = y, this.tableID = v, this.columnID = m, this.dataTypeID = w, this.dataTypeSize = S, this.dataTypeModifier = T, this.format = D;
     }
   }
-  B.Field = r;
+  U.Field = r;
   class s {
     constructor(y, v) {
       this.length = y, this.fieldCount = v, this.name = "rowDescription", this.fields = new Array(this.fieldCount);
     }
   }
-  B.RowDescriptionMessage = s;
+  U.RowDescriptionMessage = s;
   class i {
     constructor(y, v) {
       this.length = y, this.parameterCount = v, this.name = "parameterDescription", this.dataTypeIDs = new Array(this.parameterCount);
     }
   }
-  B.ParameterDescriptionMessage = i;
+  U.ParameterDescriptionMessage = i;
   class o {
     constructor(y, v, m) {
       this.length = y, this.parameterName = v, this.parameterValue = m, this.name = "parameterStatus";
     }
   }
-  B.ParameterStatusMessage = o;
+  U.ParameterStatusMessage = o;
   class a {
     constructor(y, v) {
       this.length = y, this.salt = v, this.name = "authenticationMD5Password";
     }
   }
-  B.AuthenticationMD5Password = a;
+  U.AuthenticationMD5Password = a;
   class u {
     constructor(y, v, m) {
       this.length = y, this.processID = v, this.secretKey = m, this.name = "backendKeyData";
     }
   }
-  B.BackendKeyDataMessage = u;
+  U.BackendKeyDataMessage = u;
   class d {
     constructor(y, v, m, w) {
       this.length = y, this.processId = v, this.channel = m, this.payload = w, this.name = "notification";
     }
   }
-  B.NotificationResponseMessage = d;
+  U.NotificationResponseMessage = d;
   class c {
     constructor(y, v) {
       this.length = y, this.status = v, this.name = "readyForQuery";
     }
   }
-  B.ReadyForQueryMessage = c;
+  U.ReadyForQueryMessage = c;
   class p {
     constructor(y, v) {
       this.length = y, this.text = v, this.name = "commandComplete";
     }
   }
-  B.CommandCompleteMessage = p;
+  U.CommandCompleteMessage = p;
   class l {
     constructor(y, v) {
       this.length = y, this.fields = v, this.name = "dataRow", this.fieldCount = v.length;
     }
   }
-  B.DataRowMessage = l;
+  U.DataRowMessage = l;
   class f {
     constructor(y, v) {
       this.length = y, this.message = v, this.name = "notice";
     }
   }
-  return B.NoticeMessage = f, B;
+  return U.NoticeMessage = f, U;
 }
 var Tt$1 = {}, At$1 = {}, Zr;
-function Ho() {
+function Yo() {
   if (Zr) return At$1;
   Zr = 1, Object.defineProperty(At$1, "__esModule", { value: true }), At$1.Writer = void 0;
   class e {
@@ -6697,54 +6697,54 @@ function Ho() {
   return At$1.Writer = e, At$1;
 }
 var es;
-function Go() {
+function Jo() {
   if (es) return Tt$1;
   es = 1, Object.defineProperty(Tt$1, "__esModule", { value: true }), Tt$1.serialize = void 0;
-  const e = Ho(), t = new e.Writer(), n = (_) => {
+  const e = Yo(), t = new e.Writer(), n = (_) => {
     t.addInt16(3).addInt16(0);
     for (const x of Object.keys(_)) t.addCString(x).addCString(_[x]);
     t.addCString("client_encoding").addCString("UTF8");
-    const L = t.addCString("").flush(), q = L.length + 4;
-    return new e.Writer().addInt32(q).add(L).flush();
+    const M = t.addCString("").flush(), q = M.length + 4;
+    return new e.Writer().addInt32(q).add(M).flush();
   }, r = () => {
     const _ = Buffer.allocUnsafe(8);
     return _.writeInt32BE(8, 0), _.writeInt32BE(80877103, 4), _;
-  }, s = (_) => t.addCString(_).flush(112), i = function(_, L) {
-    return t.addCString(_).addInt32(Buffer.byteLength(L)).addString(L), t.flush(112);
+  }, s = (_) => t.addCString(_).flush(112), i = function(_, M) {
+    return t.addCString(_).addInt32(Buffer.byteLength(M)).addString(M), t.flush(112);
   }, o = function(_) {
     return t.addString(_).flush(112);
   }, a = (_) => t.addCString(_).flush(81), u = [], d = (_) => {
-    const L = _.name || "";
-    L.length > 63 && (console.error("Warning! Postgres only supports 63 characters for query names."), console.error("You supplied %s (%s)", L, L.length), console.error("This can cause conflicts and silent errors executing queries"));
-    const q = _.types || u, x = q.length, $ = t.addCString(L).addCString(_.text).addInt16(x);
-    for (let z = 0; z < x; z++) $.addInt32(q[z]);
+    const M = _.name || "";
+    M.length > 63 && (console.error("Warning! Postgres only supports 63 characters for query names."), console.error("You supplied %s (%s)", M, M.length), console.error("This can cause conflicts and silent errors executing queries"));
+    const q = _.types || u, x = q.length, $ = t.addCString(M).addCString(_.text).addInt16(x);
+    for (let V = 0; V < x; V++) $.addInt32(q[V]);
     return t.flush(80);
-  }, c = new e.Writer(), p = function(_, L) {
+  }, c = new e.Writer(), p = function(_, M) {
     for (let q = 0; q < _.length; q++) {
-      const x = L ? L(_[q], q) : _[q];
+      const x = M ? M(_[q], q) : _[q];
       x == null ? (t.addInt16(0), c.addInt32(-1)) : x instanceof Buffer ? (t.addInt16(1), c.addInt32(x.length), c.add(x)) : (t.addInt16(0), c.addInt32(Buffer.byteLength(x)), c.addString(x));
     }
   }, l = (_ = {}) => {
-    const L = _.portal || "", q = _.statement || "", x = _.binary || false, $ = _.values || u, z = $.length;
-    return t.addCString(L).addCString(q), t.addInt16(z), p($, _.valueMapper), t.addInt16(z), t.add(c.flush()), t.addInt16(1), t.addInt16(x ? 1 : 0), t.flush(66);
+    const M = _.portal || "", q = _.statement || "", x = _.binary || false, $ = _.values || u, V = $.length;
+    return t.addCString(M).addCString(q), t.addInt16(V), p($, _.valueMapper), t.addInt16(V), t.add(c.flush()), t.addInt16(1), t.addInt16(x ? 1 : 0), t.flush(66);
   }, f = Buffer.from([69, 0, 0, 0, 9, 0, 0, 0, 0, 0]), h = (_) => {
     if (!_ || !_.portal && !_.rows) return f;
-    const L = _.portal || "", q = _.rows || 0, x = Buffer.byteLength(L), $ = 4 + x + 1 + 4, z = Buffer.allocUnsafe(1 + $);
-    return z[0] = 69, z.writeInt32BE($, 1), z.write(L, 5, "utf-8"), z[x + 5] = 0, z.writeUInt32BE(q, z.length - 4), z;
-  }, y = (_, L) => {
+    const M = _.portal || "", q = _.rows || 0, x = Buffer.byteLength(M), $ = 4 + x + 1 + 4, V = Buffer.allocUnsafe(1 + $);
+    return V[0] = 69, V.writeInt32BE($, 1), V.write(M, 5, "utf-8"), V[x + 5] = 0, V.writeUInt32BE(q, V.length - 4), V;
+  }, y = (_, M) => {
     const q = Buffer.allocUnsafe(16);
-    return q.writeInt32BE(16, 0), q.writeInt16BE(1234, 4), q.writeInt16BE(5678, 6), q.writeInt32BE(_, 8), q.writeInt32BE(L, 12), q;
-  }, v = (_, L) => {
-    const x = 4 + Buffer.byteLength(L) + 1, $ = Buffer.allocUnsafe(1 + x);
-    return $[0] = _, $.writeInt32BE(x, 1), $.write(L, 5, "utf-8"), $[x] = 0, $;
+    return q.writeInt32BE(16, 0), q.writeInt16BE(1234, 4), q.writeInt16BE(5678, 6), q.writeInt32BE(_, 8), q.writeInt32BE(M, 12), q;
+  }, v = (_, M) => {
+    const x = 4 + Buffer.byteLength(M) + 1, $ = Buffer.allocUnsafe(1 + x);
+    return $[0] = _, $.writeInt32BE(x, 1), $.write(M, 5, "utf-8"), $[x] = 0, $;
   }, m = t.addCString("P").flush(68), w = t.addCString("S").flush(68), S = (_) => _.name ? v(68, `${_.type}${_.name || ""}`) : _.type === "P" ? m : w, T = (_) => {
-    const L = `${_.type}${_.name || ""}`;
-    return v(67, L);
-  }, D = (_) => t.add(_).flush(100), R = (_) => v(102, _), g = (_) => Buffer.from([_, 0, 0, 0, 4]), b = g(72), I = g(83), E = g(88), M = g(99), k = { startup: n, password: s, requestSsl: r, sendSASLInitialResponseMessage: i, sendSCRAMClientFinalMessage: o, query: a, parse: d, bind: l, execute: h, describe: S, close: T, flush: () => b, sync: () => I, end: () => E, copyData: D, copyDone: () => M, copyFail: R, cancel: y };
+    const M = `${_.type}${_.name || ""}`;
+    return v(67, M);
+  }, D = (_) => t.add(_).flush(100), R = (_) => v(102, _), g = (_) => Buffer.from([_, 0, 0, 0, 4]), b = g(72), I = g(83), E = g(88), L = g(99), k = { startup: n, password: s, requestSsl: r, sendSASLInitialResponseMessage: i, sendSCRAMClientFinalMessage: o, query: a, parse: d, bind: l, execute: h, describe: S, close: T, flush: () => b, sync: () => I, end: () => E, copyData: D, copyDone: () => L, copyFail: R, cancel: y };
   return Tt$1.serialize = k, Tt$1;
 }
 var Rt$1 = {}, Et$1 = {}, ts;
-function Yo() {
+function Zo() {
   if (ts) return Et$1;
   ts = 1, Object.defineProperty(Et$1, "__esModule", { value: true }), Et$1.BufferReader = void 0;
   class e {
@@ -6788,10 +6788,10 @@ function Yo() {
   return Et$1.BufferReader = e, Et$1;
 }
 var ns;
-function Jo() {
+function ea() {
   if (ns) return Rt$1;
   ns = 1, Object.defineProperty(Rt$1, "__esModule", { value: true }), Rt$1.Parser = void 0;
-  const e = Si(), t = Yo(), n = 1, s = n + 4, i = -1, o = Buffer.allocUnsafe(0);
+  const e = Ai(), t = Zo(), n = 1, s = n + 4, i = -1, o = Buffer.allocUnsafe(0);
   class a {
     constructor(b) {
       if (this.buffer = o, this.bufferLength = 0, this.bufferOffset = 0, this.reader = new t.BufferReader(), (b == null ? void 0 : b.mode) === "binary") throw new Error("Binary mode not supported yet");
@@ -6800,35 +6800,35 @@ function Jo() {
     parse(b, I) {
       this.mergeBuffer(b);
       const E = this.bufferOffset + this.bufferLength;
-      let M = this.bufferOffset;
-      for (; M + s <= E; ) {
-        const k = this.buffer[M], _ = this.buffer.readUInt32BE(M + n), L = n + _;
-        if (L + M <= E) {
-          const q = this.handlePacket(M + s, k, _, this.buffer);
-          I(q), M += L;
+      let L = this.bufferOffset;
+      for (; L + s <= E; ) {
+        const k = this.buffer[L], _ = this.buffer.readUInt32BE(L + n), M = n + _;
+        if (M + L <= E) {
+          const q = this.handlePacket(L + s, k, _, this.buffer);
+          I(q), L += M;
         } else break;
       }
-      M === E ? (this.buffer = o, this.bufferLength = 0, this.bufferOffset = 0) : (this.bufferLength = E - M, this.bufferOffset = M);
+      L === E ? (this.buffer = o, this.bufferLength = 0, this.bufferOffset = 0) : (this.bufferLength = E - L, this.bufferOffset = L);
     }
     mergeBuffer(b) {
       if (this.bufferLength > 0) {
         const I = this.bufferLength + b.byteLength;
         if (I + this.bufferOffset > this.buffer.byteLength) {
-          let M;
-          if (I <= this.buffer.byteLength && this.bufferOffset >= this.bufferLength) M = this.buffer;
+          let L;
+          if (I <= this.buffer.byteLength && this.bufferOffset >= this.bufferLength) L = this.buffer;
           else {
             let k = this.buffer.byteLength * 2;
             for (; I >= k; ) k *= 2;
-            M = Buffer.allocUnsafe(k);
+            L = Buffer.allocUnsafe(k);
           }
-          this.buffer.copy(M, 0, this.bufferOffset, this.bufferOffset + this.bufferLength), this.buffer = M, this.bufferOffset = 0;
+          this.buffer.copy(L, 0, this.bufferOffset, this.bufferOffset + this.bufferLength), this.buffer = L, this.bufferOffset = 0;
         }
         b.copy(this.buffer, this.bufferOffset + this.bufferLength), this.bufferLength = I;
       } else this.buffer = b, this.bufferOffset = 0, this.bufferLength = b.byteLength;
     }
-    handlePacket(b, I, E, M) {
+    handlePacket(b, I, E, L) {
       const { reader: k } = this;
-      k.setBuffer(b, M);
+      k.setBuffer(b, L);
       let _;
       switch (I) {
         case 50:
@@ -6914,9 +6914,9 @@ function Jo() {
     const I = g.bytes(b - 4);
     return new e.CopyDataMessage(i, I);
   }, p = (g) => f(g, "copyInResponse"), l = (g) => f(g, "copyOutResponse"), f = (g, b) => {
-    const I = g.byte() !== 0, E = g.int16(), M = new e.CopyResponse(i, b, I, E);
-    for (let k = 0; k < E; k++) M.columnTypes[k] = g.int16();
-    return M;
+    const I = g.byte() !== 0, E = g.int16(), L = new e.CopyResponse(i, b, I, E);
+    for (let k = 0; k < E; k++) L.columnTypes[k] = g.int16();
+    return L;
   }, h = (g) => {
     const b = g.int32(), I = g.cstring(), E = g.cstring();
     return new e.NotificationResponseMessage(i, b, I, E);
@@ -6925,8 +6925,8 @@ function Jo() {
     for (let E = 0; E < b; E++) I.fields[E] = v(g);
     return I;
   }, v = (g) => {
-    const b = g.cstring(), I = g.uint32(), E = g.int16(), M = g.uint32(), k = g.int16(), _ = g.int32(), L = g.int16() === 0 ? "text" : "binary";
-    return new e.Field(b, I, E, M, k, _, L);
+    const b = g.cstring(), I = g.uint32(), E = g.int16(), L = g.uint32(), k = g.int16(), _ = g.int32(), M = g.int16() === 0 ? "text" : "binary";
+    return new e.Field(b, I, E, L, k, _, M);
   }, m = (g) => {
     const b = g.int16(), I = new e.ParameterDescriptionMessage(i, b);
     for (let E = 0; E < b; E++) I.dataTypeIDs[E] = g.int32();
@@ -6934,8 +6934,8 @@ function Jo() {
   }, w = (g) => {
     const b = g.int16(), I = new Array(b);
     for (let E = 0; E < b; E++) {
-      const M = g.int32();
-      I[E] = M === -1 ? null : g.string(M);
+      const L = g.int32();
+      I[E] = L === -1 ? null : g.string(L);
     }
     return new e.DataRowMessage(i, I);
   }, S = (g) => {
@@ -6955,17 +6955,17 @@ function Jo() {
       case 5:
         if (E.length === 12) {
           E.name = "authenticationMD5Password";
-          const M = g.bytes(4);
-          return new e.AuthenticationMD5Password(i, M);
+          const L = g.bytes(4);
+          return new e.AuthenticationMD5Password(i, L);
         }
         break;
       case 10:
         {
           E.name = "authenticationSASL", E.mechanisms = [];
-          let M;
+          let L;
           do
-            M = g.cstring(), M && E.mechanisms.push(M);
-          while (M);
+            L = g.cstring(), L && E.mechanisms.push(L);
+          while (L);
         }
         break;
       case 11:
@@ -6982,24 +6982,24 @@ function Jo() {
     const I = {};
     let E = g.string(1);
     for (; E !== "\0"; ) I[E] = g.cstring(), E = g.string(1);
-    const M = I.M, k = b === "notice" ? new e.NoticeMessage(i, M) : new e.DatabaseError(M, i, b);
+    const L = I.M, k = b === "notice" ? new e.NoticeMessage(i, L) : new e.DatabaseError(L, i, b);
     return k.severity = I.S, k.code = I.C, k.detail = I.D, k.hint = I.H, k.position = I.P, k.internalPosition = I.p, k.internalQuery = I.q, k.where = I.W, k.schema = I.s, k.table = I.t, k.column = I.c, k.dataType = I.d, k.constraint = I.n, k.file = I.F, k.line = I.L, k.routine = I.R, k;
   };
   return Rt$1;
 }
 var rs;
-function Ti() {
+function Ri() {
   return rs || (rs = 1, (function(e) {
     Object.defineProperty(e, "__esModule", { value: true }), e.DatabaseError = e.serialize = e.parse = void 0;
-    const t = Si();
+    const t = Ai();
     Object.defineProperty(e, "DatabaseError", { enumerable: true, get: function() {
       return t.DatabaseError;
     } });
-    const n = Go();
+    const n = Jo();
     Object.defineProperty(e, "serialize", { enumerable: true, get: function() {
       return n.serialize;
     } });
-    const r = Jo();
+    const r = ea();
     function s(i, o) {
       const a = new r.Parser();
       return i.on("data", (u) => a.parse(u, o)), new Promise((u) => i.on("end", () => u()));
@@ -7008,18 +7008,18 @@ function Ti() {
   })(Cn)), Cn;
 }
 var jt$1 = {}, ss;
-function Zo() {
+function ta() {
   return ss || (ss = 1, Object.defineProperty(jt$1, "__esModule", { value: true }), jt$1.default = {}), jt$1;
 }
 var kn, is;
-function ea() {
+function na() {
   if (is) return kn;
   is = 1;
   const { getStream: e, getSecureStream: t } = i();
   kn = { getStream: e, getSecureStream: t };
   function n() {
     function o(u) {
-      const d = js;
+      const d = Us;
       return new d.Socket();
     }
     function a(u) {
@@ -7029,7 +7029,7 @@ function ea() {
   }
   function r() {
     function o(u) {
-      const { CloudflareSocket: d } = Zo();
+      const { CloudflareSocket: d } = ta();
       return new d(u);
     }
     function a(u) {
@@ -7050,11 +7050,11 @@ function ea() {
   }
   return kn;
 }
-var Ln, os;
-function Ai() {
-  if (os) return Ln;
+var Mn, os;
+function Ei() {
+  if (os) return Mn;
   os = 1;
-  const e = yt$1.EventEmitter, { parse: t, serialize: n } = Ti(), { getStream: r, getSecureStream: s } = ea(), i = n.flush(), o = n.sync(), a = n.end();
+  const e = yt$1.EventEmitter, { parse: t, serialize: n } = Ri(), { getStream: r, getSecureStream: s } = na(), i = n.flush(), o = n.sync(), a = n.end();
   class u extends e {
     constructor(c) {
       super(), c = c || {}, this.stream = c.stream || r(c.ssl), typeof this.stream == "function" && (this.stream = this.stream(c)), this._keepAlive = c.keepAlive, this._keepAliveInitialDelayMillis = c.keepAliveInitialDelayMillis, this.parsedStatements = {}, this.ssl = c.ssl || false, this._ending = false, this._emitMessage = false;
@@ -7085,7 +7085,7 @@ function Ai() {
         }
         const v = { socket: l.stream };
         l.ssl !== true && (Object.assign(v, l.ssl), "key" in l.ssl && (v.key = l.ssl.key));
-        const m = js;
+        const m = Us;
         m.isIP && m.isIP(p) === 0 && (v.servername = p);
         try {
           l.stream = s(v);
@@ -7171,13 +7171,13 @@ function Ai() {
       this._send(n.copyFail(c));
     }
   }
-  return Ln = u, Ln;
+  return Mn = u, Mn;
 }
-var Ut = { exports: {} }, Mn = { exports: {} }, xn, as;
-function ta() {
+var Bt$1 = { exports: {} }, Ln = { exports: {} }, xn, as;
+function ra() {
   if (as) return xn;
   as = 1;
-  const { Transform: e } = require$$0$2, { StringDecoder: t } = Qi, n = /* @__PURE__ */ Symbol("last"), r = /* @__PURE__ */ Symbol("decoder");
+  const { Transform: e } = require$$0$2, { StringDecoder: t } = Xi, n = /* @__PURE__ */ Symbol("last"), r = /* @__PURE__ */ Symbol("decoder");
   function s(d, c, p) {
     let l;
     if (this.overflow) {
@@ -7227,9 +7227,9 @@ function ta() {
   return xn = u, xn;
 }
 var ds;
-function na() {
+function sa() {
   return ds || (ds = 1, (function(e) {
-    var t = Ki, n = require$$0$2.Stream, r = ta(), s = gt$2, i = 5432, o = process.platform === "win32", a = process.stderr, u = 56, d = 7, c = 61440, p = 32768;
+    var t = Wi, n = require$$0$2.Stream, r = ra(), s = gt$2, i = 5432, o = process.platform === "win32", a = process.stderr, u = 56, d = 7, c = 61440, p = 32768;
     function l(T) {
       return (T & c) == p;
     }
@@ -7268,22 +7268,22 @@ function na() {
       }
       var E = function() {
         D.destroy(), R(g);
-      }, M = function(k) {
+      }, L = function(k) {
         D.destroy(), v("WARNING: error on reading file: %s", k), R(void 0);
       };
-      D.on("error", M), b.on("data", I).on("end", E).on("error", M);
+      D.on("error", L), b.on("data", I).on("end", E).on("error", L);
     };
     var w = e.exports.parseLine = function(T) {
       if (T.length < 11 || T.match(/^\s+#/)) return null;
-      for (var D = "", R = "", g = 0, b = 0, I = {}, E = false, M = function(_, L, q) {
-        var x = T.substring(L, q);
+      for (var D = "", R = "", g = 0, b = 0, I = {}, E = false, L = function(_, M, q) {
+        var x = T.substring(M, q);
         Object.hasOwnProperty.call(process.env, "PGPASS_NO_DEESCAPE") || (x = x.replace(/\\([:\\])/g, "$1")), I[f[_]] = x;
       }, k = 0; k < T.length - 1; k += 1) {
         if (D = T.charAt(k + 1), R = T.charAt(k), E = g == h - 1, E) {
-          M(g, b);
+          L(g, b);
           break;
         }
-        k >= 0 && D == ":" && R !== "\\" && (M(g, b, k + 1), b = k + 2, g += 1);
+        k >= 0 && D == ":" && R !== "\\" && (L(g, b, k + 1), b = k + 2, g += 1);
       }
       return I = Object.keys(I).length === h ? I : null, I;
     }, S = e.exports.isValidEntry = function(T) {
@@ -7303,27 +7303,27 @@ function na() {
       }
       return true;
     };
-  })(Mn)), Mn.exports;
+  })(Ln)), Ln.exports;
 }
 var cs;
-function ra() {
-  if (cs) return Ut.exports;
+function ia() {
+  if (cs) return Bt$1.exports;
   cs = 1;
-  var e = Os, t = na();
-  return Ut.exports = function(n, r) {
+  var e = Bs, t = sa();
+  return Bt$1.exports = function(n, r) {
     var s = t.getFileName();
     e.stat(s, function(i, o) {
       if (i || !t.usePgPass(o, s)) return r(void 0);
       var a = e.createReadStream(s);
       t.getPassword(n, a, r);
     });
-  }, Ut.exports.warnTo = t.warnTo, Ut.exports;
+  }, Bt$1.exports.warnTo = t.warnTo, Bt$1.exports;
 }
 var Pn, us;
-function sa() {
+function oa() {
   if (us) return Pn;
   us = 1;
-  const e = yt$1.EventEmitter, t = Dt$1(), n = gt$2, r = Qo(), s = cr(), i = _i(), o = Xo(), a = Gt(), u = Ai(), d = Ii(), c = n.deprecate(() => {
+  const e = yt$1.EventEmitter, t = Dt$1(), n = gt$2, r = Xo(), s = cr(), i = Si(), o = Go(), a = Gt(), u = Ei(), d = bi(), c = n.deprecate(() => {
   }, "Client.activeQuery is deprecated and will be removed in pg@9.0"), p = n.deprecate(() => {
   }, "Client.queryQueue is deprecated and will be removed in pg@9.0."), l = n.deprecate(() => {
   }, "pgpass support is deprecated and will be removed in pg@9.0. You can provide an async function as the password property to the Client/Pool constructor that returns a password instead. Within this function you can call the pgpass module in your own code."), f = n.deprecate(() => {
@@ -7404,7 +7404,7 @@ function sa() {
       });
       else if (this.password !== null) m();
       else try {
-        ra()(this.connectionParameters, (T) => {
+        ia()(this.connectionParameters, (T) => {
           T !== void 0 && (l(), this.connectionParameters.password = this.password = T), m();
         });
       } catch (S) {
@@ -7595,7 +7595,7 @@ function sa() {
       let T, D, R, g, b;
       if (m == null) throw new TypeError("Client was passed a null or undefined query");
       return typeof m.submit == "function" ? (R = m.query_timeout || this.connectionParameters.query_timeout, D = T = m, T.callback || (typeof w == "function" ? T.callback = w : S && (T.callback = S))) : (R = m.query_timeout || this.connectionParameters.query_timeout, T = new o(m, w, S), T.callback || (D = new this._Promise((I, E) => {
-        T.callback = (M, k) => M ? E(M) : I(k);
+        T.callback = (L, k) => L ? E(L) : I(k);
       }).catch((I) => {
         throw Error.captureStackTrace(I), I;
       }))), R && (b = T.callback || (() => {
@@ -7636,7 +7636,7 @@ function sa() {
   return y.Query = o, Pn = y, Pn;
 }
 var On, ls;
-function ia() {
+function aa() {
   if (ls) return On;
   ls = 1;
   const e = yt$1.EventEmitter, t = function() {
@@ -7679,7 +7679,7 @@ function ia() {
   class u extends e {
     constructor(c, p) {
       super(), this.options = Object.assign({}, c), c != null && "password" in c && Object.defineProperty(this.options, "password", { configurable: true, enumerable: false, writable: true, value: c.password }), c != null && c.ssl && c.ssl.key && Object.defineProperty(this.options.ssl, "key", { enumerable: false }), this.options.max = this.options.max || this.options.poolSize || 10, this.options.min = this.options.min || 0, this.options.maxUses = this.options.maxUses || 1 / 0, this.options.allowExitOnIdle = this.options.allowExitOnIdle || false, this.options.maxLifetimeSeconds = this.options.maxLifetimeSeconds || 0, this.log = this.options.log || function() {
-      }, this.Client = this.options.Client || p || Ri().Client, this.Promise = this.options.Promise || Zn.Promise, typeof this.options.idleTimeoutMillis > "u" && (this.options.idleTimeoutMillis = 1e4), this._clients = [], this._idle = [], this._expired = /* @__PURE__ */ new WeakSet(), this._pendingQueue = [], this._endCallback = void 0, this.ending = false, this.ended = false;
+      }, this.Client = this.options.Client || p || Ni().Client, this.Promise = this.options.Promise || Zn.Promise, typeof this.options.idleTimeoutMillis > "u" && (this.options.idleTimeoutMillis = 1e4), this._clients = [], this._idle = [], this._expired = /* @__PURE__ */ new WeakSet(), this._pendingQueue = [], this._endCallback = void 0, this.ending = false, this.ended = false;
     }
     _promiseTry(c) {
       const p = this.Promise;
@@ -7848,12 +7848,12 @@ function ia() {
   return On = u, On;
 }
 var jn = { exports: {} };
-const oa = {}, aa = Object.freeze(Object.defineProperty({ __proto__: null, default: oa }, Symbol.toStringTag, { value: "Module" })), da = Ji(aa);
-var Un = { exports: {} }, ps;
-function ca() {
-  if (ps) return Un.exports;
+const da = {}, ca = Object.freeze(Object.defineProperty({ __proto__: null, default: da }, Symbol.toStringTag, { value: "Module" })), ua = eo(ca);
+var Bn = { exports: {} }, ps;
+function la() {
+  if (ps) return Bn.exports;
   ps = 1;
-  const e = yt$1.EventEmitter, t = gt$2, n = Dt$1(), r = Un.exports = function(i, o, a) {
+  const e = yt$1.EventEmitter, t = gt$2, n = Dt$1(), r = Bn.exports = function(i, o, a) {
     e.call(this), i = n.normalizeQueryConfig(i, o, a), this.text = i.text, this.values = i.values, this.name = i.name, this.queryMode = i.queryMode, this.callback = i.callback, this.state = "new", this._arrayMode = i.rowMode === "array", this._emitRowEvents = false, this.on("newListener", function(u) {
       u === "row" && (this._emitRowEvents = true);
     }.bind(this));
@@ -7912,20 +7912,20 @@ function ca() {
       const u = this.values.map(n.prepareValue);
       i.native.query(this.text, u, a);
     } else this.queryMode === "extended" ? i.native.query(this.text, [], a) : i.native.query(this.text, a);
-  }, Un.exports;
+  }, Bn.exports;
 }
 var fs;
-function ua() {
+function pa() {
   if (fs) return jn.exports;
   fs = 1;
   const e = gt$2;
   var t;
   try {
-    t = da;
+    t = ua;
   } catch (d) {
     throw d;
   }
-  const n = cr(), r = yt$1.EventEmitter, s = gt$2, i = _i(), o = ca(), a = e.deprecate(() => {
+  const n = cr(), r = yt$1.EventEmitter, s = gt$2, i = Si(), o = la(), a = e.deprecate(() => {
   }, "Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead."), u = jn.exports = function(d) {
     r.call(this), d = d || {}, this._Promise = d.Promise || Zn.Promise, this._types = new n(d.types), this.native = new t({ types: this._types }), this._queryQueue = [], this._ending = false, this._connecting = false, this._connected = false, this._queryable = true;
     const c = this.connectionParameters = new i(d);
@@ -8031,14 +8031,14 @@ function ua() {
     return this._connected;
   }, jn.exports;
 }
-var Bn, ms;
+var Un, ms;
 function hs() {
-  return ms || (ms = 1, Bn = ua()), Bn;
+  return ms || (ms = 1, Un = pa()), Un;
 }
 var gs;
-function Ri() {
+function Ni() {
   return gs || (gs = 1, (function(e) {
-    const t = sa(), n = Gt(), r = Ai(), s = bi(), i = Dt$1(), o = ia(), a = cr(), { DatabaseError: u } = Ti(), { escapeIdentifier: d, escapeLiteral: c } = Dt$1(), p = (y) => class extends o {
+    const t = oa(), n = Gt(), r = Ei(), s = Ti(), i = Dt$1(), o = aa(), a = cr(), { DatabaseError: u } = Ri(), { escapeIdentifier: d, escapeLiteral: c } = Dt$1(), p = (y) => class extends o {
       constructor(m) {
         super(m, y);
       }
@@ -8061,8 +8061,8 @@ function Ri() {
     } });
   })(cn)), cn.exports;
 }
-var la = Ri();
-const De = Bs(la);
+var fa = Ni();
+const De = $s(fa);
 De.Client;
 const Yt$1 = De.Pool;
 De.Connection;
@@ -8120,7 +8120,7 @@ class ur {
 function Vt(e, t) {
   return new ur(e, t);
 }
-function Wd(e) {
+function Xd(e) {
   if (e.d1Binding) return drizzle(e.d1Binding, { schema: Xe$1 });
   if (!e.connectionString) throw new Error("Either d1Binding or connectionString must be provided");
   const t = new Yt$1({ connectionString: e.connectionString, ssl: Jt(e.connectionString) });
@@ -8137,14 +8137,14 @@ function Jt(e, t) {
   }
   return process.env.DB_TLS_REJECT_UNAUTHORIZED === "false" ? { rejectUnauthorized: false } : process.env.DB_TLS_REJECT_UNAUTHORIZED === "true" ? { rejectUnauthorized: true } : { rejectUnauthorized: (_a2 = t == null ? void 0 : t.strictDefault) != null ? _a2 : false };
 }
-function Xd(e) {
+function Hd(e) {
   const t = new Yt$1({ connectionString: e, ssl: Jt(e, { strictDefault: true }) });
   return drizzle$1(t, { schema: Xe$1 });
 }
-function Hd(e) {
+function Gd(e) {
   return drizzle(e, { schema: Xe$1 });
 }
-function Gd(e) {
+function Yd(e) {
   if (e.d1Binding) {
     const r = drizzle(e.d1Binding, { schema: Xe$1 });
     return Vt(r, "d1");
@@ -8153,11 +8153,11 @@ function Gd(e) {
   const t = new Yt$1({ connectionString: e.connectionString, ssl: Jt(e.connectionString) }), n = drizzle$1(t, { schema: Xe$1 });
   return Vt(n, "postgres");
 }
-function pa(e) {
+function ma(e) {
   const t = new Yt$1({ connectionString: e, ssl: Jt(e, { strictDefault: true }) }), n = drizzle$1(t, { schema: Xe$1 });
   return Vt(n, "postgres");
 }
-function Yd(e) {
+function Jd(e) {
   const t = drizzle(e, { schema: Xe$1 });
   return Vt(t, "d1");
 }
@@ -8167,26 +8167,26 @@ let re$1 = class re {
     this.db = t;
   }
   async findById(t) {
-    return this.db.selectOne(V, eq(V.id, t));
+    return this.db.selectOne(z$1, eq(z$1.id, t));
   }
   async findByName(t) {
-    return this.db.selectOne(V, eq(V.normalizedName, t.toLowerCase()));
+    return this.db.selectOne(z$1, eq(z$1.normalizedName, t.toLowerCase()));
   }
   async findByNameAndTenant(t, n) {
-    return (await this.db.select(V)).find((s) => s.normalizedName === t.toLowerCase() && s.tenantId === n);
+    return (await this.db.select(z$1)).find((s) => s.normalizedName === t.toLowerCase() && s.tenantId === n);
   }
   async findByExactName(t) {
-    return this.db.selectOne(V, eq(V.name, t.toLowerCase()));
+    return this.db.selectOne(z$1, eq(z$1.name, t.toLowerCase()));
   }
   async findByNameForTenant(t, n) {
     const r = await this.findByName(t);
     if (!(!r || !r.tenantId)) return r.tenantId === n ? r : void 0;
   }
   async searchByName(t, n = 20) {
-    return (await this.db.select(V)).filter((s) => s.normalizedName.includes(t.toLowerCase())).slice(0, n);
+    return (await this.db.select(z$1)).filter((s) => s.normalizedName.includes(t.toLowerCase())).slice(0, n);
   }
   async findAll(t = {}, n = {}) {
-    let r = await this.db.select(V);
+    let r = await this.db.select(z$1);
     if (t.tenantId && (r = r.filter((o) => o.tenantId === t.tenantId)), t.zoneManagement && (r = r.filter((o) => o.zoneManagement === t.zoneManagement)), t.search) {
       const o = t.search.toLowerCase();
       r = r.filter((a) => a.normalizedName.includes(o) || a.name.toLowerCase().includes(o));
@@ -8195,13 +8195,13 @@ let re$1 = class re {
     return r.slice(s, s + i);
   }
   async findByZoneManagement(t, n = 100) {
-    return (await this.db.selectWhere(V, eq(V.zoneManagement, t))).slice(0, n);
+    return (await this.db.selectWhere(z$1, eq(z$1.zoneManagement, t))).slice(0, n);
   }
   async create(t) {
-    return await this.db.insert(V, { ...t, normalizedName: t.normalizedName || t.name.toLowerCase() });
+    return await this.db.insert(z$1, { ...t, normalizedName: t.normalizedName || t.name.toLowerCase() });
   }
   async findOrCreate(t) {
-    const n = t.normalizedName || t.name.toLowerCase(), r = { ...t, normalizedName: n }, i = await this.db.getDrizzle().insert(V).values(r).onConflictDoNothing({ target: [V.normalizedName, V.tenantId] }).returning();
+    const n = t.normalizedName || t.name.toLowerCase(), r = { ...t, normalizedName: n }, i = await this.db.getDrizzle().insert(z$1).values(r).onConflictDoNothing({ target: [z$1.normalizedName, z$1.tenantId] }).returning();
     if (i.length > 0) return i[0];
     if (t.tenantId) {
       const o = await this.findByNameAndTenant(n, t.tenantId);
@@ -8215,25 +8215,25 @@ let re$1 = class re {
     throw new Error(`Domain ${t.name} not found after conflict resolution`);
   }
   async update(t, n) {
-    return this.db.updateOne(V, { ...n }, eq(V.id, t));
+    return this.db.updateOne(z$1, { ...n }, eq(z$1.id, t));
   }
   async updateZoneManagement(t, n) {
     return this.update(t, { zoneManagement: n });
   }
   async list(t = {}) {
     const { limit: n = 100, offset: r = 0 } = t;
-    return (await this.db.select(V)).slice(r, r + n);
+    return (await this.db.select(z$1)).slice(r, r + n);
   }
   async count(t = {}) {
-    let n = await this.db.select(V);
+    let n = await this.db.select(z$1);
     return t.tenantId && (n = n.filter((r) => r.tenantId === t.tenantId)), t.zoneManagement && (n = n.filter((r) => r.zoneManagement === t.zoneManagement)), n.length;
   }
   async delete(t) {
-    return this.db.deleteOne(V, eq(V.id, t));
+    return this.db.deleteOne(z$1, eq(z$1.id, t));
   }
 };
-const fa = TaggedError("DbError")();
-class we extends fa {
+const ha = TaggedError("DbError")();
+class we extends ha {
   static notFound(t, n) {
     return new we({ message: `${t} not found: ${n}`, code: "NOT_FOUND", table: t, identifier: n });
   }
@@ -8244,10 +8244,10 @@ class we extends fa {
     return new we({ message: `${t} already exists: ${n}`, code: "ALREADY_EXISTS", table: t, identifier: n });
   }
 }
-function Jd(e) {
+function Zd(e) {
   return e instanceof we;
 }
-async function Zd(e, t) {
+async function ec(e, t) {
   try {
     const n = await e();
     return Result.ok(n);
@@ -8256,34 +8256,34 @@ async function Zd(e, t) {
     return Result.err(r(n));
   }
 }
-function ma(e, t, n) {
+function ga(e, t, n) {
   const r = e instanceof Error ? e.message : String(e);
   return r.includes("connection") || r.includes("ECONNREFUSED") ? new we({ message: r, code: "CONNECTION_ERROR", table: t, identifier: n }) : r.includes("timeout") || r.includes("ETIMEDOUT") ? new we({ message: r, code: "TIMEOUT", table: t, identifier: n }) : r.includes("unique constraint") || r.includes("duplicate") ? new we({ message: r, code: "ALREADY_EXISTS", table: t, identifier: n }) : new we({ message: r, code: "QUERY_FAILED", table: t, identifier: n });
 }
-async function ec(e, t, n) {
+async function tc(e, t, n) {
   try {
     const r = await e();
     return r == null ? Result.err(we.notFound(t, n)) : Result.ok(r);
   } catch (r) {
-    return Result.err(ma(r, t, n));
+    return Result.err(ga(r, t, n));
   }
 }
-function tc(e, t, n, r) {
+function nc(e, t, n, r) {
   return e ? t ? t !== n ? Result.err(we.tenantIsolation(r, n, t)) : Result.ok(e) : Result.ok(e) : Result.err(new we({ message: `${r} not found`, code: "NOT_FOUND", table: r }));
 }
-function nc(e) {
+function rc(e) {
   const [t, n] = Result.partition(e);
   return { ok: t, err: n };
 }
-function rc(e, t) {
+function sc(e, t) {
   return Result.unwrapOr(e, t);
 }
-function sc(e) {
-  var _a2;
-  return new _o({ message: e.message, resourceType: e.table, identifier: (_a2 = e.identifier) != null ? _a2 : "" });
-}
 function ic(e) {
-  return new So({ message: e.message, tenantId: e.tenantId, resourceTenantId: e.resourceTenantId });
+  var _a2;
+  return new So({ message: e.message, resourceType: e.table, identifier: (_a2 = e.identifier) != null ? _a2 : "" });
+}
+function oc(e) {
+  return new Ao({ message: e.message, tenantId: e.tenantId, resourceTenantId: e.resourceTenantId });
 }
 class $e {
   constructor(t) {
@@ -8342,7 +8342,7 @@ class $e {
     return r.length;
   }
 }
-class Ei {
+class Di {
   constructor(t) {
     __publicField(this, "db");
     this.db = t;
@@ -8374,7 +8374,7 @@ class Ei {
     return Array.from(s);
   }
 }
-class ha {
+class ya {
   constructor(t) {
     __publicField(this, "db");
     this.db = t;
@@ -8550,7 +8550,7 @@ class lr {
     for (const n of t) await this.findByProviderKey(n.providerKey) || await this.create(n);
   }
 }
-class Ni {
+class qi {
   constructor(t) {
     __publicField(this, "db");
     this.db = t;
@@ -8646,21 +8646,21 @@ class tn {
     this.db = t;
   }
   async findByTenant(t, n) {
-    let r = await this.db.select(Ue);
+    let r = await this.db.select(Be);
     return r = r.filter((s) => s.tenantId === t), n && (r = r.filter((s) => s.createdBy === n || s.isShared)), r.sort((s, i) => new Date(i.updatedAt).getTime() - new Date(s.updatedAt).getTime());
   }
   async findById(t, n) {
-    const r = await this.db.selectOne(Ue, eq(Ue.id, t));
+    const r = await this.db.selectOne(Be, eq(Be.id, t));
     if (r && !(n && r.tenantId !== n)) return r;
   }
   async create(t) {
-    return this.db.insert(Ue, t);
+    return this.db.insert(Be, t);
   }
   async update(t, n) {
-    return this.db.updateOne(Ue, { ...n, updatedAt: /* @__PURE__ */ new Date() }, eq(Ue.id, t));
+    return this.db.updateOne(Be, { ...n, updatedAt: /* @__PURE__ */ new Date() }, eq(Be.id, t));
   }
   async delete(t) {
-    await this.db.deleteOne(Ue, eq(Ue.id, t));
+    await this.db.deleteOne(Be, eq(Be.id, t));
   }
 }
 class te {
@@ -8690,25 +8690,25 @@ let vt$1 = class vt {
     this.db = t;
   }
   async findByProvider(t, n) {
-    let r = await this.db.select(Le);
+    let r = await this.db.select(Me);
     return r = r.filter((s) => s.providerKey === t), n && (r = r.filter((s) => s.tenantId === n)), r;
   }
   async findById(t, n) {
-    const r = await this.db.selectOne(Le, eq(Le.id, t));
+    const r = await this.db.selectOne(Me, eq(Me.id, t));
     if (r && !(n && r.tenantId !== n)) return r;
   }
   async findApplicable(t, n, r, s) {
-    let i = await this.db.select(Le);
+    let i = await this.db.select(Me);
     return i = i.filter((o) => o.providerKey === t && o.templateKey === n), s && (i = i.filter((o) => o.tenantId === s)), i.find((o) => !o.appliesToDomains || o.appliesToDomains.length === 0 || o.appliesToDomains.includes(r));
   }
   async create(t) {
-    return this.db.insert(Le, t);
+    return this.db.insert(Me, t);
   }
   async update(t, n) {
-    return this.db.updateOne(Le, { ...n, updatedAt: /* @__PURE__ */ new Date() }, eq(Le.id, t));
+    return this.db.updateOne(Me, { ...n, updatedAt: /* @__PURE__ */ new Date() }, eq(Me.id, t));
   }
   async delete(t) {
-    await this.db.deleteOne(Le, eq(Le.id, t));
+    await this.db.deleteOne(Me, eq(Me.id, t));
   }
 };
 let rt$1 = class rt {
@@ -8739,7 +8739,7 @@ let rt$1 = class rt {
     await this.db.deleteOne(he$1, eq(he$1.id, t));
   }
 };
-function ga(e, t) {
+function wa(e, t) {
   if (e === t) return true;
   switch (t) {
     case "acknowledged":
@@ -8787,7 +8787,7 @@ let It$1 = class It {
   async updateStatus(t, n, r, s) {
     const i = await this.findById(t, n);
     if (!i) return;
-    if (!ga(i.status, r)) throw new Error(`Invalid alert transition: ${i.status} -> ${r}`);
+    if (!wa(i.status, r)) throw new Error(`Invalid alert transition: ${i.status} -> ${r}`);
     if (i.status === r) return i;
     const o = { status: r };
     return r === "acknowledged" && (s == null ? void 0 : s.acknowledgedBy) && (o.acknowledgedAt = /* @__PURE__ */ new Date(), o.acknowledgedBy = s.acknowledgedBy), r === "resolved" && (o.resolvedAt = /* @__PURE__ */ new Date(), (s == null ? void 0 : s.resolutionNote) && (o.resolutionNote = s.resolutionNote)), this.db.updateOne(be$1, o, eq(be$1.id, t));
@@ -8805,24 +8805,24 @@ class nn {
     this.db = t;
   }
   async create(t) {
-    return this.db.insert(Be, t);
+    return this.db.insert(Ue, t);
   }
   async findById(t, n) {
-    const r = await this.db.selectOne(Be, eq(Be.id, t));
+    const r = await this.db.selectOne(Ue, eq(Ue.id, t));
     if (!(!r || r.tenantId !== n)) return r;
   }
   async findByToken(t) {
-    const n = await this.db.select(Be), r = /* @__PURE__ */ new Date();
+    const n = await this.db.select(Ue), r = /* @__PURE__ */ new Date();
     return n.find((s) => !(s.shareToken !== t || s.visibility !== "shared" || !s.tenantId || s.status !== "ready" || s.expiresAt && new Date(s.expiresAt) <= r));
   }
   async findByTokenRaw(t) {
-    return (await this.db.select(Be)).find((r) => !(r.shareToken !== t || r.visibility !== "shared" || !r.tenantId));
+    return (await this.db.select(Ue)).find((r) => !(r.shareToken !== t || r.visibility !== "shared" || !r.tenantId));
   }
   async listByTenant(t) {
-    return (await this.db.select(Be)).filter((r) => r.tenantId === t).sort((r, s) => new Date(s.createdAt).getTime() - new Date(r.createdAt).getTime());
+    return (await this.db.select(Ue)).filter((r) => r.tenantId === t).sort((r, s) => new Date(s.createdAt).getTime() - new Date(r.createdAt).getTime());
   }
   async expire(t, n) {
-    if (await this.findById(t, n)) return this.db.updateOne(Be, { status: "expired", updatedAt: /* @__PURE__ */ new Date() }, eq(Be.id, t));
+    if (await this.findById(t, n)) return this.db.updateOne(Ue, { status: "expired", updatedAt: /* @__PURE__ */ new Date() }, eq(Ue.id, t));
   }
 }
 let Ct$1 = class Ct {
@@ -8905,7 +8905,7 @@ let ct$1 = class ct {
     return s;
   }
 };
-class Me {
+class Le {
   constructor(t) {
     __publicField(this, "db");
     this.db = t;
@@ -9048,13 +9048,13 @@ let _t$1 = class _t {
 };
 const ft$1 = tr({ service: "dns-ops-web", version: "1.0.0", minLevel: "info" });
 let Fn = null, ys = null, ws = false, vs = false;
-function ya(e) {
+function va(e) {
   return typeof (e == null ? void 0 : e.ASSETS) < "u" || !!(e == null ? void 0 : e.HYPERDRIVE);
 }
-function wa(e) {
-  return (!Fn || ys !== e) && (Fn = pa(e), ys = e), Fn;
+function Ia(e) {
+  return (!Fn || ys !== e) && (Fn = ma(e), ys = e), Fn;
 }
-async function va(e) {
+async function _a(e) {
   var _a2;
   if (!vs) {
     vs = true;
@@ -9254,13 +9254,13 @@ async function va(e) {
     }
   }
 }
-const Ia = createMiddleware(async (e, t) => {
+const ba = createMiddleware(async (e, t) => {
   const { databaseUrl: n, isDevelopment: r } = nr(e.env);
   if (r && !n) return ft$1.error("DATABASE_URL is required in development mode", void 0, { hint: "Set DATABASE_URL environment variable", code: "DB_CONFIG_MISSING" }), e.req.path.startsWith("/api/") ? e.json({ error: "Database configuration error", message: "DATABASE_URL is required in development mode", code: "DB_CONFIG_MISSING" }, 503) : await t();
-  if (!n && ya(e.env) && (ws || (ws = true, ft$1.warn("No database connection available", { code: "DB_UNAVAILABLE" })), e.req.path.startsWith("/api/") && e.req.path !== "/api/health")) return e.json({ error: "Database unavailable", message: "Database connection not configured", code: "DB_UNAVAILABLE" }, 503);
+  if (!n && va(e.env) && (ws || (ws = true, ft$1.warn("No database connection available", { code: "DB_UNAVAILABLE" })), e.req.path.startsWith("/api/") && e.req.path !== "/api/health")) return e.json({ error: "Database unavailable", message: "Database connection not configured", code: "DB_UNAVAILABLE" }, 503);
   if (n) {
-    const s = wa(n);
-    e.set("db", s), await va(s);
+    const s = Ia(n);
+    e.set("db", s), await _a(s);
   }
   return await t();
 }), Wn = { INFRA_CONFIG_MISSING: "INFRA_CONFIG_MISSING" };
@@ -9273,30 +9273,30 @@ function O() {
   }
   return $n;
 }
-function _a(e) {
+function Sa(e) {
   O().info("Product event: search", { eventType: "product_search", ...e });
 }
 function Is(e) {
   O().info("Product event: mail_check", { eventType: "product_mail_check", ...e });
 }
-function Di(e) {
+function Ci(e) {
   O().info("Product event: diff", { eventType: "product_diff", ...e });
 }
-function ba(e) {
+function Ta(e) {
   O().info("Product event: legacy_open", { eventType: "product_legacy_open", ...e });
 }
-function Sa(e) {
+function Aa(e) {
   O().info("Product event: report", { eventType: "product_report", ...e });
 }
 function pr(e) {
   O().info("Product event: alert", { eventType: "product_alert", ...e });
 }
-const kt$1 = new Hono(), fr = 7, qi = fr * 24 * 60 * 60 * 1e3;
-function Ci() {
+const kt$1 = new Hono(), fr = 7, ki = fr * 24 * 60 * 60 * 1e3;
+function Mi() {
   const e = new Uint8Array(32);
   return crypto.getRandomValues(e), Array.from(e, (t) => t.toString(16).padStart(2, "0")).join("");
 }
-function ki(e) {
+function Li(e) {
   if (!e) return {};
   const t = {};
   for (const n of e.split(";")) {
@@ -9315,7 +9315,7 @@ kt$1.post("/signup", async (e) => {
   if (await t.getDrizzle().query.users.findFirst({ where: eq($t$1.email, n.toLowerCase()) })) return e.json({ error: "An account with this email already exists" }, 409);
   const o = await hash$1(r, { memoryCost: 65536, timeCost: 3, outputLen: 32, parallelism: 4 }), a = n.split("@")[1], u = await Xt(a);
   await t.getDrizzle().insert($t$1).values({ email: n.toLowerCase(), passwordHash: o, tenantId: u, name: n.split("@")[0] });
-  const d = Ci(), c = new Date(Date.now() + qi);
+  const d = Mi(), c = new Date(Date.now() + ki);
   return await t.getDrizzle().insert(Fe).values({ token: d, userEmail: n.toLowerCase(), tenantId: u, expiresAt: c }), e.header("Set-Cookie", `dns_ops_session=${d}; Path=/; Max-Age=${fr * 24 * 60 * 60}; HttpOnly; SameSite=Lax`), e.json({ success: true, email: n, tenant: a });
 });
 kt$1.post("/login", async (e) => {
@@ -9326,62 +9326,57 @@ kt$1.post("/login", async (e) => {
   const s = await t.getDrizzle().query.users.findFirst({ where: eq($t$1.email, n.toLowerCase()) });
   if (!s) return e.json({ error: "Invalid email or password" }, 401);
   if (!await verify(s.passwordHash, r)) return e.json({ error: "Invalid email or password" }, 401);
-  const o = Ci(), a = new Date(Date.now() + qi);
+  const o = Mi(), a = new Date(Date.now() + ki);
   return await t.getDrizzle().insert(Fe).values({ token: o, userEmail: s.email, tenantId: s.tenantId, expiresAt: a }), e.header("Set-Cookie", `dns_ops_session=${o}; Path=/; Max-Age=${fr * 24 * 60 * 60}; HttpOnly; SameSite=Lax`), e.json({ success: true, email: s.email, tenant: n.split("@")[1] });
 });
 kt$1.post("/logout", async (e) => {
-  const t = e.get("db"), r = ki(e.req.header("Cookie")).dns_ops_session;
+  const t = e.get("db"), r = Li(e.req.header("Cookie")).dns_ops_session;
   return r && t && await t.getDrizzle().delete(Fe).where(eq(Fe.token, r)), e.header("Set-Cookie", "dns_ops_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"), e.json({ success: true });
 });
 kt$1.get("/me", async (e) => {
   const t = e.get("db");
   if (!t) return e.json({ authenticated: false }, 401);
-  const r = ki(e.req.header("Cookie")).dns_ops_session;
+  const r = Li(e.req.header("Cookie")).dns_ops_session;
   if (!r) return e.json({ authenticated: false }, 401);
   const s = await t.getDrizzle().query.sessions.findFirst({ where: and(eq(Fe.token, r), gt$1(Fe.expiresAt, /* @__PURE__ */ new Date())) });
   return s ? e.json({ authenticated: true, email: s.userEmail, tenant: s.userEmail.split("@")[1] }) : e.json({ authenticated: false }, 401);
 });
-const mr = new Hono();
-async function Ta(e) {
-  var _a2;
-  try {
-    return await e.getDrizzle().execute(sql`
-      CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
-        name VARCHAR(255),
-        tenant_id UUID NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-      );
-    `), console.log("[Migration] Users table created or already exists"), true;
-  } catch (t) {
-    return ((_a2 = t.message) == null ? void 0 : _a2.includes("already exists")) ? true : (console.error("[Migration] Users table error:", t.message), false);
-  }
-}
+const mr = new Hono(), _s = ["users", "sessions", "domains", "ruleset_versions", "snapshots", "observations", "record_sets", "findings", "suggestions", "domain_notes", "domain_tags", "saved_filters", "audit_events", "template_overrides", "monitored_domains", "alerts", "shared_reports", "fleet_reports", "probe_observations"], bs = { users: ["id", "email", "password_hash", "tenant_id"], sessions: ["id", "token", "user_email", "tenant_id", "expires_at"], domains: ["id", "name", "normalized_name", "tenant_id"], snapshots: ["id", "domain_id", "tenant_id", "collector"], monitored_domains: ["id", "domain_id", "schedule", "tenant_id", "created_by"], domain_notes: ["id", "domain_id", "tenant_id", "content", "created_by"], domain_tags: ["id", "domain_id", "tenant_id", "tag"], findings: ["id", "domain_id", "tenant_id", "severity", "code"], observations: ["id", "snapshot_id", "query_name", "query_type", "rcode"], record_sets: ["id", "snapshot_id", "domain_id", "name", "type"], suggestions: ["id", "domain_id", "tenant_id", "action", "target"], alerts: ["id", "monitored_domain_id", "tenant_id", "status", "severity"], ruleset_versions: ["id", "version", "rules", "tenant_id"], saved_filters: ["id", "tenant_id", "name", "filters"], audit_events: ["id", "tenant_id", "action", "actor"], template_overrides: ["id", "tenant_id", "template_id", "field_name"], shared_reports: ["id", "tenant_id", "name", "type"], fleet_reports: ["id", "tenant_id", "name", "findings"], probe_observations: ["id", "tenant_id", "domain", "record_type"] };
 mr.get("/status", async (e) => {
-  var _a2, _b;
   const t = e.get("db");
   if (!t) return e.json({ error: "Database not available" }, 503);
   try {
-    return await t.select(V), e.json({ status: "migrated", message: "Database tables exist" });
+    const r = (await t.getDrizzle().execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `)).map((i) => i.table_name), s = _s.filter((i) => !r.includes(i));
+    return s.length > 0 ? e.json({ status: "incomplete", missingTables: s, existingTables: r, message: `Missing tables: ${s.join(", ")}` }, 200) : e.json({ status: "complete", tables: _s.length, message: "All required tables exist" });
   } catch (n) {
-    return ((_a2 = n.message) == null ? void 0 : _a2.includes("does not exist")) || ((_b = n.message) == null ? void 0 : _b.includes("relation")) ? e.json({ status: "not_migrated", error: "domains table does not exist" }, 200) : e.json({ status: "error", message: n.message }, 500);
+    return e.json({ status: "error", message: n.message }, 500);
   }
 });
-mr.post("/run", async (e) => {
-  var _a2;
+mr.get("/schema", async (e) => {
   const t = e.get("db");
   if (!t) return e.json({ error: "Database not available" }, 503);
   try {
-    return await t.select(V), await Ta(t), e.json({ status: "migrated", message: "Database is accessible and migrated" });
+    const n = {};
+    for (const [s, i] of Object.entries(bs)) {
+      const a = (await t.getDrizzle().execute(sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = ${s} AND table_schema = 'public'
+      `)).map((d) => d.column_name), u = i.filter((d) => !a.includes(d));
+      n[s] = { columns: a, missing: u };
+    }
+    const r = Object.entries(n).filter(([, s]) => s.missing.length > 0).map(([s, i]) => ({ table: s, missing: i.missing }));
+    return r.length > 0 ? e.json({ status: "incomplete", issues: r, message: `${r.length} tables have missing columns` }, 200) : e.json({ status: "complete", tablesChecked: Object.keys(bs).length, message: "All tables have required columns" });
   } catch (n) {
-    return ((_a2 = n.message) == null ? void 0 : _a2.includes("does not exist")) ? e.json({ status: "needs_migration", error: n.message, solution: "Run: cd packages/db && DATABASE_URL=<url> npx drizzle-kit push:pg" }, 200) : e.json({ status: "error", message: n.message }, 500);
+    return e.json({ status: "error", message: n.message }, 500);
   }
 });
-const Aa = 3, Xn = 3e4;
-class Ra {
+const Ra = 3, Xn = 3e4;
+class Ea {
   constructor() {
     __publicField(this, "state", "closed");
     __publicField(this, "consecutiveFailures", 0);
@@ -9399,7 +9394,7 @@ class Ra {
     this.consecutiveFailures = 0, this.state = "closed", this.halfOpenProbeInFlight = false;
   }
   recordFailure() {
-    this.consecutiveFailures++, this.lastFailureAt = Date.now(), this.halfOpenProbeInFlight = false, this.consecutiveFailures >= Aa && (this.state = "open");
+    this.consecutiveFailures++, this.lastFailureAt = Date.now(), this.halfOpenProbeInFlight = false, this.consecutiveFailures >= Ra && (this.state = "open");
   }
   getInfo() {
     return { state: this.getState(), consecutiveFailures: this.consecutiveFailures, lastFailureAt: this.lastFailureAt };
@@ -9408,8 +9403,8 @@ class Ra {
     this.state = "closed", this.consecutiveFailures = 0, this.lastFailureAt = 0, this.halfOpenProbeInFlight = false;
   }
 }
-const Ze$1 = new Ra();
-function Ea(e, t) {
+const Ze$1 = new Ea();
+function Na(e, t) {
   const n = e.get("tenantId"), r = e.get("actorId");
   if (!n || !r) return e.json({ error: "Authenticated tenant and actor required" }, 401);
   const { collectorUrl: s, internalSecret: i, isProduction: o } = nr(e.env), a = {};
@@ -9420,7 +9415,7 @@ async function hr(e, t) {
     const i = Ze$1.getInfo();
     return O().warn("[CollectorProxy] Circuit open \u2014 rejecting request", { path: t.path, requestId: e.req.header("X-Request-ID") || crypto.randomUUID(), tenantId: e.get("tenantId"), ...i }), e.json({ error: "Collector service temporarily unavailable", message: `Circuit breaker is ${i.state} after ${i.consecutiveFailures} consecutive failures. Retrying in ${Math.max(0, Math.ceil((Xn - (Date.now() - i.lastFailureAt)) / 1e3))}s.`, retryAfterSeconds: Math.max(0, Math.ceil((Xn - (Date.now() - i.lastFailureAt)) / 1e3)) }, 503);
   }
-  const n = Ea(e);
+  const n = Na(e);
   if (n instanceof Response) return n;
   const r = `${n.collectorUrl}${t.path}`, s = e.req.header("X-Request-ID") || crypto.randomUUID();
   try {
@@ -9442,14 +9437,14 @@ async function hr(e, t) {
     return O().error("[CollectorProxy] Network error: collector unreachable", i instanceof Error ? i : new Error(String(i)), { path: t.path, method: t.method, requestId: e.req.header("X-Request-ID") || crypto.randomUUID(), tenantId: e.get("tenantId"), circuitState: o.state, consecutiveFailures: o.consecutiveFailures }), e.json({ error: "Failed to connect to collector service", message: i instanceof Error ? i.message : "Unknown error", circuitState: o.state }, 503);
   }
 }
-function Li(e, t, n, r, s, i) {
-  const o = Na(n, r), a = Da(n, r), u = qa(s, i), d = Ca(e, t), c = ka(e.rulesetVersion, t.rulesetVersion), p = [...o, ...u], l = { totalChanges: p.filter((h) => h.type !== "unchanged").length, additions: p.filter((h) => h.type === "added").length, deletions: p.filter((h) => h.type === "removed").length, modifications: p.filter((h) => h.type === "modified").length, unchanged: p.filter((h) => h.type === "unchanged").length }, f = { totalChanges: u.filter((h) => h.type !== "unchanged").length, added: u.filter((h) => h.type === "added").length, removed: u.filter((h) => h.type === "removed").length, modified: u.filter((h) => h.type === "modified").length, unchanged: u.filter((h) => h.type === "unchanged").length, severityChanges: u.filter((h) => {
+function xi(e, t, n, r, s, i) {
+  const o = Da(n, r), a = qa(n, r), u = Ca(s, i), d = ka(e, t), c = Ma(e.rulesetVersion, t.rulesetVersion), p = [...o, ...u], l = { totalChanges: p.filter((h) => h.type !== "unchanged").length, additions: p.filter((h) => h.type === "added").length, deletions: p.filter((h) => h.type === "removed").length, modifications: p.filter((h) => h.type === "modified").length, unchanged: p.filter((h) => h.type === "unchanged").length }, f = { totalChanges: u.filter((h) => h.type !== "unchanged").length, added: u.filter((h) => h.type === "added").length, removed: u.filter((h) => h.type === "removed").length, modified: u.filter((h) => h.type === "modified").length, unchanged: u.filter((h) => h.type === "unchanged").length, severityChanges: u.filter((h) => {
     var _a2;
     return (_a2 = h.changes) == null ? void 0 : _a2.severity;
   }).length };
   return { snapshotA: { id: e.id, createdAt: e.createdAt, rulesetVersion: e.rulesetVersion }, snapshotB: { id: t.id, createdAt: t.createdAt, rulesetVersion: t.rulesetVersion }, comparison: { recordChanges: o, ttlChanges: a, findingChanges: u, scopeChanges: d, rulesetChange: c }, summary: l, findingsSummary: f };
 }
-function Na(e, t) {
+function Da(e, t) {
   const n = [], r = (o) => `${o.name}|${o.type}`, s = new Map(e.map((o) => [r(o), o])), i = new Map(t.map((o) => [r(o), o]));
   for (const [o, a] of s) {
     const u = i.get(o);
@@ -9462,7 +9457,7 @@ function Na(e, t) {
   for (const [o, a] of i) s.has(o) || n.push({ type: "added", name: a.name, recordType: a.type, valuesB: a.values });
   return n;
 }
-function Da(e, t) {
+function qa(e, t) {
   const n = [], r = (o) => `${o.name}|${o.type}`, s = new Map(e.map((o) => [r(o), o])), i = new Map(t.map((o) => [r(o), o]));
   for (const [o, a] of s) {
     const u = i.get(o);
@@ -9470,7 +9465,7 @@ function Da(e, t) {
   }
   return n;
 }
-function qa(e, t) {
+function Ca(e, t) {
   var _a2, _b, _c, _d2, _e2, _f, _g, _h;
   const n = [], r = (o) => `${o.type}|${o.ruleId}`, s = new Map(e.map((o) => [r(o), o])), i = new Map(t.map((o) => [r(o), o]));
   for (const [o, a] of s) {
@@ -9489,84 +9484,84 @@ function qa(e, t) {
   for (const [o, a] of i) s.has(o) || n.push({ type: "added", findingType: a.type, title: a.title, severityB: a.severity, confidenceB: a.confidence, ruleId: a.ruleId, ruleVersionB: a.ruleVersion, evidenceCountB: (_h = (_g = a.evidence) == null ? void 0 : _g.length) != null ? _h : 0 });
   return n;
 }
-function Ca(e, t) {
+function ka(e, t) {
   const n = t.queriedNames.filter((u) => !e.queriedNames.includes(u)), r = e.queriedNames.filter((u) => !t.queriedNames.includes(u)), s = t.queriedTypes.filter((u) => !e.queriedTypes.includes(u)), i = e.queriedTypes.filter((u) => !t.queriedTypes.includes(u)), o = t.vantages.filter((u) => !e.vantages.includes(u)), a = e.vantages.filter((u) => !t.vantages.includes(u));
   return n.length === 0 && r.length === 0 && s.length === 0 && i.length === 0 && o.length === 0 && a.length === 0 ? null : { type: "scope-changed", namesAdded: n, namesRemoved: r, typesAdded: s, typesRemoved: i, vantagesAdded: o, vantagesRemoved: a, message: "Query scope changed between snapshots" };
 }
-function ka(e, t) {
+function Ma(e, t) {
   return e === t ? null : { type: "ruleset-changed", versionA: e, versionB: t, message: `Ruleset version changed from ${e} to ${t}` };
 }
-var Vn, _s;
+var Vn, Ss;
 function La() {
-  if (_s) return Vn;
-  _s = 1;
+  if (Ss) return Vn;
+  Ss = 1;
   const e = 2147483647, t = 36, n = 1, r = 26, s = 38, i = 700, o = 72, a = 128, u = "-", d = /^xn--/, c = /[^\0-\x7F]/, p = /[\x2E\u3002\uFF0E\uFF61]/g, l = { overflow: "Overflow: input needs wider integers to process", "not-basic": "Illegal input >= 0x80 (not a basic code point)", "invalid-input": "Invalid input" }, f = t - n, h = Math.floor, y = String.fromCharCode;
   function v(_) {
     throw new RangeError(l[_]);
   }
-  function m(_, L) {
+  function m(_, M) {
     const q = [];
     let x = _.length;
-    for (; x--; ) q[x] = L(_[x]);
+    for (; x--; ) q[x] = M(_[x]);
     return q;
   }
-  function w(_, L) {
+  function w(_, M) {
     const q = _.split("@");
     let x = "";
     q.length > 1 && (x = q[0] + "@", _ = q[1]), _ = _.replace(p, ".");
-    const $ = _.split("."), z = m($, L).join(".");
-    return x + z;
+    const $ = _.split("."), V = m($, M).join(".");
+    return x + V;
   }
   function S(_) {
-    const L = [];
+    const M = [];
     let q = 0;
     const x = _.length;
     for (; q < x; ) {
       const $ = _.charCodeAt(q++);
       if ($ >= 55296 && $ <= 56319 && q < x) {
-        const z = _.charCodeAt(q++);
-        (z & 64512) == 56320 ? L.push((($ & 1023) << 10) + (z & 1023) + 65536) : (L.push($), q--);
-      } else L.push($);
+        const V = _.charCodeAt(q++);
+        (V & 64512) == 56320 ? M.push((($ & 1023) << 10) + (V & 1023) + 65536) : (M.push($), q--);
+      } else M.push($);
     }
-    return L;
+    return M;
   }
   const T = (_) => String.fromCodePoint(..._), D = function(_) {
     return _ >= 48 && _ < 58 ? 26 + (_ - 48) : _ >= 65 && _ < 91 ? _ - 65 : _ >= 97 && _ < 123 ? _ - 97 : t;
-  }, R = function(_, L) {
-    return _ + 22 + 75 * (_ < 26) - ((L != 0) << 5);
-  }, g = function(_, L, q) {
+  }, R = function(_, M) {
+    return _ + 22 + 75 * (_ < 26) - ((M != 0) << 5);
+  }, g = function(_, M, q) {
     let x = 0;
-    for (_ = q ? h(_ / i) : _ >> 1, _ += h(_ / L); _ > f * r >> 1; x += t) _ = h(_ / f);
+    for (_ = q ? h(_ / i) : _ >> 1, _ += h(_ / M); _ > f * r >> 1; x += t) _ = h(_ / f);
     return h(x + (f + 1) * _ / (_ + s));
   }, b = function(_) {
-    const L = [], q = _.length;
-    let x = 0, $ = a, z = o, pe = _.lastIndexOf(u);
+    const M = [], q = _.length;
+    let x = 0, $ = a, V = o, pe = _.lastIndexOf(u);
     pe < 0 && (pe = 0);
-    for (let ne = 0; ne < pe; ++ne) _.charCodeAt(ne) >= 128 && v("not-basic"), L.push(_.charCodeAt(ne));
+    for (let ne = 0; ne < pe; ++ne) _.charCodeAt(ne) >= 128 && v("not-basic"), M.push(_.charCodeAt(ne));
     for (let ne = pe > 0 ? pe + 1 : 0; ne < q; ) {
       const ge = x;
       for (let ue = 1, Ie = t; ; Ie += t) {
         ne >= q && v("invalid-input");
         const je = D(_.charCodeAt(ne++));
         je >= t && v("invalid-input"), je > h((e - x) / ue) && v("overflow"), x += je * ue;
-        const Je = Ie <= z ? n : Ie >= z + r ? r : Ie - z;
+        const Je = Ie <= V ? n : Ie >= V + r ? r : Ie - V;
         if (je < Je) break;
         const St = t - Je;
         ue > h(e / St) && v("overflow"), ue *= St;
       }
-      const Q = L.length + 1;
-      z = g(x - ge, Q, ge == 0), h(x / Q) > e - $ && v("overflow"), $ += h(x / Q), x %= Q, L.splice(x++, 0, $);
+      const Q = M.length + 1;
+      V = g(x - ge, Q, ge == 0), h(x / Q) > e - $ && v("overflow"), $ += h(x / Q), x %= Q, M.splice(x++, 0, $);
     }
-    return String.fromCodePoint(...L);
+    return String.fromCodePoint(...M);
   }, I = function(_) {
-    const L = [];
+    const M = [];
     _ = S(_);
     const q = _.length;
-    let x = a, $ = 0, z = o;
-    for (const ge of _) ge < 128 && L.push(y(ge));
-    const pe = L.length;
+    let x = a, $ = 0, V = o;
+    for (const ge of _) ge < 128 && M.push(y(ge));
+    const pe = M.length;
     let ne = pe;
-    for (pe && L.push(u); ne < q; ) {
+    for (pe && M.push(u); ne < q; ) {
       let ge = e;
       for (const ue of _) ue >= x && ue < ge && (ge = ue);
       const Q = ne + 1;
@@ -9574,29 +9569,29 @@ function La() {
       for (const ue of _) if (ue < x && ++$ > e && v("overflow"), ue === x) {
         let Ie = $;
         for (let je = t; ; je += t) {
-          const Je = je <= z ? n : je >= z + r ? r : je - z;
+          const Je = je <= V ? n : je >= V + r ? r : je - V;
           if (Ie < Je) break;
           const St = Ie - Je, Ir = t - Je;
-          L.push(y(R(Je + St % Ir, 0))), Ie = h(St / Ir);
+          M.push(y(R(Je + St % Ir, 0))), Ie = h(St / Ir);
         }
-        L.push(y(R(Ie, 0))), z = g($, Q, ne === pe), $ = 0, ++ne;
+        M.push(y(R(Ie, 0))), V = g($, Q, ne === pe), $ = 0, ++ne;
       }
       ++$, ++x;
     }
-    return L.join("");
+    return M.join("");
   };
   return Vn = { version: "2.3.1", ucs2: { decode: S, encode: T }, decode: b, encode: I, toASCII: function(_) {
-    return w(_, function(L) {
-      return c.test(L) ? "xn--" + I(L) : L;
+    return w(_, function(M) {
+      return c.test(M) ? "xn--" + I(M) : M;
     });
   }, toUnicode: function(_) {
-    return w(_, function(L) {
-      return d.test(L) ? b(L.slice(4).toLowerCase()) : L;
+    return w(_, function(M) {
+      return d.test(M) ? b(M.slice(4).toLowerCase()) : M;
     });
   } }, Vn;
 }
-var Ma = La();
-const Mi = Bs(Ma), { toASCII: xi, toUnicode: xa } = Mi, Hn = "xn--";
+var xa = La();
+const Pi = $s(xa), { toASCII: Oi, toUnicode: Pa } = Pi, Hn = "xn--";
 class Te extends Error {
   constructor(t, n) {
     super(t);
@@ -9604,10 +9599,10 @@ class Te extends Error {
     this.code = n, this.name = "DomainNormalizationError";
   }
 }
-function Pa(e) {
+function Oa(e) {
   return e.startsWith(Hn);
 }
-function Pi(e) {
+function ji(e) {
   if (!e || typeof e != "string") return false;
   const t = e.trim();
   if (t.length > 253) return false;
@@ -9617,7 +9612,7 @@ function Pi(e) {
   for (const s of r) {
     if (s.length === 0 || s.length > 63 || s.startsWith("-") || s.endsWith("-")) return false;
     try {
-      const i = xi(s);
+      const i = Oi(s);
       if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(i) && !i.startsWith(Hn)) return false;
     } catch {
       if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(s) && !s.startsWith(Hn)) return false;
@@ -9625,7 +9620,7 @@ function Pi(e) {
   }
   return true;
 }
-function Oa(e) {
+function ja(e) {
   if (!e || typeof e != "string") throw new Te("Domain name is required", "EMPTY_DOMAIN");
   const t = e.trim();
   if (t.length === 0) throw new Te("Domain name cannot be empty", "EMPTY_DOMAIN");
@@ -9640,10 +9635,10 @@ function Oa(e) {
     if (d.endsWith("-")) throw new Te(`Label "${d}" ends with hyphen`, "INVALID_FORMAT");
     if (d.includes(" ")) throw new Te(`Label "${d}" contains spaces`, "INVALID_CHARACTERS");
     let c, p;
-    if (Pa(d)) {
+    if (Oa(d)) {
       c = d;
       try {
-        p = xa(d);
+        p = Pa(d);
       } catch {
         p = d;
       }
@@ -9651,7 +9646,7 @@ function Oa(e) {
       if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/i.test(d)) throw new Te(`Label "${d}" contains invalid characters`, "INVALID_CHARACTERS");
       c = d, p = d;
     } else try {
-      c = xi(d), p = d;
+      c = Oi(d), p = d;
     } catch (f) {
       throw new Te(`Failed to convert label "${d}" to punycode: ${f instanceof Error ? f.message : String(f)}`, "INVALID_CHARACTERS");
     }
@@ -9660,8 +9655,8 @@ function Oa(e) {
   const a = i.join("."), u = o.join(".");
   return { original: e, unicode: u, punycode: a, normalized: a };
 }
-const { toASCII: oc, toUnicode: ac } = Mi;
-function ja(e) {
+const { toASCII: ac, toUnicode: dc } = Pi;
+function Ba(e) {
   if (!e.includes("v=spf1")) return null;
   const t = e.split(/\s+/).filter(Boolean), n = [], r = [];
   for (let s = 0; s < t.length; s++) {
@@ -9683,7 +9678,7 @@ function Ua(e) {
   const r = e.indexOf(":"), s = r >= 0 ? e.slice(0, r) : e, i = r >= 0 ? e.slice(r + 1) : void 0;
   return { type: s, value: i, prefix: t, prefixName: n };
 }
-function Ba(e) {
+function Fa(e) {
   if (!e.includes("v=DMARC1")) return null;
   const t = { version: "DMARC1", raw: e }, n = e.split(/\s*;\s*/).filter(Boolean);
   for (const r of n) {
@@ -9741,7 +9736,7 @@ function Ke(e, t) {
     if (!(n == null || n === "")) return et$1(e, t)(n);
   };
 }
-function Fa(e, t, n) {
+function $a(e, t, n) {
   return (r) => {
     if (r == null) throw new ee(e, "MISSING_FIELD", `${e} is required`);
     if (!Array.isArray(r)) throw new ee(e, "INVALID_FORMAT", `${e} must be an array`);
@@ -9750,7 +9745,7 @@ function Fa(e, t, n) {
 }
 function mt$1(e, t) {
   return (n) => {
-    if (n != null) return Fa(e, t)(n);
+    if (n != null) return $a(e, t)(n);
   };
 }
 function Nt$1(e, t, n = true) {
@@ -9763,7 +9758,7 @@ function Nt$1(e, t, n = true) {
     return r;
   };
 }
-function $a(e, t = true) {
+function Va(e, t = true) {
   const n = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return (r) => {
     if (r == null || r === "") {
@@ -9774,7 +9769,7 @@ function $a(e, t = true) {
     return r;
   };
 }
-function Va(e, t = true) {
+function za(e, t = true) {
   const n = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return (r) => {
     if (r == null || r === "") {
@@ -9792,11 +9787,11 @@ function Gn(e, t = true) {
       return;
     }
     if (typeof n != "string") throw new ee(e, "INVALID_FORMAT", `${e} must be a string`);
-    if (!Pi(n)) throw new ee(e, "INVALID_FORMAT", `${e} must be a valid domain name`);
-    return Oa(n).normalized;
+    if (!ji(n)) throw new ee(e, "INVALID_FORMAT", `${e} must be a valid domain name`);
+    return ja(n).normalized;
   };
 }
-function Oi(e, t = true) {
+function Bi(e, t = true) {
   return (n) => {
     if (n == null) {
       if (t) throw new ee(e, "MISSING_FIELD", `${e} is required`);
@@ -9851,27 +9846,27 @@ function Ne(e, t) {
 }
 let zn;
 function Qe$1() {
-  return zn || (zn = mo(O())), zn;
+  return zn || (zn = go(O())), zn;
 }
 function Ve(e) {
   var _a2;
   const t = e.req.header("x-forwarded-for"), n = e.req.header("x-real-ip"), r = ((_a2 = t == null ? void 0 : t.split(",")[0]) == null ? void 0 : _a2.trim()) || (n == null ? void 0 : n.trim());
   if (r) return r.slice(0, 45);
 }
-const za = ["pending", "sent", "suppressed", "acknowledged", "resolved"], Ka = ["critical", "high", "medium", "low", "info"], Qa = ["private", "tenant", "shared"], qe = new Hono();
-function Wa(e) {
+const Ka = ["pending", "sent", "suppressed", "acknowledged", "resolved"], Qa = ["critical", "high", "medium", "low", "info"], Wa = ["private", "tenant", "shared"], qe = new Hono();
+function Xa(e) {
   return !e.includes("/reports/shared/");
 }
 qe.use("*", async (e, t) => {
   const n = e.req.path;
-  return Wa(n) ? F$1(e, t) : t();
+  return Xa(n) ? F$1(e, t) : t();
 });
-function bs(e, t) {
+function Ts(e, t) {
   if (!e) return t;
   const n = Number.parseInt(e, 10);
   return Number.isFinite(n) && n >= 0 ? n : t;
 }
-async function Xa(e, t) {
+async function Ha(e, t) {
   const n = new rt$1(e), r = new It$1(e), s = await n.findByTenant(t), i = await r.findPending(t), o = { critical: i.filter((a) => a.severity === "critical").length, high: i.filter((a) => a.severity === "high").length, medium: i.filter((a) => a.severity === "medium").length, low: i.filter((a) => a.severity === "low").length };
   return { summary: { totalMonitored: s.length, activeAlerts: i.length, bySeverity: o }, alertSummary: i.slice(0, 10).map((a) => ({ title: a.title, severity: a.severity, status: a.status, createdAt: a.createdAt })), generatedAlertCount: i.length };
 }
@@ -9891,10 +9886,10 @@ qe.post("/reports", H, async (e) => {
   var _a2, _b;
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
-  const s = await Se$1(e, { title: Ke("title", { minLength: 3, maxLength: 200 }), visibility: Nt$1("visibility", Qa, false), expiresInDays: Yn("expiresInDays", { min: 1, max: 365, required: false }) });
+  const s = await Se$1(e, { title: Ke("title", { minLength: 3, maxLength: 200 }), visibility: Nt$1("visibility", Wa, false), expiresInDays: Yn("expiresInDays", { min: 1, max: 365, required: false }) });
   if (!s.success) return Ne(e, s.error);
-  const i = await Xa(t, n), o = (_a2 = s.data.visibility) != null ? _a2 : "shared", a = (_b = s.data.title) != null ? _b : `Shared alert report ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}`, u = s.data.expiresInDays ? new Date(Date.now() + s.data.expiresInDays * 24 * 60 * 60 * 1e3) : void 0, d = o === "shared" ? crypto.randomUUID().replaceAll("-", "") : void 0, c = new nn(t), p = new te(t), l = await c.create({ tenantId: n, createdBy: r, title: a, visibility: o, status: "ready", shareToken: d, expiresAt: u, summary: i.summary, alertSummary: i.alertSummary, metadata: { redacted: true, generatedAlertCount: i.generatedAlertCount } });
-  return await p.create({ action: "shared_report_created", entityType: "shared_report", entityId: l.id, actorId: r, tenantId: n, newValue: { title: l.title, visibility: l.visibility, expiresAt: l.expiresAt }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), Sa({ tenantId: n, reportType: "shared", reportId: l.id, action: o === "shared" ? "share" : "generate" }), e.json({ report: l, shareUrl: d ? `/api/alerts/reports/shared/${d}` : void 0 }, 201);
+  const i = await Ha(t, n), o = (_a2 = s.data.visibility) != null ? _a2 : "shared", a = (_b = s.data.title) != null ? _b : `Shared alert report ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}`, u = s.data.expiresInDays ? new Date(Date.now() + s.data.expiresInDays * 24 * 60 * 60 * 1e3) : void 0, d = o === "shared" ? crypto.randomUUID().replaceAll("-", "") : void 0, c = new nn(t), p = new te(t), l = await c.create({ tenantId: n, createdBy: r, title: a, visibility: o, status: "ready", shareToken: d, expiresAt: u, summary: i.summary, alertSummary: i.alertSummary, metadata: { redacted: true, generatedAlertCount: i.generatedAlertCount } });
+  return await p.create({ action: "shared_report_created", entityType: "shared_report", entityId: l.id, actorId: r, tenantId: n, newValue: { title: l.title, visibility: l.visibility, expiresAt: l.expiresAt }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), Aa({ tenantId: n, reportType: "shared", reportId: l.id, action: o === "shared" ? "share" : "generate" }), e.json({ report: l, shareUrl: d ? `/api/alerts/reports/shared/${d}` : void 0 }, 201);
 });
 qe.post("/reports/:id/expire", H, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
@@ -9907,9 +9902,9 @@ qe.post("/reports/:id/expire", H, async (e) => {
 qe.get("/", async (e) => {
   const t = e.get("db"), n = e.get("tenantId");
   if (!t || !n) return e.json({ error: "Database or tenant context unavailable" }, 503);
-  const r = e.req.query("status"), s = e.req.query("severity"), i = Math.min(bs(e.req.query("limit"), 50), 100), o = bs(e.req.query("offset"), 0);
-  if (r && !za.includes(r)) return e.json({ error: "Invalid alert status filter" }, 400);
-  if (s && !Ka.includes(s)) return e.json({ error: "Invalid alert severity filter" }, 400);
+  const r = e.req.query("status"), s = e.req.query("severity"), i = Math.min(Ts(e.req.query("limit"), 50), 100), o = Ts(e.req.query("offset"), 0);
+  if (r && !Ka.includes(r)) return e.json({ error: "Invalid alert status filter" }, 400);
+  if (s && !Qa.includes(s)) return e.json({ error: "Invalid alert severity filter" }, 400);
   const a = new It$1(t), { alerts: u, total: d } = await a.findAll(n, { status: r, severity: s, limit: i, offset: o });
   return e.json({ alerts: u, pagination: { total: d, limit: i, offset: o, hasMore: o + u.length < d } });
 });
@@ -10086,19 +10081,19 @@ class gr {
 function sn(e, t) {
   return e !== "managed" ? "single-domain" : t === "NS" || t === "SOA" ? "subdomain-tree" : "single-domain";
 }
-function Ha(e, t, n) {
+function Ga(e, t, n) {
   return e === "critical" || e === "high" || t === "related-domains" || t === "infrastructure" || t === "organization-wide" || n === "low" || n === "heuristic";
 }
-const Ga = { id: "dns.auth-failure.v1", name: "Authoritative Lookup Failure", description: "Detects timeouts and failures from authoritative nameservers", version: "1.0.0", enabled: true, evaluate(e) {
+const Ya = { id: "dns.auth-failure.v1", name: "Authoritative Lookup Failure", description: "Detects timeouts and failures from authoritative nameservers", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.observations.filter((s) => s.vantageType === "authoritative" && (s.status === "timeout" || s.status === "refused" || s.status === "error"));
   if (t.length === 0) return null;
-  const n = td(t), r = [];
+  const n = nd(t), r = [];
   for (const [s, i] of n) {
     const [o, a] = s.split("|"), u = [...new Set(i.map((l) => l.status))], d = u.includes("timeout") ? "high" : "medium", c = sn(e.zoneManagement, a), p = u.length === i.length ? "certain" : "high";
-    r.push({ finding: { type: `dns.authoritative-${u[0]}`, title: `Authoritative ${u[0]} for ${o} ${a}`, description: `Query for ${o} (${a}) failed from ${i.length} authoritative server(s) with: ${u.join(", ")}. This may indicate nameserver issues or network problems.`, severity: d, confidence: p, riskPosture: d === "high" ? "high" : "medium", blastRadius: c, reviewOnly: Ha(d, c, p), evidence: i.map((l) => ({ observationId: l.id, description: `${l.vantageIdentifier}: ${l.status}${l.errorMessage ? ` - ${l.errorMessage}` : ""}` })), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Check authoritative server health", description: `Verify that authoritative nameservers for ${e.domainName} are responding correctly.`, action: `Run connectivity checks to: ${[...new Set(i.map((l) => l.vantageIdentifier))].join(", ")}`, riskPosture: "low", blastRadius: c, reviewOnly: true }] });
+    r.push({ finding: { type: `dns.authoritative-${u[0]}`, title: `Authoritative ${u[0]} for ${o} ${a}`, description: `Query for ${o} (${a}) failed from ${i.length} authoritative server(s) with: ${u.join(", ")}. This may indicate nameserver issues or network problems.`, severity: d, confidence: p, riskPosture: d === "high" ? "high" : "medium", blastRadius: c, reviewOnly: Ga(d, c, p), evidence: i.map((l) => ({ observationId: l.id, description: `${l.vantageIdentifier}: ${l.status}${l.errorMessage ? ` - ${l.errorMessage}` : ""}` })), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Check authoritative server health", description: `Verify that authoritative nameservers for ${e.domainName} are responding correctly.`, action: `Run connectivity checks to: ${[...new Set(i.map((l) => l.vantageIdentifier))].join(", ")}`, riskPosture: "low", blastRadius: c, reviewOnly: true }] });
   }
   return r[0] || null;
-} }, Ya = { id: "dns.auth-mismatch.v1", name: "Authoritative Server Answer Mismatch", description: "Detects when different authoritative servers return different answers", version: "1.0.0", enabled: true, evaluate(e) {
+} }, Ja = { id: "dns.auth-mismatch.v1", name: "Authoritative Server Answer Mismatch", description: "Detects when different authoritative servers return different answers", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.recordSets.filter((r) => !r.isConsistent);
   if (t.length === 0) return null;
   const n = [];
@@ -10112,7 +10107,7 @@ const Ga = { id: "dns.auth-failure.v1", name: "Authoritative Lookup Failure", de
     }), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Investigate zone inconsistency", description: "Check for zone transfer issues or configuration differences between authoritative servers.", action: `Compare zone files on: ${r.sourceVantages.filter((o) => !o.includes("(")).join(", ")}`, riskPosture: "high", blastRadius: i, reviewOnly: true }] });
   }
   return n[0] || null;
-} }, Ja = { id: "dns.recursive-auth-mismatch.v1", name: "Recursive vs Authoritative Mismatch", description: "Detects when public recursive resolvers disagree with authoritative servers", version: "1.0.0", enabled: true, evaluate(e) {
+} }, Za = { id: "dns.recursive-auth-mismatch.v1", name: "Recursive vs Authoritative Mismatch", description: "Detects when public recursive resolvers disagree with authoritative servers", version: "1.0.0", enabled: true, evaluate(e) {
   const t = /* @__PURE__ */ new Map();
   for (const i of e.recordSets) {
     const o = `${i.name.toLowerCase()}|${i.type}`;
@@ -10122,8 +10117,8 @@ const Ga = { id: "dns.auth-failure.v1", name: "Authoritative Lookup Failure", de
   for (const [i] of t) {
     const [o, a] = i.split("|"), u = e.observations.filter((l) => l.queryName.toLowerCase() === o.toLowerCase() && l.queryType === a && l.vantageType === "public-recursive" && l.status === "success"), d = e.observations.filter((l) => l.queryName.toLowerCase() === o.toLowerCase() && l.queryType === a && l.vantageType === "authoritative" && l.status === "success");
     if (u.length === 0 || d.length === 0) continue;
-    const c = Ss(u), p = Ss(d);
-    nd(Ts(c), Ts(p)) || n.push({ name: o, type: a, recursiveValues: c, authoritativeValues: p, recursiveObs: u, authObs: d });
+    const c = As(u), p = As(d);
+    rd(Rs(c), Rs(p)) || n.push({ name: o, type: a, recursiveValues: c, authoritativeValues: p, recursiveObs: u, authObs: d });
   }
   if (n.length === 0) return null;
   const r = n[0], s = sn(e.zoneManagement, r.type);
@@ -10134,7 +10129,7 @@ const Ga = { id: "dns.auth-failure.v1", name: "Authoritative Lookup Failure", de
     var _a2;
     return { observationId: i.id, description: `Authoritative (${i.vantageIdentifier}): ${((_a2 = i.answerSection) == null ? void 0 : _a2.map((o) => o.data).join(", ")) || "no answer"}` };
   })], ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Check for stale cache", description: "Verify if this is a cache propagation issue or configuration problem.", action: "Compare TTL on recursive vs authoritative. Consider cache flush if values are stale.", riskPosture: "low", blastRadius: s, reviewOnly: true }] };
-} }, Za = { id: "dns.cname-coexistence.v1", name: "CNAME Coexistence Conflict", description: "Detects CNAME records coexisting with other record types (RFC violation)", version: "1.0.0", enabled: true, evaluate(e) {
+} }, ed = { id: "dns.cname-coexistence.v1", name: "CNAME Coexistence Conflict", description: "Detects CNAME records coexisting with other record types (RFC violation)", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.recordSets.filter((i) => i.type === "CNAME");
   if (t.length === 0) return null;
   const n = [];
@@ -10145,12 +10140,12 @@ const Ga = { id: "dns.auth-failure.v1", name: "Authoritative Lookup Failure", de
   if (n.length === 0) return null;
   const r = n[0], s = sn(e.zoneManagement, "CNAME");
   return { finding: { type: "dns.cname-coexistence-conflict", title: `CNAME coexistence violation at ${r.cname.name}`, description: `${r.cname.name} has a CNAME record coexisting with ${r.conflicting.map((i) => i.type).join(", ")} records. Per RFC 1034/2181, CNAME cannot coexist with other data (except DNSSEC records). This causes undefined behavior.`, severity: "critical", confidence: "certain", riskPosture: "critical", blastRadius: s, reviewOnly: true, evidence: [...e.observations.filter((i) => i.queryName.toLowerCase() === r.cname.name.toLowerCase()).map((i) => ({ observationId: i.id, description: `${i.queryType} from ${i.vantageIdentifier}` }))], ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Remove conflicting records", description: "Either remove the CNAME or the conflicting record(s). CNAME cannot coexist with other data.", action: `Choose one: keep CNAME (${r.cname.values.join(", ")}) OR keep ${r.conflicting.map((i) => `${i.type} (${i.values.join(", ")})`).join(", ")}`, riskPosture: "high", blastRadius: s, reviewOnly: true }] };
-} }, ed = { id: "dns.unmanaged-partial.v1", name: "Unmanaged Zone Partial Coverage", description: "Explicitly notes that unmanaged zones have limited visibility", version: "1.0.0", enabled: true, evaluate(e) {
+} }, td = { id: "dns.unmanaged-partial.v1", name: "Unmanaged Zone Partial Coverage", description: "Explicitly notes that unmanaged zones have limited visibility", version: "1.0.0", enabled: true, evaluate(e) {
   if (e.zoneManagement !== "unmanaged") return null;
   const t = [...new Set(e.observations.map((r) => r.queryName))], n = [...new Set(e.observations.map((r) => r.queryType))];
   return e.observations.length === 0 ? { finding: { type: "dns.partial-coverage-unmanaged", title: `No data collected for ${e.domainName}`, description: `No observations were collected for ${e.domainName}. This is an unmanaged zone with no visibility.`, severity: "info", confidence: "certain", riskPosture: "safe", blastRadius: "none", reviewOnly: false, evidence: [], ruleId: this.id, ruleVersion: this.version } } : { finding: { type: "dns.partial-coverage-unmanaged", title: `Partial coverage for unmanaged zone ${e.domainName}`, description: `${e.domainName} is an unmanaged zone. Only targeted inspection was performed for: ${t.join(", ")} (types: ${n.join(", ")}). Full zone enumeration was not attempted. This is limited visibility, not authoritative completeness.`, severity: "info", confidence: "certain", riskPosture: "safe", blastRadius: "none", reviewOnly: false, evidence: e.observations.map((r) => ({ observationId: r.id, description: `Queried ${r.queryName} ${r.queryType}` })), ruleId: this.id, ruleVersion: this.version } };
 } };
-function td(e) {
+function nd(e) {
   var _a2;
   const t = /* @__PURE__ */ new Map();
   for (const n of e) {
@@ -10159,18 +10154,18 @@ function td(e) {
   }
   return t;
 }
-function Ss(e) {
+function As(e) {
   const t = /* @__PURE__ */ new Set();
   for (const n of e) for (const r of n.answerSection || []) t.add(r.data);
   return [...t];
 }
-function Ts(e) {
+function Rs(e) {
   return [...e].sort();
 }
-function nd(e, t) {
+function rd(e, t) {
   return e.length !== t.length ? false : e.every((n, r) => n === t[r]);
 }
-const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description: "Detects presence or absence of MX records", version: "1.0.0", enabled: true, evaluate(e) {
+const sd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description: "Detects presence or absence of MX records", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.observations.filter((o) => o.queryType === "MX" && o.queryName.toLowerCase() === e.domainName.toLowerCase()), n = t.filter((o) => o.status === "success"), r = n.some((o) => o.answerSection && o.answerSection.length > 0);
   if (n.find((o) => {
     var _a2;
@@ -10185,7 +10180,7 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
     var _a2;
     return { observationId: o.id, description: `${o.vantageType}: ${((_a2 = o.answerSection) == null ? void 0 : _a2.map((a) => a.data).join(", ")) || "no answer"}` };
   }), ruleId: this.id, ruleVersion: this.version } };
-} }, sd = { id: "mail.spf-analysis.v1", name: "SPF Record Analysis", description: "Analyzes SPF record presence, validity, and configuration", version: "1.0.0", enabled: true, evaluate(e) {
+} }, id = { id: "mail.spf-analysis.v1", name: "SPF Record Analysis", description: "Analyzes SPF record presence, validity, and configuration", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.observations.filter((f) => f.queryType === "TXT" && f.queryName.toLowerCase() === e.domainName.toLowerCase()), n = t.filter((f) => f.status === "success"), r = t.filter((f) => f.status === "timeout" || f.status === "error" || f.status === "refused");
   let s = null, i = null;
   for (const f of n) {
@@ -10197,7 +10192,7 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
   }
   if (!s && r.length > 0 && n.length === 0) return { finding: { type: "mail.spf-query-failed", title: `SPF query failed for ${e.domainName}`, description: `Could not determine SPF status for ${e.domainName} due to query failures: ${r.map((f) => f.status).join(", ")}. This is not the same as "no SPF record".`, severity: "medium", confidence: "low", riskPosture: "medium", blastRadius: "single-domain", reviewOnly: true, evidence: t.map((f) => ({ observationId: f.id, description: `${f.vantageType}: ${f.status}${f.errorMessage ? ` - ${f.errorMessage}` : ""}` })), ruleId: this.id, ruleVersion: this.version } };
   if (!s) return { finding: { type: "mail.no-spf-record", title: `No SPF record for ${e.domainName}`, description: `${e.domainName} has no SPF record. Without SPF, anyone can forge email appearing to come from this domain. This is a security risk.`, severity: "high", confidence: "certain", riskPosture: "high", blastRadius: "single-domain", reviewOnly: false, evidence: n.map((f) => ({ observationId: f.id, description: `${f.vantageType}: TXT record present but no SPF found` })), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Add SPF record", description: `Add an SPF record to prevent email spoofing of ${e.domainName}.`, action: `Add TXT record at ${e.domainName}: "v=spf1 include:_spf.google.com ~all" (adjust for your mail provider)`, riskPosture: "medium", blastRadius: "single-domain", reviewOnly: true }] };
-  const o = ja(s);
+  const o = Ba(s);
   if (!o) return { finding: { type: "mail.spf-malformed", title: `Malformed SPF record for ${e.domainName}`, description: `${e.domainName} has an SPF record that could not be parsed: "${s}". This may cause mail delivery issues as receiving servers may reject or flag emails.`, severity: "critical", confidence: "certain", riskPosture: "critical", blastRadius: "single-domain", reviewOnly: true, evidence: i ? [{ observationId: i.id, description: `Raw SPF record: ${s}` }] : [], ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Fix SPF syntax", description: "The SPF record has syntax errors that need correction.", action: "Review and correct the SPF record syntax. Common issues: missing spaces, invalid mechanisms, or missing version tag.", riskPosture: "high", blastRadius: "single-domain", reviewOnly: true }] };
   const a = ["all", "include", "a", "mx", "ptr", "ip4", "ip6", "exists", "redirect"], u = o.mechanisms.filter((f) => !a.includes(f.type));
   if (u.length > 0) return { finding: { type: "mail.spf-malformed", title: `Malformed SPF record for ${e.domainName}`, description: `${e.domainName} has an SPF record with invalid mechanisms: ${u.map((f) => f.type).join(", ")}. Raw: "${s}". Valid mechanisms are: ${a.join(", ")}.`, severity: "critical", confidence: "certain", riskPosture: "critical", blastRadius: "single-domain", reviewOnly: true, evidence: i ? [{ observationId: i.id, description: "Invalid SPF mechanisms found" }] : [], ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Fix SPF mechanism syntax", description: "The SPF record contains unknown mechanisms that may cause mail delivery issues.", action: `Remove or correct invalid mechanisms: ${u.map((f) => f.type).join(", ")}`, riskPosture: "high", blastRadius: "single-domain", reviewOnly: true }] };
@@ -10205,7 +10200,7 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
   c ? c.prefix === "~" ? d.push("Softfail (~all) - emails may be delivered but flagged") : c.prefix === "?" ? d.push("Neutral (?all) - no enforcement, effectively no protection") : c.prefix === "+" && d.push("Pass (+all) - DANGEROUS: allows all senders") : d.push("No all mechanism - may cause unexpected behavior"), o.mechanisms.filter((f) => f.type === "include").length === 0 && !o.mechanisms.some((f) => ["a", "mx", "ip4", "ip6"].includes(f.type)) && d.push("No sender sources defined");
   const l = d.some((f) => f.includes("DANGEROUS")) ? "critical" : d.length > 0 ? "medium" : "info";
   return { finding: { type: "mail.spf-present", title: `SPF record present for ${e.domainName}`, description: `${e.domainName} has a valid SPF record. Raw: "${s}". ${d.length > 0 ? `Issues: ${d.join("; ")}` : "Configuration looks good with proper all mechanism."}`, severity: l, confidence: "certain", riskPosture: l === "critical" ? "critical" : l === "medium" ? "medium" : "safe", blastRadius: "single-domain", reviewOnly: l !== "info", evidence: i ? [{ observationId: i.id, description: `Parsed SPF: ${JSON.stringify(o)}` }] : [], ruleId: this.id, ruleVersion: this.version }, suggestions: d.length > 0 ? [{ title: "Review SPF configuration", description: "The SPF record has configuration issues that may affect mail delivery.", action: `Address: ${d.join("; ")}`, riskPosture: "medium", blastRadius: "single-domain", reviewOnly: true }] : void 0 };
-} }, id = { id: "mail.dmarc-analysis.v1", name: "DMARC Record Analysis", description: "Analyzes DMARC record presence, validity, and policy", version: "1.0.0", enabled: true, evaluate(e) {
+} }, od = { id: "mail.dmarc-analysis.v1", name: "DMARC Record Analysis", description: "Analyzes DMARC record presence, validity, and policy", version: "1.0.0", enabled: true, evaluate(e) {
   var _a2;
   const t = e.observations.filter((p) => p.queryType === "TXT" && p.queryName.toLowerCase() === `_dmarc.${e.domainName}`.toLowerCase() && p.status === "success");
   let n = null, r = null;
@@ -10217,13 +10212,13 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
     if (n) break;
   }
   if (!n) return { finding: { type: "mail.no-dmarc-record", title: `No DMARC record for ${e.domainName}`, description: `${e.domainName} has no DMARC record. Without DMARC, receiving servers have no policy guidance for handling SPF/DKIM failures. This is a security risk.`, severity: "high", confidence: "certain", riskPosture: "high", blastRadius: "single-domain", reviewOnly: false, evidence: t.map((p) => ({ observationId: p.id, description: `${p.vantageType}: ${p.status}` })), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Add DMARC record", description: "Add a DMARC record to specify how receivers should handle authentication failures.", action: 'Start with monitoring: "v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com", then progress to quarantine/reject', riskPosture: "medium", blastRadius: "single-domain", reviewOnly: true }] };
-  const s = Ba(n);
+  const s = Fa(n);
   if (!s) return { finding: { type: "mail.dmarc-malformed", title: `Malformed DMARC record for ${e.domainName}`, description: `${e.domainName} has a DMARC record that could not be parsed: "${n}". This may cause mail delivery issues.`, severity: "critical", confidence: "certain", riskPosture: "critical", blastRadius: "single-domain", reviewOnly: true, evidence: r ? [{ observationId: r.id, description: `Raw DMARC: ${n}` }] : [], ruleId: this.id, ruleVersion: this.version } };
   const i = s.policy, o = s.subdomainPolicy, a = s.rua, u = (_a2 = s.percentage) != null ? _a2 : 100;
   let d = "info";
   const c = [];
   return i === "none" ? (d = "medium", c.push('Policy is "none" - monitoring only, no enforcement')) : i === "quarantine" ? (d = "info", c.push('Policy is "quarantine" - failed emails go to spam')) : i === "reject" && (d = "info", c.push('Policy is "reject" - failed emails are rejected')), (!a || a.length === 0) && (c.push("No aggregate report URI (rua) - no visibility into failures"), d === "info" && (d = "low")), u < 100 && c.push(`Partial deployment: ${u}% of emails affected`), o && o !== i && c.push(`Subdomain policy (${o}) differs from main policy (${i})`), { finding: { type: "mail.dmarc-present", title: `DMARC record present for ${e.domainName}`, description: `${e.domainName} has a valid DMARC record with policy "${i}". ${c.length > 0 ? `Notes: ${c.join("; ")}` : "Configuration looks good."}`, severity: d, confidence: "certain", riskPosture: d === "info" ? "safe" : "medium", blastRadius: "single-domain", reviewOnly: d !== "info", evidence: r ? [{ observationId: r.id, description: `Policy: ${i}${o ? `, Subdomain: ${o}` : ""}, RUA: ${(a == null ? void 0 : a.join(", ")) || "none"}, Pct: ${u}%` }] : [], ruleId: this.id, ruleVersion: this.version }, suggestions: i === "none" ? [{ title: "Strengthen DMARC policy", description: "DMARC is in monitoring mode only. Consider progressing to quarantine or reject.", action: `After monitoring shows SPF/DKIM alignment, upgrade: "v=DMARC1; p=quarantine; rua=mailto:dmarc@${e.domainName}"`, riskPosture: "medium", blastRadius: "single-domain", reviewOnly: true }] : void 0 };
-} }, od = { id: "mail.dkim-presence.v1", name: "DKIM Key Presence", description: "Checks for DKIM public keys at discovered selectors", version: "1.0.0", enabled: true, evaluate(e) {
+} }, ad = { id: "mail.dkim-presence.v1", name: "DKIM Key Presence", description: "Checks for DKIM public keys at discovered selectors", version: "1.0.0", enabled: true, evaluate(e) {
   var _a2, _b;
   const t = e.domainName.toLowerCase(), n = e.observations.filter((i) => {
     const o = i.queryName.toLowerCase();
@@ -10245,7 +10240,7 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
     a.includes("k=") && a.includes("v=DKIM1") ? r.push({ selector: o, observation: i }) : s.push({ selector: o, observation: i, reason: "No valid DKIM key data found" });
   }
   return r.length === 0 ? { finding: { type: "mail.dkim-no-valid-keys", title: `No valid DKIM keys found for ${e.domainName}`, description: `DKIM selectors were queried but no valid keys were found. Attempted: ${s.map((i) => i.selector).join(", ")}. ${s.map((i) => `${i.selector}: ${i.reason}`).join("; ")}`, severity: "high", confidence: "certain", riskPosture: "high", blastRadius: "single-domain", reviewOnly: false, evidence: n.map((i) => ({ observationId: i.id, description: `${i.queryName}: ${i.status}` })), ruleId: this.id, ruleVersion: this.version } } : { finding: { type: "mail.dkim-keys-present", title: `DKIM keys present for ${e.domainName}`, description: `Valid DKIM keys found for selectors: ${r.map((i) => i.selector).join(", ")}. ${s.length > 0 ? `Additional selectors queried but invalid: ${s.map((i) => i.selector).join(", ")}` : ""}`, severity: "info", confidence: "certain", riskPosture: "safe", blastRadius: "none", reviewOnly: false, evidence: r.map((i) => ({ observationId: i.observation.id, description: `Selector ${i.selector}: valid DKIM key` })), ruleId: this.id, ruleVersion: this.version } };
-} }, ad = { id: "mail.mta-sts-presence.v1", name: "MTA-STS Presence", description: "Checks for MTA-STS TXT record", version: "1.0.0", enabled: true, evaluate(e) {
+} }, dd = { id: "mail.mta-sts-presence.v1", name: "MTA-STS Presence", description: "Checks for MTA-STS TXT record", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.observations.filter((s) => s.queryType === "TXT" && s.queryName.toLowerCase() === `_mta-sts.${e.domainName}`.toLowerCase());
   return t.filter((s) => s.status === "success").some((s) => {
     var _a2;
@@ -10254,7 +10249,7 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
     var _a2;
     return { observationId: s.id, description: `${s.vantageType}: ${((_a2 = s.answerSection) == null ? void 0 : _a2.map((i) => i.data).join(", ")) || "present"}` };
   }), ruleId: this.id, ruleVersion: this.version } } : { finding: { type: "mail.no-mta-sts", title: `No MTA-STS for ${e.domainName}`, description: `${e.domainName} has no MTA-STS policy. MTA-STS enforces TLS encryption for inbound mail and prevents downgrade attacks. Recommended for security-conscious domains.`, severity: "low", confidence: "certain", riskPosture: "low", blastRadius: "none", reviewOnly: false, evidence: t.map((s) => ({ observationId: s.id, description: `${s.vantageType}: ${s.status}` })), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Consider MTA-STS", description: "MTA-STS enforces TLS for email and prevents downgrade attacks.", action: `Deploy MTA-STS: (1) Add TXT record _mta-sts.${e.domainName} with "v=STSv1; id=YYYYMMDD", (2) Host policy at https://mta-sts.${e.domainName}/.well-known/mta-sts.txt`, riskPosture: "low", blastRadius: "single-domain", reviewOnly: true }] };
-} }, dd = { id: "mail.tls-rpt-presence.v1", name: "TLS-RPT Presence", description: "Checks for TLS-RPT TXT record", version: "1.0.0", enabled: true, evaluate(e) {
+} }, cd = { id: "mail.tls-rpt-presence.v1", name: "TLS-RPT Presence", description: "Checks for TLS-RPT TXT record", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.observations.filter((s) => s.queryType === "TXT" && s.queryName.toLowerCase() === `_smtp._tls.${e.domainName}`.toLowerCase());
   return t.filter((s) => s.status === "success").some((s) => {
     var _a2;
@@ -10263,14 +10258,14 @@ const rd = { id: "mail.mx-presence.v1", name: "MX Record Presence", description:
     var _a2;
     return { observationId: s.id, description: `${s.vantageType}: ${((_a2 = s.answerSection) == null ? void 0 : _a2.map((i) => i.data).join(", ")) || "present"}` };
   }), ruleId: this.id, ruleVersion: this.version } } : { finding: { type: "mail.no-tls-rpt", title: `No TLS-RPT for ${e.domainName}`, description: `${e.domainName} has no TLS-RPT record. TLS-RPT provides reports on TLS connectivity issues for inbound mail. Useful for monitoring MTA-STS effectiveness.`, severity: "low", confidence: "certain", riskPosture: "low", blastRadius: "none", reviewOnly: false, evidence: t.map((s) => ({ observationId: s.id, description: `${s.vantageType}: ${s.status}` })), ruleId: this.id, ruleVersion: this.version }, suggestions: [{ title: "Consider TLS-RPT", description: "TLS-RPT provides reports on TLS connectivity issues for inbound mail.", action: `Add TXT record at _smtp._tls.${e.domainName}: "v=TLSRPTv1; rua=mailto:tls-rpt@${e.domainName}"`, riskPosture: "low", blastRadius: "single-domain", reviewOnly: true }] };
-} }, cd = { id: "mail.bimi-presence.v1", name: "BIMI Presence", description: "Checks for BIMI TXT record (info only)", version: "1.0.0", enabled: true, evaluate(e) {
+} }, ud = { id: "mail.bimi-presence.v1", name: "BIMI Presence", description: "Checks for BIMI TXT record (info only)", version: "1.0.0", enabled: true, evaluate(e) {
   const t = e.observations.filter((s) => s.queryType === "TXT" && s.queryName.toLowerCase() === `default._bimi.${e.domainName}`.toLowerCase());
   return t.filter((s) => s.status === "success").some((s) => {
     var _a2;
     return (_a2 = s.answerSection) == null ? void 0 : _a2.some((i) => i.data.includes("v=BIMI1"));
   }) ? { finding: { type: "mail.bimi-present", title: `BIMI configured for ${e.domainName}`, description: `${e.domainName} has a BIMI record for email logo display. Note: BIMI requires a validated DMARC policy (p=quarantine or p=reject) and a trademarked logo or VMC certificate.`, severity: "info", confidence: "certain", riskPosture: "safe", blastRadius: "none", reviewOnly: false, evidence: t.map((s) => ({ observationId: s.id, description: `${s.vantageType}: BIMI record present` })), ruleId: this.id, ruleVersion: this.version } } : null;
 } };
-class ud {
+class ld {
   compare(t, n, r, s) {
     const i = [], o = r.find((l) => l.type.startsWith("mail.dmarc")), a = r.find((l) => l.type.startsWith("mail.spf")), u = r.find((l) => l.type.startsWith("mail.dkim"));
     i.push(this.compareDmarcPresence(o, s.dmarc)), i.push(this.compareDmarcValidity(o, s.dmarc)), i.push(this.compareDmarcPolicy(o, s.dmarc)), i.push(this.compareSpfPresence(a, s.spf)), i.push(this.compareSpfValidity(a, s.spf)), i.push(this.compareDkimPresence(u, s.dkim)), i.push(this.compareDkimValidity(u, s.dkim));
@@ -10323,7 +10318,7 @@ class ud {
     return s.join(". ");
   }
 }
-const ld = new ud(), xe = { "google-workspace": { id: "template.google-workspace.v1", provider: "google-workspace", name: "Google Workspace", description: "Expected configuration for Google Workspace email hosting", version: "1.0.0", expected: { mx: [{ priority: 1, pattern: /\.googlemail\.com$/i, description: "Google Workspace MX" }, { priority: 5, pattern: /\.googlemail\.com$/i, description: "Google Workspace MX backup" }], spf: { required: true, include: "_spf.google.com", patterns: [/_spf\.google\.com/, /include:.*google/] }, dmarc: { required: true, recommendedPolicy: "quarantine" }, dkim: { required: true, selectors: ["google", "20210112", "20230601"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["google", "20210112", "20230601", "2024"], detection: { mxPatterns: [/googlemail\.com$/i, /\.google\.com$/i], spfPatterns: [/_spf\.google\.com/i, /google\.com/i] } }, "microsoft-365": { id: "template.microsoft-365.v1", provider: "microsoft-365", name: "Microsoft 365", description: "Expected configuration for Microsoft 365 email hosting", version: "1.0.0", expected: { mx: [{ priority: 0, pattern: /\.mail\.protection\.outlook\.com$/i, description: "Microsoft 365 MX" }], spf: { required: true, include: "spf.protection.outlook.com", patterns: [/spf\.protection\.outlook\.com/i, /outlook\.com/i] }, dmarc: { required: true, recommendedPolicy: "quarantine" }, dkim: { required: true, selectors: ["selector1", "selector2"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["selector1", "selector2", "microsoft"], detection: { mxPatterns: [/\.mail\.protection\.outlook\.com$/i, /outlook\.com$/i, /hotmail\.com$/i], spfPatterns: [/spf\.protection\.outlook\.com/i, /outlook\.com/i] } }, "amazon-ses": { id: "template.amazon-ses.v1", provider: "amazon-ses", name: "Amazon SES", description: "Expected configuration for Amazon Simple Email Service", version: "1.0.0", expected: { mx: [], spf: { required: false, include: "amazonses.com", patterns: [/amazonses\.com/i] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: true, selectors: ["amazonses"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["amazonses", "aws"], detection: { mxPatterns: [/amazonses\.com$/i], spfPatterns: [/amazonses\.com/i] } }, sendgrid: { id: "template.sendgrid.v1", provider: "sendgrid", name: "SendGrid", description: "Expected configuration for SendGrid email delivery", version: "1.0.0", expected: { mx: [], spf: { required: false, include: "sendgrid.net", patterns: [/sendgrid\.net/i] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: true, selectors: ["smtpapi"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["smtpapi", "sendgrid"], detection: { mxPatterns: [/sendgrid\.(net|com)$/i], spfPatterns: [/sendgrid\.net/i] } }, mailgun: { id: "template.mailgun.v1", provider: "mailgun", name: "Mailgun", description: "Expected configuration for Mailgun email delivery", version: "1.0.0", expected: { mx: [{ priority: 10, pattern: /\.mailgun\.(org|net)$/i, description: "Mailgun MX" }], spf: { required: true, include: "mailgun.org", patterns: [/mailgun\.(org|net)/i] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: true, selectors: ["krs", "mailgun"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["krs", "mailgun", "mg"], detection: { mxPatterns: [/\.mailgun\.(org|net)$/i], spfPatterns: [/mailgun\.(org|net)/i] } }, other: { id: "template.other.v1", provider: "other", name: "Other Provider", description: "Generic template for unidentified mail providers", version: "1.0.0", expected: { mx: [], spf: { required: true, patterns: [/v=spf1/] }, dmarc: { required: true, recommendedPolicy: "none" }, dkim: { required: false, selectors: [] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["default", "dkim", "mail"], detection: { mxPatterns: [], spfPatterns: [] } }, unknown: { id: "template.unknown.v1", provider: "unknown", name: "Unknown Provider", description: "No provider detected - minimal expectations", version: "1.0.0", expected: { mx: [], spf: { required: false, patterns: [] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: false, selectors: [] }, mtaSts: false, tlsRpt: false }, knownSelectors: [], detection: { mxPatterns: [], spfPatterns: [] } } };
+const pd = new ld(), xe = { "google-workspace": { id: "template.google-workspace.v1", provider: "google-workspace", name: "Google Workspace", description: "Expected configuration for Google Workspace email hosting", version: "1.0.0", expected: { mx: [{ priority: 1, pattern: /\.googlemail\.com$/i, description: "Google Workspace MX" }, { priority: 5, pattern: /\.googlemail\.com$/i, description: "Google Workspace MX backup" }], spf: { required: true, include: "_spf.google.com", patterns: [/_spf\.google\.com/, /include:.*google/] }, dmarc: { required: true, recommendedPolicy: "quarantine" }, dkim: { required: true, selectors: ["google", "20210112", "20230601"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["google", "20210112", "20230601", "2024"], detection: { mxPatterns: [/googlemail\.com$/i, /\.google\.com$/i], spfPatterns: [/_spf\.google\.com/i, /google\.com/i] } }, "microsoft-365": { id: "template.microsoft-365.v1", provider: "microsoft-365", name: "Microsoft 365", description: "Expected configuration for Microsoft 365 email hosting", version: "1.0.0", expected: { mx: [{ priority: 0, pattern: /\.mail\.protection\.outlook\.com$/i, description: "Microsoft 365 MX" }], spf: { required: true, include: "spf.protection.outlook.com", patterns: [/spf\.protection\.outlook\.com/i, /outlook\.com/i] }, dmarc: { required: true, recommendedPolicy: "quarantine" }, dkim: { required: true, selectors: ["selector1", "selector2"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["selector1", "selector2", "microsoft"], detection: { mxPatterns: [/\.mail\.protection\.outlook\.com$/i, /outlook\.com$/i, /hotmail\.com$/i], spfPatterns: [/spf\.protection\.outlook\.com/i, /outlook\.com/i] } }, "amazon-ses": { id: "template.amazon-ses.v1", provider: "amazon-ses", name: "Amazon SES", description: "Expected configuration for Amazon Simple Email Service", version: "1.0.0", expected: { mx: [], spf: { required: false, include: "amazonses.com", patterns: [/amazonses\.com/i] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: true, selectors: ["amazonses"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["amazonses", "aws"], detection: { mxPatterns: [/amazonses\.com$/i], spfPatterns: [/amazonses\.com/i] } }, sendgrid: { id: "template.sendgrid.v1", provider: "sendgrid", name: "SendGrid", description: "Expected configuration for SendGrid email delivery", version: "1.0.0", expected: { mx: [], spf: { required: false, include: "sendgrid.net", patterns: [/sendgrid\.net/i] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: true, selectors: ["smtpapi"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["smtpapi", "sendgrid"], detection: { mxPatterns: [/sendgrid\.(net|com)$/i], spfPatterns: [/sendgrid\.net/i] } }, mailgun: { id: "template.mailgun.v1", provider: "mailgun", name: "Mailgun", description: "Expected configuration for Mailgun email delivery", version: "1.0.0", expected: { mx: [{ priority: 10, pattern: /\.mailgun\.(org|net)$/i, description: "Mailgun MX" }], spf: { required: true, include: "mailgun.org", patterns: [/mailgun\.(org|net)/i] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: true, selectors: ["krs", "mailgun"] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["krs", "mailgun", "mg"], detection: { mxPatterns: [/\.mailgun\.(org|net)$/i], spfPatterns: [/mailgun\.(org|net)/i] } }, other: { id: "template.other.v1", provider: "other", name: "Other Provider", description: "Generic template for unidentified mail providers", version: "1.0.0", expected: { mx: [], spf: { required: true, patterns: [/v=spf1/] }, dmarc: { required: true, recommendedPolicy: "none" }, dkim: { required: false, selectors: [] }, mtaSts: false, tlsRpt: false }, knownSelectors: ["default", "dkim", "mail"], detection: { mxPatterns: [], spfPatterns: [] } }, unknown: { id: "template.unknown.v1", provider: "unknown", name: "Unknown Provider", description: "No provider detected - minimal expectations", version: "1.0.0", expected: { mx: [], spf: { required: false, patterns: [] }, dmarc: { required: false, recommendedPolicy: "none" }, dkim: { required: false, selectors: [] }, mtaSts: false, tlsRpt: false }, knownSelectors: [], detection: { mxPatterns: [], spfPatterns: [] } } };
 function zt$1(e, t) {
   const n = { "google-workspace": 0, "microsoft-365": 0, "amazon-ses": 0, sendgrid: 0, mailgun: 0, other: 0, unknown: 0 }, r = { "google-workspace": [], "microsoft-365": [], "amazon-ses": [], sendgrid: [], mailgun: [], other: [], unknown: [] };
   for (const a of e) {
@@ -10339,7 +10334,7 @@ function zt$1(e, t) {
   let o = "low";
   return i >= 3 ? o = "certain" : i >= 2 ? o = "high" : i >= 1 && (o = "medium"), { provider: s, confidence: o, evidence: r[s] };
 }
-function pd(e, t) {
+function fd(e, t) {
   var _a2, _b;
   const n = xe[e], r = [], s = [], i = [];
   if (n.expected.mx && n.expected.mx.length > 0 && (!t.mx || t.mx.length === 0 ? i.push({ aspect: "MX", expected: n.expected.mx.map((a) => a.description).join(", "), severity: "critical" }) : n.expected.mx.some((u) => {
@@ -10361,7 +10356,7 @@ function pd(e, t) {
   let o;
   return s.length === 0 && i.length === 0 ? o = "full" : r.length > 0 ? o = "partial" : o = "none", { provider: e, matches: r, mismatches: s, missing: i, overallMatch: o };
 }
-class fd {
+class md {
   constructor() {
     __publicField(this, "templates");
     this.templates = new Map(Object.entries(xe));
@@ -10381,8 +10376,8 @@ class fd {
     r && !r.knownSelectors.includes(n) && (r.knownSelectors.push(n), (_a2 = r.expected.dkim) == null ? void 0 : _a2.selectors.push(n));
   }
 }
-const ht$1 = new fd();
-class md {
+const ht$1 = new md();
+class hd {
   constructor(t) {
     __publicField(this, "ruleset");
     this.ruleset = t;
@@ -10487,9 +10482,9 @@ class md {
     return t.map((n) => ({ type: n.type, title: n.title, severity: n.severity, ruleId: n.ruleId }));
   }
 }
-const Oe = new Hono(), Jn = "1.2.0", hd = "DNS and Mail Rules";
-function Lt$1() {
-  return { id: "dns-mail-v1", version: Jn, name: hd, description: "Combined DNS and mail analysis rules (Bead 06)", rules: [Ga, Ya, Ja, Za, ed, rd, sd, id, od, ad, dd, cd], createdAt: /* @__PURE__ */ new Date() };
+const Oe = new Hono(), Jn = "1.2.0", gd = "DNS and Mail Rules";
+function Mt$1() {
+  return { id: "dns-mail-v1", version: Jn, name: gd, description: "Combined DNS and mail analysis rules (Bead 06)", rules: [Ya, Ja, Za, ed, td, sd, id, od, ad, dd, cd, ud], createdAt: /* @__PURE__ */ new Date() };
 }
 async function on(e, t, n) {
   const r = await e.findByVersion(t.version);
@@ -10499,17 +10494,17 @@ Oe.get("/snapshot/:snapshotId/findings", F$1, async (e) => {
   var _a2, _b;
   const t = e.req.param("snapshotId"), n = e.req.query("refresh") === "true", r = e.get("db");
   try {
-    const s = new ie(r), i = new re$1(r), o = new Pe(r), a = new Ct$1(r), u = new $e(r), d = new _t$1(r), c = new Me(r), p = await s.findById(t);
+    const s = new ie(r), i = new re$1(r), o = new Pe(r), a = new Ct$1(r), u = new $e(r), d = new _t$1(r), c = new Le(r), p = await s.findById(t);
     if (!p) return e.json({ error: "Snapshot not found" }, 404);
     const l = await i.findById(p.domainId);
     if (!l) return e.json({ error: "Domain not found" }, 404);
     const f = e.get("tenantId");
     if (l.tenantId && l.tenantId !== f) return e.json({ error: "Snapshot not found" }, 404);
     if (!f && l.tenantId) return e.json({ error: "Snapshot not found" }, 404);
-    const h = Lt$1(), y = e.req.header("X-Actor-Id") || "system", v = await on(c, h, y), m = await u.findBySnapshotIdAndRulesetVersionId(t, v);
+    const h = Mt$1(), y = e.req.header("X-Actor-Id") || "system", v = await on(c, h, y), m = await u.findBySnapshotIdAndRulesetVersionId(t, v);
     if (m.length > 0 && !n) {
-      const q = m.map((ne) => ne.id), $ = [...(await d.findByFindingIds(q)).values()].flat(), z = m.filter((ne) => ne.type.startsWith("dns.")), pe = m.filter((ne) => ne.type.startsWith("mail."));
-      return e.json({ snapshotId: t, domain: l.name, rulesetVersion: h.version, rulesetVersionId: v, persisted: true, idempotent: true, summary: { totalFindings: m.length, dnsFindings: z.length, mailFindings: pe.length, suggestions: $.length }, findings: m, suggestions: $, categorized: { dns: z, mail: pe } });
+      const q = m.map((ne) => ne.id), $ = [...(await d.findByFindingIds(q)).values()].flat(), V = m.filter((ne) => ne.type.startsWith("dns.")), pe = m.filter((ne) => ne.type.startsWith("mail."));
+      return e.json({ snapshotId: t, domain: l.name, rulesetVersion: h.version, rulesetVersionId: v, persisted: true, idempotent: true, summary: { totalFindings: m.length, dnsFindings: V.length, mailFindings: pe.length, suggestions: $.length }, findings: m, suggestions: $, categorized: { dns: V, mail: pe } });
     }
     const w = await o.findBySnapshotId(t), S = await a.findBySnapshotId(t), T = { snapshotId: t, domainId: l.id, domainName: l.name, zoneManagement: p.zoneManagement, observations: w, recordSets: S, rulesetVersion: h.version }, D = new gr(h), { findings: R, suggestions: g } = D.evaluate(T);
     n && m.length > 0 && await u.deleteBySnapshotIdAndRulesetVersionId(t, v);
@@ -10518,13 +10513,13 @@ Oe.get("/snapshot/:snapshotId/findings", F$1, async (e) => {
       const x = R[q].id, $ = (_a2 = I[q]) == null ? void 0 : _a2.id;
       x && $ && E.set(x, $);
     }
-    const M = [];
+    const L = [];
     for (const q of g) {
       const x = E.get(q.findingId);
-      x && M.push({ findingId: x, title: q.title, description: q.description, action: q.action, riskPosture: q.riskPosture, blastRadius: q.blastRadius, reviewOnly: (_b = q.reviewOnly) != null ? _b : false });
+      x && L.push({ findingId: x, title: q.title, description: q.description, action: q.action, riskPosture: q.riskPosture, blastRadius: q.blastRadius, reviewOnly: (_b = q.reviewOnly) != null ? _b : false });
     }
-    const k = await d.createMany(M), _ = I.filter((q) => q.type.startsWith("dns.")), L = I.filter((q) => q.type.startsWith("mail."));
-    return e.json({ snapshotId: t, domain: l.name, rulesetVersion: h.version, rulesetVersionId: v, persisted: true, evaluated: true, idempotent: false, rulesEvaluated: D.getEnabledRulesCount(), summary: { totalFindings: I.length, dnsFindings: _.length, mailFindings: L.length, suggestions: k.length }, findings: I, suggestions: k, categorized: { dns: _, mail: L } });
+    const k = await d.createMany(L), _ = I.filter((q) => q.type.startsWith("dns.")), M = I.filter((q) => q.type.startsWith("mail."));
+    return e.json({ snapshotId: t, domain: l.name, rulesetVersion: h.version, rulesetVersionId: v, persisted: true, evaluated: true, idempotent: false, rulesEvaluated: D.getEnabledRulesCount(), summary: { totalFindings: I.length, dnsFindings: _.length, mailFindings: M.length, suggestions: k.length }, findings: I, suggestions: k, categorized: { dns: _, mail: M } });
   } catch (s) {
     return O().error("Error evaluating findings:", s instanceof Error ? s : new Error(String(s)), { requestId: e.req.header("X-Request-ID"), path: "/api/snapshots/:snapshotId/findings", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to evaluate findings", message: s instanceof Error ? s.message : "Unknown error" }, 500);
   }
@@ -10533,7 +10528,7 @@ Oe.get("/snapshot/:snapshotId/findings/mail", F$1, async (e) => {
   var _a2, _b;
   const t = e.req.param("snapshotId"), n = e.get("db");
   try {
-    const r = new ie(n), s = new re$1(n), i = new $e(n), o = new _t$1(n), a = new ha(n), u = new Ei(n), d = await r.findById(t);
+    const r = new ie(n), s = new re$1(n), i = new $e(n), o = new _t$1(n), a = new ya(n), u = new Di(n), d = await r.findById(t);
     if (!d) return e.json({ error: "Snapshot not found" }, 404);
     const c = await s.findById(d.domainId);
     if (!c) return e.json({ error: "Domain not found" }, 404);
@@ -10542,11 +10537,11 @@ Oe.get("/snapshot/:snapshotId/findings/mail", F$1, async (e) => {
     if (!p && c.tenantId) return e.json({ error: "Snapshot not found" }, 404);
     const [l, f] = await Promise.all([a.findBySnapshotId(t), u.findBySnapshotId(t)]), h = await i.findBySnapshotId(t), y = h.filter((D) => D.type.startsWith("mail."));
     if (h.length === 0) {
-      const g = ((_a2 = (await (await fetch(`${e.req.url.replace("/findings/mail", "/findings")}`, { headers: e.req.raw.headers })).json()).categorized) == null ? void 0 : _a2.mail) || [], b = As(g), I = Rs(b, l);
-      return e.json({ snapshotId: t, domain: c.name, rulesetVersion: Jn, summary: { totalFindings: g.length, dkimSelectorsFound: f.filter((E) => E.found).length, dkimSelectorsTried: f.length }, mailConfig: I, mailEvidence: l || null, dkimSelectors: Es(f), findings: g });
+      const g = ((_a2 = (await (await fetch(`${e.req.url.replace("/findings/mail", "/findings")}`, { headers: e.req.raw.headers })).json()).categorized) == null ? void 0 : _a2.mail) || [], b = Es(g), I = Ns(b, l);
+      return e.json({ snapshotId: t, domain: c.name, rulesetVersion: Jn, summary: { totalFindings: g.length, dkimSelectorsFound: f.filter((E) => E.found).length, dkimSelectorsTried: f.length }, mailConfig: I, mailEvidence: l || null, dkimSelectors: Ds(f), findings: g });
     }
-    const v = y.map((D) => D.id), w = [...(await o.findByFindingIds(v)).values()].flat(), S = As(y), T = Rs(S, l);
-    return e.json({ snapshotId: t, domain: c.name, rulesetVersion: ((_b = y[0]) == null ? void 0 : _b.ruleVersion) || Jn, persisted: true, summary: { totalFindings: y.length, suggestions: w.length, dkimSelectorsFound: f.filter((D) => D.found).length, dkimSelectorsTried: f.length }, mailConfig: T, mailEvidence: l || null, dkimSelectors: Es(f), findings: y, suggestions: w });
+    const v = y.map((D) => D.id), w = [...(await o.findByFindingIds(v)).values()].flat(), S = Es(y), T = Ns(S, l);
+    return e.json({ snapshotId: t, domain: c.name, rulesetVersion: ((_b = y[0]) == null ? void 0 : _b.ruleVersion) || Jn, persisted: true, summary: { totalFindings: y.length, suggestions: w.length, dkimSelectorsFound: f.filter((D) => D.found).length, dkimSelectorsTried: f.length }, mailConfig: T, mailEvidence: l || null, dkimSelectors: Ds(f), findings: y, suggestions: w });
   } catch (r) {
     return O().error("Error evaluating mail findings:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/mail/findings", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to evaluate mail findings", message: r instanceof Error ? r.message : "Unknown error" }, 500);
   }
@@ -10554,9 +10549,9 @@ Oe.get("/snapshot/:snapshotId/findings/mail", F$1, async (e) => {
 Oe.post("/snapshot/:snapshotId/evaluate", F$1, async (e) => {
   const t = e.req.param("snapshotId"), n = e.get("db");
   try {
-    const r = new ie(n), s = new $e(n), i = new Me(n);
+    const r = new ie(n), s = new $e(n), i = new Le(n);
     if (!await r.findById(t)) return e.json({ error: "Snapshot not found" }, 404);
-    const a = Lt$1(), u = e.req.header("X-Actor-Id") || "system", d = await on(i, a, u), c = await s.deleteBySnapshotIdAndRulesetVersionId(t, d), l = await (await fetch(`${e.req.url.replace("/evaluate", "/findings")}?refresh=true`, { headers: e.req.raw.headers })).json();
+    const a = Mt$1(), u = e.req.header("X-Actor-Id") || "system", d = await on(i, a, u), c = await s.deleteBySnapshotIdAndRulesetVersionId(t, d), l = await (await fetch(`${e.req.url.replace("/evaluate", "/findings")}?refresh=true`, { headers: e.req.raw.headers })).json();
     return e.json({ snapshotId: t, previousFindingsDeleted: c, rulesetVersion: a.version, rulesetVersionId: d, ...typeof l == "object" && l !== null ? l : {} });
   } catch (r) {
     return O().error("Error re-evaluating findings:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/snapshots/:snapshotId/findings/re-evaluate", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to re-evaluate findings", message: r instanceof Error ? r.message : "Unknown error" }, 500);
@@ -10618,7 +10613,7 @@ Oe.post("/findings/backfill", F$1, async (e) => {
   if (!n) return e.json({ error: "Unauthorized" }, 401);
   const r = await e.req.json().catch(() => ({})), { domainId: s, limit: i = 50, dryRun: o = false } = r, a = Math.min(i || 50, 200);
   try {
-    const u = new ie(t), d = new $e(t), c = new Me(t), p = new re$1(t), l = new Pe(t), f = new Ct$1(t), h = new _t$1(t), y = Lt$1(), v = await on(c, y, n), m = await u.countNeedingBackfill(v, { domainId: s, completedOnly: true });
+    const u = new ie(t), d = new $e(t), c = new Le(t), p = new re$1(t), l = new Pe(t), f = new Ct$1(t), h = new _t$1(t), y = Mt$1(), v = await on(c, y, n), m = await u.countNeedingBackfill(v, { domainId: s, completedOnly: true });
     if (o) return e.json({ dryRun: true, rulesetVersion: y.version, rulesetVersionId: v, stats: m, message: `${m.needsBackfill} of ${m.total} snapshots need backfill` });
     const w = await u.findNeedingBackfill(v, { domainId: s, limit: a, completedOnly: true });
     if (w.length === 0) return e.json({ processed: 0, rulesetVersion: y.version, rulesetVersionId: v, stats: m, message: "No snapshots require backfill" });
@@ -10638,11 +10633,11 @@ Oe.post("/findings/backfill", F$1, async (e) => {
         S.push({ snapshotId: b.id, domainName: b.domainName, findingsCount: 0, suggestionsCount: 0, status: "error", error: "Cross-tenant access denied" });
         continue;
       }
-      const M = await l.findBySnapshotId(b.id), k = await f.findBySnapshotId(b.id), _ = { snapshotId: b.id, domainId: I.id, domainName: I.name, zoneManagement: b.zoneManagement, observations: M, recordSets: k, rulesetVersion: y.version }, L = new gr(y), { findings: q, suggestions: x } = L.evaluate(_);
+      const L = await l.findBySnapshotId(b.id), k = await f.findBySnapshotId(b.id), _ = { snapshotId: b.id, domainId: I.id, domainName: I.name, zoneManagement: b.zoneManagement, observations: L, recordSets: k, rulesetVersion: y.version }, M = new gr(y), { findings: q, suggestions: x } = M.evaluate(_);
       await d.deleteBySnapshotIdAndRulesetVersionId(b.id, v);
-      const $ = q.map((Q) => ({ snapshotId: b.id, type: Q.type, title: Q.title, description: Q.description, severity: Q.severity, confidence: Q.confidence, riskPosture: Q.riskPosture, blastRadius: Q.blastRadius, reviewOnly: Q.reviewOnly, evidence: Q.evidence, ruleId: Q.ruleId, ruleVersion: Q.ruleVersion, rulesetVersionId: v })), z = await d.createMany($), pe = /* @__PURE__ */ new Map();
+      const $ = q.map((Q) => ({ snapshotId: b.id, type: Q.type, title: Q.title, description: Q.description, severity: Q.severity, confidence: Q.confidence, riskPosture: Q.riskPosture, blastRadius: Q.blastRadius, reviewOnly: Q.reviewOnly, evidence: Q.evidence, ruleId: Q.ruleId, ruleVersion: Q.ruleVersion, rulesetVersionId: v })), V = await d.createMany($), pe = /* @__PURE__ */ new Map();
       for (let Q = 0; Q < q.length; Q++) {
-        const ue = q[Q].id, Ie = (_a2 = z[Q]) == null ? void 0 : _a2.id;
+        const ue = q[Q].id, Ie = (_a2 = V[Q]) == null ? void 0 : _a2.id;
         ue && Ie && pe.set(ue, Ie);
       }
       const ne = [];
@@ -10651,7 +10646,7 @@ Oe.post("/findings/backfill", F$1, async (e) => {
         ue && ne.push({ findingId: ue, title: Q.title, description: Q.description, action: Q.action, riskPosture: Q.riskPosture, blastRadius: Q.blastRadius, reviewOnly: (_b = Q.reviewOnly) != null ? _b : false });
       }
       const ge = await h.createMany(ne);
-      await u.updateRulesetVersion(b.id, v), S.push({ snapshotId: b.id, domainName: b.domainName, findingsCount: z.length, suggestionsCount: ge.length, status: "success" });
+      await u.updateRulesetVersion(b.id, v), S.push({ snapshotId: b.id, domainName: b.domainName, findingsCount: V.length, suggestionsCount: ge.length, status: "success" });
     } catch (I) {
       S.push({ snapshotId: b.id, domainName: b.domainName, findingsCount: 0, suggestionsCount: 0, status: "error", error: I instanceof Error ? I.message : "Unknown error" });
     }
@@ -10664,13 +10659,13 @@ Oe.post("/findings/backfill", F$1, async (e) => {
 Oe.get("/findings/backfill/status", F$1, async (e) => {
   const t = e.get("db"), n = e.req.query("domainId");
   try {
-    const r = new ie(t), s = new Me(t), i = Lt$1(), o = e.req.header("X-Actor-Id") || "system", a = await on(s, i, o), u = await r.countNeedingBackfill(a, { domainId: n, completedOnly: true });
+    const r = new ie(t), s = new Le(t), i = Mt$1(), o = e.req.header("X-Actor-Id") || "system", a = await on(s, i, o), u = await r.countNeedingBackfill(a, { domainId: n, completedOnly: true });
     return e.json({ rulesetVersion: i.version, rulesetVersionId: a, total: u.total, needsBackfill: u.needsBackfill, evaluated: u.total - u.needsBackfill, completionPercent: u.total > 0 ? Math.round((u.total - u.needsBackfill) / u.total * 100) : 100 });
   } catch (r) {
     return O().error("Error getting backfill status:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/unknown", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to get backfill status", message: r instanceof Error ? r.message : "Unknown error" }, 500);
   }
 });
-function As(e) {
+function Es(e) {
   const t = { hasMx: false, hasSpf: false, hasDmarc: false, hasDkim: false, hasMtaSts: false, hasTlsRpt: false, securityScore: 0, issues: [], recommendations: [] };
   let n = 0;
   for (const r of e) switch (r.type) {
@@ -10711,13 +10706,13 @@ function As(e) {
   }
   return t.securityScore = Math.min(100, n), t;
 }
-function Rs(e, t) {
+function Ns(e, t) {
   var _a2, _b, _c, _d2, _e2, _f, _g;
   if (!t) return e;
   const n = { ...e, hasMx: (_a2 = t.hasMx) != null ? _a2 : e.hasMx, hasSpf: (_b = t.hasSpf) != null ? _b : e.hasSpf, hasDmarc: (_c = t.hasDmarc) != null ? _c : e.hasDmarc, hasDkim: (_d2 = t.hasDkim) != null ? _d2 : e.hasDkim, hasMtaSts: (_e2 = t.hasMtaSts) != null ? _e2 : e.hasMtaSts, hasTlsRpt: (_f = t.hasTlsRpt) != null ? _f : e.hasTlsRpt, hasBimi: (_g = t.hasBimi) != null ? _g : false, securityScore: t.securityScore ? Number.parseInt(t.securityScore, 10) : e.securityScore };
   return t.dmarcPolicy && (n.dmarcPolicy = t.dmarcPolicy), t.dmarcSubdomainPolicy && (n.dmarcSubdomainPolicy = t.dmarcSubdomainPolicy), t.dmarcPercent && (n.dmarcPercent = t.dmarcPercent), t.dmarcRua && (n.dmarcRua = t.dmarcRua), t.dmarcRuf && (n.dmarcRuf = t.dmarcRuf), t.spfRecord && (n.spfRecord = t.spfRecord), t.dmarcRecord && (n.dmarcRecord = t.dmarcRecord), t.detectedProvider && (n.detectedProvider = t.detectedProvider), t.providerConfidence && (n.providerConfidence = t.providerConfidence), n;
 }
-function Es(e) {
+function Ds(e) {
   return e.map((t) => {
     var _a2;
     return { selector: t.selector, domain: t.domain, provenance: t.provenance, confidence: t.confidence, provider: t.provider || void 0, found: t.found, keyType: t.keyType || void 0, keySize: t.keySize || void 0, isValid: (_a2 = t.isValid) != null ? _a2 : void 0, validationError: t.validationError || void 0 };
@@ -10737,29 +10732,29 @@ an.post("/import-csv", H, async (e) => {
   const n = await hr(e, { path: "/api/fleet-report/import-csv", method: "POST", headers: { "Content-Type": "text/csv" }, body: t });
   return n instanceof Response ? n : e.json(n.json);
 });
-let Ns = false;
-function gd() {
+let qs = false;
+function yd() {
   const e = process.env.VITE_DMARC_TOOL_URL, t = process.env.VITE_DKIM_TOOL_URL, n = !!e && e.length > 0, r = !!t && t.length > 0;
-  if (!Ns && (!n || !r)) {
-    Ns = true;
+  if (!qs && (!n || !r)) {
+    qs = true;
     const s = O(), i = [];
     n || i.push("VITE_DMARC_TOOL_URL"), r || i.push("VITE_DKIM_TOOL_URL"), s.warn("Legacy tools configuration incomplete", { missingConfig: i, message: `Legacy tool URLs not configured: ${i.join(", ")}. Deep-links will return 503.` });
   }
   return { dmarcAvailable: n, dkimAvailable: r };
 }
-function ji(e, t) {
+function Ui(e, t) {
   var _a2;
   const n = e.req.header("X-Request-ID") || `req_${Date.now().toString(36)}`, s = (_a2 = { DMARC: "VITE_DMARC_TOOL_URL", DKIM: "VITE_DKIM_TOOL_URL" }[t]) != null ? _a2 : `${t.toUpperCase()}_TOOL_URL`, i = { ok: false, code: Wn.INFRA_CONFIG_MISSING, error: `${t} tool not configured`, requestId: n, details: { tool: t.toLowerCase(), hint: `Set the ${s} environment variable to enable this feature.` } };
   return e.json(i, 503);
 }
-const yd = /^(\d{1,3}\.){3}\d{1,3}$/, wd = /* @__PURE__ */ new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "localhost.localdomain"]), vd = /^[a-zA-Z0-9_-]{1,63}$/;
+const wd = /^(\d{1,3}\.){3}\d{1,3}$/, vd = /* @__PURE__ */ new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "localhost.localdomain"]), Id = /^[a-zA-Z0-9_-]{1,63}$/;
 function yr(e) {
-  if (/[#\n\r\0]/.test(e) || /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(e) || e.startsWith("xn--") || /[^\x00-\x7F]/.test(e) || yd.test(e) || e.startsWith("[") && e.endsWith("]") || e.includes(":") && /^[0-9a-fA-F:]+$/.test(e)) return false;
+  if (/[#\n\r\0]/.test(e) || /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(e) || e.startsWith("xn--") || /[^\x00-\x7F]/.test(e) || wd.test(e) || e.startsWith("[") && e.endsWith("]") || e.includes(":") && /^[0-9a-fA-F:]+$/.test(e)) return false;
   const t = e.toLowerCase();
-  return wd.has(t) || /^localhost/.test(t) ? false : Pi(e);
+  return vd.has(t) || /^localhost/.test(t) ? false : ji(e);
 }
-function Ui(e) {
-  return !e || e.length > 63 ? false : vd.test(e);
+function Fi(e) {
+  return !e || e.length > 63 ? false : Id.test(e);
 }
 function Kt(e, t) {
   try {
@@ -10779,7 +10774,7 @@ st$1.post("/log", F$1, async (e) => {
     if (!["dmarc", "dkim"].includes(n)) return e.json({ error: 'Invalid tool type. Must be "dmarc" or "dkim"' }, 400);
     if (!["view", "navigate"].includes(s)) return e.json({ error: 'Invalid action type. Must be "view" or "navigate"' }, 400);
     const o = e.get("tenantId") || "default";
-    ba({ tenantId: o, toolType: n, domain: r, parameters: { action: s, ...i } });
+    Ta({ tenantId: o, toolType: n, domain: r, parameters: { action: s, ...i } });
     let a = false;
     const u = e.get("db");
     if (u) {
@@ -10792,12 +10787,12 @@ st$1.post("/log", F$1, async (e) => {
   }
 });
 st$1.get("/config", (e) => {
-  const { dmarcAvailable: t, dkimAvailable: n } = gd(), r = { dmarc: { name: "DMARC Analyzer", available: t, supportDeepLink: t, supportEmbed: false, authRequired: true, disclaimer: "Legacy tool output is informational only. No parity with workbench findings is guaranteed." }, dkim: { name: "DKIM Validator", available: n, supportDeepLink: n, supportEmbed: false, authRequired: true, disclaimer: "Legacy tool output is informational only. No parity with workbench findings is guaranteed." } };
+  const { dmarcAvailable: t, dkimAvailable: n } = yd(), r = { dmarc: { name: "DMARC Analyzer", available: t, supportDeepLink: t, supportEmbed: false, authRequired: true, disclaimer: "Legacy tool output is informational only. No parity with workbench findings is guaranteed." }, dkim: { name: "DKIM Validator", available: n, supportDeepLink: n, supportEmbed: false, authRequired: true, disclaimer: "Legacy tool output is informational only. No parity with workbench findings is guaranteed." } };
   return e.json(r);
 });
 st$1.get("/dmarc/deeplink", F$1, (e) => {
   const t = e.req.query("domain"), n = process.env.VITE_DMARC_TOOL_URL;
-  if (!n) return ji(e, "DMARC");
+  if (!n) return Ui(e, "DMARC");
   if (!t) return e.json({ error: "Domain is required" }, 400);
   if (!yr(t)) return e.json({ error: "Invalid domain format" }, 400);
   const r = Kt(n, { domain: t });
@@ -10805,11 +10800,11 @@ st$1.get("/dmarc/deeplink", F$1, (e) => {
 });
 st$1.get("/dkim/deeplink", F$1, (e) => {
   const t = e.req.query("domain"), n = e.req.query("selector"), r = process.env.VITE_DKIM_TOOL_URL;
-  if (!r) return ji(e, "DKIM");
+  if (!r) return Ui(e, "DKIM");
   if (!t) return e.json({ error: "Domain is required" }, 400);
   if (!n) return e.json({ error: "Selector is required" }, 400);
   if (!yr(t)) return e.json({ error: "Invalid domain format" }, 400);
-  if (!Ui(n)) return e.json({ error: "Invalid selector format" }, 400);
+  if (!Fi(n)) return e.json({ error: "Invalid selector format" }, 400);
   const s = Kt(r, { domain: t, selector: n });
   return s ? e.json({ tool: "dkim", domain: t, selector: n, url: s, disclaimer: "This links to a legacy tool. Results may differ from workbench findings. No parity is guaranteed.", legacyWarning: true, openInNewTab: true }) : e.json({ error: "Failed to build deep-link URL" }, 500);
 });
@@ -10835,7 +10830,7 @@ st$1.post("/bulk-deeplinks", F$1, async (e) => {
     }
     if (u === "dkim") {
       if (!n) return { index: a, error: "DKIM tool not configured", code: Wn.INFRA_CONFIG_MISSING };
-      if (!c || !Ui(c)) return { index: a, error: "Invalid selector" };
+      if (!c || !Fi(c)) return { index: a, error: "Invalid selector" };
       const p = Kt(n, { domain: d, selector: c });
       return p ? { index: a, tool: u, domain: d, selector: c, url: p } : { index: a, error: "Failed to build URL" };
     }
@@ -10865,14 +10860,14 @@ st$1.get("/shadow-stats", F$1, async (e) => {
     return O().error("Shadow stats error:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/unknown", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to get shadow comparison statistics", message: r instanceof Error ? r.message : "Unknown error" }, 500);
   }
 });
-const Ds = ["open", "in-progress", "resolved", "closed"], qs = ["low", "medium", "high", "critical"], Id = new Hono().post("/collect/mail", F$1, H, async (e) => {
+const Cs = ["open", "in-progress", "resolved", "closed"], ks = ["low", "medium", "high", "critical"], _d = new Hono().post("/collect/mail", F$1, H, async (e) => {
   const t = await Se$1(e, { domain: Gn("domain"), preferredProvider: Nt$1("preferredProvider", ["google", "microsoft", "zoho", "other"], false), explicitSelectors: mt$1("explicitSelectors", (a, u) => {
     if (typeof a != "string" || a.length === 0) throw new Error(`explicitSelectors[${u}] must be a non-empty string`);
     if (a.length > 63) throw new Error(`explicitSelectors[${u}] must be at most 63 characters`);
     return a;
   }) });
   if (!t.success) return Ne(e, t.error);
-  const n = t.data, { collectorUrl: r, internalSecret: s } = vo(e.env), i = e.get("tenantId"), o = e.get("actorId");
+  const n = t.data, { collectorUrl: r, internalSecret: s } = _o(e.env), i = e.get("tenantId"), o = e.get("actorId");
   if (!i || !o) return e.json({ error: "Authenticated tenant and actor required" }, 403);
   if (!s) return e.json({ error: "Collector integration is not configured" }, 503);
   try {
@@ -10890,10 +10885,10 @@ const Ds = ["open", "in-progress", "resolved", "closed"], qs = ["low", "medium",
   var _a2;
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
-  const s = await Se$1(e, { domain: Gn("domain"), snapshotId: $a("snapshotId", false), contactEmail: Va("contactEmail"), contactName: Ke("contactName", { minLength: 2, maxLength: 100 }), contactPhone: Ke("contactPhone", { minLength: 8, maxLength: 20, pattern: /^\+?[\d\s-]{8,20}$/, patternMessage: "contactPhone must be a valid phone number" }), issues: mt$1("issues", (v, m) => {
+  const s = await Se$1(e, { domain: Gn("domain"), snapshotId: Va("snapshotId", false), contactEmail: za("contactEmail"), contactName: Ke("contactName", { minLength: 2, maxLength: 100 }), contactPhone: Ke("contactPhone", { minLength: 8, maxLength: 20, pattern: /^\+?[\d\s-]{8,20}$/, patternMessage: "contactPhone must be a valid phone number" }), issues: mt$1("issues", (v, m) => {
     if (typeof v != "string" || v.length === 0) throw new Error(`issues[${m}] must be a non-empty string`);
     return v;
-  }), priority: Nt$1("priority", qs, false), notes: Ke("notes", { maxLength: 5e3 }) });
+  }), priority: Nt$1("priority", ks, false), notes: Ke("notes", { maxLength: 5e3 }) });
   if (!s.success) return Ne(e, s.error);
   const { contactEmail: i, contactName: o, contactPhone: a, domain: u, issues: d, notes: c, priority: p, snapshotId: l } = s.data;
   if (!u) return e.json({ error: "domain is required" }, 400);
@@ -10906,8 +10901,8 @@ const Ds = ["open", "in-progress", "resolved", "closed"], qs = ["low", "medium",
   const t = e.get("db"), n = e.get("tenantId");
   if (!t || !n) return e.json({ error: "Database or tenant context unavailable" }, 503);
   const r = e.req.query("status"), s = e.req.query("priority"), i = e.req.query("domain");
-  if (r && !Ds.includes(r)) return e.json({ error: "Invalid remediation status filter" }, 400);
-  if (s && !qs.includes(s)) return e.json({ error: "Invalid remediation priority filter" }, 400);
+  if (r && !Cs.includes(r)) return e.json({ error: "Invalid remediation status filter" }, 400);
+  if (s && !ks.includes(s)) return e.json({ error: "Invalid remediation priority filter" }, 400);
   const a = await new ct$1(t).list(n, { domains: i ? [i] : void 0, statuses: r ? [r] : void 0, priorities: s ? [s] : void 0 });
   return e.json({ remediation: a });
 }).get("/remediation/stats", F$1, async (e) => {
@@ -10929,7 +10924,7 @@ const Ds = ["open", "in-progress", "resolved", "closed"], qs = ["low", "medium",
   var _a2, _b, _c, _d2, _e2;
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
-  const i = await Se$1(e, { status: Nt$1("status", Ds, false), assignedTo: Ke("assignedTo", { maxLength: 100 }), notes: Ke("notes", { maxLength: 5e3 }) });
+  const i = await Se$1(e, { status: Nt$1("status", Cs, false), assignedTo: Ke("assignedTo", { maxLength: 100 }), notes: Ke("notes", { maxLength: 5e3 }) });
   if (!i.success) return Ne(e, i.error);
   const o = new ct$1(t), a = await o.findById(s, n);
   if (!a) return e.json({ error: "Remediation request not found" }, 404);
@@ -10945,10 +10940,10 @@ const Ds = ["open", "in-progress", "resolved", "closed"], qs = ["low", "medium",
   return e.json({ remediation: d });
 }), Ye$1 = new Hono();
 Ye$1.use("*", F$1);
-async function Mt$1(e, t, n) {
+async function Lt$1(e, t, n) {
   return (await e.findByTenant(t)).find((s) => s.id === n || s.domainId === n);
 }
-function _d(e, t) {
+function bd(e, t) {
   if (!(e instanceof Error)) return false;
   const n = e.message.toLowerCase();
   return n.includes("duplicate key") || n.includes("unique constraint") || n.includes(t.toLowerCase());
@@ -10965,7 +10960,7 @@ Ye$1.get("/domains", async (e) => {
 Ye$1.get("/domains/:id", async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.req.param("id");
   if (!t || !n) return e.json({ error: "Database or tenant context unavailable" }, 503);
-  const s = new rt$1(t), i = new re$1(t), o = await Mt$1(s, n, r);
+  const s = new rt$1(t), i = new re$1(t), o = await Lt$1(s, n, r);
   if (!o) return e.json({ error: "Monitored domain not found" }, 404);
   const a = await i.findById(o.domainId);
   return e.json({ monitoredDomain: { ...o, domainName: (a == null ? void 0 : a.name) || "Unknown" } });
@@ -10984,14 +10979,14 @@ Ye$1.post("/domains", H, async (e) => {
     d || (d = await i.create({ name: s.domainName, normalizedName: s.domainName.toLowerCase(), tenantId: n, zoneManagement: "unknown" })), a = d.id, u = d.name;
   }
   if (!a) return e.json({ error: "Could not resolve domain" }, 400);
-  const c = await Mt$1(o, n, a);
+  const c = await Lt$1(o, n, a);
   if (c) return e.json({ error: "Domain is already being monitored", existingId: c.id }, 409);
   if (await o.findByDomainId(a, n)) return e.json({ error: "Domain is already being monitored" }, 409);
   let l;
   try {
     l = await o.create({ domainId: a, schedule: s.schedule || "daily", alertChannels: s.alertChannels || {}, maxAlertsPerDay: (_a2 = s.maxAlertsPerDay) != null ? _a2 : 5, suppressionWindowMinutes: (_b = s.suppressionWindowMinutes) != null ? _b : 60, isActive: true, createdBy: r, tenantId: n });
   } catch (h) {
-    if (_d(h, "monitored_domain_unique_idx")) return e.json({ error: "Domain is already being monitored" }, 409);
+    if (bd(h, "monitored_domain_unique_idx")) return e.json({ error: "Domain is already being monitored" }, 409);
     throw h;
   }
   return await new te(t).create({ action: "monitored_domain_created", entityType: "monitored_domain", entityId: l.id, actorId: r, tenantId: n, newValue: { domainId: l.domainId, domainName: u, schedule: l.schedule, isActive: l.isActive }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ monitoredDomain: l }, 201);
@@ -10999,7 +10994,7 @@ Ye$1.post("/domains", H, async (e) => {
 Ye$1.put("/domains/:id", H, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
-  const i = await e.req.json().catch(() => ({})), o = new rt$1(t), a = await Mt$1(o, n, s);
+  const i = await e.req.json().catch(() => ({})), o = new rt$1(t), a = await Lt$1(o, n, s);
   if (!a) return e.json({ error: "Monitored domain not found" }, 404);
   const u = await o.update(a.id, { ...i.schedule && { schedule: i.schedule }, ...i.alertChannels && { alertChannels: i.alertChannels }, ...i.maxAlertsPerDay !== void 0 && { maxAlertsPerDay: i.maxAlertsPerDay }, ...i.suppressionWindowMinutes !== void 0 && { suppressionWindowMinutes: i.suppressionWindowMinutes }, ...i.isActive !== void 0 && { isActive: i.isActive } });
   return u && await new te(t).create({ action: "monitored_domain_updated", entityType: "monitored_domain", entityId: u.id, actorId: r, tenantId: n, previousValue: { schedule: a.schedule, isActive: a.isActive, alertChannels: a.alertChannels, maxAlertsPerDay: a.maxAlertsPerDay, suppressionWindowMinutes: a.suppressionWindowMinutes }, newValue: { schedule: u.schedule, isActive: u.isActive, alertChannels: u.alertChannels, maxAlertsPerDay: u.maxAlertsPerDay, suppressionWindowMinutes: u.suppressionWindowMinutes }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ monitoredDomain: u });
@@ -11007,7 +11002,7 @@ Ye$1.put("/domains/:id", H, async (e) => {
 Ye$1.delete("/domains/:id", H, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
-  const i = new rt$1(t), o = new re$1(t), a = await Mt$1(i, n, s);
+  const i = new rt$1(t), o = new re$1(t), a = await Lt$1(i, n, s);
   if (!a) return e.json({ error: "Monitored domain not found" }, 404);
   const u = await o.findById(a.domainId);
   return await i.delete(a.id), await new te(t).create({ action: "monitored_domain_deleted", entityType: "monitored_domain", entityId: a.id, actorId: r, tenantId: n, previousValue: { domainId: a.domainId, domainName: u == null ? void 0 : u.name, schedule: a.schedule, isActive: a.isActive }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ success: true, deletedId: a.id });
@@ -11015,7 +11010,7 @@ Ye$1.delete("/domains/:id", H, async (e) => {
 Ye$1.post("/domains/:id/toggle", H, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId"), s = e.req.param("id");
   if (!t || !n || !r) return e.json({ error: "Database, tenant, and actor context required" }, 503);
-  const i = new rt$1(t), o = await Mt$1(i, n, s);
+  const i = new rt$1(t), o = await Lt$1(i, n, s);
   if (!o) return e.json({ error: "Monitored domain not found" }, 404);
   const a = await i.update(o.id, { isActive: !o.isActive });
   return a && await new te(t).create({ action: "monitored_domain_toggled", entityType: "monitored_domain", entityId: a.id, actorId: r, tenantId: n, previousValue: { isActive: o.isActive }, newValue: { isActive: a.isActive }, ipAddress: Ve(e), userAgent: e.req.header("user-agent") }), e.json({ monitoredDomain: a });
@@ -11030,28 +11025,28 @@ oe.post("/search", async (e) => {
   if (!s.success) return Ne(e, s.error);
   const { query: i, tags: o, severities: a, zoneManagement: u, limit: d = 20, offset: c = 0 } = s.data;
   try {
-    const p = new qt(n), l = [eq(V.tenantId, r)];
+    const p = new qt(n), l = [eq(z$1.tenantId, r)];
     if (i) {
-      const I = or$1(like(V.name, `%${i}%`), like(V.normalizedName, `%${i}%`));
+      const I = or$1(like(z$1.name, `%${i}%`), like(z$1.normalizedName, `%${i}%`));
       I && l.push(I);
     }
-    u && u.length > 0 && l.push(inArray(V.zoneManagement, u));
+    u && u.length > 0 && l.push(inArray(z$1.zoneManagement, u));
     let f = [];
     if (o && o.length > 0) {
       if (f = await p.findDomainsByTags(o, r), f.length === 0) return e.json({ domains: [], total: 0 });
-      l.push(inArray(V.id, f));
+      l.push(inArray(z$1.id, f));
     }
-    const h = (_a2 = l.length > 1 ? and(...l) : l[0]) != null ? _a2 : eq(V.tenantId, r), y = await n.getDrizzle().query.domains.findMany({ where: h, limit: d, offset: c, orderBy: desc(V.updatedAt) }), v = y.map((I) => I.id), m = v.length > 0 ? await n.getDrizzle().query.snapshots.findMany({ where: inArray(W.domainId, v), orderBy: desc(W.createdAt) }) : [], w = /* @__PURE__ */ new Map();
+    const h = (_a2 = l.length > 1 ? and(...l) : l[0]) != null ? _a2 : eq(z$1.tenantId, r), y = await n.getDrizzle().query.domains.findMany({ where: h, limit: d, offset: c, orderBy: desc(z$1.updatedAt) }), v = y.map((I) => I.id), m = v.length > 0 ? await n.getDrizzle().query.snapshots.findMany({ where: inArray(W.domainId, v), orderBy: desc(W.createdAt) }) : [], w = /* @__PURE__ */ new Map();
     for (const I of m) w.has(I.domainId) || w.set(I.domainId, I);
     const S = Array.from(w.values()).map((I) => I.id), T = a && a.length > 0, D = S.length > 0 ? await n.getDrizzle().query.findings.findMany({ where: T ? and(inArray(K$1.snapshotId, S), inArray(K$1.severity, a)) : inArray(K$1.snapshotId, S) }) : [], R = /* @__PURE__ */ new Map();
     for (const I of D) R.has(I.snapshotId) || R.set(I.snapshotId, []), (_b = R.get(I.snapshotId)) == null ? void 0 : _b.push(I);
     const b = y.map((I) => {
       const E = w.get(I.id);
       if (!E) return { ...I, findings: [], findingsEvaluated: false, latestSnapshot: null };
-      const M = E.rulesetVersionId !== null, k = R.get(E.id) || [];
-      return T && k.length === 0 && M ? null : { ...I, findings: k, findingsEvaluated: M, latestSnapshot: { id: E.id, createdAt: E.createdAt, resultState: E.resultState, rulesetVersionId: E.rulesetVersionId } };
+      const L = E.rulesetVersionId !== null, k = R.get(E.id) || [];
+      return T && k.length === 0 && L ? null : { ...I, findings: k, findingsEvaluated: L, latestSnapshot: { id: E.id, createdAt: E.createdAt, resultState: E.resultState, rulesetVersionId: E.rulesetVersionId } };
     }).filter(Boolean);
-    return _a({ tenantId: r, query: i, filters: { tags: o, severities: a, zoneManagement: u }, resultCount: b.length, durationMs: Date.now() - t }), e.json({ domains: b, total: b.length, limit: d, offset: c });
+    return Sa({ tenantId: r, query: i, filters: { tags: o, severities: a, zoneManagement: u }, resultCount: b.length, durationMs: Date.now() - t }), e.json({ domains: b, total: b.length, limit: d, offset: c });
   } catch {
     return e.json({ error: "Search failed" }, 500);
   }
@@ -11183,7 +11178,7 @@ oe.get("/filters", async (e) => {
 oe.post("/filters", H, async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.get("actorId");
   if (!n || !r) return e.json({ error: "Authenticated tenant and actor required" }, 401);
-  const s = await Se$1(e, { name: et$1("name", { minLength: 1, maxLength: 100 }), description: Ke("description", { maxLength: 500 }), criteria: (d) => d && typeof d == "object" ? d : {}, isShared: Oi("isShared", false) });
+  const s = await Se$1(e, { name: et$1("name", { minLength: 1, maxLength: 100 }), description: Ke("description", { maxLength: 500 }), criteria: (d) => d && typeof d == "object" ? d : {}, isShared: Bi("isShared", false) });
   if (!s.success) return Ne(e, s.error);
   const { name: i, description: o, criteria: a, isShared: u } = s.data;
   try {
@@ -11338,12 +11333,12 @@ it$1.post("/compare-to-provider", async (e) => {
   try {
     const i = new ie(t), o = new Ct$1(t), a = await i.findById(r);
     if (!a) return e.json({ error: "Snapshot not found" }, 404);
-    const u = await o.findBySnapshotId(r), d = bd(u);
+    const u = await o.findBySnapshotId(r), d = Sd(u);
     let c = s;
     c || (c = zt$1(d.mx || [], d.spf || void 0).provider);
     const p = ht$1.getTemplate(c);
     if (!p) return e.json({ error: "Provider template not found", requestedProvider: c, availableProviders: Object.keys(xe) }, 404);
-    const l = pd(c, d);
+    const l = fd(c, d);
     return e.json({ domain: a.domainName, snapshotId: r, provider: c, providerName: p.name, detectionConfidence: s ? void 0 : zt$1(d.mx || [], d.spf).confidence, comparison: { overallMatch: l.overallMatch, matches: l.matches, mismatches: l.mismatches, missing: l.missing }, actual: d, expected: { mx: p.expected.mx, spf: p.expected.spf, dkim: p.expected.dkim, dmarc: p.expected.dmarc } });
   } catch (i) {
     return O().error("Provider comparison error:", i instanceof Error ? i : new Error(String(i)), { requestId: e.req.header("X-Request-ID"), path: "/api/provider-templates/compare", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to compare to provider template", message: i instanceof Error ? i.message : "Unknown error" }, 500);
@@ -11369,7 +11364,7 @@ it$1.post("/providers/:provider/selectors", Ge, async (e) => {
     return O().error("Add selector error:", s instanceof Error ? s : new Error(String(s)), { requestId: e.req.header("X-Request-ID"), path: "/api/provider-templates/:provider/selectors", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to add selector", message: s instanceof Error ? s.message : "Unknown error" }, 500);
   }
 });
-function bd(e) {
+function Sd(e) {
   const t = {};
   for (const n of e) {
     if (n.type === "MX" && (t.mx = n.values), n.type === "TXT") {
@@ -11387,11 +11382,11 @@ function bd(e) {
   }
   return t;
 }
-const Cs = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, Sd = new Hono().get("/", F$1, async (e) => {
+const Ms = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, Td = new Hono().get("/", F$1, async (e) => {
   const t = e.get("db");
   if (!t) return e.json({ error: "Database not available" }, 503);
   try {
-    const n = Math.min(parseInt(e.req.query("limit") || "20", 10), 100), r = parseInt(e.req.query("offset") || "0", 10), s = new Me(t), [i, o] = await Promise.all([s.list(n, r), s.count()]);
+    const n = Math.min(parseInt(e.req.query("limit") || "20", 10), 100), r = parseInt(e.req.query("offset") || "0", 10), s = new Le(t), [i, o] = await Promise.all([s.list(n, r), s.count()]);
     return e.json({ versions: i, pagination: { limit: n, offset: r, total: o, hasMore: r + i.length < o } });
   } catch (n) {
     return O().error("Error listing ruleset versions:", n instanceof Error ? n : new Error(String(n)), { requestId: e.req.header("X-Request-ID"), path: "/api/ruleset-versions", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to list ruleset versions", message: n instanceof Error ? n.message : "Unknown error" }, 500);
@@ -11400,7 +11395,7 @@ const Cs = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
   const t = e.get("db");
   if (!t) return e.json({ error: "Database not available" }, 503);
   try {
-    const r = await new Me(t).findActive();
+    const r = await new Le(t).findActive();
     return r ? e.json(r) : e.json({ error: "No active ruleset version found" }, 404);
   } catch (n) {
     return O().error("Error fetching active ruleset version:", n instanceof Error ? n : new Error(String(n)), { requestId: e.req.header("X-Request-ID"), path: "/api/ruleset-versions/active", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to fetch active ruleset version", message: n instanceof Error ? n.message : "Unknown error" }, 500);
@@ -11409,7 +11404,7 @@ const Cs = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
   const t = e.get("db");
   if (!t) return e.json({ error: "Database not available" }, 503);
   try {
-    const r = await new Me(t).findLatest();
+    const r = await new Le(t).findLatest();
     return r ? e.json(r) : e.json({ error: "No ruleset versions found" }, 404);
   } catch (n) {
     return O().error("Error fetching latest ruleset version:", n instanceof Error ? n : new Error(String(n)), { requestId: e.req.header("X-Request-ID"), path: "/api/ruleset-versions/latest", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to fetch latest ruleset version", message: n instanceof Error ? n.message : "Unknown error" }, 500);
@@ -11418,29 +11413,29 @@ const Cs = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
   const t = e.req.param("version"), n = e.get("db");
   if (!n) return e.json({ error: "Database not available" }, 503);
   try {
-    const s = await new Me(n).findByVersion(t);
+    const s = await new Le(n).findByVersion(t);
     return s ? e.json(s) : e.json({ error: "Ruleset version not found" }, 404);
   } catch (r) {
     return O().error("Error fetching ruleset version:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/ruleset-versions/:id", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to fetch ruleset version", message: r instanceof Error ? r.message : "Unknown error" }, 500);
   }
 }).get("/:id", F$1, async (e) => {
   const t = e.req.param("id");
-  if (!Cs.test(t)) return e.json({ error: "Invalid ruleset version ID" }, 400);
+  if (!Ms.test(t)) return e.json({ error: "Invalid ruleset version ID" }, 400);
   const n = e.get("db");
   if (!n) return e.json({ error: "Database not available" }, 503);
   try {
-    const s = await new Me(n).findById(t);
+    const s = await new Le(n).findById(t);
     return s ? e.json(s) : e.json({ error: "Ruleset version not found" }, 404);
   } catch (r) {
     return O().error("Error fetching ruleset version:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/ruleset-versions/:id", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to fetch ruleset version", message: r instanceof Error ? r.message : "Unknown error" }, 500);
   }
 }).post("/:id/activate", F$1, H, async (e) => {
   const t = e.req.param("id");
-  if (!Cs.test(t)) return e.json({ error: "Invalid ruleset version ID" }, 400);
+  if (!Ms.test(t)) return e.json({ error: "Invalid ruleset version ID" }, 400);
   const n = e.get("db");
   if (!n) return e.json({ error: "Database not available" }, 503);
   try {
-    const s = await new Me(n).setActive(t);
+    const s = await new Le(n).setActive(t);
     return s ? e.json({ success: true, message: `Ruleset version ${s.version} is now active`, rulesetVersion: s }) : e.json({ error: "Ruleset version not found" }, 404);
   } catch (r) {
     return O().error("Error activating ruleset version:", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/ruleset-versions/:id/activate", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to activate ruleset version", message: r instanceof Error ? r.message : "Unknown error" }, 500);
@@ -11449,7 +11444,7 @@ const Cs = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
 wr.get("/snapshot/:snapshotId/selectors", F$1, async (e) => {
   const t = e.req.param("snapshotId"), n = e.get("db");
   try {
-    const r = new ie(n), s = new Ei(n);
+    const r = new ie(n), s = new Di(n);
     if (!await r.findById(t)) return e.json({ error: "Snapshot not found" }, 404);
     const o = await s.findBySnapshotId(t);
     if (o.length > 0) {
@@ -11489,18 +11484,18 @@ ve.post("/compare", async (e) => {
   const t = e.get("db"), n = await e.req.json().catch(() => ({})), { snapshotId: r, legacyOutput: s } = n;
   if (!r || !s) return e.json({ error: "Missing required fields", required: ["snapshotId", "legacyOutput"] }, 400);
   try {
-    const i = Td(s);
+    const i = Ad(s);
     if (!i.valid || !i.data) return e.json({ error: "Invalid legacy output format", details: i.errors }, 400);
     const o = new ie(t), a = new nt$1(t), u = new Zt(t), d = await o.findById(r);
     if (!d) return e.json({ error: "Snapshot not found" }, 404);
     const c = e.get("tenantId");
     if (c) {
-      const { DomainRepository: y } = await import('../build/index-vkeogiSq.mjs'), m = await new y(t).findById(d.domainId);
+      const { DomainRepository: y } = await import('../build/index-D7TwHSZ1.mjs'), m = await new y(t).findById(d.domainId);
       if (!m || m.tenantId && m.tenantId !== c) return e.json({ error: "Snapshot not found" }, 404);
     }
     const p = await t.selectWhere(K$1, eq(K$1.snapshotId, r));
     await u.log({ toolType: "dmarc-check", domain: d.domainName, requestSource: "api", responseStatus: "success", outputSummary: { dmarcPresent: i.data.dmarc.present, dmarcValid: i.data.dmarc.valid, spfPresent: i.data.spf.present, spfValid: i.data.spf.valid, dkimPresent: i.data.dkim.present, dkimValid: i.data.dkim.valid }, snapshotId: r });
-    const l = { ...i.data, checkedAt: typeof i.data.checkedAt == "string" ? new Date(i.data.checkedAt) : i.data.checkedAt }, f = ld.compare(r, d.domainName, p, l), h = await a.create({ snapshotId: r, domain: d.domainName, comparedAt: /* @__PURE__ */ new Date(), status: f.status, comparisons: f.comparisons, metrics: f.metrics, summary: f.summary, legacyOutput: i.data, tenantId: c || void 0 });
+    const l = { ...i.data, checkedAt: typeof i.data.checkedAt == "string" ? new Date(i.data.checkedAt) : i.data.checkedAt }, f = pd.compare(r, d.domainName, p, l), h = await a.create({ snapshotId: r, domain: d.domainName, comparedAt: /* @__PURE__ */ new Date(), status: f.status, comparisons: f.comparisons, metrics: f.metrics, summary: f.summary, legacyOutput: i.data, tenantId: c || void 0 });
     return Qe$1().shadow.comparisonRun({ domain: d.domainName, hadMismatch: f.status !== "match", mismatchTypes: f.status !== "match" ? f.comparisons.filter((y) => y.status === "mismatch").map((y) => y.field) : void 0 }), e.json({ comparison: h, summary: f.summary, status: f.status, metrics: f.metrics, persisted: true });
   } catch (i) {
     return O().error("Shadow comparison error", i instanceof Error ? i : new Error(String(i)), { requestId: e.req.header("X-Request-ID"), path: "/api/shadow-comparison/compare", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to perform shadow comparison", message: i instanceof Error ? i.message : "Unknown error" }, 500);
@@ -11533,7 +11528,7 @@ ve.get("/legacy-logs", async (e) => {
     return O().error("Legacy logs error", s instanceof Error ? s : new Error(String(s)), { requestId: e.req.header("X-Request-ID"), path: "/api/shadow-comparison/legacy-logs", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to get legacy access logs", message: s instanceof Error ? s.message : "Unknown error" }, 500);
   }
 });
-function Bi(e, t, n) {
+function $i(e, t, n) {
   const r = { ...e }, s = [];
   for (const i of t) {
     if (n && i.appliesToDomains && i.appliesToDomains.length > 0 && !i.appliesToDomains.includes(n)) continue;
@@ -11546,7 +11541,7 @@ ve.get("/provider-baselines", async (e) => {
   const t = e.get("db"), n = e.get("tenantId"), r = e.req.query("domainName");
   try {
     const s = new lr(t), i = new vt$1(t), o = await s.findActive(), a = await Promise.all(o.map(async (u) => {
-      const d = await i.findByProvider(u.providerKey, n), c = Bi(u, d, r);
+      const d = await i.findByProvider(u.providerKey, n), c = $i(u, d, r);
       return { providerKey: c.providerKey, providerName: c.providerName, baseline: c.baseline, dkimSelectors: c.dkimSelectors, mxPatterns: c.mxPatterns, spfIncludes: c.spfIncludes, version: c.version, overridesApplied: c.overridesApplied };
     }));
     return e.json({ baselines: a, overridesActive: a.some((u) => u.overridesApplied.length > 0) });
@@ -11559,7 +11554,7 @@ ve.get("/provider-baselines/:providerKey", async (e) => {
   try {
     const i = new lr(n), o = new vt$1(n), a = await i.findByProviderKey(t);
     if (!a) return e.json({ error: "Provider baseline not found" }, 404);
-    const u = await o.findByProvider(t, r), d = Bi(a, u, s);
+    const u = await o.findByProvider(t, r), d = $i(a, u, s);
     return e.json({ baseline: d, overridesApplied: d.overridesApplied });
   } catch (i) {
     return O().error("Provider baseline error", i instanceof Error ? i : new Error(String(i)), { requestId: e.req.header("X-Request-ID"), path: "/api/shadow-comparison/provider-baselines/:providerKey", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to get provider baseline", message: i instanceof Error ? i.message : "Unknown error" }, 500);
@@ -11569,7 +11564,7 @@ ve.post("/mismatch-report", Ge, async (e) => {
   const t = e.get("db"), n = await e.req.json().catch(() => ({})), { domain: r, periodStart: s, periodEnd: i, generatedBy: o } = n;
   if (!r) return e.json({ error: "Domain is required" }, 400);
   try {
-    const a = new nt$1(t), u = new Ni(t), d = s ? new Date(s) : new Date(Date.now() - 720 * 60 * 60 * 1e3), c = i ? new Date(i) : /* @__PURE__ */ new Date(), p = await u.generateReport(a, r, d, c, o || "system");
+    const a = new nt$1(t), u = new qi(t), d = s ? new Date(s) : new Date(Date.now() - 720 * 60 * 60 * 1e3), c = i ? new Date(i) : /* @__PURE__ */ new Date(), p = await u.generateReport(a, r, d, c, o || "system");
     return e.json({ report: p, message: p.cutoverReady ? "Domain is ready for cutover" : "Domain does not meet cutover threshold" });
   } catch (a) {
     return O().error("Mismatch report error", a instanceof Error ? a : new Error(String(a)), { requestId: e.req.header("X-Request-ID"), path: "/api/shadow-comparison/mismatch-report", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to generate mismatch report", message: a instanceof Error ? a.message : "Unknown error" }, 500);
@@ -11578,7 +11573,7 @@ ve.post("/mismatch-report", Ge, async (e) => {
 ve.get("/mismatch-reports/:domain", async (e) => {
   const t = e.req.param("domain"), n = e.get("db"), r = e.get("tenantId");
   try {
-    const i = await new Ni(n).findByDomain(t, r), o = i[0];
+    const i = await new qi(n).findByDomain(t, r), o = i[0];
     return e.json({ domain: t, reports: i.map((a) => ({ id: a.id, periodStart: a.periodStart, periodEnd: a.periodEnd, matchRate: a.matchRate, cutoverReady: a.cutoverReady, generatedAt: a.generatedAt })), latestReport: o ? { matchRate: o.matchRate, cutoverReady: o.cutoverReady, totalComparisons: o.totalComparisons, mismatchBreakdown: o.mismatchBreakdown, cutoverNotes: o.cutoverNotes } : null });
   } catch (s) {
     return O().error("Mismatch reports error", s instanceof Error ? s : new Error(String(s)), { requestId: e.req.header("X-Request-ID"), path: "/api/shadow-comparison/mismatch-reports/:domain", method: "GET", tenantId: e.get("tenantId") }), e.json({ error: "Failed to get mismatch reports", message: s instanceof Error ? s.message : "Unknown error" }, 500);
@@ -11616,7 +11611,7 @@ ve.post("/:id/adjudicate", Ge, async (e) => {
     return O().error("Shadow adjudication error", d instanceof Error ? d : new Error(String(d)), { requestId: e.req.header("X-Request-ID"), path: "/api/shadow-comparison/:id/adjudicate", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to adjudicate shadow comparison", message: d instanceof Error ? d.message : "Unknown error" }, 500);
   }
 });
-function Td(e) {
+function Ad(e) {
   const t = [];
   if (!e || typeof e != "object") return { valid: false, errors: ["Legacy output must be an object"] };
   const n = e;
@@ -11641,7 +11636,7 @@ vr.post("/", F$1, async (e) => {
     const l = e.get("tenantId");
     if (p.tenantId && p.tenantId !== l) return e.json({ error: "Snapshot not found" }, 404);
     if (!l && p.tenantId) return e.json({ error: "Snapshot not found" }, 404);
-    const f = await i.findBySnapshotId(u), h = await o.findBySnapshotId(u), y = await a.findBySnapshotId(u), v = Lt$1(), m = { snapshotId: u, domainId: p.id, domainName: p.name, zoneManagement: c.zoneManagement, observations: f, recordSets: h, rulesetVersion: v.version }, S = new md(v).simulate(m, y.map((T) => ({ type: T.type, title: T.title, severity: T.severity, ruleId: T.ruleId })), d);
+    const f = await i.findBySnapshotId(u), h = await o.findBySnapshotId(u), y = await a.findBySnapshotId(u), v = Mt$1(), m = { snapshotId: u, domainId: p.id, domainName: p.name, zoneManagement: c.zoneManagement, observations: f, recordSets: h, rulesetVersion: v.version }, S = new hd(v).simulate(m, y.map((T) => ({ type: T.type, title: T.title, severity: T.severity, ruleId: T.ruleId })), d);
     return e.json(S);
   } catch (r) {
     return O().error("Simulation error", r instanceof Error ? r : new Error(String(r)), { requestId: e.req.header("X-Request-ID"), path: "/api/simulate", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Simulation failed", message: r instanceof Error ? r.message : "Unknown error" }, 500);
@@ -11707,8 +11702,8 @@ ot$1.post("/:domain/diff", async (e) => {
     if (!d) return e.json({ error: `Snapshot ${i} not found` }, 404);
     if (!c) return e.json({ error: `Snapshot ${o} not found` }, 404);
     if (d.domainId !== a.id || c.domainId !== a.id) return e.json({ error: "Snapshot not found" }, 404);
-    const [p, l, f, h] = await Promise.all([t.selectWhere(ce, eq(ce.snapshotId, i)), t.selectWhere(ce, eq(ce.snapshotId, o)), t.selectWhere(K$1, eq(K$1.snapshotId, i)), t.selectWhere(K$1, eq(K$1.snapshotId, o))]), y = d.rulesetVersionId !== null, v = c.rulesetVersionId !== null, m = Li({ id: d.id, createdAt: d.createdAt, rulesetVersion: String(d.rulesetVersionId || "unknown"), queriedNames: d.queriedNames, queriedTypes: d.queriedTypes, vantages: d.vantages }, { id: c.id, createdAt: c.createdAt, rulesetVersion: String(c.rulesetVersionId || "unknown"), queriedNames: c.queriedNames, queriedTypes: c.queriedTypes, vantages: c.vantages }, p, l, y ? f : [], v ? h : []), w = [];
-    return m.comparison.scopeChanges && w.push("Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes."), (!y || !v) && w.push(`Findings comparison incomplete: ${!y && !v ? "neither snapshot has been evaluated" : y ? "snapshot B has not been evaluated" : "snapshot A has not been evaluated"}. Re-evaluate old snapshots via POST /api/snapshot/:id/evaluate to see finding changes.`), n && Di({ tenantId: n, domain: r, snapshotIds: [i, o], changeCount: m.comparison.recordChanges.length + m.comparison.findingChanges.length, diffType: "full" }), e.json({ domain: r, diff: m, findingsEvaluated: { snapshotA: y, snapshotB: v }, warnings: w.length > 0 ? w : void 0, ambiguityWarning: m.comparison.scopeChanges ? "Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes." : void 0 });
+    const [p, l, f, h] = await Promise.all([t.selectWhere(ce, eq(ce.snapshotId, i)), t.selectWhere(ce, eq(ce.snapshotId, o)), t.selectWhere(K$1, eq(K$1.snapshotId, i)), t.selectWhere(K$1, eq(K$1.snapshotId, o))]), y = d.rulesetVersionId !== null, v = c.rulesetVersionId !== null, m = xi({ id: d.id, createdAt: d.createdAt, rulesetVersion: String(d.rulesetVersionId || "unknown"), queriedNames: d.queriedNames, queriedTypes: d.queriedTypes, vantages: d.vantages }, { id: c.id, createdAt: c.createdAt, rulesetVersion: String(c.rulesetVersionId || "unknown"), queriedNames: c.queriedNames, queriedTypes: c.queriedTypes, vantages: c.vantages }, p, l, y ? f : [], v ? h : []), w = [];
+    return m.comparison.scopeChanges && w.push("Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes."), (!y || !v) && w.push(`Findings comparison incomplete: ${!y && !v ? "neither snapshot has been evaluated" : y ? "snapshot B has not been evaluated" : "snapshot A has not been evaluated"}. Re-evaluate old snapshots via POST /api/snapshot/:id/evaluate to see finding changes.`), n && Ci({ tenantId: n, domain: r, snapshotIds: [i, o], changeCount: m.comparison.recordChanges.length + m.comparison.findingChanges.length, diffType: "full" }), e.json({ domain: r, diff: m, findingsEvaluated: { snapshotA: y, snapshotB: v }, warnings: w.length > 0 ? w : void 0, ambiguityWarning: m.comparison.scopeChanges ? "Query scope differs between snapshots. Some changes may reflect scope differences rather than actual DNS changes." : void 0 });
   } catch (a) {
     return O().error("Snapshot diff error:", a instanceof Error ? a : new Error(String(a)), { requestId: e.req.header("X-Request-ID"), path: "/api/snapshots/:domain/diff", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to compare snapshots" }, 500);
   }
@@ -11722,21 +11717,21 @@ ot$1.post("/:domain/compare-latest", async (e) => {
     if (!s) return e.json({ error: "Domain not found" }, 404);
     const o = await new ie(t).findByDomain(s.id, 2);
     if (o.length < 2) return e.json({ error: "Need at least 2 snapshots to compare", availableSnapshots: o.length }, 400);
-    const [a, u] = o, [d, c, p, l] = await Promise.all([t.selectWhere(ce, eq(ce.snapshotId, u.id)), t.selectWhere(ce, eq(ce.snapshotId, a.id)), t.selectWhere(K$1, eq(K$1.snapshotId, u.id)), t.selectWhere(K$1, eq(K$1.snapshotId, a.id))]), f = u.rulesetVersionId !== null, h = a.rulesetVersionId !== null, y = Li({ id: u.id, createdAt: u.createdAt, rulesetVersion: String(u.rulesetVersionId || "unknown"), queriedNames: u.queriedNames, queriedTypes: u.queriedTypes, vantages: u.vantages }, { id: a.id, createdAt: a.createdAt, rulesetVersion: String(a.rulesetVersionId || "unknown"), queriedNames: a.queriedNames, queriedTypes: a.queriedTypes, vantages: a.vantages }, d, c, f ? p : [], h ? l : []), v = [];
-    return (!f || !h) && v.push(`Findings comparison incomplete: ${!f && !h ? "neither snapshot has been evaluated" : f ? "newer snapshot has not been evaluated" : "older snapshot has not been evaluated"}. Re-evaluate via POST /api/snapshot/:id/evaluate.`), n && Di({ tenantId: n, domain: r, snapshotIds: [u.id, a.id], changeCount: y.comparison.recordChanges.length + y.comparison.findingChanges.length, diffType: "full" }), e.json({ diff: y, findingsEvaluated: { older: f, newer: h }, warnings: v.length > 0 ? v : void 0 });
+    const [a, u] = o, [d, c, p, l] = await Promise.all([t.selectWhere(ce, eq(ce.snapshotId, u.id)), t.selectWhere(ce, eq(ce.snapshotId, a.id)), t.selectWhere(K$1, eq(K$1.snapshotId, u.id)), t.selectWhere(K$1, eq(K$1.snapshotId, a.id))]), f = u.rulesetVersionId !== null, h = a.rulesetVersionId !== null, y = xi({ id: u.id, createdAt: u.createdAt, rulesetVersion: String(u.rulesetVersionId || "unknown"), queriedNames: u.queriedNames, queriedTypes: u.queriedTypes, vantages: u.vantages }, { id: a.id, createdAt: a.createdAt, rulesetVersion: String(a.rulesetVersionId || "unknown"), queriedNames: a.queriedNames, queriedTypes: a.queriedTypes, vantages: a.vantages }, d, c, f ? p : [], h ? l : []), v = [];
+    return (!f || !h) && v.push(`Findings comparison incomplete: ${!f && !h ? "neither snapshot has been evaluated" : f ? "newer snapshot has not been evaluated" : "older snapshot has not been evaluated"}. Re-evaluate via POST /api/snapshot/:id/evaluate.`), n && Ci({ tenantId: n, domain: r, snapshotIds: [u.id, a.id], changeCount: y.comparison.recordChanges.length + y.comparison.findingChanges.length, diffType: "full" }), e.json({ diff: y, findingsEvaluated: { older: f, newer: h }, warnings: v.length > 0 ? v : void 0 });
   } catch (s) {
     return O().error("Snapshot compare-latest error:", s instanceof Error ? s : new Error(String(s)), { requestId: e.req.header("X-Request-ID"), path: "/api/snapshots/:domain/compare-latest", method: "POST", tenantId: e.get("tenantId") }), e.json({ error: "Failed to compare snapshots" }, 500);
   }
 });
 const Pt$1 = new Hono();
 Pt$1.use("*", F$1);
-const Ad = { confirmApply: Oi("confirmApply", false) };
+const Rd = { confirmApply: Bi("confirmApply", false) };
 Pt$1.patch("/:suggestionId/apply", H, async (e) => {
   const t = e.get("db");
   if (!t) return e.json({ error: "Database not available" }, 503);
   const n = e.req.param("suggestionId"), r = e.get("actorId");
   if (!r) return e.json({ error: "Unauthorized" }, 401);
-  const s = await Se$1(e, Ad), i = s.success ? s.data.confirmApply : void 0, o = new _t$1(t), a = await o.findById(n);
+  const s = await Se$1(e, Rd), i = s.success ? s.data.confirmApply : void 0, o = new _t$1(t), a = await o.findById(n);
   if (!a) return e.json({ error: "Suggestion not found", code: "NOT_FOUND", suggestionId: n }, 404);
   if (a.appliedAt) return e.json({ error: "Suggestion already applied", code: "ALREADY_APPLIED", suggestionId: n, appliedAt: a.appliedAt, appliedBy: a.appliedBy }, 409);
   if (a.dismissedAt) return e.json({ error: "Suggestion was dismissed", code: "DISMISSED", suggestionId: n, dismissedAt: a.dismissedAt }, 409);
@@ -11767,8 +11762,8 @@ Pt$1.get("/:suggestionId", async (e) => {
   const n = e.req.param("suggestionId"), s = await new _t$1(t).findById(n);
   return s ? e.json({ suggestion: s }) : e.json({ error: "Suggestion not found", code: "NOT_FOUND", suggestionId: n }, 404);
 });
-const ks = Date.now(), Z = new Hono();
-async function Fi(e, t, n) {
+const Ls = Date.now(), Z = new Hono();
+async function Vi(e, t, n) {
   const r = new ie(e), s = new re$1(e), i = await r.findById(t);
   if (!i) return null;
   const o = await s.findById(i.domainId);
@@ -11783,25 +11778,25 @@ Z.get("/health/detailed", Ge, async (e) => {
   let n = "error", r = null;
   if (t) try {
     const c = Date.now();
-    await t.select(V), r = Date.now() - c, n = "connected";
+    await t.select(z$1), r = Date.now() - c, n = "connected";
   } catch (c) {
     O().error("DB health check failed", c instanceof Error ? c : new Error(String(c)), { path: "/api/health/detailed", method: "GET" }), n = "error";
   }
-  const s = Ze$1.getInfo(), i = Date.now() - ks, o = Math.floor(i / 1e3), a = Math.floor(o / 60), u = Math.floor(a / 60), d = u > 0 ? `${u}h ${a % 60}m ${o % 60}s` : a > 0 ? `${a}m ${o % 60}s` : `${o}s`;
-  return e.json({ status: n === "connected" ? "healthy" : "degraded", service: "dns-ops-web", version: process.env.npm_package_version || "1.0.0", uptime: { startedAt: new Date(ks).toISOString(), seconds: o, formatted: d }, timestamp: (/* @__PURE__ */ new Date()).toISOString(), checks: { database: { status: n, latencyMs: r }, circuitBreaker: { state: s.state, consecutiveFailures: s.consecutiveFailures, lastFailureAt: s.lastFailureAt ? new Date(s.lastFailureAt).toISOString() : null } } });
+  const s = Ze$1.getInfo(), i = Date.now() - Ls, o = Math.floor(i / 1e3), a = Math.floor(o / 60), u = Math.floor(a / 60), d = u > 0 ? `${u}h ${a % 60}m ${o % 60}s` : a > 0 ? `${a}m ${o % 60}s` : `${o}s`;
+  return e.json({ status: n === "connected" ? "healthy" : "degraded", service: "dns-ops-web", version: process.env.npm_package_version || "1.0.0", uptime: { startedAt: new Date(Ls).toISOString(), seconds: o, formatted: d }, timestamp: (/* @__PURE__ */ new Date()).toISOString(), checks: { database: { status: n, latencyMs: r }, circuitBreaker: { state: s.state, consecutiveFailures: s.consecutiveFailures, lastFailureAt: s.lastFailureAt ? new Date(s.lastFailureAt).toISOString() : null } } });
 });
 Z.route("/auth", kt$1);
 Z.route("/", Oe);
 Z.route("/", st$1);
 Z.route("/", wr);
 Z.route("/", bt$1);
-Z.route("/", Id);
+Z.route("/", _d);
 Z.route("/shadow-comparison", ve);
 Z.route("/mail", it$1);
 Z.route("/snapshots", ot$1);
 Z.route("/migrate", mr);
 Z.route("/portfolio", oe);
-Z.route("/ruleset-versions", Sd);
+Z.route("/ruleset-versions", Td);
 Z.route("/monitoring", Ye$1);
 Z.route("/alerts", qe);
 Z.route("/fleet-report", an);
@@ -11826,7 +11821,7 @@ Z.get("/snapshot/:snapshotId/observations", async (e) => {
   const t = e.get("tenantId"), n = e.get("db"), r = e.req.param("snapshotId");
   if (!n) return e.json({ error: "Database not available" }, 503);
   try {
-    const s = await Fi(n, r, t);
+    const s = await Vi(n, r, t);
     if (!s) return e.json({ error: "Snapshot not found" }, 404);
     const o = await new Pe(n).findBySnapshotId(s.snapshot.id);
     return e.json(o);
@@ -11838,7 +11833,7 @@ Z.get("/snapshot/:snapshotId/recordsets", async (e) => {
   const t = e.get("tenantId"), n = e.get("db"), r = e.req.param("snapshotId");
   if (!n) return e.json({ error: "Database not available" }, 503);
   try {
-    const s = await Fi(n, r, t);
+    const s = await Vi(n, r, t);
     if (!s) return e.json({ error: "Snapshot not found" }, 404);
     const o = await new Ct$1(n).findBySnapshotId(s.snapshot.id);
     return e.json(o);
@@ -11853,17 +11848,17 @@ Z.post("/collect/domain", F$1, H, async (e) => {
   return i instanceof Response ? i : e.json(i.json);
 });
 if (typeof process < "u" && process.env) try {
-  wo();
+  Io();
 } catch {
   console.warn("[ENV] Skipping env validation in Workers runtime");
 }
 const dn = new Hono();
-dn.use("*", Ia);
-dn.use("*", Mo);
+dn.use("*", ba);
+dn.use("*", Po);
 dn.route("/api", Z);
-const dc = lo(({ request: e }) => {
+const cc = fo(({ request: e }) => {
   var _a2, _b, _c;
-  const n = (_c = (_b = (_a2 = zs()) == null ? void 0 : _a2.context) == null ? void 0 : _b.cloudflare) == null ? void 0 : _c.env;
+  const n = (_c = (_b = (_a2 = Qs()) == null ? void 0 : _a2.context) == null ? void 0 : _b.cloudflare) == null ? void 0 : _c.env;
   return dn.fetch(e, n != null ? n : {});
 });
 
@@ -12277,7 +12272,7 @@ const Yt = Rt({ createRouter: Mt, getRouterManifest: tt })(jt);
 const handlers = [
   { route: '', handler: _MTmOo_, lazy: false, middleware: true, method: undefined },
   { route: '/_server', handler: le$2, lazy: false, middleware: true, method: undefined },
-  { route: '/api', handler: dc, lazy: false, middleware: true, method: undefined },
+  { route: '/api', handler: cc, lazy: false, middleware: true, method: undefined },
   { route: '/', handler: Yt, lazy: false, middleware: true, method: undefined }
 ];
 
@@ -12701,5 +12696,5 @@ trapUnhandledNodeErrors();
 setupGracefulShutdown(listener, nitroApp);
 const nodeServer = {};
 
-export { $e as $, Gd as A, pa as B, Ct$1 as C, Ae as D, Ei as E, ke as F, Gs as G, Hd as H, It$1 as I, Js as J, _e$1 as K, Lo as L, Me as M, Ni as N, V as O, Pe as P, Co as Q, K$1 as R, di as S, Jd as T, Ce as U, Vt as V, Wd as W, Xd as X, Yd as Y, Zd as Z, _t$1 as _, te as a, Ys as a0, se$1 as a1, sr as a2, ma as a3, lt$1 as a4, he$1 as a5, si as a6, ze as a7, Jt as a8, nc as a9, $t$1 as aA, ti as aB, dr as aC, St as aD, be as aE, ye as aF, Dt as aG, nodeServer as aH, ui as aa, ci as ab, Re as ac, ce as ad, Ws as ae, fe$1 as af, Qs as ag, Zs as ah, or as ai, le$1 as aj, Ue as ak, rr as al, Xs as am, Fe as an, ir as ao, me$1 as ap, Hs as aq, ai as ar, oi as as, Be as at, W as au, ye$1 as av, Le as aw, sc as ax, ic as ay, rc as az, en as b, Zt as c, rt$1 as d, ec as e, ct$1 as f, tn as g, ha as h, nn as i, ie as j, ko as k, lr as l, ii as m, nt$1 as n, be$1 as o, ri as p, qt as q, re$1 as r, pt$1 as s, tc as t, ur as u, vt$1 as v, we as w, ar as x, ni as y, ei as z };
+export { $e as $, ar as A, si as B, Ct$1 as C, Di as D, ni as E, Jd as F, Gd as G, ma as H, It$1 as I, Js as J, Hd as K, Lo as L, Ae as M, ke as N, _e$1 as O, Pe as P, z$1 as Q, Mo as R, K$1 as S, ui as T, Zd as U, Vt as V, Ce as W, Xd as X, Yd as Y, Zt as Z, _t$1 as _, te as a, Zs as a0, se$1 as a1, sr as a2, ga as a3, lt$1 as a4, he$1 as a5, oi as a6, ze as a7, Jt as a8, rc as a9, $t$1 as aA, ri as aB, dr as aC, St as aD, be as aE, ye as aF, Dt as aG, nodeServer as aH, pi as aa, li as ab, Re as ac, ce as ad, Hs as ae, fe$1 as af, Xs as ag, ti as ah, or as ai, le$1 as aj, Be as ak, rr as al, Gs as am, Fe as an, ir as ao, me$1 as ap, Ys as aq, ci as ar, di as as, Ue as at, W as au, ye$1 as av, Me as aw, ic as ax, oc as ay, sc as az, en as b, qi as c, rt$1 as d, ec as e, ct$1 as f, Le as g, tn as h, nt$1 as i, nn as j, ie as k, lr as l, ai as m, nc as n, be$1 as o, ii as p, qt as q, re$1 as r, pt$1 as s, tc as t, ur as u, vt$1 as v, we as w, xo as x, ya as y, ei as z };
 //# sourceMappingURL=nitro.mjs.map
