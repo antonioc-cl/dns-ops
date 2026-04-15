@@ -1,4 +1,4 @@
-import authRoutes from './auth.js';
+import authRoutes from './signup.js';
 import migrateRoutes from './migrate.js';
 import {
   DomainRepository,

@@ -2,7 +2,7 @@ import { jsxs, jsx } from 'react/jsx-runtime';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { TaggedError } from 'better-result';
-import { aB as St } from '../nitro/nitro.mjs';
+import { aC as St } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -30,6 +30,7 @@ import 'path';
 import 'stream';
 import 'string_decoder';
 import 'drizzle-orm/pg-core';
+import '@node-rs/argon2';
 import 'drizzle-orm';
 import '@tanstack/history';
 import 'node:stream';
@@ -227,4 +228,4 @@ const T = function() {
 };
 
 export { T as component };
-//# sourceMappingURL=index-BRNDoEzB.mjs.map
+//# sourceMappingURL=index-Kjg-Wu4U.mjs.map

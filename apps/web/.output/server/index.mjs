@@ -1,6 +1,6 @@
 import process from 'node:process';globalThis._importMeta_={url:import.meta.url,env:process.env};import 'node:http';
 import 'node:https';
-export { aF as default } from './chunks/nitro/nitro.mjs';
+export { aG as default } from './chunks/nitro/nitro.mjs';
 import 'node:events';
 import 'node:buffer';
 import 'node:fs';
@@ -27,6 +27,7 @@ import 'path';
 import 'stream';
 import 'string_decoder';
 import 'drizzle-orm/pg-core';
+import '@node-rs/argon2';
 import 'drizzle-orm';
 import '@tanstack/react-router';
 import 'react/jsx-runtime';

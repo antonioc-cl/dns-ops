@@ -4,6 +4,8 @@
   "type": "module",
   "private": true,
   "dependencies": {
+    "@node-rs/argon2": "2.0.2",
+    "@node-rs/argon2-darwin-arm64": "2.0.2",
     "@tanstack/history": "1.120.17",
     "@tanstack/react-router": "1.120.20",
     "@tanstack/react-store": "0.7.7",

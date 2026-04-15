@@ -1,7 +1,7 @@
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { useState, useId, useEffect, useCallback } from 'react';
 import { u, p, x } from './StateDisplay-DMFHryPA.mjs';
-import { aC as be$1, aD as ye$1, aE as Dt } from '../nitro/nitro.mjs';
+import { aD as be$1, aE as ye$1, aF as Dt } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -30,6 +30,7 @@ import 'path';
 import 'stream';
 import 'string_decoder';
 import 'drizzle-orm/pg-core';
+import '@node-rs/argon2';
 import 'drizzle-orm';
 import '@tanstack/react-router';
 import '@tanstack/history';
@@ -859,4 +860,4 @@ const Ct = function() {
 };
 
 export { Ct as component };
-//# sourceMappingURL=_domain-DRJ5bw6B.mjs.map
+//# sourceMappingURL=_domain-B6RX7dFy.mjs.map

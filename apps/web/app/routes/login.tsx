@@ -7,7 +7,10 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,28 +19,41 @@ function LoginPage() {
     setError('');
     setLoading(true);
 
-    if (!email) {
-      setError('Email is required');
+    if (!email || !password) {
+      setError('Email and password are required');
+      setLoading(false);
+      return;
+    }
+
+    if (isSignup && password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (isSignup && password.length < 8) {
+      setError('Password must be at least 8 characters');
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const endpoint = isSignup ? '/api/auth/signup' : '/api/auth/login';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-        credentials: 'include', // Important: include cookies
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        // Navigate to portfolio after successful login
         navigate({ to: '/portfolio' });
       } else {
-        const data = await response.json();
-        setError(data.error || 'Login failed');
+        setError(data.error || (isSignup ? 'Signup failed' : 'Login failed'));
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -50,10 +66,32 @@ function LoginPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to DNS Ops
+              {isSignup ? 'Create Account' : 'Sign in to DNS Ops'}
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Internal access only
+              {isSignup ? (
+                <>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setIsSignup(false); setError(''); }}
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Sign in
+                  </button>
+                </>
+              ) : (
+                <>
+                  Need an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setIsSignup(true); setError(''); }}
+                    className="font-medium text-blue-600 hover:text-blue-500"
+                  >
+                    Sign up
+                  </button>
+                </>
+              )}
             </p>
           </div>
 
@@ -72,10 +110,52 @@ function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="admin@yourcompany.com"
+                  placeholder="you@yourcompany.com"
                 />
               </div>
             </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={isSignup ? 'new-password' : 'current-password'}
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder={isSignup ? 'At least 8 characters' : '••••••••'}
+                />
+              </div>
+            </div>
+
+            {isSignup && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                  Confirm Password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={8}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="text-sm text-red-600">{error}</div>
@@ -87,7 +167,7 @@ function LoginPage() {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? 'Please wait...' : (isSignup ? 'Create Account' : 'Sign in')}
               </button>
             </div>
           </form>
@@ -99,7 +179,7 @@ function LoginPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  Internal use only
+                  DNS Ops Workbench
                 </span>
               </div>
             </div>
