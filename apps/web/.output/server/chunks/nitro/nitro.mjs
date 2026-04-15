@@ -29,7 +29,7 @@ import require$$0$2 from 'stream';
 import Zi from 'string_decoder';
 import { readFile as readFile$1, readdir as readdir$1 } from 'node:fs/promises';
 import { hash as hash$1, verify } from '@node-rs/argon2';
-import { RouterProvider, createRootRoute, HeadContent, Link, Outlet, Scripts, createFileRoute, lazyRouteComponent, redirect, createRouter as createRouter$2 } from '@tanstack/react-router';
+import { RouterProvider, createRootRoute, HeadContent, Link, Outlet, Scripts, createFileRoute, lazyRouteComponent, redirect, useLocation, createRouter as createRouter$2 } from '@tanstack/react-router';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
 import { createMemoryHistory } from '@tanstack/history';
@@ -4299,7 +4299,7 @@ async function errorHandler(error, event) {
 }
 
 const appConfig = {"name":"vinxi","routers":[{"name":"public","type":"static","dir":"./public","base":"/","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","order":0,"outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/public"},{"name":"client","type":"client","target":"browser","handler":"app/client.tsx","base":"/_build","build":{"sourcemap":true},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/client","order":1},{"name":"ssr","type":"http","target":"server","handler":"app/ssr.tsx","link":{"client":"client"},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","base":"/","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/ssr","order":2},{"name":"server","type":"http","target":"server","base":"/_server","handler":"../../node_modules/.bun/@tanstack+start-server-functions-handler@1.120.19/node_modules/@tanstack/start-server-functions-handler/dist/esm/index.js","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/server","order":3},{"name":"api","base":"/api","type":"http","handler":"app/api.ts","target":"server","root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web","outDir":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web/.vinxi/build/api","order":4}],"server":{"rollupConfig":{},"preset":"node-server","experimental":{"asyncContext":true}},"root":"/Users/antonio/Documents/PROYECTOS/dns-ops/apps/web"};
-				const buildManifest = {"client":{"_StateDisplay-BEDLHVs5.js":{"file":"assets/StateDisplay-BEDLHVs5.js","name":"StateDisplay","imports":["_client-Biyvsx6Q.js"]},"_client-Biyvsx6Q.js":{"file":"assets/client-Biyvsx6Q.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-Djv1hhiY.js":{"file":"assets/index-Djv1hhiY.js","name":"index","imports":["_client-Biyvsx6Q.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-SlgQZPEc.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-Biyvsx6Q.js","_StateDisplay-BEDLHVs5.js","_index-Djv1hhiY.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-DUt_GA3g.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-Biyvsx6Q.js","_index-Djv1hhiY.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-COykeM9l.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-Biyvsx6Q.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-Dkcv8HCd.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-Biyvsx6Q.js","_StateDisplay-BEDLHVs5.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-PJotoH9w.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-Biyvsx6Q.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-DRCeJElI.js":{"file":"assets/index-DRCeJElI.js","name":"index","imports":["_ssr-CcWpy4Ig.js"]},"_ssr-CcWpy4Ig.js":{"file":"assets/ssr-CcWpy4Ig.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-DNZTudJa.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-DRCeJElI.js","_ssr-CcWpy4Ig.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-d3aENihj.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-DRCeJElI.js","_ssr-CcWpy4Ig.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-CcWpy4Ig.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-CmP4Xv-7.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-BMWKtk7w.js"]},"_api-BMWKtk7w.js":{"file":"assets/api-BMWKtk7w.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-BMWKtk7w.js"]}}};
+				const buildManifest = {"client":{"_StateDisplay-BzdWnJyb.js":{"file":"assets/StateDisplay-BzdWnJyb.js","name":"StateDisplay","imports":["_client-CxV4Q2X1.js"]},"_client-CxV4Q2X1.js":{"file":"assets/client-CxV4Q2X1.js","name":"client","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/client.css"]},"_client.css":{"file":"assets/client.css","src":"_client.css"},"_index-BlqDtuX7.js":{"file":"assets/index-BlqDtuX7.js","name":"index","imports":["_client-CxV4Q2X1.js"]},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-BAKK46ce.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CxV4Q2X1.js","_StateDisplay-BzdWnJyb.js","_index-BlqDtuX7.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-C7Oqg5B2.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CxV4Q2X1.js","_index-BlqDtuX7.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-CKTt9wqo.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CxV4Q2X1.js"]},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BPPOwjOh.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_client-CxV4Q2X1.js","_StateDisplay-BzdWnJyb.js"]},"virtual:$vinxi/handler/client":{"file":"assets/client-CD1Z2cME.js","name":"client","src":"virtual:$vinxi/handler/client","isEntry":true,"imports":["_client-CxV4Q2X1.js"]}},"ssr":{"_StateDisplay-DMFHryPA.js":{"file":"assets/StateDisplay-DMFHryPA.js","name":"StateDisplay"},"_index-C6a_ZGd0.js":{"file":"assets/index-C6a_ZGd0.js","name":"index","imports":["_ssr-D3rTkrKb.js"]},"_ssr-D3rTkrKb.js":{"file":"assets/ssr-D3rTkrKb.js","name":"ssr","dynamicImports":["app/routes/portfolio.tsx?tsr-split=component","app/routes/login.tsx?tsr-split=component","app/routes/index.tsx?tsr-split=component","app/routes/domain/$domain.tsx?tsr-split=component"],"css":["assets/ssr.css"]},"_ssr.css":{"file":"assets/ssr.css","src":"_ssr.css"},"app/routes/domain/$domain.tsx?tsr-split=component":{"file":"assets/_domain-CBnIhVv9.js","name":"_domain","src":"app/routes/domain/$domain.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js","_index-C6a_ZGd0.js","_ssr-D3rTkrKb.js"]},"app/routes/index.tsx?tsr-split=component":{"file":"assets/index-a3K783r9.js","name":"index","src":"app/routes/index.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_index-C6a_ZGd0.js","_ssr-D3rTkrKb.js"]},"app/routes/login.tsx?tsr-split=component":{"file":"assets/login-DlihRwPd.js","name":"login","src":"app/routes/login.tsx?tsr-split=component","isDynamicEntry":true},"app/routes/portfolio.tsx?tsr-split=component":{"file":"assets/portfolio-BOrQ6SEm.js","name":"portfolio","src":"app/routes/portfolio.tsx?tsr-split=component","isDynamicEntry":true,"imports":["_StateDisplay-DMFHryPA.js"]},"virtual:$vinxi/handler/ssr":{"file":"ssr.js","name":"ssr","src":"virtual:$vinxi/handler/ssr","isEntry":true,"imports":["_ssr-D3rTkrKb.js"]}},"server":{"virtual:$vinxi/handler/server":{"file":"server.js","name":"server","src":"virtual:$vinxi/handler/server","isEntry":true}},"api":{"../../packages/db/dist/index.js":{"file":"assets/index-CmP4Xv-7.js","name":"index","src":"../../packages/db/dist/index.js","isDynamicEntry":true,"imports":["_api-BMWKtk7w.js"]},"_api-BMWKtk7w.js":{"file":"assets/api-BMWKtk7w.js","name":"api","dynamicImports":["../../packages/db/dist/index.js"]},"virtual:$vinxi/handler/api":{"file":"api.js","name":"api","src":"virtual:$vinxi/handler/api","isEntry":true,"imports":["_api-BMWKtk7w.js"]}}};
 
 				const routeManifest = {"api":{}};
 
@@ -4560,82 +4560,82 @@ app
 ];
 
 const assets = {
-  "/assets/ssr.css": {
-    "type": "text/css; charset=utf-8",
-    "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T22:30:09.891Z",
-    "size": 29329,
-    "path": "../public/assets/ssr.css"
-  },
   "/_build/.vite/manifest.json": {
     "type": "application/json",
-    "etag": "\"867-FXsSE06M5S89lIDBIFub+5BQCig\"",
-    "mtime": "2026-04-15T22:30:09.888Z",
+    "etag": "\"867-2L9nC773f6J7afs9K1gwZd4cVfw\"",
+    "mtime": "2026-04-15T23:17:23.522Z",
     "size": 2151,
     "path": "../public/_build/.vite/manifest.json"
   },
-  "/_build/assets/StateDisplay-BEDLHVs5.js": {
+  "/assets/ssr.css": {
+    "type": "text/css; charset=utf-8",
+    "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
+    "mtime": "2026-04-15T23:17:23.527Z",
+    "size": 29329,
+    "path": "../public/assets/ssr.css"
+  },
+  "/_build/assets/StateDisplay-BzdWnJyb.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"1496-t9eXEUX8hNW0kafZNik0o1u+DYA\"",
-    "mtime": "2026-04-15T22:30:09.887Z",
+    "etag": "\"1496-JCP4hHh/L1X0ADq4ibRNun2/clY\"",
+    "mtime": "2026-04-15T23:17:23.522Z",
     "size": 5270,
-    "path": "../public/_build/assets/StateDisplay-BEDLHVs5.js"
+    "path": "../public/_build/assets/StateDisplay-BzdWnJyb.js"
   },
-  "/_build/assets/_domain-SlgQZPEc.js": {
+  "/_build/assets/client-CD1Z2cME.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"164a5-mS6LQZtznptKTOtSJz5G3Ctqkuw\"",
-    "mtime": "2026-04-15T22:30:09.887Z",
-    "size": 91301,
-    "path": "../public/_build/assets/_domain-SlgQZPEc.js"
-  },
-  "/_build/assets/client-PJotoH9w.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"3f-O44IAjntXgHWn4tecIV3cAQwGrs\"",
-    "mtime": "2026-04-15T22:30:09.887Z",
+    "etag": "\"3f-vRSzr2rnP8XYnrIoGKYDbOB/dl0\"",
+    "mtime": "2026-04-15T23:17:23.522Z",
     "size": 63,
-    "path": "../public/_build/assets/client-PJotoH9w.js"
+    "path": "../public/_build/assets/client-CD1Z2cME.js"
+  },
+  "/_build/assets/_domain-BAKK46ce.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"164a5-IMp88h5+jGW3paYshMEYkjdXGzo\"",
+    "mtime": "2026-04-15T23:17:23.523Z",
+    "size": 91301,
+    "path": "../public/_build/assets/_domain-BAKK46ce.js"
   },
   "/_build/assets/client.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"7291-qgK3KA90GKhSLqukMEi7hhq4rxc\"",
-    "mtime": "2026-04-15T22:30:09.887Z",
+    "mtime": "2026-04-15T23:17:23.524Z",
     "size": 29329,
     "path": "../public/_build/assets/client.css"
   },
-  "/_build/assets/index-Djv1hhiY.js": {
+  "/_build/assets/login-CKTt9wqo.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"1507-vBK9esXBX0wN/2uSuSPzJRvO+00\"",
-    "mtime": "2026-04-15T22:30:09.887Z",
-    "size": 5383,
-    "path": "../public/_build/assets/index-Djv1hhiY.js"
-  },
-  "/_build/assets/index-DUt_GA3g.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"1da7-29g8KoOk/t2+BgHQpcgKTYwzx1M\"",
-    "mtime": "2026-04-15T22:30:09.888Z",
-    "size": 7591,
-    "path": "../public/_build/assets/index-DUt_GA3g.js"
-  },
-  "/_build/assets/login-COykeM9l.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"10cf-qEod4lLJ8QdPicCmEc/uarN93SE\"",
-    "mtime": "2026-04-15T22:30:09.888Z",
+    "etag": "\"10cf-Zck9MYOavtNcclkl9SCjW3gpgYQ\"",
+    "mtime": "2026-04-15T23:17:23.523Z",
     "size": 4303,
-    "path": "../public/_build/assets/login-COykeM9l.js"
+    "path": "../public/_build/assets/login-CKTt9wqo.js"
   },
-  "/_build/assets/client-Biyvsx6Q.js": {
+  "/_build/assets/client-CxV4Q2X1.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"36697-PgjwfJ2LWqExpx/dF3dpBOjfKo4\"",
-    "mtime": "2026-04-15T22:30:09.888Z",
-    "size": 222871,
-    "path": "../public/_build/assets/client-Biyvsx6Q.js"
+    "etag": "\"366e8-59W0QKnKWOY+nSE4UKPd2fBjQHc\"",
+    "mtime": "2026-04-15T23:17:23.523Z",
+    "size": 222952,
+    "path": "../public/_build/assets/client-CxV4Q2X1.js"
   },
-  "/_build/assets/portfolio-Dkcv8HCd.js": {
+  "/_build/assets/index-C7Oqg5B2.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"1311f-GLULTFTeKnrJBB8TGv7FaQ3hzLI\"",
-    "mtime": "2026-04-15T22:30:09.888Z",
+    "etag": "\"1da7-vVi5RQDfGljik8/jT0XL5o1kMng\"",
+    "mtime": "2026-04-15T23:17:23.524Z",
+    "size": 7591,
+    "path": "../public/_build/assets/index-C7Oqg5B2.js"
+  },
+  "/_build/assets/index-BlqDtuX7.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"1507-kB5p82iDiz7nE8YKIBzKvIle1Dc\"",
+    "mtime": "2026-04-15T23:17:23.522Z",
+    "size": 5383,
+    "path": "../public/_build/assets/index-BlqDtuX7.js"
+  },
+  "/_build/assets/portfolio-BPPOwjOh.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"1311f-72YeJPl6BKbb4GF8Yv5qYcyMcSs\"",
+    "mtime": "2026-04-15T23:17:23.523Z",
     "size": 78111,
-    "path": "../public/_build/assets/portfolio-Dkcv8HCd.js"
+    "path": "../public/_build/assets/portfolio-BPPOwjOh.js"
   }
 };
 
@@ -5013,7 +5013,7 @@ function N(e) {
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-var tr = typeof globalThis < "u" ? globalThis : typeof global < "u" ? global : typeof self < "u" ? self : {};
+var tr$1 = typeof globalThis < "u" ? globalThis : typeof global < "u" ? global : typeof self < "u" ? self : {};
 function Xs(e) {
   return e && e.__esModule && Object.prototype.hasOwnProperty.call(e, "default") ? e.default : e;
 }
@@ -5085,7 +5085,7 @@ function ao(e = {}) {
     return t[n] || (t[n] = oo({ ...e, ...r })), t[n];
   } };
 }
-const Ut = typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : typeof global < "u" ? global : {}, Ar = "__unctx__", co = Ut[Ar] || (Ut[Ar] = ao()), uo = (e, t = {}) => co.get(e, t), Tr = "__unctx_async_handlers__", Rr = Ut[Tr] || (Ut[Tr] = /* @__PURE__ */ new Set());
+const Ut$1 = typeof globalThis < "u" ? globalThis : typeof self < "u" ? self : typeof global < "u" ? global : {}, Ar = "__unctx__", co = Ut$1[Ar] || (Ut$1[Ar] = ao()), uo = (e, t = {}) => co.get(e, t), Tr = "__unctx_async_handlers__", Rr = Ut$1[Tr] || (Ut$1[Tr] = /* @__PURE__ */ new Set());
 function lo(e) {
   let t;
   const n = Ws(e), r = { duplex: "half", method: e.method, headers: e.headers };
@@ -7334,7 +7334,7 @@ function la() {
     constructor(m) {
       super(), this.connectionParameters = new i(m), this.user = this.connectionParameters.user, this.database = this.connectionParameters.database, this.port = this.connectionParameters.port, this.host = this.connectionParameters.host, Object.defineProperty(this, "password", { configurable: true, enumerable: false, writable: true, value: this.connectionParameters.password }), this.replication = this.connectionParameters.replication;
       const w = m || {};
-      w.Promise && f(), this._Promise = w.Promise || tr.Promise, this._types = new s(w.types), this._ending = false, this._ended = false, this._connecting = false, this._connected = false, this._connectionError = false, this._queryable = true, this._activeQuery = null, this.enableChannelBinding = !!w.enableChannelBinding, this.connection = w.connection || new u({ stream: w.stream, ssl: this.connectionParameters.ssl, keepAlive: w.keepAlive || false, keepAliveInitialDelayMillis: w.keepAliveInitialDelayMillis || 0, encoding: this.connectionParameters.client_encoding || "utf8" }), this._queryQueue = [], this.binary = w.binary || a.binary, this.processID = null, this.secretKey = null, this.ssl = this.connectionParameters.ssl || false, this.ssl && this.ssl.key && Object.defineProperty(this.ssl, "key", { enumerable: false }), this._connectionTimeoutMillis = w.connectionTimeoutMillis || 0;
+      w.Promise && f(), this._Promise = w.Promise || tr$1.Promise, this._types = new s(w.types), this._ending = false, this._ended = false, this._connecting = false, this._connected = false, this._connectionError = false, this._queryable = true, this._activeQuery = null, this.enableChannelBinding = !!w.enableChannelBinding, this.connection = w.connection || new u({ stream: w.stream, ssl: this.connectionParameters.ssl, keepAlive: w.keepAlive || false, keepAliveInitialDelayMillis: w.keepAliveInitialDelayMillis || 0, encoding: this.connectionParameters.client_encoding || "utf8" }), this._queryQueue = [], this.binary = w.binary || a.binary, this.processID = null, this.secretKey = null, this.ssl = this.connectionParameters.ssl || false, this.ssl && this.ssl.key && Object.defineProperty(this.ssl, "key", { enumerable: false }), this._connectionTimeoutMillis = w.connectionTimeoutMillis || 0;
     }
     get activeQuery() {
       return c(), this._activeQuery;
@@ -7680,7 +7680,7 @@ function pa() {
   class u extends e {
     constructor(c, p) {
       super(), this.options = Object.assign({}, c), c != null && "password" in c && Object.defineProperty(this.options, "password", { configurable: true, enumerable: false, writable: true, value: c.password }), c != null && c.ssl && c.ssl.key && Object.defineProperty(this.options.ssl, "key", { enumerable: false }), this.options.max = this.options.max || this.options.poolSize || 10, this.options.min = this.options.min || 0, this.options.maxUses = this.options.maxUses || 1 / 0, this.options.allowExitOnIdle = this.options.allowExitOnIdle || false, this.options.maxLifetimeSeconds = this.options.maxLifetimeSeconds || 0, this.log = this.options.log || function() {
-      }, this.Client = this.options.Client || p || Ci().Client, this.Promise = this.options.Promise || tr.Promise, typeof this.options.idleTimeoutMillis > "u" && (this.options.idleTimeoutMillis = 1e4), this._clients = [], this._idle = [], this._expired = /* @__PURE__ */ new WeakSet(), this._pendingQueue = [], this._endCallback = void 0, this.ending = false, this.ended = false;
+      }, this.Client = this.options.Client || p || Ci().Client, this.Promise = this.options.Promise || tr$1.Promise, typeof this.options.idleTimeoutMillis > "u" && (this.options.idleTimeoutMillis = 1e4), this._clients = [], this._idle = [], this._expired = /* @__PURE__ */ new WeakSet(), this._pendingQueue = [], this._endCallback = void 0, this.ending = false, this.ended = false;
     }
     _promiseTry(c) {
       const p = this.Promise;
@@ -7928,7 +7928,7 @@ function ya() {
   }
   const n = lr(), r = yt$1.EventEmitter, s = gt$2, i = Ri(), o = ga(), a = e.deprecate(() => {
   }, "Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead."), u = Bn.exports = function(d) {
-    r.call(this), d = d || {}, this._Promise = d.Promise || tr.Promise, this._types = new n(d.types), this.native = new t({ types: this._types }), this._queryQueue = [], this._ending = false, this._connecting = false, this._connected = false, this._queryable = true;
+    r.call(this), d = d || {}, this._Promise = d.Promise || tr$1.Promise, this._types = new n(d.types), this.native = new t({ types: this._types }), this._queryQueue = [], this._ending = false, this._connecting = false, this._connected = false, this._queryable = true;
     const c = this.connectionParameters = new i(d);
     d.nativeConnectionString && (c.nativeConnectionString = d.nativeConnectionString), this.user = c.user, Object.defineProperty(this, "password", { configurable: true, enumerable: false, writable: true, value: c.password }), this.database = c.database, this.host = c.host, this.port = c.port, this.namedQueries = {};
   };
@@ -11775,24 +11775,24 @@ const yc = wo(({ request: e }) => {
   return cn.fetch(e, n != null ? n : {});
 });
 
-const Qe = () => ({ routes: { __root__: { filePath: "__root.tsx", children: ["/", "/login", "/portfolio", "/domain/$domain"], preloads: ["/_build/assets/client-PJotoH9w.js", "/_build/assets/client-Biyvsx6Q.js"] }, "/": { filePath: "index.tsx" }, "/login": { filePath: "login.tsx" }, "/portfolio": { filePath: "portfolio.tsx" }, "/domain/$domain": { filePath: "domain/$domain.tsx" } } });
-function Ze(e) {
+const Qe = () => ({ routes: { __root__: { filePath: "__root.tsx", children: ["/", "/login", "/portfolio", "/domain/$domain"], preloads: ["/_build/assets/client-CD1Z2cME.js", "/_build/assets/client-CxV4Q2X1.js"] }, "/": { filePath: "index.tsx" }, "/login": { filePath: "login.tsx" }, "/portfolio": { filePath: "portfolio.tsx" }, "/domain/$domain": { filePath: "domain/$domain.tsx" } } });
+function Xe(e) {
   return globalThis.MANIFEST[e];
 }
-var Xe = "Invariant failed";
-function Ye(e, r) {
-  if (!e) throw new Error(Xe);
+var Ye = "Invariant failed";
+function et(e, r) {
+  if (!e) throw new Error(Ye);
 }
-function et() {
+function tt() {
   var _a;
   const e = Qe(), r = e.routes.__root__ = e.routes.__root__ || {};
   r.assets = r.assets || [];
   let t = "";
-  const s = Ze("client"), n = (_a = s.inputs[s.handler]) == null ? void 0 : _a.output.path;
-  return n || Ye(n), r.assets.push({ tag: "script", attrs: { type: "module", suppressHydrationWarning: true, async: true }, children: `${t}import("${n}")` }), e;
+  const s = Xe("client"), n = (_a = s.inputs[s.handler]) == null ? void 0 : _a.output.path;
+  return n || et(n), r.assets.push({ tag: "script", attrs: { type: "module", suppressHydrationWarning: true, async: true }, children: `${t}import("${n}")` }), e;
 }
-function tt() {
-  const e = et();
+function rt() {
+  const e = tt();
   return { ...e, routes: Object.fromEntries(Object.entries(e.routes).map(([r, t]) => {
     const { preloads: s, assets: n } = t;
     return [r, { preloads: s, assets: n }];
@@ -11801,27 +11801,27 @@ function tt() {
 function le(e) {
   return jsx(RouterProvider, { router: e.router });
 }
-var rt = " daum[ /]| deusu/|(?:^|[^g])news(?!sapphire)|(?<! (?:channel/|google/))google(?!(app|/google| pixel))|(?<! cu)bots?(?:\\b|_)|(?<!(?:lib))http|(?<!cam)scan|24x7|@[a-z][\\w-]+\\.|\\(\\)|\\.com\\b|\\b\\w+\\.ai|\\bmanus-user/|\\bort/|\\bperl\\b|\\bsecurityheaders\\b|\\btime/|\\||^[\\w \\.\\-\\(?:\\):%]+(?:/v?\\d+(?:\\.\\d+)?(?:\\.\\d{1,10})*?)?(?:,|$)|^[^ ]{50,}$|^\\d+\\b|^\\W|^\\w*search\\b|^\\w+/[\\w\\(\\)]*$|^\\w+/\\d\\.\\d\\s\\([\\w@]+\\)$|^active|^ad muncher|^amaya|^apache/|^avsdevicesdk/|^azure|^biglotron|^bot|^bw/|^clamav[ /]|^client/|^cobweb/|^custom|^ddg[_-]android|^discourse|^dispatch/\\d|^downcast/|^duckduckgo|^email|^facebook|^getright/|^gozilla/|^hobbit|^hotzonu|^hwcdn/|^igetter/|^jeode/|^jetty/|^jigsaw|^microsoft bits|^movabletype|^mozilla/\\d\\.\\d\\s[\\w\\.-]+$|^mozilla/\\d\\.\\d\\s\\((?:compatible;)?(?:\\s?[\\w\\d-.]+\\/\\d+\\.\\d+)?\\)$|^navermailapp|^netsurf|^offline|^openai/|^owler|^php|^postman|^python|^rank|^read|^reed|^rest|^rss|^snapchat|^space bison|^svn|^swcd |^taringa|^thumbor/|^track|^w3c|^webbandit/|^webcopier|^wget|^whatsapp|^wordpress|^xenu link sleuth|^yahoo|^yandex|^zdm/\\d|^zoom marketplace/|advisor|agent\\b|analyzer|archive|ask jeeves/teoma|audit|bit\\.ly/|bluecoat drtr|browsex|burpcollaborator|capture|catch|check\\b|checker|chrome-lighthouse|chromeframe|classifier|cloudflare|convertify|crawl|cypress/|dareboost|datanyze|dejaclick|detect|dmbrowser|download|exaleadcloudview|feed|fetcher|firephp|functionize|grab|headless|httrack|hubspot marketing grader|ibisbrowser|infrawatch|insight|inspect|iplabel|java(?!;)|library|linkcheck|mail\\.ru/|manager|measure|monitor\\b|neustar wpm|node\\b|nutch|offbyone|onetrust|optimize|pageburst|pagespeed|parser|phantomjs|pingdom|powermarks|preview|proxy|ptst[ /]\\d|retriever|rexx;|rigor|rss\\b|scrape|server|sogou|sparkler/|speedcurve|spider|splash|statuscake|supercleaner|synapse|synthetic|tools|torrent|transcoder|url|validator|virtuoso|wappalyzer|webglance|webkit2png|whatcms/|xtate/", nt = /bot|crawl|http|lighthouse|scan|search|spider/i, O;
-function st() {
+var nt = " daum[ /]| deusu/|(?:^|[^g])news(?!sapphire)|(?<! (?:channel/|google/))google(?!(app|/google| pixel))|(?<! cu)bots?(?:\\b|_)|(?<!(?:lib))http|(?<!cam)scan|24x7|@[a-z][\\w-]+\\.|\\(\\)|\\.com\\b|\\b\\w+\\.ai|\\bmanus-user/|\\bort/|\\bperl\\b|\\bsecurityheaders\\b|\\btime/|\\||^[\\w \\.\\-\\(?:\\):%]+(?:/v?\\d+(?:\\.\\d+)?(?:\\.\\d{1,10})*?)?(?:,|$)|^[^ ]{50,}$|^\\d+\\b|^\\W|^\\w*search\\b|^\\w+/[\\w\\(\\)]*$|^\\w+/\\d\\.\\d\\s\\([\\w@]+\\)$|^active|^ad muncher|^amaya|^apache/|^avsdevicesdk/|^azure|^biglotron|^bot|^bw/|^clamav[ /]|^client/|^cobweb/|^custom|^ddg[_-]android|^discourse|^dispatch/\\d|^downcast/|^duckduckgo|^email|^facebook|^getright/|^gozilla/|^hobbit|^hotzonu|^hwcdn/|^igetter/|^jeode/|^jetty/|^jigsaw|^microsoft bits|^movabletype|^mozilla/\\d\\.\\d\\s[\\w\\.-]+$|^mozilla/\\d\\.\\d\\s\\((?:compatible;)?(?:\\s?[\\w\\d-.]+\\/\\d+\\.\\d+)?\\)$|^navermailapp|^netsurf|^offline|^openai/|^owler|^php|^postman|^python|^rank|^read|^reed|^rest|^rss|^snapchat|^space bison|^svn|^swcd |^taringa|^thumbor/|^track|^w3c|^webbandit/|^webcopier|^wget|^whatsapp|^wordpress|^xenu link sleuth|^yahoo|^yandex|^zdm/\\d|^zoom marketplace/|advisor|agent\\b|analyzer|archive|ask jeeves/teoma|audit|bit\\.ly/|bluecoat drtr|browsex|burpcollaborator|capture|catch|check\\b|checker|chrome-lighthouse|chromeframe|classifier|cloudflare|convertify|crawl|cypress/|dareboost|datanyze|dejaclick|detect|dmbrowser|download|exaleadcloudview|feed|fetcher|firephp|functionize|grab|headless|httrack|hubspot marketing grader|ibisbrowser|infrawatch|insight|inspect|iplabel|java(?!;)|library|linkcheck|mail\\.ru/|manager|measure|monitor\\b|neustar wpm|node\\b|nutch|offbyone|onetrust|optimize|pageburst|pagespeed|parser|phantomjs|pingdom|powermarks|preview|proxy|ptst[ /]\\d|retriever|rexx;|rigor|rss\\b|scrape|server|sogou|sparkler/|speedcurve|spider|splash|statuscake|supercleaner|synapse|synthetic|tools|torrent|transcoder|url|validator|virtuoso|wappalyzer|webglance|webkit2png|whatcms/|xtate/", st = /bot|crawl|http|lighthouse|scan|search|spider/i, O;
+function at() {
   if (O instanceof RegExp) return O;
   try {
-    O = new RegExp(rt, "i");
+    O = new RegExp(nt, "i");
   } catch {
-    O = nt;
+    O = st;
   }
   return O;
 }
 function de(e) {
-  return !!e && st().test(e);
-}
-function at(e, r) {
-  return pe(e, r);
+  return !!e && at().test(e);
 }
 function ot(e, r) {
+  return pe(e, r);
+}
+function it(e, r) {
   return Readable.fromWeb(pe(e, Readable.toWeb(r)));
 }
-const it = /(<body)/, ct = /(<\/body>)/, lt = /(<\/html>)/, dt = /(<head.*?>)/, ut = /(<\/[a-zA-Z][\w:.-]*?>)/g, ft = new TextDecoder();
-function mt() {
+const ct = /(<body)/, lt = /(<\/body>)/, dt = /(<\/html>)/, ut = /(<head.*?>)/, ft = /(<\/[a-zA-Z][\w:.-]*?>)/g, mt = new TextDecoder();
+function pt() {
   let e;
   const r = new TextEncoder(), s = { stream: new ReadableStream$1({ start(n) {
     e = n;
@@ -11834,7 +11834,7 @@ function mt() {
   }, destroyed: false };
   return s;
 }
-async function pt(e, r) {
+async function ht(e, r) {
   var t, s, n;
   try {
     const i = e.getReader();
@@ -11846,14 +11846,14 @@ async function pt(e, r) {
   }
 }
 function pe(e, r) {
-  const t = mt();
+  const t = pt();
   let s = true, n = "", i = "", l = false, d = false, c = "", S = "";
   function h() {
     const u = n;
     return n = "", u;
   }
   function H(u) {
-    return u instanceof Uint8Array ? ft.decode(u) : String(u);
+    return u instanceof Uint8Array ? mt.decode(u) : String(u);
   }
   const E = createControlledPromise();
   let w = 0;
@@ -11875,12 +11875,12 @@ function pe(e, r) {
     t.end(u);
   }).catch((u) => {
     console.error("Error reading routerStream:", u), t.destroy(u);
-  }), pt(r, { onData: (u) => {
+  }), ht(r, { onData: (u) => {
     const j = H(u.value);
     let g = c + j;
-    const I = g.match(ct), B = g.match(lt);
-    if (l || g.match(it) && (l = true), !d) {
-      const f = g.match(dt);
+    const I = g.match(lt), B = g.match(dt);
+    if (l || g.match(ct) && (l = true), !d) {
+      const f = g.match(ut);
       if (f) {
         d = true;
         const a = f.index, o = f[0], _ = g.slice(a + o.length);
@@ -11897,7 +11897,7 @@ function pe(e, r) {
       return;
     }
     let N, A = 0;
-    for (; (N = ut.exec(g)) !== null; ) A = N.index + N[0].length;
+    for (; (N = ft.exec(g)) !== null; ) A = N.index + N[0].length;
     if (A > 0) {
       const f = g.slice(0, A) + h() + S;
       t.write(f), c = g.slice(A);
@@ -11926,12 +11926,12 @@ function he(e) {
   }
   return r;
 }
-function ht(e) {
+function gt(e) {
   return e instanceof Headers ? new Headers(e) : Array.isArray(e) ? new Headers(e) : typeof e == "object" ? new Headers(e) : new Headers();
 }
 function ue(...e) {
   return e.reduce((r, t) => {
-    const s = ht(t);
+    const s = gt(t);
     for (const [n, i] of s.entries()) n === "set-cookie" ? he(i).forEach((d) => r.append("set-cookie", d)) : r.set(n, i);
     return r;
   }, new Headers());
@@ -11970,11 +11970,11 @@ const z = { stringify: (e) => JSON.stringify(e, function(t, s) {
     Array.isArray(s) ? s.forEach((n) => r.append(t, n)) : r.append(t, s);
   }), r;
 }), F("bigint", (e) => typeof e == "bigint", (e) => e.toString(), (e) => BigInt(e))];
-function gt(e) {
+function St(e) {
   return e && e.__esModule && Object.prototype.hasOwnProperty.call(e, "default") ? e.default : e;
 }
 var re, fe;
-function St() {
+function _t() {
   if (fe) return re;
   fe = 1;
   const e = {}, r = e.hasOwnProperty, t = (a, o) => {
@@ -12041,24 +12041,24 @@ function St() {
   };
   return f.version = "3.0.2", re = f, re;
 }
-var _t = St();
-const P = gt(_t), yt = `const __TSR_SSR__={matches:[],streamedValues:{},initMatch:o=>(__TSR_SSR__.matches.push(o),o.extracted?.forEach(l=>{if(l.type==="stream"){let r;l.value=new ReadableStream({start(e){r={enqueue:t=>{try{e.enqueue(t)}catch{}},close:()=>{try{e.close()}catch{}}}}}),l.value.controller=r}else{let r,e;l.value=new Promise((t,a)=>{e=a,r=t}),l.value.reject=e,l.value.resolve=r}}),!0),resolvePromise:({matchId:o,id:l,promiseState:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="promise"&&t.value&&r.status==="success")return t.value.resolve(r.data),!0}return!1},injectChunk:({matchId:o,id:l,chunk:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="stream"&&t.value?.controller)return t.value.controller.enqueue(new TextEncoder().encode(r.toString())),!0}return!1},closeStream:({matchId:o,id:l})=>{const r=__TSR_SSR__.matches.find(e=>e.id===o);if(r){const e=r.extracted?.[l];if(e&&e.type==="stream"&&e.value?.controller)return e.value.controller.close(),!0}return!1},cleanScripts:()=>{document.querySelectorAll(".tsr-once").forEach(o=>{o.remove()})}};window.__TSR_SSR__=__TSR_SSR__;
+var yt = _t();
+const P = St(yt), bt = `const __TSR_SSR__={matches:[],streamedValues:{},initMatch:o=>(__TSR_SSR__.matches.push(o),o.extracted?.forEach(l=>{if(l.type==="stream"){let r;l.value=new ReadableStream({start(e){r={enqueue:t=>{try{e.enqueue(t)}catch{}},close:()=>{try{e.close()}catch{}}}}}),l.value.controller=r}else{let r,e;l.value=new Promise((t,a)=>{e=a,r=t}),l.value.reject=e,l.value.resolve=r}}),!0),resolvePromise:({matchId:o,id:l,promiseState:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="promise"&&t.value&&r.status==="success")return t.value.resolve(r.data),!0}return!1},injectChunk:({matchId:o,id:l,chunk:r})=>{const e=__TSR_SSR__.matches.find(t=>t.id===o);if(e){const t=e.extracted?.[l];if(t&&t.type==="stream"&&t.value?.controller)return t.value.controller.enqueue(new TextEncoder().encode(r.toString())),!0}return!1},closeStream:({matchId:o,id:l})=>{const r=__TSR_SSR__.matches.find(e=>e.id===o);if(r){const e=r.extracted?.[l];if(e&&e.type==="stream"&&e.value?.controller)return e.value.controller.close(),!0}return!1},cleanScripts:()=>{document.querySelectorAll(".tsr-once").forEach(o=>{o.remove()})}};window.__TSR_SSR__=__TSR_SSR__;
 `;
-function bt(e, r) {
+function wt(e, r) {
   e.ssr = { manifest: r, serializer: z }, e.serverSsr = { injectedHtml: [], streamedKeys: /* @__PURE__ */ new Set(), injectHtml: (t) => {
     const s = Promise.resolve().then(t);
     return e.serverSsr.injectedHtml.push(s), e.emit({ type: "onInjectedHtml", promise: s }), s.then(() => {
     });
   }, injectScript: (t, s) => e.serverSsr.injectHtml(async () => `<script class='tsr-once'>${await t()}; if (typeof __TSR_SSR__ !== 'undefined') __TSR_SSR__.cleanScripts()<\/script>`), streamValue: (t, s) => {
     e.serverSsr.streamedKeys.has(t), e.serverSsr.streamedKeys.add(t), e.serverSsr.injectScript(() => `__TSR_SSR__.streamedValues['${t}'] = { value: ${P(e.ssr.serializer.stringify(s), { isScriptContext: true, wrap: true, json: true })}}`);
-  }, onMatchSettled: vt }, e.serverSsr.injectScript(() => yt, { logScript: false });
+  }, onMatchSettled: Rt }, e.serverSsr.injectScript(() => bt, { logScript: false });
 }
-function wt(e) {
+function xt(e) {
   var r, t;
   const s = { manifest: e.ssr.manifest, dehydratedData: (t = (r = e.options).dehydrate) == null ? void 0 : t.call(r) };
   e.serverSsr.injectScript(() => `__TSR_SSR__.dehydrated = ${P(e.ssr.serializer.stringify(s), { isScriptContext: true, wrap: true, json: true })}`);
 }
-function xt(e, r) {
+function vt(e, r) {
   const t = [];
   return { replaced: se(e, (n, i) => {
     if (n instanceof ReadableStream) {
@@ -12071,11 +12071,11 @@ function xt(e, r) {
     return n;
   }), extracted: t };
 }
-function vt(e) {
+function Rt(e) {
   const { router: r, match: t } = e;
   let s, n;
   if (t.loaderData !== void 0) {
-    const c = xt(t.loaderData, { match: t });
+    const c = vt(t.loaderData, { match: t });
     t.loaderData = c.replaced, s = c.extracted, n = s.reduce((S, h) => ne(S, ["temp", ...h.path], void 0), { temp: c.replaced }).temp;
   }
   const i = `__TSR_SSR__.initMatch(${P({ id: t.id, __beforeLoadContext: r.ssr.serializer.stringify(t.__beforeLoadContext), loaderData: r.ssr.serializer.stringify(n), error: r.ssr.serializer.stringify(t.error), extracted: s == null ? void 0 : s.map((c) => pick(c, ["type", "path"])), updatedAt: t.updatedAt, status: t.status }, { isScriptContext: true, wrap: true, json: true })})`;
@@ -12115,24 +12115,24 @@ function se(e, r, t = []) {
   const s = r(e, t);
   return s !== e ? s : e;
 }
-function Rt({ createRouter: e, getRouterManifest: r }) {
+function Et({ createRouter: e, getRouterManifest: r }) {
   return (t) => eventHandler(async (s) => {
     const n = toWebRequest(s), i = new URL(n.url), l = i.href.replace(i.origin, ""), d = createMemoryHistory({ initialEntries: [l] }), c = e();
-    bt(c, await (r == null ? void 0 : r())), c.update({ history: d }), await c.load(), wt(c);
-    const S = Et({ event: s, router: c });
+    wt(c, await (r == null ? void 0 : r())), c.update({ history: d }), await c.load(), xt(c);
+    const S = jt({ event: s, router: c });
     return await t({ request: n, router: c, responseHeaders: S });
   });
 }
-function Et(e) {
+function jt(e) {
   let r = ue(getResponseHeaders(e.event), e.event.___ssrRpcResponseHeaders, { "Content-Type": "text/html; charset=UTF-8" }, ...e.router.state.matches.map((s) => s.headers));
   const { redirect: t } = e.router.state;
   return t && (r = ue(r, t.headers, { Location: t.href })), r;
 }
-const jt = async ({ request: e, router: r, responseHeaders: t }) => {
+const At = async ({ request: e, router: r, responseHeaders: t }) => {
   if (typeof G$2.renderToReadableStream == "function") {
     const s = await G$2.renderToReadableStream(jsx(le, { router: r }), { signal: e.signal });
     de(e.headers.get("User-Agent")) && await s.allReady;
-    const n = at(r, s);
+    const n = ot(r, s);
     return new Response(n, { status: r.state.statusCode, headers: t });
   }
   if (typeof G$2.renderToPipeableStream == "function") {
@@ -12148,51 +12148,51 @@ const jt = async ({ request: e, router: r, responseHeaders: t }) => {
     } catch (i) {
       console.error("Error in renderToPipeableStream:", i);
     }
-    const n = ot(r, s);
+    const n = it(r, s);
     return new Response(n, { status: r.state.statusCode, headers: t });
   }
   throw new Error("No renderToReadableStream or renderToPipeableStream found in react-dom/server. Ensure you are using a version of react-dom that supports streaming.");
-}, M = createRootRoute({ component: Ct, head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }], links: [{ rel: "stylesheet", href: "/_build/assets/client.css" }] }) });
-function At() {
-  const [e, r] = useState(false), [t, s] = useState(false), [n, i] = useState(null);
+}, M = createRootRoute({ component: Tt, head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }], links: [{ rel: "stylesheet", href: "/_build/assets/client.css" }] }) });
+function Ct() {
+  const [e, r] = useState(false), [t, s] = useState(false), [n, i] = useState(null), l = useLocation();
   useEffect(() => {
-    r(true), fetch("/api/auth/me", { credentials: "include" }).then((d) => d.json()).then((d) => {
-      d.authenticated && (s(true), i(d.email || null));
+    r(true), fetch("/api/auth/me", { credentials: "include" }).then((c) => c.json()).then((c) => {
+      c.authenticated ? (s(true), i(c.email || null)) : (s(false), i(null));
     }).catch(() => {
     });
-  }, []);
-  const l = async () => {
+  }, [l.pathname]);
+  const d = async () => {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" }), s(false), i(null), window.location.href = "/";
   };
-  return e ? t ? jsxs(Fragment, { children: [jsx("span", { className: "text-sm text-gray-500", children: n }), jsx("button", { onClick: l, className: "focus-ring rounded text-gray-600 hover:text-gray-900 text-sm", children: "Logout" })] }) : jsx(Link, { to: "/login", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Login" }) : jsx(Link, { to: "/login", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Login" });
+  return e ? t ? jsxs(Fragment, { children: [jsx("span", { className: "text-sm text-gray-500", children: n }), jsx("button", { onClick: d, className: "focus-ring rounded text-gray-600 hover:text-gray-900 text-sm", children: "Logout" })] }) : jsx(Link, { to: "/login", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Login" }) : jsx(Link, { to: "/login", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Login" });
 }
-function Ct() {
-  return jsxs("html", { lang: "en", children: [jsx("head", { children: jsx(HeadContent, {}) }), jsxs("body", { children: [jsxs("div", { className: "min-h-screen bg-gray-50", children: [jsx("header", { className: "bg-white border-b border-gray-200", children: jsx("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", children: jsxs("div", { className: "flex justify-between h-16 items-center", children: [jsx(Link, { to: "/", className: "focus-ring text-xl font-bold text-gray-900 rounded", children: "DNS Ops Workbench" }), jsxs("nav", { className: "flex gap-6 items-center", children: [jsx(Link, { to: "/", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Home" }), jsx(Link, { to: "/portfolio", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Portfolio" }), jsx(At, {})] })] }) }) }), jsx("main", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: jsx(Outlet, {}) })] }), jsx(Scripts, {})] })] });
+function Tt() {
+  return jsxs("html", { lang: "en", children: [jsx("head", { children: jsx(HeadContent, {}) }), jsxs("body", { children: [jsxs("div", { className: "min-h-screen bg-gray-50", children: [jsx("header", { className: "bg-white border-b border-gray-200", children: jsx("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8", children: jsxs("div", { className: "flex justify-between h-16 items-center", children: [jsx(Link, { to: "/", className: "focus-ring text-xl font-bold text-gray-900 rounded", children: "DNS Ops Workbench" }), jsxs("nav", { className: "flex gap-6 items-center", children: [jsx(Link, { to: "/", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Home" }), jsx(Link, { to: "/portfolio", className: "focus-ring rounded text-gray-600 hover:text-gray-900 [&.active]:text-blue-600 [&.active]:font-medium", children: "Portfolio" }), jsx(Ct, {})] })] }) }) }), jsx("main", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8", children: jsx(Outlet, {}) })] }), jsx(Scripts, {})] })] });
 }
-const Tt = () => import('../build/portfolio-BOrQ6SEm.mjs'), ge = createFileRoute("/portfolio")({ component: lazyRouteComponent(Tt, "component", () => ge.ssr) }), $t = () => import('../build/login-DlihRwPd.mjs'), Se = createFileRoute("/login")({ component: lazyRouteComponent($t, "component", () => Se.ssr) }), Dt = () => import('../build/index-d3aENihj.mjs'), _e = createFileRoute("/")({ validateSearch: (e) => ({ domain: typeof e.domain == "string" && e.domain.length > 0 ? e.domain : void 0 }), beforeLoad: ({ search: e }) => {
+const $t = () => import('../build/portfolio-BOrQ6SEm.mjs'), ge = createFileRoute("/portfolio")({ component: lazyRouteComponent($t, "component", () => ge.ssr) }), Dt = () => import('../build/login-DlihRwPd.mjs'), Se = createFileRoute("/login")({ component: lazyRouteComponent(Dt, "component", () => Se.ssr) }), Pt = () => import('../build/index-a3K783r9.mjs'), _e = createFileRoute("/")({ validateSearch: (e) => ({ domain: typeof e.domain == "string" && e.domain.length > 0 ? e.domain : void 0 }), beforeLoad: ({ search: e }) => {
   if (e.domain) throw redirect({ to: "/domain/$domain", params: { domain: e.domain } });
-}, component: lazyRouteComponent(Dt, "component", () => _e.ssr) });
+}, component: lazyRouteComponent(Pt, "component", () => _e.ssr) });
 function ye() {
   return process.env.VITE_FEATURE_DELEGATION !== "false";
 }
-function Pt() {
+function Ht() {
   return process.env.VITE_FEATURE_SIMULATION === "true";
 }
-ye(), Pt();
-const Ht = () => import('../build/_domain-DNZTudJa.mjs'), It = ye(), me = ["overview", "dns", "mail", "history"], Nt = It ? [...me, "delegation"] : me, Ot = Nt, be = createFileRoute("/domain/$domain")({ component: lazyRouteComponent(Ht, "component", () => be.ssr), validateSearch: (e) => {
+ye(), Ht();
+const It = () => import('../build/_domain-CBnIhVv9.mjs'), Nt = ye(), me = ["overview", "dns", "mail", "history"], Ot = Nt ? [...me, "delegation"] : me, Ft = Ot, be = createFileRoute("/domain/$domain")({ component: lazyRouteComponent(It, "component", () => be.ssr), validateSearch: (e) => {
   const r = e.tab;
-  return { tab: r && Ot.includes(r) ? r : void 0 };
-}, loader: ({ params: e }) => ({ domain: e.domain, snapshot: null, observations: [] }) }), Ft = ge.update({ id: "/portfolio", path: "/portfolio", getParentRoute: () => M }), zt = Se.update({ id: "/login", path: "/login", getParentRoute: () => M }), Lt = _e.update({ id: "/", path: "/", getParentRoute: () => M }), Mt = be.update({ id: "/domain/$domain", path: "/domain/$domain", getParentRoute: () => M }), kt = { IndexRoute: Lt, LoginRoute: zt, PortfolioRoute: Ft, DomainDomainRoute: Mt }, Bt = M._addFileChildren(kt)._addFileTypes();
-function qt() {
-  return createRouter$2({ routeTree: Bt, context: {}, defaultPreload: "intent" });
+  return { tab: r && Ft.includes(r) ? r : void 0 };
+}, loader: ({ params: e }) => ({ domain: e.domain, snapshot: null, observations: [] }) }), zt = ge.update({ id: "/portfolio", path: "/portfolio", getParentRoute: () => M }), Lt = Se.update({ id: "/login", path: "/login", getParentRoute: () => M }), Mt = _e.update({ id: "/", path: "/", getParentRoute: () => M }), kt = be.update({ id: "/domain/$domain", path: "/domain/$domain", getParentRoute: () => M }), Bt = { IndexRoute: Mt, LoginRoute: Lt, PortfolioRoute: zt, DomainDomainRoute: kt }, qt = M._addFileChildren(Bt)._addFileTypes();
+function Ut() {
+  return createRouter$2({ routeTree: qt, context: {}, defaultPreload: "intent" });
 }
-const er = Rt({ createRouter: qt, getRouterManifest: tt })(jt);
+const tr = Et({ createRouter: Ut, getRouterManifest: rt })(At);
 
 const handlers = [
   { route: '', handler: _MTmOo_, lazy: false, middleware: true, method: undefined },
   { route: '/_server', handler: le$1, lazy: false, middleware: true, method: undefined },
   { route: '/api', handler: yc, lazy: false, middleware: true, method: undefined },
-  { route: '/', handler: er, lazy: false, middleware: true, method: undefined }
+  { route: '/', handler: tr, lazy: false, middleware: true, method: undefined }
 ];
 
 function createNitroApp() {
@@ -12615,5 +12615,5 @@ trapUnhandledNodeErrors();
 setupGracefulShutdown(listener, nitroApp);
 const nodeServer = {};
 
-export { Ce as $, cr as A, Bo as B, Ct$1 as C, ai as D, ii as E, Fo as F, ic as G, nc as H, It$1 as I, oc as J, sc as K, Le as L, Mi as M, Nt$1 as N, va as O, rc as P, zt$1 as Q, Ae as R, ke as S, Ie as T, Ue as U, z$1 as V, Oo as W, X, fi as Y, ac as Z, _t$1 as _, en as a, ni as a0, re$1 as a1, or as a2, _a as a3, pt$1 as a4, me$1 as a5, ci as a6, ze as a7, Jt as a8, lc as a9, Vt as aA, oi as aB, ur as aC, gt as aD, be as aE, ye as aF, Pt as aG, nodeServer as aH, hi as aa, mi as ab, Te as ac, de$1 as ad, Zs as ae, pe$1 as af, Ys as ag, si as ah, dr as ai, ue$1 as aj, Be as ak, ir as al, Js as am, $e as an, ar as ao, fe$1 as ap, ei as aq, pi as ar, li as as, Fe as at, K$1 as au, ge$1 as av, Me as aw, fc as ax, mc as ay, pc as az, ba as b, cc as c, dc as d, ee as e, fr as f, ut$1 as g, nn as h, nt$1 as i, rn as j, ki as k, ti as l, ui as m, ne$1 as n, _e$1 as o, pr as p, di as q, rt$1 as r, se$1 as s, tn as t, uc as u, vt$1 as v, ft$1 as w, xe as x, ye$1 as y, ri as z };
+export { Ce as $, cr as A, Bo as B, Ct$1 as C, ai as D, ii as E, Fo as F, ic as G, nc as H, It$1 as I, oc as J, sc as K, Le as L, Mi as M, Nt$1 as N, va as O, rc as P, zt$1 as Q, Ae as R, ke as S, Ie as T, Ue as U, z$1 as V, Oo as W, X, fi as Y, ac as Z, _t$1 as _, en as a, ni as a0, re$1 as a1, or as a2, _a as a3, pt$1 as a4, me$1 as a5, ci as a6, ze as a7, Jt as a8, lc as a9, Vt as aA, oi as aB, ur as aC, St as aD, be as aE, ye as aF, Ht as aG, nodeServer as aH, hi as aa, mi as ab, Te as ac, de$1 as ad, Zs as ae, pe$1 as af, Ys as ag, si as ah, dr as ai, ue$1 as aj, Be as ak, ir as al, Js as am, $e as an, ar as ao, fe$1 as ap, ei as aq, pi as ar, li as as, Fe as at, K$1 as au, ge$1 as av, Me as aw, fc as ax, mc as ay, pc as az, ba as b, cc as c, dc as d, ee as e, fr as f, ut$1 as g, nn as h, nt$1 as i, rn as j, ki as k, ti as l, ui as m, ne$1 as n, _e$1 as o, pr as p, di as q, rt$1 as r, se$1 as s, tn as t, uc as u, vt$1 as v, ft$1 as w, xe as x, ye$1 as y, ri as z };
 //# sourceMappingURL=nitro.mjs.map

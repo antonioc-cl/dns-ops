@@ -1,4 +1,4 @@
-import { createRootRoute, HeadContent, Link, Outlet, Scripts } from '@tanstack/react-router';
+import { createRootRoute, HeadContent, Link, Outlet, Scripts, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import '../styles/app.css';
 
@@ -19,6 +19,7 @@ function AuthNav() {
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     setMounted(true);
@@ -28,10 +29,13 @@ function AuthNav() {
         if (data.authenticated) {
           setIsAuthenticated(true);
           setUserEmail(data.email || null);
+        } else {
+          setIsAuthenticated(false);
+          setUserEmail(null);
         }
       })
       .catch(() => {});
-  }, []);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { 
