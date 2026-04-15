@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import type { IDatabaseAdapter } from '@dns-ops/db';
 import { createPostgresAdapter } from '@dns-ops/db';
 import { createLogger } from '@dns-ops/logging';
@@ -30,14 +31,29 @@ async function runMigrationsIfNeeded(db: IDatabaseAdapter): Promise<void> {
   hasRunMigrations = true;
   
   try {
-    // Try to query a known table
-    // If it fails with "does not exist", run migrations
     logger.info('Checking database schema...');
     
-    // Simple check - try to use the adapter
-    // The actual migration should be done via drizzle-kit
+    // Create users table if it doesn't exist
+    await db.getDrizzle().execute(sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        name VARCHAR(255),
+        tenant_id UUID NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `);
+    
+    logger.info('Users table created or already exists');
     logger.info('Database adapter initialized');
-  } catch (err) {
+  } catch (err: any) {
+    // Ignore "already exists" errors
+    if (err.message?.includes('already exists')) {
+      logger.info('Users table already exists');
+      return;
+    }
     logger.error('Database initialization error:', err as Error);
   }
 }
