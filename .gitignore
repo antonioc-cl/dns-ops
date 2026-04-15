@@ -44,5 +44,5 @@ coverage/
 .DS_Store
 Thumbs.db
 .wrangler/
-contracts
-db
+/contracts
+/db
