@@ -2,7 +2,7 @@ import { jsxs, jsx } from 'react/jsx-runtime';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { TaggedError } from 'better-result';
-import { aD as yt } from '../nitro/nitro.mjs';
+import { aD as bt } from '../nitro/nitro.mjs';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -151,7 +151,7 @@ function X() {
   } }, S;
 }
 var J = X();
-const q = yt(J), { toASCII: K, toUnicode: Q } = q, Z = "xn--";
+const q = bt(J), { toASCII: K, toUnicode: Q } = q, Z = "xn--";
 class h extends Error {
   constructor(c, D) {
     super(c);
@@ -230,4 +230,4 @@ const j = function() {
 };
 
 export { j as component };
-//# sourceMappingURL=index-CKfECdck.mjs.map
+//# sourceMappingURL=index-BZ24uBbU.mjs.map

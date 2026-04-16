@@ -75,13 +75,18 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
     // Run migrations and schema repair in background - don't block startup
     if (!hasRunMigrations) {
       hasRunMigrations = true;
-      runMigrations(db).catch(err => {
-        logger.error('Background migration failed:', err);
-      });
-      // Always run schema repair to fix any missing columns
-      repairSchema(db).catch(err => {
-        logger.error('Background schema repair failed:', err);
-      });
+      (async () => {
+        try {
+          await runMigrations(db);
+        } catch (err: any) {
+          logger.error('Background migration failed:', err);
+        }
+        try {
+          await repairSchema(db);
+        } catch (err: any) {
+          logger.error('Background schema repair failed:', err);
+        }
+      })();
     }
   }
 

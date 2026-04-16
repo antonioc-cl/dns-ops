@@ -1,11 +1,12 @@
 import { createRootRoute, HeadContent, Link, Outlet, Scripts, useLocation, useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import '../styles/app.css';
 
 export const Route = createRootRoute({
   component: RootComponent,
   head: () => ({
+    title: 'DNS Ops Workbench',
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -22,9 +23,14 @@ function AuthNav() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const isLoggingOut = useRef(false);
 
   useEffect(() => {
     setMounted(true);
+    if (isLoggingOut.current) {
+      isLoggingOut.current = false;
+      return;
+    }
     fetch('/api/auth/me', { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
@@ -40,6 +46,7 @@ function AuthNav() {
   }, [location.pathname]);
 
   const handleLogout = async () => {
+    isLoggingOut.current = true;
     await fetch('/api/auth/logout', { 
       method: 'POST',
       credentials: 'include' 
