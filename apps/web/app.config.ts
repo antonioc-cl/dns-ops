@@ -1,15 +1,9 @@
 import { defineConfig } from '@tanstack/react-start/config';
 
-// Detect Railway environment for correct preset
-const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_NAME;
-
 export default defineConfig({
   server: {
-    preset: isRailway ? 'node-server' : 'cloudflare-pages',
-    // pg's optional native binding is unavailable in CF Workers — stub it so
-    // the bundle doesn't fail. The production app still uses PostgreSQL, but
-    // Workers receive the connection string from runtime bindings/env instead of
-    // loading native pg bindings in the browser bundle.
+    preset: 'node-server',
+    // pg's optional native binding is unavailable in bundled output — stub it
     rollupConfig: {
       plugins: [
         {

@@ -1,16 +1,15 @@
 {
   "name": "@dns-ops/web",
   "version": "0.1.0",
-  "description": "DNS Ops Workbench Web App - TanStack Start + Hono on Cloudflare Workers",
+  "description": "DNS Ops Workbench Web App - TanStack Start + Hono on Railway",
   "type": "module",
   "packageManager": "bun@1.3.11",
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
-    "preview": "wrangler pages dev dist",
-    "deploy": "wrangler pages deploy dist",
+    "start": "node .output/server/index.mjs",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check app hono e2e app.config.ts playwright.config.mjs postcss.config.js tailwind.config.js wrangler.jsonc",
+    "lint": "biome check app hono e2e app.config.ts playwright.config.mjs postcss.config.js tailwind.config.js",
     "test": "echo 'Use bun e2e for browser tests'",
     "e2e": "bunx playwright test",
     "e2e:headed": "bunx playwright test --headed",
@@ -40,12 +39,10 @@
   "devDependencies": {
     "@dns-ops/testkit": "workspace:*",
     "@playwright/test": "^1.49.0",
-    "@cloudflare/workers-types": "^4.20231218.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
-    "typescript": "^5.3.0",
-    "wrangler": "^3.22.0"
+    "typescript": "^5.3.0"
   }
 }
