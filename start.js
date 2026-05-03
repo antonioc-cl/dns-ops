@@ -1,38 +1,40 @@
 #!/usr/bin/env node
-/**
- * Service launcher — selects the correct app based on RAILWAY_SERVICE_NAME
- */
-
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const serviceName = process.env.RAILWAY_SERVICE_NAME;
 const isCollector = serviceName === 'dns-ops';
+const cwd = process.cwd();
 
-const candidates = isCollector
-  ? [
-      join(process.cwd(), 'apps/collector/dist/index.js'),
-      join(process.cwd(), 'dist/index.js'),
-    ]
-  : [
-      join(process.cwd(), 'apps/web/.output/server/index.mjs'),
-      join(process.cwd(), '.output/server/index.mjs'),
-    ];
+// Check specific paths
+const paths = {
+  appsDir: join(cwd, 'apps'),
+  webOutput: join(cwd, 'apps/web/.output/server/index.mjs'),
+  webOutputAlt: join(cwd, '.output/server/index.mjs'),
+  collectorDist: join(cwd, 'apps/collector/dist/index.js'),
+  collectorDistAlt: join(cwd, 'dist/index.js'),
+};
 
-for (const path of candidates) {
-  if (existsSync(path)) {
-    console.log(`[start.js] Launching ${isCollector ? 'collector' : 'web'} from ${path}`);
-    import(path);
-    process.exit(0);
-  }
+for (const [name, path] of Object.entries(paths)) {
+  console.log(`[start.js] ${name}: ${existsSync(path) ? 'EXISTS' : 'MISSING'} (${path})`);
 }
 
-console.error(`[start.js] No entry point found for ${serviceName}`);
-console.error('Searched:', candidates);
-console.error('CWD:', process.cwd());
-try {
-  console.error('Files in CWD:', readdirSync(process.cwd()));
-} catch (e) {
-  console.error('Cannot read CWD:', e.message);
+// List apps dir if it exists
+if (existsSync(paths.appsDir)) {
+  const appsContents = readdirSync(paths.appsDir);
+  console.log(`[start.js] apps/ contents: ${appsContents.join(', ')}`);
+} else {
+  console.log('[start.js] apps/ dir is MISSING');
 }
-process.exit(1);
+
+const target = isCollector
+  ? (existsSync(paths.collectorDist) ? paths.collectorDist : paths.collectorDistAlt)
+  : (existsSync(paths.webOutput) ? paths.webOutput : paths.webOutputAlt);
+
+if (existsSync(target)) {
+  console.log(`[start.js] Launching ${isCollector ? 'collector' : 'web'} from ${target}`);
+  import(target);
+} else {
+  console.error(`[start.js] FATAL: No entry point for ${serviceName}. Target: ${target}`);
+  process.exit(1);
+}
