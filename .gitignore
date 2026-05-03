@@ -1,7 +1,6 @@
 # Build outputs
 dist/
 *.tsbuildinfo
-.output/
 
 # Turbo cache
 .turbo/
@@ -40,3 +39,4 @@ Thumbs.db
 /contracts
 /db
 .pi/self-learning-memory
+.seed-credentials.txt

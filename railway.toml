@@ -10,3 +10,4 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+# Force rebuild Sun May  3 18:16:41 -04 2026
