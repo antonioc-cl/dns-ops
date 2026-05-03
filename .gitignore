@@ -14,7 +14,6 @@ app.config.timestamp_*.js
 node_modules/
 
 # Database files
-.dolt/
 *.db
 *.db-shm
 *.db-wal
@@ -23,13 +22,6 @@ node_modules/
 .ntm/
 .pi/messenger/crew/
 .bv/
-
-# Beads history (track issues.jsonl only)
-.beads/.br_history/
-.beads/last-touched
-.beads/*.db
-.beads/*.db-shm
-.beads/*.db-wal
 
 # IDE
 .idea/
