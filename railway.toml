@@ -5,7 +5,7 @@
 buildCommand = "bun install && bun run build --filter=@dns-ops/web"
 
 [deploy]
-startCommand = "sh -c 'if [ \"$RAILWAY_SERVICE_NAME\" = \"dns-ops\" ]; then node apps/collector/dist/index.js; else node apps/web/.output/server/index.mjs; fi'"
+startCommand = "node start.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
