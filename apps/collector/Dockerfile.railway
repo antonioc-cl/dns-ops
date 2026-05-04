@@ -1,5 +1,6 @@
 # DNS Ops Collector - Railway Deployment
 # Multi-stage build with Bun for compilation, Node for runtime
+# Updated: 2026-05-04 — rebuild to include /api/health and /api/collect routes
 
 # =============================================================================
 # Stage 1: Builder
