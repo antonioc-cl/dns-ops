@@ -31,8 +31,8 @@ COPY packages/parsing/ ./packages/parsing/
 COPY packages/rules/ ./packages/rules/
 COPY apps/collector/ ./apps/collector/
 
-# Build
-RUN bun run build --filter=@dns-ops/collector...
+# Build — cache-busted by build timestamp to ensure fresh dist
+RUN date +%s > /tmp/build_ts && bun run build --filter=@dns-ops/collector...
 
 # =============================================================================
 # Stage 2: Production
