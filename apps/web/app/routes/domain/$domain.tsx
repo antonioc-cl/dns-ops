@@ -1,7 +1,7 @@
 import type { Observation, Snapshot } from '@dns-ops/db/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { type KeyboardEvent, useCallback, useId, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { AuthPending } from '../../components/AuthPending.js';
 import { DelegationPanel } from '../../components/DelegationPanel.js';
 import { DiscoveredSelectors } from '../../components/DiscoveredSelectors.js';
@@ -157,9 +157,19 @@ function Domain360Page() {
           message?: string;
         };
         if (response.status === 401 || response.status === 403) {
-          throw new Error('Operator sign-in is required to refresh DNS evidence.');
+          throw new Error('Authentication failed. Please sign in again.');
         }
-        throw new Error(errorData.message || errorData.error || 'Refresh failed');
+        if (response.status === 503) {
+          throw new Error(
+            'DNS collector is temporarily unavailable. The service may be restarting — try again in 30 seconds.'
+          );
+        }
+        if (response.status === 429) {
+          throw new Error(
+            errorData.message || 'Collection rate limit reached. Wait 60 seconds before retrying.'
+          );
+        }
+        throw new Error(errorData.message || errorData.error || `Collection failed (${response.status})`);
       }
     },
     onSuccess: () => {
@@ -226,10 +236,19 @@ function Domain360Page() {
     }
   };
 
-  const handleRefresh = () => {
+  // Auto-trigger collection on first load when no snapshot exists
+  useEffect(() => {
+    const shouldAutoCollect = !isLoading && !snapshot && !error && !refreshMutation.isPending && !refreshMutation.isSuccess;
+    if (shouldAutoCollect) {
+      setRefreshError(null);
+      refreshMutation.mutate();
+    }
+  }, [isLoading, snapshot, error, refreshMutation.isPending, refreshMutation.isSuccess, refreshMutation]);
+
+  const handleRefresh = useCallback(() => {
     setRefreshError(null);
     refreshMutation.mutate();
-  };
+  }, [refreshMutation]);
 
   return (
     <div data-loaded={!isLoading || undefined}>
@@ -272,14 +291,25 @@ function Domain360Page() {
               {loaderError.message}
             </p>
           </div>
+        ) : refreshMutation.isPending ? (
+          <div
+            className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+            data-testid="domain-collecting-banner"
+          >
+            <div className="flex items-center gap-3">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+              <p className="text-blue-800">
+                Collecting DNS data for <strong>{domain}</strong>... This takes about 5 seconds.
+              </p>
+            </div>
+          </div>
         ) : (
           <div
             className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
             data-testid="domain-no-data-banner"
           >
             <p className="text-yellow-800">
-              No DNS snapshot is available for {domain} yet. Use an operator session to refresh and
-              collect new DNS evidence.
+              No DNS data for {domain} yet. Click <strong>Refresh</strong> to collect now.
             </p>
           </div>
         )}

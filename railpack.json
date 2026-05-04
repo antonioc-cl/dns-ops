@@ -1,7 +1,0 @@
-{
-  "providers": ["node"],
-  "node": {
-    "packageManager": "bun",
-    "runtime": "bun"
-  }
-}

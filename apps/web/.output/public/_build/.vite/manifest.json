@@ -1,0 +1,82 @@
+{
+  "_StateDisplay-5pFnI7cN.js": {
+    "file": "assets/StateDisplay-5pFnI7cN.js",
+    "name": "StateDisplay",
+    "imports": [
+      "_client-naTBV8fL.js"
+    ]
+  },
+  "_client-naTBV8fL.js": {
+    "file": "assets/client-naTBV8fL.js",
+    "name": "client",
+    "dynamicImports": [
+      "app/routes/portfolio.tsx?tsr-split=component",
+      "app/routes/login.tsx?tsr-split=component",
+      "app/routes/index.tsx?tsr-split=component",
+      "app/routes/domain/$domain.tsx?tsr-split=component"
+    ],
+    "css": [
+      "assets/client.css"
+    ]
+  },
+  "_client.css": {
+    "file": "assets/client.css",
+    "src": "_client.css"
+  },
+  "_index-BQk-qo2X.js": {
+    "file": "assets/index-BQk-qo2X.js",
+    "name": "index",
+    "imports": [
+      "_client-naTBV8fL.js"
+    ]
+  },
+  "app/routes/domain/$domain.tsx?tsr-split=component": {
+    "file": "assets/_domain-DgkXAIWl.js",
+    "name": "_domain",
+    "src": "app/routes/domain/$domain.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_client-naTBV8fL.js",
+      "_StateDisplay-5pFnI7cN.js",
+      "_index-BQk-qo2X.js"
+    ]
+  },
+  "app/routes/index.tsx?tsr-split=component": {
+    "file": "assets/index-BaCSB2v9.js",
+    "name": "index",
+    "src": "app/routes/index.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_client-naTBV8fL.js",
+      "_index-BQk-qo2X.js"
+    ]
+  },
+  "app/routes/login.tsx?tsr-split=component": {
+    "file": "assets/login-CBiOh73f.js",
+    "name": "login",
+    "src": "app/routes/login.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_client-naTBV8fL.js"
+    ]
+  },
+  "app/routes/portfolio.tsx?tsr-split=component": {
+    "file": "assets/portfolio-BhazMpv3.js",
+    "name": "portfolio",
+    "src": "app/routes/portfolio.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_client-naTBV8fL.js",
+      "_StateDisplay-5pFnI7cN.js"
+    ]
+  },
+  "virtual:$vinxi/handler/client": {
+    "file": "assets/client-D1SWe1en.js",
+    "name": "client",
+    "src": "virtual:$vinxi/handler/client",
+    "isEntry": true,
+    "imports": [
+      "_client-naTBV8fL.js"
+    ]
+  }
+}
