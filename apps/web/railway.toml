@@ -1,12 +1,11 @@
-# Railway deployment configuration for web app
-# Uses railway.app.config.ts which targets node-server preset
+# Railway deployment for web service
+# Uses Dockerfile for proper monorepo workspace support
 
 [build]
-# Build all workspace packages first, then build web
-buildCommand = "bun install && bun run build --filter=@dns-ops/web"
+builder = "DOCKERFILE"
+dockerfilePath = "apps/web/Dockerfile.railway"
 
 [deploy]
-# Node-server preset outputs to .output/server/index.mjs
 startCommand = "node apps/web/.output/server/index.mjs"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
