@@ -72,6 +72,7 @@ export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
   if (!data) return null;
 
   const { mailConfig, findings, suggestions } = data;
+  const safeSuggestions = Array.isArray(suggestions) ? suggestions : [];
   const findingsBySeverity = groupBySeverity(findings);
 
   return (
@@ -161,7 +162,7 @@ export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
                   key={finding.id}
                   finding={finding}
                   domain={data.domain}
-                  suggestions={suggestions.filter((s) => s.findingId === finding.id)}
+                  suggestions={safeSuggestions.filter((s) => s.findingId === finding.id)}
                 />
               ))}
             </div>
@@ -280,7 +281,7 @@ function MailFindingCard({
             <p className="text-sm text-gray-600 mt-1 line-clamp-2">{finding.description}</p>
             <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
               <span className="capitalize">{finding.confidence} confidence</span>
-              {suggestions.length > 0 && <span>{suggestions.length} suggestion(s)</span>}
+              {safeSuggestions.length > 0 && <span>{safeSuggestions.length} suggestion(s)</span>}
             </div>
           </div>
           <svg
@@ -314,12 +315,12 @@ function MailFindingCard({
             </div>
           )}
 
-          {suggestions.length > 0 && (
+          {safeSuggestions.length > 0 && (
             <div className="mt-4 space-y-3">
               <h6 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Suggestions
               </h6>
-              {suggestions.map((suggestion) => (
+              {safeSuggestions.map((suggestion) => (
                 <MailSuggestionCard key={suggestion.id} suggestion={suggestion} domain={domain} />
               ))}
             </div>

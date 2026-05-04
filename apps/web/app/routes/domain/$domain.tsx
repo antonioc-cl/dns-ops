@@ -130,7 +130,7 @@ function Domain360Page() {
   });
 
   const snapshot = domainData?.snapshot ?? null;
-  const observations = domainData?.observations ?? [];
+  const observations = Array.isArray(domainData?.observations) ? domainData.observations : [];
 
   const loaderError: LoaderError | undefined = error
     ? {

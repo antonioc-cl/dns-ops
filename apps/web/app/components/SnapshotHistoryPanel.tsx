@@ -342,12 +342,13 @@ function DiffResultView({ result, onClose }: { result: DiffResponse; onClose: ()
   const { diff, warnings } = result;
   const { findingsSummary, comparison } = diff;
 
-  const nonUnchangedRecords = comparison.recordChanges.filter((r) => r.type !== 'unchanged');
+  const safeRecordChanges = Array.isArray(comparison?.recordChanges) ? comparison.recordChanges : [];
+  const nonUnchangedRecords = safeRecordChanges.filter((r) => r.type !== 'unchanged');
   const recordStats = {
-    added: comparison.recordChanges.filter((r) => r.type === 'added').length,
-    removed: comparison.recordChanges.filter((r) => r.type === 'removed').length,
-    modified: comparison.recordChanges.filter((r) => r.type === 'modified').length,
-    unchanged: comparison.recordChanges.filter((r) => r.type === 'unchanged').length,
+    added: safeRecordChanges.filter((r) => r.type === 'added').length,
+    removed: safeRecordChanges.filter((r) => r.type === 'removed').length,
+    modified: safeRecordChanges.filter((r) => r.type === 'modified').length,
+    unchanged: safeRecordChanges.filter((r) => r.type === 'unchanged').length,
   };
 
   return (

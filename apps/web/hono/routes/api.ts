@@ -311,6 +311,22 @@ apiRoutes.post('/collect/domain', requireAuth, requireWritePermission, async (c)
 
   const { domain, zoneManagement = 'unmanaged' } = validation.data;
   const actorId = c.get('actorId');
+  const tenantId = c.get('tenantId');
+  const db = c.get('db');
+
+  if (!db) {
+    return c.json({ error: 'Database unavailable' }, 503);
+  }
+
+  // Ensure domain exists in portfolio before collecting
+  // This prevents 404 on /domain/:domain after collection triggers
+  const domainRepo = new DomainRepository(db);
+  const domainRecord = await domainRepo.findOrCreate({
+    name: domain.toLowerCase(),
+    normalizedName: domain.toLowerCase(),
+    tenantId,
+    zoneManagement: zoneManagement as 'managed' | 'unmanaged' | 'unknown',
+  });
 
   const result = await proxyToCollector(c, {
     path: '/api/collect/domain',
@@ -323,5 +339,5 @@ apiRoutes.post('/collect/domain', requireAuth, requireWritePermission, async (c)
   });
 
   if (result instanceof Response) return result;
-  return c.json(result.json);
+  return c.json({ ...result.json, domainId: domainRecord.id });
 });
