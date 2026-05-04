@@ -40,3 +40,4 @@ Thumbs.db
 /db
 .pi/self-learning-memory
 .seed-credentials.txt
+apps/web/.output/
