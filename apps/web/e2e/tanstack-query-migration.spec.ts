@@ -8,8 +8,8 @@
 
 import { expect, test } from '@playwright/test';
 import {
-  mockDomainSnapshot,
   mockDelegation,
+  mockDomainSnapshot,
   mockMail,
   waitForDomainPageReady,
 } from './support/domain-fixtures.js';

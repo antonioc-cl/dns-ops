@@ -100,7 +100,10 @@ export function NotesPanel({ domainId, isDomainName = false }: NotesPanelProps) 
     error: notesError,
   } = useQuery({
     queryKey: ['notes', resolvedDomainId],
-    queryFn: () => fetchNotes(resolvedDomainId!),
+    queryFn: () => {
+      if (!resolvedDomainId) throw new Error('Domain ID is required');
+      return fetchNotes(resolvedDomainId);
+    },
     enabled: !!resolvedDomainId,
   });
 

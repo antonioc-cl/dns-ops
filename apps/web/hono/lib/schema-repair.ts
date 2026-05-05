@@ -6,6 +6,12 @@ import type { IDatabaseAdapter } from '@dns-ops/db';
 import { createLogger } from '@dns-ops/logging';
 import { sql } from 'drizzle-orm';
 
+type QueryRows<T> = { rows?: T[] };
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 const logger = createLogger({ service: 'schema-repair' });
 
 export async function repairSchema(db: IDatabaseAdapter): Promise<void> {
@@ -265,10 +271,12 @@ export async function repairSchema(db: IDatabaseAdapter): Promise<void> {
     FROM information_schema.columns
     WHERE table_schema = 'public'
   `);
+  const existingRows =
+    (existing as QueryRows<{ table_name?: string; column_name?: string }>).rows ?? [];
   const existingCols = new Set(
-    ((existing as any).rows || [])
-      .filter((r: any) => r.table_name && r.column_name)
-      .map((r: any) => `${r.table_name}.${r.column_name}`)
+    existingRows
+      .filter((row) => row.table_name && row.column_name)
+      .map((row) => `${row.table_name}.${row.column_name}`)
   );
 
   let fixed = 0;
@@ -277,9 +285,10 @@ export async function repairSchema(db: IDatabaseAdapter): Promise<void> {
     try {
       await db.execute(sql.raw(repairSql));
       fixed++;
-    } catch (err: any) {
-      if (!err.message?.includes('already exists')) {
-        logger.warn(`[SchemaRepair] Note: ${err.message}`);
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
+      if (!message.includes('already exists')) {
+        logger.warn(`[SchemaRepair] Note: ${message}`);
       }
     }
   }

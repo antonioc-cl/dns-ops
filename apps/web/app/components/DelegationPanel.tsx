@@ -82,7 +82,10 @@ export function DelegationPanel({ snapshotId }: DelegationPanelProps) {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['delegation', snapshotId],
-    queryFn: () => fetchDelegationData(snapshotId!),
+    queryFn: () => {
+      if (!snapshotId) throw new Error('Snapshot ID is required');
+      return fetchDelegationData(snapshotId);
+    },
     enabled: !!snapshotId,
   });
 

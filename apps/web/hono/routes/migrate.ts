@@ -14,6 +14,10 @@ import type { Env } from '../types.js';
 
 const logger = createLogger({ service: 'migrate-routes' });
 
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 const migrateRoutes = new Hono<Env>();
 
 // All tables that should exist in the database
@@ -109,8 +113,8 @@ migrateRoutes.get('/status', async (c) => {
       tables: REQUIRED_TABLES.length,
       message: 'All required tables exist',
     });
-  } catch (err: any) {
-    return c.json({ status: 'error', message: err.message }, 500);
+  } catch (err: unknown) {
+    return c.json({ status: 'error', message: getErrorMessage(err) }, 500);
   }
 });
 
@@ -165,8 +169,8 @@ migrateRoutes.get('/schema', async (c) => {
       tablesChecked: Object.keys(CRITICAL_COLUMNS).length,
       message: 'All tables have required columns',
     });
-  } catch (err: any) {
-    return c.json({ status: 'error', message: err.message }, 500);
+  } catch (err: unknown) {
+    return c.json({ status: 'error', message: getErrorMessage(err) }, 500);
   }
 });
 
@@ -186,8 +190,8 @@ migrateRoutes.post('/reset', async (c) => {
       status: 'reset',
       message: 'Migration tracker cleared. Migrations will re-run on next request.',
     });
-  } catch (err: any) {
-    return c.json({ status: 'error', message: err.message }, 500);
+  } catch (err: unknown) {
+    return c.json({ status: 'error', message: getErrorMessage(err) }, 500);
   }
 });
 
@@ -206,8 +210,8 @@ migrateRoutes.post('/repair', async (c) => {
   try {
     await repairSchema(db);
     return c.json({ status: 'repaired', message: 'Schema repair complete' });
-  } catch (err: any) {
-    return c.json({ status: 'error', message: err.message }, 500);
+  } catch (err: unknown) {
+    return c.json({ status: 'error', message: getErrorMessage(err) }, 500);
   }
 });
 
@@ -246,8 +250,8 @@ migrateRoutes.post('/rebuild', async (c) => {
       try {
         await db.execute(sql.raw(`DROP TABLE IF EXISTS "${table}" CASCADE;`));
         logger.info(`[Rebuild] Dropped ${table}`);
-      } catch (err: any) {
-        logger.warn(`[Rebuild] Could not drop ${table}: ${err.message}`);
+      } catch (err: unknown) {
+        logger.warn(`[Rebuild] Could not drop ${table}: ${getErrorMessage(err)}`);
       }
     }
 
@@ -259,8 +263,8 @@ migrateRoutes.post('/rebuild', async (c) => {
       dropped: tablesToDrop,
       message: 'Broken tables dropped. Real migrations will recreate them on next request.',
     });
-  } catch (err: any) {
-    return c.json({ status: 'error', message: err.message }, 500);
+  } catch (err: unknown) {
+    return c.json({ status: 'error', message: getErrorMessage(err) }, 500);
   }
 });
 
@@ -295,8 +299,8 @@ migrateRoutes.post('/run-init', async (c) => {
       try {
         await db.execute(sql.raw(statement));
         results.push({ statement: statement.slice(0, 60), status: 'ok' });
-      } catch (err: any) {
-        const errorMsg = err.message || String(err);
+      } catch (err: unknown) {
+        const errorMsg = getErrorMessage(err);
         const skipErrors = [
           'already exists',
           'does not exist',
@@ -331,8 +335,8 @@ migrateRoutes.post('/run-init', async (c) => {
       total: results.length,
       message: 'Init migration executed successfully',
     });
-  } catch (err: any) {
-    return c.json({ status: 'error', message: err.message }, 500);
+  } catch (err: unknown) {
+    return c.json({ status: 'error', message: getErrorMessage(err) }, 500);
   }
 });
 

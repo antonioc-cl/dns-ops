@@ -342,7 +342,9 @@ function DiffResultView({ result, onClose }: { result: DiffResponse; onClose: ()
   const { diff, warnings } = result;
   const { findingsSummary, comparison } = diff;
 
-  const safeRecordChanges = Array.isArray(comparison?.recordChanges) ? comparison.recordChanges : [];
+  const safeRecordChanges = Array.isArray(comparison?.recordChanges)
+    ? comparison.recordChanges
+    : [];
   const nonUnchangedRecords = safeRecordChanges.filter((r) => r.type !== 'unchanged');
   const recordStats = {
     added: safeRecordChanges.filter((r) => r.type === 'added').length,

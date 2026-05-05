@@ -46,7 +46,10 @@ async function fetchMailFindings(snapshotId: string): Promise<MailFindingsData> 
 export function MailFindingsPanel({ snapshotId }: MailFindingsPanelProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['mail-findings', snapshotId],
-    queryFn: () => fetchMailFindings(snapshotId!),
+    queryFn: () => {
+      if (!snapshotId) throw new Error('Snapshot ID is required');
+      return fetchMailFindings(snapshotId);
+    },
     enabled: !!snapshotId,
   });
 

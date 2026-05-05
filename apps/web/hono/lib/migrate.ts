@@ -12,6 +12,12 @@ const logger = createLogger({ service: 'migrations' });
 
 const MIGRATIONS_DIR = join(process.cwd(), 'packages', 'db', 'src', 'migrations');
 
+type QueryRows<T> = { rows?: T[] };
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
   logger.info('[Migration] Running drizzle migrations...');
 
@@ -38,7 +44,7 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
         ) as exists;
       `);
 
-      const rows = (applied as any).rows;
+      const rows = (applied as QueryRows<{ exists?: boolean }>).rows ?? [];
       if (rows[0]?.exists) {
         logger.info(`[Migration] Skipping ${file} (already applied)`);
         continue;
@@ -56,7 +62,7 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
       for (const statement of statements) {
         try {
           await db.execute(sql.raw(statement));
-        } catch (err: any) {
+        } catch (err: unknown) {
           // Ignore common idempotent errors
           const skipErrors = [
             'already exists',
@@ -67,8 +73,9 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
             'no such table',
           ];
 
-          if (skipErrors.some((e) => err.message?.includes(e))) {
-            logger.warn(`[Migration] Skipping statement: ${err.message}`);
+          const message = getErrorMessage(err);
+          if (skipErrors.some((e) => message.includes(e))) {
+            logger.warn(`[Migration] Skipping statement: ${message}`);
             continue;
           }
 
@@ -86,7 +93,7 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
     }
 
     logger.info('[Migration] All migrations complete');
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[Migration] Failed:', err);
     throw err;
   }

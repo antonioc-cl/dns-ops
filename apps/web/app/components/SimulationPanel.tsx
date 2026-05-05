@@ -102,7 +102,10 @@ export function SimulationPanel({ snapshotId }: SimulationPanelProps) {
     refetch,
   } = useQuery({
     queryKey: ['simulation', snapshotId],
-    queryFn: () => runSimulationFetch(snapshotId!),
+    queryFn: () => {
+      if (!snapshotId) throw new Error('Snapshot ID is required');
+      return runSimulationFetch(snapshotId);
+    },
     enabled: !!snapshotId && hasRun,
     staleTime: 5 * 60 * 1000, // 5 minutes — simulation results are expensive
   });

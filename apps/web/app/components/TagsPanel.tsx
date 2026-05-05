@@ -94,7 +94,10 @@ export function TagsPanel({ domainId, isDomainName = false, onTagsChange }: Tags
     error: tagsError,
   } = useQuery({
     queryKey: ['tags', resolvedDomainId],
-    queryFn: () => fetchTags(resolvedDomainId!),
+    queryFn: () => {
+      if (!resolvedDomainId) throw new Error('Domain ID is required');
+      return fetchTags(resolvedDomainId);
+    },
     enabled: !!resolvedDomainId,
   });
 

@@ -169,7 +169,9 @@ function Domain360Page() {
             errorData.message || 'Collection rate limit reached. Wait 60 seconds before retrying.'
           );
         }
-        throw new Error(errorData.message || errorData.error || `Collection failed (${response.status})`);
+        throw new Error(
+          errorData.message || errorData.error || `Collection failed (${response.status})`
+        );
       }
     },
     onSuccess: () => {
@@ -238,12 +240,20 @@ function Domain360Page() {
 
   // Auto-trigger collection on first load when no snapshot exists
   useEffect(() => {
-    const shouldAutoCollect = !isLoading && !snapshot && !error && !refreshMutation.isPending && !refreshMutation.isSuccess;
+    const shouldAutoCollect =
+      !isLoading && !snapshot && !error && !refreshMutation.isPending && !refreshMutation.isSuccess;
     if (shouldAutoCollect) {
       setRefreshError(null);
       refreshMutation.mutate();
     }
-  }, [isLoading, snapshot, error, refreshMutation.isPending, refreshMutation.isSuccess, refreshMutation]);
+  }, [
+    isLoading,
+    snapshot,
+    error,
+    refreshMutation.isPending,
+    refreshMutation.isSuccess,
+    refreshMutation,
+  ]);
 
   const handleRefresh = useCallback(() => {
     setRefreshError(null);

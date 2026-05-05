@@ -33,6 +33,8 @@ const REQUIRED_TABLES = [
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL;
 
+type QueryRows<T> = { rows?: T[] };
+
 describe.skipIf(!hasDatabaseUrl)('Database Schema', () => {
   let db: ReturnType<typeof createPostgresAdapter>;
 
@@ -54,8 +56,8 @@ describe.skipIf(!hasDatabaseUrl)('Database Schema', () => {
           ) as exists
         `);
 
-        const rows = (result as any).rows;
-        expect(rows[0].exists).toBe(true);
+        const rows = (result as QueryRows<{ exists?: boolean }>).rows ?? [];
+        expect(rows[0]?.exists).toBe(true);
       });
     }
   });
@@ -72,8 +74,8 @@ describe.skipIf(!hasDatabaseUrl)('Database Schema', () => {
           WHERE table_schema = 'public' AND table_name = ${table}
         `);
 
-        const colRows = (colResult as any).rows;
-        const columns = colRows.map((r: any) => r.column_name);
+        const colRows = (colResult as QueryRows<{ column_name: string }>).rows ?? [];
+        const columns = colRows.map((row) => row.column_name);
 
         // Check it has an 'id' column (all tables should)
         if (!columns.includes('id')) {
@@ -103,8 +105,8 @@ describe.skipIf(!hasDatabaseUrl)('Database Schema', () => {
           WHERE constraint_type = 'PRIMARY KEY' AND table_name = ${table}
         `);
 
-        const rows = (result as any).rows;
-        expect(Number(rows[0].count)).toBeGreaterThan(0);
+        const rows = (result as QueryRows<{ count?: string | number }>).rows ?? [];
+        expect(Number(rows[0]?.count)).toBeGreaterThan(0);
       }
     });
   });

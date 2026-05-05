@@ -78,12 +78,12 @@ export const dbMiddleware = createMiddleware<Env>(async (c, next) => {
       (async () => {
         try {
           await runMigrations(db);
-        } catch (err: any) {
+        } catch (err: unknown) {
           logger.error('Background migration failed:', err);
         }
         try {
           await repairSchema(db);
-        } catch (err: any) {
+        } catch (err: unknown) {
           logger.error('Background schema repair failed:', err);
         }
       })();
