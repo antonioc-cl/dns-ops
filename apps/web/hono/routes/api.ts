@@ -309,35 +309,46 @@ apiRoutes.post('/collect/domain', requireAuth, requireWritePermission, async (c)
     return validationErrorResponse(c, validation.error);
   }
 
-  const { domain, zoneManagement = 'unmanaged' } = validation.data;
+  const validatedDomain = validation.data.domain;
+  const zoneManagement = validation.data.zoneManagement ?? 'unmanaged';
   const actorId = c.get('actorId');
   const tenantId = c.get('tenantId');
   const db = c.get('db');
+
+  if (!validatedDomain) {
+    return c.json({ error: 'Domain is required' }, 400);
+  }
 
   if (!db) {
     return c.json({ error: 'Database unavailable' }, 503);
   }
 
+  const normalizedDomain = validatedDomain.toLowerCase();
+
   // Ensure domain exists in portfolio before collecting
   // This prevents 404 on /domain/:domain after collection triggers
   const domainRepo = new DomainRepository(db);
   const domainRecord = await domainRepo.findOrCreate({
-    name: domain.toLowerCase(),
-    normalizedName: domain.toLowerCase(),
+    name: normalizedDomain,
+    normalizedName: normalizedDomain,
     tenantId,
-    zoneManagement: zoneManagement as 'managed' | 'unmanaged' | 'unknown',
+    zoneManagement,
   });
 
   const result = await proxyToCollector(c, {
     path: '/api/collect/domain',
     method: 'POST',
     body: JSON.stringify({
-      domain,
+      domain: validatedDomain,
       zoneManagement,
       triggeredBy: actorId,
     }),
   });
 
   if (result instanceof Response) return result;
-  return c.json({ ...result.json, domainId: domainRecord.id });
+  const responseBody =
+    result.json && typeof result.json === 'object' && !Array.isArray(result.json)
+      ? result.json
+      : {};
+  return c.json({ ...responseBody, domainId: domainRecord.id });
 });
